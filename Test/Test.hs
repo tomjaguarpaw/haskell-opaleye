@@ -14,6 +14,9 @@ import qualified Data.Profunctor.Product.Default as D
 import qualified Data.List as L
 import qualified System.Exit as Exit
 
+import qualified Control.Applicative as A
+import           Control.Arrow ((&&&))
+
 -- { Set your test database info here.  Then invoke the 'main'
 --   function to run the tests, or just use 'cabal test'.  The test
 --   database must already exist and the test user must have
@@ -108,11 +111,18 @@ table2 = twoIntTable "table2"
 table1Q :: Query (Column Int, Column Int)
 table1Q = T.queryTable table1
 
+table2Q :: Query (Column Int, Column Int)
+table2Q = T.queryTable table2
+
 table1data :: [(Int, Int)]
 table1data = [ (1, 100)
              , (1, 100)
              , (1, 200)
              , (2, 300) ]
+
+table2data :: [(Int, Int)]
+table2data = [ (1, 100)
+             , (3, 400) ]
 
 type Test = SQL.Connection -> IO Bool
 
@@ -128,6 +138,11 @@ testG q p conn = do
 testSelect :: Test
 testSelect = testG table1Q
              (\r -> L.sort table1data == L.sort r)
+
+testProduct :: Test
+testProduct = testG query
+                 (\r -> L.sort (A.liftA2 (,) table1data table2data) == L.sort r)
+  where query = table1Q &&& table2Q
 
 allTests :: [Test]
 allTests = [testSelect]
