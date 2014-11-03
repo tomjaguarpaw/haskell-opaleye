@@ -145,7 +145,7 @@ testProduct = testG query
   where query = table1Q &&& table2Q
 
 allTests :: [Test]
-allTests = [testSelect]
+allTests = [testSelect, testProduct]
 
 main :: IO ()
 main = do
