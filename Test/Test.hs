@@ -6,6 +6,8 @@ module Main where
 import qualified Opaleye.Table as T
 import           Opaleye.Table (TableColumn)
 import           Opaleye.Column (Column)
+import           Opaleye.Operators ((.==))
+import qualified Opaleye.Operators as O
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.RunQuery as RQ
 
@@ -15,7 +17,8 @@ import qualified Data.List as L
 import qualified System.Exit as Exit
 
 import qualified Control.Applicative as A
-import           Control.Arrow ((&&&))
+import qualified Control.Arrow as Arr
+import           Control.Arrow ((&&&), (<<<))
 
 -- { Set your test database info here.  Then invoke the 'main'
 --   function to run the tests, or just use 'cabal test'.  The test
@@ -144,8 +147,16 @@ testProduct = testG query
                  (\r -> L.sort (A.liftA2 (,) table1data table2data) == L.sort r)
   where query = table1Q &&& table2Q
 
+testRestrict :: Test
+testRestrict = testG query
+               (\r -> filter ((== 1) . fst) (L.sort table1data) == L.sort r)
+  where query = proc () -> do
+          t <- table1Q -< ()
+          O.restrict -< fst t .== 1
+          Arr.returnA -< t
+
 allTests :: [Test]
-allTests = [testSelect, testProduct]
+allTests = [testSelect, testProduct, testRestrict]
 
 main :: IO ()
 main = do
