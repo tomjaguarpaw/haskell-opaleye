@@ -1,0 +1,45 @@
+name:     opaleye
+version:  0.1
+synopsis: A relational query language for Haskell
+author:   Purely Agile
+build-type: Simple
+cabal-version: >= 1.8
+License:      BSD3
+License-File: LICENSE
+
+library
+
+  build-depends:
+      base               >= 4   && < 5
+    , karamaan-plankton  >= 0.1 && < 0.4
+    , haskelldb          == 2.2.3.0.0.0.1
+      -- vv This is just for RunQuery.  If we ever move
+      -- RunQuery elsewhere we should remove this dependency.
+    , old-locale          == 1.0.*
+    , postgresql-simple   >= 0.3 && < 0.5
+    , product-profunctors >= 0.5 && < 0.6
+    , profunctors         >= 4.0 && < 4.3
+    , transformers >= 0.3 && < 0.4
+
+  exposed-modules: Opaleye.Column,
+                   Opaleye.QueryArr,
+                   Opaleye.RunQuery,
+                   Opaleye.Sql,
+                   Opaleye.Table,
+                   Opaleye.Internal.PackMap,
+                   Opaleye.Internal.Table,
+                   Opaleye.Internal.TableMaker,
+                   Opaleye.Internal.Tag,
+                   Opaleye.Internal.Unpackspec
+
+  ghc-options:     -Wall
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  hs-source-dirs: Test
+  build-depends:
+    base >= 4 && < 5,
+    postgresql-simple,
+    product-profunctors,
+    opaleye
