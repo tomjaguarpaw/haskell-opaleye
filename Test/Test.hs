@@ -163,7 +163,7 @@ testNum = testG query expected
           Arr.returnA -< op t
         expected = \r -> L.sort (map op table1data) == L.sort r
         op :: Num a => (a, a) -> a
-        op (x, y) = abs (x - 5) * signum (x - 4) * (y * y)
+        op (x, y) = abs (x - 5) * signum (x - 4) * (y * y + 1)
 
 testDiv :: Test
 testDiv = testG query expected
