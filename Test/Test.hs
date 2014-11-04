@@ -21,6 +21,7 @@ import qualified Data.Profunctor.Product as PP
 import qualified Data.Profunctor as P
 import qualified Data.Ord as Ord
 import qualified Data.List as L
+import           Data.Monoid ((<>))
 import qualified System.Exit as Exit
 
 import qualified Control.Applicative as A
@@ -228,9 +229,17 @@ testOrderBy :: Test
 testOrderBy = testG (Order.orderBy (Order.desc snd) table1Q)
                     (L.sortBy (flip (Ord.comparing snd)) table1data ==)
 
+testOrderBy2 :: Test
+testOrderBy2 = testG (Order.orderBy orderQ table1Q)
+                     (L.sortBy order table1data ==)
+  where orderQ = Order.desc fst <> Order.asc snd
+        order = flip (Ord.comparing fst) <> Ord.comparing snd
+
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
-            testDistinct, testAggregate, testAggregateProfunctor, testOrderBy]
+            testDistinct, testAggregate, testAggregateProfunctor,
+            testOrderBy, testOrderBy2]
 
 main :: IO ()
 main = do
