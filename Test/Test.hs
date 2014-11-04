@@ -155,8 +155,18 @@ testRestrict = testG query
           O.restrict -< fst t .== 1
           Arr.returnA -< t
 
+testNum :: Test
+testNum = testG query expected
+  where query :: Query (Column Int)
+        query = proc () -> do
+          t <- table1Q -< ()
+          Arr.returnA -< op t
+        expected = \r -> L.sort (map op table1data) == L.sort r
+        op :: Num a => (a, a) -> a
+        op (x, y) = abs (x - 5) * signum (x - 4) * (y * y)
+
 allTests :: [Test]
-allTests = [testSelect, testProduct, testRestrict]
+allTests = [testSelect, testProduct, testRestrict, testNum]
 
 main :: IO ()
 main = do
