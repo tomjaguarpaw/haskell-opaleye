@@ -237,11 +237,16 @@ testOrderBy2 = testG (Order.orderBy orderQ table1Q)
   where orderQ = Order.desc fst <> Order.asc snd
         order = flip (Ord.comparing fst) <> Ord.comparing snd
 
+testOrderBySame :: Test
+testOrderBySame = testG (Order.orderBy orderQ table1Q)
+                        (L.sortBy order table1data ==)
+  where orderQ = Order.desc fst <> Order.asc fst
+        order = flip (Ord.comparing fst) <> Ord.comparing fst
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
-            testOrderBy, testOrderBy2]
+            testOrderBy, testOrderBy2, testOrderBySame]
 
 main :: IO ()
 main = do
