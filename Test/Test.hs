@@ -11,6 +11,7 @@ import           Opaleye.Operators ((.==))
 import qualified Opaleye.Operators as O
 import           Opaleye.QueryArr (Query, QueryArr)
 import qualified Opaleye.RunQuery as RQ
+import qualified Opaleye.Order as Order
 import qualified Opaleye.Distinct as Dis
 import qualified Opaleye.Aggregate as Agg
 
@@ -18,6 +19,7 @@ import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Profunctor as P
+import qualified Data.Ord as Ord
 import qualified Data.List as L
 import qualified System.Exit as Exit
 
@@ -222,9 +224,13 @@ testAggregateProfunctor = testG q expected
                            (uncurry (*))
                            (PP.p2 (Agg.sum, Agg.count))
 
+testOrderBy :: Test
+testOrderBy = testG (Order.orderBy (Order.desc snd) table1Q)
+                    (L.sortBy (flip (Ord.comparing snd)) table1data ==)
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
-            testDistinct, testAggregate, testAggregateProfunctor]
+            testDistinct, testAggregate, testAggregateProfunctor, testOrderBy]
 
 main :: IO ()
 main = do

@@ -11,6 +11,7 @@ library
 
   build-depends:
       base               >= 4   && < 5
+    , contravariant      >= 0.4.4 && < 1
     , karamaan-plankton  >= 0.1 && < 0.4
     , haskelldb          == 2.2.3.0.0.0.1
       -- vv This is just for RunQuery.  If we ever move
@@ -25,6 +26,7 @@ library
                    Opaleye.Column,
                    Opaleye.Distinct,
                    Opaleye.Operators,
+                   Opaleye.Order,
                    Opaleye.QueryArr,
                    Opaleye.RunQuery,
                    Opaleye.Sql,

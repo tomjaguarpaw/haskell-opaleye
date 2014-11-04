@@ -5,6 +5,9 @@ import qualified Database.HaskellDB.Query as Q
 
 newtype Column a = Column PQ.PrimExpr deriving Show
 
+unColumn :: Column a -> PQ.PrimExpr
+unColumn (Column e) = e
+
 unsafeCoerce :: Column a -> Column b
 unsafeCoerce (Column e) = Column e
 
