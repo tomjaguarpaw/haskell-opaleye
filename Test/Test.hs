@@ -18,7 +18,7 @@ import qualified System.Exit as Exit
 
 import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
-import           Control.Arrow ((&&&))
+import           Control.Arrow ((&&&), (***), (<<<))
 
 -- { Set your test database info here.  Then invoke the 'main'
 --   function to run the tests, or just use 'cabal test'.  The test
@@ -165,8 +165,22 @@ testNum = testG query expected
         op :: Num a => (a, a) -> a
         op (x, y) = abs (x - 5) * signum (x - 4) * (y * y)
 
+testDiv :: Test
+testDiv = testG query expected
+  where query :: Query (Column Double)
+        query = proc () -> do
+          t <- Arr.arr (O.doubleOfInt *** O.doubleOfInt) <<< table1Q -< ()
+          Arr.returnA -< op t
+        expected = \r -> L.sort (map (op . toDoubles) table1data) == L.sort r
+        op :: Fractional a => (a, a) -> a
+        -- Choosing 0.5 here as it should be exactly representable in
+        -- floating point
+        op (x, y) = y / x * 0.5
+        toDoubles :: (Int, Int) -> (Double, Double)
+        toDoubles = fromIntegral *** fromIntegral
+
 allTests :: [Test]
-allTests = [testSelect, testProduct, testRestrict, testNum]
+allTests = [testSelect, testProduct, testRestrict, testNum, testDiv]
 
 main :: IO ()
 main = do
