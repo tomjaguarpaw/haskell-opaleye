@@ -18,7 +18,7 @@ import qualified System.Exit as Exit
 
 import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
-import           Control.Arrow ((&&&), (<<<))
+import           Control.Arrow ((&&&))
 
 -- { Set your test database info here.  Then invoke the 'main'
 --   function to run the tests, or just use 'cabal test'.  The test
