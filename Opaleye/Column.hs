@@ -5,6 +5,9 @@ import qualified Database.HaskellDB.Query as Q
 
 newtype Column a = Column PQ.PrimExpr deriving Show
 
+unsafeCoerce :: Column a -> Column b
+unsafeCoerce (Column e) = Column e
+
 -- This may well end up moving out somewhere else
 constant :: Q.ShowConstant a => a -> Column a
 constant = Column . PQ.ConstExpr . Q.showConstant
