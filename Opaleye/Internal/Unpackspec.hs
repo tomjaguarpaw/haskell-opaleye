@@ -9,20 +9,25 @@ import           Control.Applicative (Applicative, pure, (<*>))
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
+import qualified Data.Profunctor.Product.Default as D
 
 import qualified Database.HaskellDB.PrimQuery as PQ
 
-newtype Unpackspec columns b = Unpackspec (PM.PackMap PQ.PrimExpr () columns b)
+newtype Unpackspec columns columns' =
+  Unpackspec (PM.PackMap PQ.PrimExpr PQ.PrimExpr columns columns')
 
 unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
 unpackspecColumn = Unpackspec
-                   (PM.PackMap (\f c@(C.Column pe) -> fmap (const c) (f pe)))
+                   (PM.PackMap (\f (C.Column pe) -> fmap C.Column (f pe)))
 
 runUnpackspec :: Applicative f
                  => Unpackspec columns b
-                 -> (PQ.PrimExpr -> f ())
+                 -> (PQ.PrimExpr -> f PQ.PrimExpr)
                  -> (columns -> f b)
 runUnpackspec (Unpackspec f) = PM.packmap f
+
+instance D.Default Unpackspec (C.Column a) (C.Column a) where
+  def = unpackspecColumn
 
 -- {
 

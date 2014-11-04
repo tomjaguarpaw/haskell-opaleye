@@ -10,6 +10,7 @@ import           Opaleye.Operators ((.==))
 import qualified Opaleye.Operators as O
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.RunQuery as RQ
+import qualified Opaleye.Distinct as Dis
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Profunctor.Product.Default as D
@@ -188,8 +189,13 @@ testCase = testG q (== expected)
         expected :: [Int]
         expected = [12, 12, 21, 33]
 
+testDistinct :: Test
+testDistinct = testG (Dis.distinct table1Q)
+               (\r -> L.sort (L.nub table1data) == L.sort r)
+
 allTests :: [Test]
-allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase]
+allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
+            testDistinct]
 
 main :: IO ()
 main = do

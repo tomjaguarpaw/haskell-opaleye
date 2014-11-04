@@ -22,6 +22,7 @@ library
     , transformers >= 0.3 && < 0.4
 
   exposed-modules: Opaleye.Column,
+                   Opaleye.Distinct,
                    Opaleye.Operators,
                    Opaleye.QueryArr,
                    Opaleye.RunQuery,

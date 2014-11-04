@@ -39,7 +39,7 @@ runSimpleQueryArr f (a, t) = runQueryArr f (a, PQ.Empty, t)
 runQueryArrUnpack :: U.Unpackspec a b -> Query a -> PQ.PrimQuery
 runQueryArrUnpack unpackspec q = primQ'
   where (columns, primQ, _) = runSimpleQueryArr q ((), Tag.start)
-        f pe = ([pe], ())
+        f pe = ([pe], pe)
         primExprs :: [PQ.PrimExpr]
         (primExprs, _) = U.runUnpackspec unpackspec f columns
 
