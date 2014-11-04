@@ -226,8 +226,10 @@ testAggregateProfunctor = testG q expected
                            (PP.p2 (Agg.sum, Agg.count))
 
 testOrderBy :: Test
-testOrderBy = testG (Order.orderBy (Order.desc snd) table1Q)
-                    (L.sortBy (flip (Ord.comparing snd)) table1data ==)
+testOrderBy = testG (Order.orderBy orderQ table1Q)
+                    (L.sortBy order table1data ==)
+  where orderQ = Order.desc snd
+        order = flip (Ord.comparing snd)
 
 testOrderBy2 :: Test
 testOrderBy2 = testG (Order.orderBy orderQ table1Q)
