@@ -57,6 +57,9 @@ fieldQueryRunnerUnclassed = QueryRunner (P.rmap (const ()) U.unpackspecColumn)
 instance D.Default QueryRunner (Column Int) Int where
   def = fieldQueryRunner
 
+instance D.Default QueryRunner (Column Integer) Integer where
+  def = fieldQueryRunner
+
 instance D.Default QueryRunner (Column Double) Double where
   def = fieldQueryRunner
 

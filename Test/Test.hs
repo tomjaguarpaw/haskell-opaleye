@@ -6,14 +6,17 @@ module Main where
 import qualified Opaleye.Table as T
 import           Opaleye.Table (TableColumn)
 import           Opaleye.Column (Column)
+import qualified Opaleye.Column as C
 import           Opaleye.Operators ((.==))
 import qualified Opaleye.Operators as O
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.RunQuery as RQ
 import qualified Opaleye.Distinct as Dis
+import qualified Opaleye.Aggregate as Agg
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Profunctor.Product.Default as D
+import qualified Data.Profunctor.Product as PP
 import qualified Data.List as L
 import qualified System.Exit as Exit
 
@@ -193,9 +196,20 @@ testDistinct :: Test
 testDistinct = testG (Dis.distinct table1Q)
                (\r -> L.sort (L.nub table1data) == L.sort r)
 
+-- FIXME: the unsafeCoerce is currently needed because the type
+-- changes required for aggregation are not currently dealt with by
+-- Opaleye.
+testAggregate :: Test
+testAggregate = testG ((Arr.second (Arr.arr C.unsafeCoerce)
+                        <<< (Agg.aggregate (PP.p2 (Agg.groupBy, Agg.sum))
+                                           table1Q))
+                       :: Query (Column Int, Column Integer))
+
+                      (\r -> [(1, 400) :: (Int, Integer), (2, 300)] == L.sort r)
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
-            testDistinct]
+            testDistinct, testAggregate]
 
 main :: IO ()
 main = do
