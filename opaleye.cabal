@@ -44,3 +44,4 @@ test-suite test
     postgresql-simple,
     product-profunctors,
     opaleye
+  ghc-options: -Wall
