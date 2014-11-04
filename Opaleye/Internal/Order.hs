@@ -32,3 +32,9 @@ orderByU os (columns, primQ, t) = (columns, primQ', t)
         OrderSpec sos = os
         orderExprs = map (\(SingleOrderSpec op f)
                           -> PQ.OrderExpr op (f columns)) sos
+
+limit' :: Int -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
+limit' n (x, q, t) = (x, PQ.Special (PQ.Top n) q, t)
+
+offset' :: Int -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
+offset' n (x, q, t) = (x, PQ.Special (PQ.Offset n) q, t)

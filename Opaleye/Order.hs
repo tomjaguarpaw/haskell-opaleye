@@ -16,3 +16,9 @@ desc = O.orderSpec PQ.OpDesc
 
 asc :: (a -> C.Column b) -> O.OrderSpec a
 asc = O.orderSpec PQ.OpAsc
+
+limit :: Int -> Query a -> Query a
+limit n a = Q.simpleQueryArr (O.limit' n . Q.runSimpleQueryArr a)
+
+offset :: Int -> Query a -> Query a
+offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)

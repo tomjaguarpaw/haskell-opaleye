@@ -243,10 +243,18 @@ testOrderBySame :: Test
 testOrderBySame = testOrderByG (Order.desc fst <> Order.asc fst)
                                (flip (Ord.comparing fst) <> Ord.comparing fst)
 
+testLimit :: Test
+testLimit = testG (Order.limit 2 (Order.orderBy (Order.desc snd) table1Q))
+                  (take 2 (L.sortBy (flip (Ord.comparing snd)) table1data) ==)
+
+testOffset :: Test
+testOffset = testG (Order.offset 2 (Order.orderBy (Order.desc snd) table1Q))
+                   (drop 2 (L.sortBy (flip (Ord.comparing snd)) table1data) ==)
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
-            testOrderBy, testOrderBy2, testOrderBySame]
+            testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset]
 
 main :: IO ()
 main = do
