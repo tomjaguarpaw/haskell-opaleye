@@ -19,16 +19,20 @@ newtype Aggregator a b = Aggregator
                                      a b)
 
 groupBy :: Aggregator (C.Column a) (C.Column a)
-groupBy = Aggregator (PM.PackMap
-                      (\f (C.Column e) -> fmap C.Column (f (e, Nothing))))
+groupBy = makeAggr' Nothing
 
 sum :: Aggregator (C.Column a) (C.Column a)
-sum = Aggregator (PM.PackMap
-                  (\f (C.Column e) -> fmap C.Column (f (e, Just PQ.AggrSum))))
+sum = makeAggr PQ.AggrSum
 
 count :: Aggregator (C.Column a) (C.Column a)
-count = Aggregator (PM.PackMap
-                  (\f (C.Column e) -> fmap C.Column (f (e, Just PQ.AggrCount))))
+count = makeAggr PQ.AggrCount
+
+makeAggr' :: Maybe PQ.AggrOp -> Aggregator (C.Column a) (C.Column a)
+makeAggr' m = Aggregator (PM.PackMap
+                          (\f (C.Column e) -> fmap C.Column (f (e, m))))
+
+makeAggr :: PQ.AggrOp -> Aggregator (C.Column a) (C.Column a)
+makeAggr = makeAggr' . Just
 
 runAggregator :: Applicative f => Aggregator a b
               -> ((PQ.PrimExpr, Maybe PQ.AggrOp) -> f PQ.PrimExpr) -> a -> f b
