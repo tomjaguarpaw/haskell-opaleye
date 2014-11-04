@@ -29,6 +29,7 @@ library
                    Opaleye.RunQuery,
                    Opaleye.Sql,
                    Opaleye.Table,
+                   Opaleye.Internal.Aggregate,
                    Opaleye.Internal.PackMap,
                    Opaleye.Internal.Table,
                    Opaleye.Internal.TableMaker,
