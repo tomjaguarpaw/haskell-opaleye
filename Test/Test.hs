@@ -9,7 +9,7 @@ import           Opaleye.Column (Column)
 import qualified Opaleye.Column as C
 import           Opaleye.Operators ((.==))
 import qualified Opaleye.Operators as O
-import           Opaleye.QueryArr (Query)
+import           Opaleye.QueryArr (Query, QueryArr)
 import qualified Opaleye.RunQuery as RQ
 import qualified Opaleye.Distinct as Dis
 import qualified Opaleye.Aggregate as Agg
@@ -17,6 +17,7 @@ import qualified Opaleye.Aggregate as Agg
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor.Product as PP
+import qualified Data.Profunctor as P
 import qualified Data.List as L
 import qualified System.Exit as Exit
 
@@ -199,17 +200,31 @@ testDistinct = testG (Dis.distinct table1Q)
 -- FIXME: the unsafeCoerce is currently needed because the type
 -- changes required for aggregation are not currently dealt with by
 -- Opaleye.
+aggregateCoerceFIXME :: QueryArr (Column Int) (Column Integer)
+aggregateCoerceFIXME = Arr.arr C.unsafeCoerce
+
 testAggregate :: Test
-testAggregate = testG ((Arr.second (Arr.arr C.unsafeCoerce)
+testAggregate = testG ((Arr.second aggregateCoerceFIXME
                         <<< (Agg.aggregate (PP.p2 (Agg.groupBy, Agg.sum))
                                            table1Q))
                        :: Query (Column Int, Column Integer))
 
                       (\r -> [(1, 400) :: (Int, Integer), (2, 300)] == L.sort r)
 
+testAggregateProfunctor :: Test
+testAggregateProfunctor = testG q expected
+  where q = ((Arr.second aggregateCoerceFIXME
+                        <<< (Agg.aggregate (PP.p2 (Agg.groupBy, countsum))
+                                           table1Q))
+                       :: Query (Column Int, Column Integer))
+        expected = (\r -> [(1, 1200) :: (Int, Integer), (2, 300)] == L.sort r)
+        countsum = P.dimap (\x -> (x,x))
+                           (uncurry (*))
+                           (PP.p2 (Agg.sum, Agg.count))
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
-            testDistinct, testAggregate]
+            testDistinct, testAggregate, testAggregateProfunctor]
 
 main :: IO ()
 main = do
