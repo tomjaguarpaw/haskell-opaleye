@@ -1,6 +1,6 @@
-module Opaleye.Operators (module Opaleye.Operators, (.==)) where
+module Opaleye.Operators (module Opaleye.Operators, (.==), case_) where
 
-import           Opaleye.Column (Column(Column), (.==))
+import           Opaleye.Column (Column(Column), (.==), case_)
 import           Opaleye.QueryArr (QueryArr(QueryArr))
 import qualified Database.HaskellDB.PrimQuery as PQ
 

@@ -18,7 +18,7 @@ import qualified System.Exit as Exit
 
 import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
-import           Control.Arrow ((&&&), (***), (<<<))
+import           Control.Arrow ((&&&), (***), (<<<), (>>>))
 
 -- { Set your test database info here.  Then invoke the 'main'
 --   function to run the tests, or just use 'cabal test'.  The test
@@ -179,8 +179,17 @@ testDiv = testG query expected
         toDoubles :: (Int, Int) -> (Double, Double)
         toDoubles = fromIntegral *** fromIntegral
 
+-- TODO: need to implement and test case_ returning tuples
+testCase :: Test
+testCase = testG q (== expected)
+  where q :: Query (Column Int)
+        q = table1Q >>> proc (i, j) -> do
+          Arr.returnA -< O.case_ [(j .== 100, 12), (i .== 1, 21)] 33
+        expected :: [Int]
+        expected = [12, 12, 21, 33]
+
 allTests :: [Test]
-allTests = [testSelect, testProduct, testRestrict, testNum, testDiv]
+allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase]
 
 main :: IO ()
 main = do
