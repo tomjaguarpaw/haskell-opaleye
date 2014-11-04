@@ -225,23 +225,23 @@ testAggregateProfunctor = testG q expected
                            (uncurry (*))
                            (PP.p2 (Agg.sum, Agg.count))
 
+testOrderByG :: Order.OrderSpec (Column Int, Column Int)
+                -> ((Int, Int) -> (Int, Int) -> Ordering)
+                -> Test
+testOrderByG orderQ order = testG (Order.orderBy orderQ table1Q)
+                                  (L.sortBy order table1data ==)
+
 testOrderBy :: Test
-testOrderBy = testG (Order.orderBy orderQ table1Q)
-                    (L.sortBy order table1data ==)
-  where orderQ = Order.desc snd
-        order = flip (Ord.comparing snd)
+testOrderBy = testOrderByG (Order.desc snd)
+                           (flip (Ord.comparing snd))
 
 testOrderBy2 :: Test
-testOrderBy2 = testG (Order.orderBy orderQ table1Q)
-                     (L.sortBy order table1data ==)
-  where orderQ = Order.desc fst <> Order.asc snd
-        order = flip (Ord.comparing fst) <> Ord.comparing snd
+testOrderBy2 = testOrderByG (Order.desc fst <> Order.asc snd)
+                            (flip (Ord.comparing fst) <> Ord.comparing snd)
 
 testOrderBySame :: Test
-testOrderBySame = testG (Order.orderBy orderQ table1Q)
-                        (L.sortBy order table1data ==)
-  where orderQ = Order.desc fst <> Order.asc fst
-        order = flip (Ord.comparing fst) <> Ord.comparing fst
+testOrderBySame = testOrderByG (Order.desc fst <> Order.asc fst)
+                               (flip (Ord.comparing fst) <> Ord.comparing fst)
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,

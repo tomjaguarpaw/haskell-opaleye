@@ -1,4 +1,4 @@
-module Opaleye.Order where
+module Opaleye.Order (module Opaleye.Order, O.OrderSpec) where
 
 import qualified Opaleye.Column as C
 import           Opaleye.QueryArr (Query)
