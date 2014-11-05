@@ -45,10 +45,13 @@ aggregate aggrs s = S.newSelect { S.attrs = attrs
                                 , S.groupby = groupBy' }
   where groupBy = (map (\(x, _, y) -> (x, sqlExpr y))
                    . filter (\(_, x, _) -> M.isNothing x)) aggrs
-        attrs = (map (\(x, aggrOp, pe) -> (x, sqlExpr (maybe id HP.AggrExpr aggrOp pe)))) aggrs
+        attrs = (map (\(x, aggrOp, pe) -> (x, sqlExpr (aggrExpr aggrOp pe)))) aggrs
 
         groupBy' = case groupBy of [] -> Nothing
                                    _  -> Just (S.Columns groupBy)
+
+        aggrExpr :: Maybe HP.AggrOp -> HP.PrimExpr -> HP.PrimExpr
+        aggrExpr = maybe id HP.AggrExpr
 
 order :: [HP.OrderExpr] -> S.SqlSelect -> S.SqlSelect
 order oes s = S.newSelect { S.tables = [anonTable s]
