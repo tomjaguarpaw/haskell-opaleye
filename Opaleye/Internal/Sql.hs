@@ -55,11 +55,11 @@ order oes s = S.newSelect { S.tables = [("", s)]
                           , S.orderby = map (SD.toSqlOrder SD.defaultSqlGenerator) oes }
 
 limit :: PQ.LimitOp -> S.SqlSelect -> S.SqlSelect
-limit lo s = case lo of
-  PQ.LimitOp n         -> S.newSelect { S.tables = [("", s)]
-                                      , S.extra = ["LIMIT " ++ show n] }
-  PQ.OffsetOp n        -> S.newSelect { S.tables = [("", s)]
-                                      , S.extra = ["OFFSET " ++ show n] }
-  PQ.LimitOffsetOp l o -> S.newSelect { S.tables = [("", s)]
-                                      , S.extra = ["LIMIT " ++ show l
-                                                  ,"OFFSET " ++ show o] }
+limit lo s = S.newSelect { S.tables = [("", s)]
+                         , S.extra = extra }
+  where extra = case lo of
+          PQ.LimitOp n         -> [limit' n]
+          PQ.OffsetOp n        -> [offset n]
+          PQ.LimitOffsetOp l o -> [limit' l, offset o]
+        limit' n = "LIMIT " ++ show n
+        offset n = "OFFSET " ++ show n
