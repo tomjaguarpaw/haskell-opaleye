@@ -14,7 +14,12 @@ groupBy = A.makeAggr' Nothing
 sum :: Aggregator (C.Column a) (C.Column a)
 sum = A.makeAggr PQ.AggrSum
 
-count :: Aggregator (C.Column a) (C.Column a)
+-- TODO: We have to decide what is the most appropriate return type
+-- for the count aggregator.  In Postgres it returns a 64 bit integer,
+-- but making this explicit will imply a lot of annoying fiddling on
+-- the part of our users.  Can we get away with just saying 'Integer'
+-- here?
+count :: Aggregator (C.Column a) (C.Column Integer)
 count = A.makeAggr PQ.AggrCount
 
 aggregate :: Aggregator a b -> Query a -> Query b

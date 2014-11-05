@@ -16,11 +16,11 @@ newtype Aggregator a b = Aggregator
                          (PM.PackMap (PQ.PrimExpr, Maybe PQ.AggrOp) PQ.PrimExpr
                                      a b)
 
-makeAggr' :: Maybe PQ.AggrOp -> Aggregator (C.Column a) (C.Column a)
+makeAggr' :: Maybe PQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr' m = Aggregator (PM.PackMap
                           (\f (C.Column e) -> fmap C.Column (f (e, m))))
 
-makeAggr :: PQ.AggrOp -> Aggregator (C.Column a) (C.Column a)
+makeAggr :: PQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr = makeAggr' . Just
 
 runAggregator :: Applicative f => Aggregator a b

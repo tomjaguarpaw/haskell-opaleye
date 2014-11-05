@@ -204,7 +204,10 @@ testDistinct = testG (Dis.distinct table1Q)
 -- changes required for aggregation are not currently dealt with by
 -- Opaleye.
 aggregateCoerceFIXME :: QueryArr (Column Int) (Column Integer)
-aggregateCoerceFIXME = Arr.arr C.unsafeCoerce
+aggregateCoerceFIXME = Arr.arr aggregateCoerceFIXME'
+
+aggregateCoerceFIXME' :: Column a -> Column Integer
+aggregateCoerceFIXME' = C.unsafeCoerce
 
 testAggregate :: Test
 testAggregate = testG ((Arr.second aggregateCoerceFIXME
@@ -216,13 +219,11 @@ testAggregate = testG ((Arr.second aggregateCoerceFIXME
 
 testAggregateProfunctor :: Test
 testAggregateProfunctor = testG q expected
-  where q = ((Arr.second aggregateCoerceFIXME
-                        <<< (Agg.aggregate (PP.p2 (Agg.groupBy, countsum))
-                                           table1Q))
+  where q = ((Agg.aggregate (PP.p2 (Agg.groupBy, countsum)) table1Q)
                        :: Query (Column Int, Column Integer))
         expected = (\r -> [(1, 1200) :: (Int, Integer), (2, 300)] == L.sort r)
         countsum = P.dimap (\x -> (x,x))
-                           (uncurry (*))
+                           (\(x, y) -> aggregateCoerceFIXME' x * y)
                            (PP.p2 (Agg.sum, Agg.count))
 
 testOrderByG :: Order.OrderSpec (Column Int, Column Int)
