@@ -34,6 +34,7 @@ library
                    Opaleye.Internal.Aggregate,
                    Opaleye.Internal.Order,
                    Opaleye.Internal.PackMap,
+                   Opaleye.Internal.PrimQuery,
                    Opaleye.Internal.Table,
                    Opaleye.Internal.TableMaker,
                    Opaleye.Internal.Tag,
