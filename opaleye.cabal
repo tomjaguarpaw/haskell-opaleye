@@ -33,6 +33,7 @@ library
                    Opaleye.Sql,
                    Opaleye.Table,
                    Opaleye.Internal.Aggregate,
+                   Opaleye.Internal.Distinct,
                    Opaleye.Internal.NEList,
                    Opaleye.Internal.Order,
                    Opaleye.Internal.PackMap,
