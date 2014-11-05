@@ -210,17 +210,14 @@ aggregateCoerceFIXME' :: Column a -> Column Integer
 aggregateCoerceFIXME' = C.unsafeCoerce
 
 testAggregate :: Test
-testAggregate = testG ((Arr.second aggregateCoerceFIXME
+testAggregate = testG (Arr.second aggregateCoerceFIXME
                         <<< (Agg.aggregate (PP.p2 (Agg.groupBy, Agg.sum))
                                            table1Q))
-                       :: Query (Column Int, Column Integer))
-
                       (\r -> [(1, 400) :: (Int, Integer), (2, 300)] == L.sort r)
 
 testAggregateProfunctor :: Test
 testAggregateProfunctor = testG q expected
-  where q = ((Agg.aggregate (PP.p2 (Agg.groupBy, countsum)) table1Q)
-                       :: Query (Column Int, Column Integer))
+  where q = (Agg.aggregate (PP.p2 (Agg.groupBy, countsum)) table1Q)
         expected = (\r -> [(1, 1200) :: (Int, Integer), (2, 300)] == L.sort r)
         countsum = P.dimap (\x -> (x,x))
                            (\(x, y) -> aggregateCoerceFIXME' x * y)
