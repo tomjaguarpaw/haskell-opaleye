@@ -8,7 +8,7 @@ import qualified Database.HaskellDB.PrimQuery as HPQ
 
 restrict :: QueryArr (Column Bool) ()
 restrict = QueryArr f where
-  f (Column predicate, primQ, t0) = ((), PQ.Product [primQ] [predicate], t0)
+  f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
 
 doubleOfInt :: Column Int -> Column Double
 doubleOfInt (Column e) = (Column (HPQ.CastExpr "double precision" e))

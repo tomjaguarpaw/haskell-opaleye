@@ -3,6 +3,7 @@ module Opaleye.Internal.Sql where
 import           Prelude hiding (product)
 
 import qualified Opaleye.Internal.PrimQuery as PQ
+import qualified Opaleye.Internal.NEList as NE
 
 import qualified Database.HaskellDB.PrimQuery as HP
 import qualified Database.HaskellDB.Sql as S
@@ -34,9 +35,8 @@ baseTable name columns =
   S.newSelect { S.attrs = map (\(x, y) -> (x, S.ColumnSqlExpr y)) columns
               , S.tables = [("", S.SqlTable name)] }
 
--- FIXME: I doubt this is going to work if ss is empty
-product :: [S.SqlSelect] -> [HP.PrimExpr] -> S.SqlSelect
-product ss pes = S.newSelect { S.tables = map (\s -> ("", s)) ss
+product :: NE.NEList S.SqlSelect -> [HP.PrimExpr] -> S.SqlSelect
+product ss pes = S.newSelect { S.tables = (map (\s -> ("", s)) . NE.toList) ss
                              , S.criteria = map sqlExpr pes }
 
 aggregate :: [(PQ.Symbol, Maybe HP.AggrOp, HP.PrimExpr)] -> S.SqlSelect -> S.SqlSelect
