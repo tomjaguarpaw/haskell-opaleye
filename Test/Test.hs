@@ -257,9 +257,8 @@ testOffset = testLOG (Order.offset 2) (drop 2)
 testLimitOffset :: Test
 testLimitOffset = testLOG (Order.limit 2 . Order.offset 2) (take 2 . drop 2)
 
--- FIXME: HaskellDB has a bug.  This fails but should pass
---testOffsetLimit :: Test
---testOffsetLimit = testLOG (Order.offset 2 . Order.limit 2) (drop 2 . take 2)
+testOffsetLimit :: Test
+testOffsetLimit = testLOG (Order.offset 2 . Order.limit 2) (drop 2 . take 2)
 
 -- FIXME: Another HaskellDB bug.  This fails but should pass.
 {-
@@ -277,7 +276,7 @@ allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
-            testLimitOffset]
+            testLimitOffset, testOffsetLimit]
 
 main :: IO ()
 main = do
