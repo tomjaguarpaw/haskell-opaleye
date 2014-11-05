@@ -8,7 +8,9 @@ import qualified Opaleye.QueryArr as QA
 import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Table as T
 import qualified Opaleye.Internal.Tag as Tag
-import qualified Database.HaskellDB.PrimQuery as PQ
+import qualified Opaleye.Internal.PrimQuery as PQ
+
+import qualified Database.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Profunctor.Product.Default as D
 
@@ -39,16 +41,17 @@ queryTable' :: TM.ColumnMaker tablecolumns columns
             -> (columns, PQ.PrimQuery)
 queryTable' cm table tag = (primExprs, primQ) where
   (Table tableName tableCols) = table
-  ((projcols, cols), primExprs) = runColumnMaker cm tag tableCols
+  ((projcols, _cols), primExprs) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
-  primQ = PQ.Project projcols (PQ.BaseTable tableName cols)
+  -- FIXME: do we still need runColumnMaker to yield cols?
+  primQ = PQ.BaseTable tableName projcols
 
 runColumnMaker :: TM.ColumnMaker tablecolumns columns
-                  -> (PQ.Attribute -> String)
+                  -> (HPQ.Attribute -> String)
                   -> tablecolumns
-                  -> (([(String, PQ.PrimExpr)], [PQ.Attribute]), columns)
+                  -> (([(String, String)], [HPQ.Attribute]), columns)
 runColumnMaker cm tag tableCols = TM.runColumnMaker cm f tableCols where
   -- Using or abusing the instances
   -- (Monoid a, Monoid b) => Monoid (a, b), and
   -- Monoid a => Applicative (a, b)
-  f s = (([(tag s, PQ.AttrExpr s)], [s]), tag s)
+  f s = (([(tag s, s)], [s]), tag s)

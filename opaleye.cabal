@@ -18,6 +18,7 @@ library
       -- RunQuery elsewhere we should remove this dependency.
     , old-locale          == 1.0.*
     , postgresql-simple   >= 0.3 && < 0.5
+    , pretty              >= 1.1.1.0 && < 1.2
     , product-profunctors >= 0.5 && < 0.6
     , profunctors         >= 4.0 && < 4.3
     , transformers >= 0.3 && < 0.4

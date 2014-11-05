@@ -11,8 +11,9 @@ import           Prelude hiding (id)
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as Tag
 import           Opaleye.Internal.Tag (Tag)
+import qualified Opaleye.Internal.PrimQuery as PQ
 
-import qualified Database.HaskellDB.PrimQuery as PQ
+import qualified Database.HaskellDB.PrimQuery as HPQ
 
 import qualified Control.Arrow as A
 import           Control.Arrow ((&&&), (***), arr)
@@ -34,19 +35,15 @@ runQueryArr :: QueryArr a b -> (a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag)
 runQueryArr (QueryArr f) = f
 
 runSimpleQueryArr :: QueryArr a b -> (a, Tag) -> (b, PQ.PrimQuery, Tag)
-runSimpleQueryArr f (a, t) = runQueryArr f (a, PQ.Empty, t)
+runSimpleQueryArr f (a, t) = runQueryArr f (a, PQ.Unit, t)
 
-runQueryArrUnpack :: U.Unpackspec a b -> Query a -> PQ.PrimQuery
-runQueryArrUnpack unpackspec q = primQ'
+runQueryArrUnpack :: U.Unpackspec a b
+                  -> Query a -> (PQ.PrimQuery, [HPQ.PrimExpr])
+runQueryArrUnpack unpackspec q = (primQ, primExprs)
   where (columns, primQ, _) = runSimpleQueryArr q ((), Tag.start)
         f pe = ([pe], pe)
-        primExprs :: [PQ.PrimExpr]
+        primExprs :: [HPQ.PrimExpr]
         (primExprs, _) = U.runUnpackspec unpackspec f columns
-
-        attrs = map (\(i, primExpr) -> ("result" ++ show i, primExpr))
-                    (zip [1 :: Int ..] primExprs)
-
-        primQ' = PQ.Project attrs primQ
 
 first3 :: (a1 -> b) -> (a1, a2, a3) -> (b, a2, a3)
 first3 f (a1, a2, a3) = (f a1, a2, a3)

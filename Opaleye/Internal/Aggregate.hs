@@ -7,24 +7,25 @@ import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 
 import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Column as C
 
-import qualified Database.HaskellDB.PrimQuery as PQ
+import qualified Database.HaskellDB.PrimQuery as HPQ
 
 newtype Aggregator a b = Aggregator
-                         (PM.PackMap (PQ.PrimExpr, Maybe PQ.AggrOp) PQ.PrimExpr
+                         (PM.PackMap (HPQ.PrimExpr, Maybe HPQ.AggrOp) HPQ.PrimExpr
                                      a b)
 
-makeAggr' :: Maybe PQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
+makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr' m = Aggregator (PM.PackMap
                           (\f (C.Column e) -> fmap C.Column (f (e, m))))
 
-makeAggr :: PQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
+makeAggr :: HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr = makeAggr' . Just
 
 runAggregator :: Applicative f => Aggregator a b
-              -> ((PQ.PrimExpr, Maybe PQ.AggrOp) -> f PQ.PrimExpr) -> a -> f b
+              -> ((HPQ.PrimExpr, Maybe HPQ.AggrOp) -> f HPQ.PrimExpr) -> a -> f b
 runAggregator (Aggregator a) = PM.packmap a
 
 -- FIXME: duplication with distinctU
@@ -32,21 +33,18 @@ runAggregator (Aggregator a) = PM.packmap a
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
 aggregateU agg (c0, primQ, t0) = (c1, primQ', t0)
-  where f :: (PQ.PrimExpr, Maybe PQ.AggrOp)
-          -> S.State ([(String, PQ.PrimExpr)], Int) PQ.PrimExpr
+  where f :: (HPQ.PrimExpr, Maybe HPQ.AggrOp)
+          -> S.State ([(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)], Int) HPQ.PrimExpr
         f (pe, maggrop) = do
           (projPEs, i) <- S.get
           let s = "result" ++ show i
-          let aggrpe = case maggrop of
-                Nothing -> id
-                Just aggrop -> PQ.AggrExpr aggrop
-          S.put (projPEs ++ [(s, aggrpe pe)], i+1)
-          return (PQ.AttrExpr s)
+          S.put (projPEs ++ [(s, maggrop, pe)], i+1)
+          return (HPQ.AttrExpr s)
 
         (c1, (projPEs', _)) =
           S.runState (runAggregator agg f c0) ([], 0)
 
-        primQ' = PQ.Project projPEs' primQ
+        primQ' = PQ.Aggregate projPEs' primQ
 
 -- { Boilerplate instances
 

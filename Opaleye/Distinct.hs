@@ -6,7 +6,8 @@ import qualified Opaleye.QueryArr as Q
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
-import qualified Database.HaskellDB.PrimQuery as PQ
+import qualified Opaleye.Internal.PrimQuery as PQ
+import qualified Database.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Profunctor.Product.Default as D
 
@@ -27,14 +28,16 @@ distinctU :: U.Unpackspec columns columns'
           -> (columns, PQ.PrimQuery, T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
 distinctU unpack (columns, primQ, t) = (newColumns, primQ', t)
   where -- TODO: This should really be a writer for the writable part
-        f :: PQ.PrimExpr -> S.State ([(String, PQ.PrimExpr)], Int) PQ.PrimExpr
+        f :: HPQ.PrimExpr
+          -> S.State ([(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)], Int)
+                     HPQ.PrimExpr
         f pe = do
           (groupPEs, i) <- S.get
           let s = "result" ++ show i
-          S.put (groupPEs ++ [(s, pe)], i+1)
-          return (PQ.AttrExpr s)
+          S.put (groupPEs ++ [(s, Nothing, pe)], i+1)
+          return (HPQ.AttrExpr s)
 
         (newColumns, (groupPEs', _)) =
           S.runState (U.runUnpackspec unpack f columns) ([], 0)
 
-        primQ' = PQ.Group groupPEs' primQ
+        primQ' = PQ.Aggregate groupPEs' primQ
