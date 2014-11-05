@@ -41,17 +41,15 @@ queryTable' :: TM.ColumnMaker tablecolumns columns
             -> (columns, PQ.PrimQuery)
 queryTable' cm table tag = (primExprs, primQ) where
   (Table tableName tableCols) = table
-  ((projcols, _cols), primExprs) = runColumnMaker cm tag tableCols
+  (projcols, primExprs) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
-  -- FIXME: do we still need runColumnMaker to yield cols?
   primQ = PQ.BaseTable tableName projcols
 
 runColumnMaker :: TM.ColumnMaker tablecolumns columns
                   -> (HPQ.Attribute -> String)
                   -> tablecolumns
-                  -> (([(String, String)], [HPQ.Attribute]), columns)
+                  -> ([(String, String)], columns)
 runColumnMaker cm tag tableCols = TM.runColumnMaker cm f tableCols where
-  -- Using or abusing the instances
-  -- (Monoid a, Monoid b) => Monoid (a, b), and
+  -- Using or abusing the instance
   -- Monoid a => Applicative (a, b)
-  f s = (([(tag s, s)], [s]), tag s)
+  f s = ([(tag s, s)], tag s)
