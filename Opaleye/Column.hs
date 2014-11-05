@@ -29,7 +29,8 @@ case_ alts (Column otherwise_) = Column (PQ.CaseExpr (unColumns alts) otherwise_
 (.==) = binOp PQ.OpEq
 
 -- FIXME: This is missing many methods!
--- The constraints here are not really
+-- The constraints here are not really appropriate.  There should be
+-- some restriction to a numeric Postgres type
 instance (Q.ShowConstant a, Num a) => Num (Column a) where
   fromInteger = constant . fromInteger
   (*) = binOp PQ.OpMul
