@@ -29,15 +29,14 @@ runAggregator :: Applicative f => Aggregator a b
 runAggregator (Aggregator a) = PM.packmap a
 
 -- FIXME: duplication with distinctU
--- FIXME: probably need to use the tag
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
-aggregateU agg (c0, primQ, t0) = (c1, primQ', t0)
+aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
   where f :: (HPQ.PrimExpr, Maybe HPQ.AggrOp)
           -> S.State ([(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)], Int) HPQ.PrimExpr
         f (pe, maggrop) = do
           (projPEs, i) <- S.get
-          let s = "result" ++ show i
+          let s = T.tagWith t0 ("result" ++ show i)
           S.put (projPEs ++ [(s, maggrop, pe)], i+1)
           return (HPQ.AttrExpr s)
 

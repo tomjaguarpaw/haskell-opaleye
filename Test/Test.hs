@@ -260,8 +260,6 @@ testLimitOffset = testLOG (Order.limit 2 . Order.offset 2) (take 2 . drop 2)
 testOffsetLimit :: Test
 testOffsetLimit = testLOG (Order.offset 2 . Order.limit 2) (drop 2 . take 2)
 
--- FIXME: Another HaskellDB bug.  This fails but should pass.
-{-
 testDistinctAndAggregate :: Test
 testDistinctAndAggregate = testG q expected
   where q = Dis.distinct table1Q
@@ -270,13 +268,12 @@ testDistinctAndAggregate = testG q expected
         expected r = L.sort r == L.sort expectedResult
         expectedResult = A.liftA2 (,) (L.nub table1data)
                                       [(1 :: Int, 400 :: Integer), (2, 300)]
--}
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
-            testLimitOffset, testOffsetLimit]
+            testLimitOffset, testOffsetLimit, testDistinctAndAggregate]
 
 main :: IO ()
 main = do

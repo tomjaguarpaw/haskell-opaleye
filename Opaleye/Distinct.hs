@@ -24,6 +24,7 @@ distinctExplicit unpack q = Q.simpleQueryArr (distinctU unpack
 
 -- TODO: duplication with runQueryArrUnpack
 -- TODO: move this to Internal
+-- FIXME: Need to use the tag.  Write a test for this!
 distinctU :: U.Unpackspec columns columns'
           -> (columns, PQ.PrimQuery, T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
 distinctU unpack (columns, primQ, t) = (newColumns, primQ', t)
