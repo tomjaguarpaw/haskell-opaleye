@@ -243,18 +243,31 @@ testOrderBySame :: Test
 testOrderBySame = testOrderByG (Order.desc fst <> Order.asc fst)
                                (flip (Ord.comparing fst) <> Ord.comparing fst)
 
+testLOG :: (Query (Column Int, Column Int) -> Query (Column Int, Column Int))
+           -> ([(Int, Int)] -> [(Int, Int)]) -> Test
+testLOG olQ ol = testG (olQ (orderQ table1Q))
+                       (ol (order table1data) ==)
+  where orderQ = Order.orderBy (Order.desc snd)
+        order = L.sortBy (flip (Ord.comparing snd))
+
 testLimit :: Test
-testLimit = testG (Order.limit 2 (Order.orderBy (Order.desc snd) table1Q))
-                  (take 2 (L.sortBy (flip (Ord.comparing snd)) table1data) ==)
+testLimit = testLOG (Order.limit 2) (take 2)
 
 testOffset :: Test
-testOffset = testG (Order.offset 2 (Order.orderBy (Order.desc snd) table1Q))
-                   (drop 2 (L.sortBy (flip (Ord.comparing snd)) table1data) ==)
+testOffset = testLOG (Order.offset 2) (drop 2)
+
+testLimitOffset :: Test
+testLimitOffset = testLOG (Order.limit 2 . Order.offset 2) (take 2 . drop 2)
+
+-- FIXME: HaskellDB has a bug.  This fails but should pass
+--testOffsetLimit :: Test
+--testOffsetLimit = testLOG (Order.offset 2 . Order.limit 2) (drop 2 . take 2)
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
-            testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset]
+            testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
+            testLimitOffset]
 
 main :: IO ()
 main = do
