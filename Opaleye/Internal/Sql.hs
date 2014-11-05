@@ -8,12 +8,8 @@ import qualified Database.HaskellDB.PrimQuery as HP
 import qualified Database.HaskellDB.Sql as S
 import qualified Database.HaskellDB.Sql.Default as SD
 import qualified Database.HaskellDB.Sql.Generate as SG
-import qualified Database.HaskellDB.Sql.Print as Pr
 
 import qualified Data.Maybe as M
-
--- TODO: only imported this to get a type signature.  Is this sane?
-import qualified Text.PrettyPrint.HughesPJ as HPJ
 
 type SqlQueryGenerator = PQ.PrimQueryFold S.SqlSelect
 

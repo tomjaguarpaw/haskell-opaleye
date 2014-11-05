@@ -2,7 +2,6 @@ module Opaleye.Aggregate where
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator)
-import qualified Opaleye.Internal.PrimQuery as PQ
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.QueryArr as Q
 import qualified Opaleye.Column as C

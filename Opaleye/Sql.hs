@@ -4,9 +4,6 @@ module Opaleye.Sql where
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 import qualified Database.HaskellDB.Sql.Print as P
-import qualified Database.HaskellDB.Sql.Generate as G
-import qualified Database.HaskellDB.Sql.Default as D
-import qualified Database.HaskellDB.Optimize as O
 
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Sql as Sql

@@ -4,7 +4,6 @@ import qualified Opaleye.Column as C
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.QueryArr as Q
 import qualified Opaleye.Internal.Order as O
-import qualified Opaleye.Internal.PrimQuery as PQ
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
