@@ -36,7 +36,7 @@ baseTable name columns =
               , S.tables = [("", S.SqlTable name)] }
 
 product :: NE.NEList S.SqlSelect -> [HP.PrimExpr] -> S.SqlSelect
-product ss pes = S.newSelect { S.tables = (map (\s -> anonTable s) . NE.toList) ss
+product ss pes = S.newSelect { S.tables = (map anonTable . NE.toList) ss
                              , S.criteria = map sqlExpr pes }
 
 aggregate :: [(PQ.Symbol, Maybe HP.AggrOp, HP.PrimExpr)] -> S.SqlSelect -> S.SqlSelect
