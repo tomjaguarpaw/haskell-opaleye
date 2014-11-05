@@ -36,12 +36,12 @@ baseTable name columns =
               , S.tables = [("", S.SqlTable name)] }
 
 product :: NE.NEList S.SqlSelect -> [HP.PrimExpr] -> S.SqlSelect
-product ss pes = S.newSelect { S.tables = (map (\s -> ("", s)) . NE.toList) ss
+product ss pes = S.newSelect { S.tables = (map (\s -> anonTable s) . NE.toList) ss
                              , S.criteria = map sqlExpr pes }
 
 aggregate :: [(PQ.Symbol, Maybe HP.AggrOp, HP.PrimExpr)] -> S.SqlSelect -> S.SqlSelect
 aggregate aggrs s = S.newSelect { S.attrs = attrs
-                                , S.tables = [("", s)]
+                                , S.tables = [anonTable s]
                                 , S.groupby = groupBy' }
   where groupBy = (map (\(x, _, y) -> (x, sqlExpr y))
                    . filter (\(_, x, _) -> M.isNothing x)) aggrs
@@ -51,11 +51,11 @@ aggregate aggrs s = S.newSelect { S.attrs = attrs
                                    _  -> Just (S.Columns groupBy)
 
 order :: [HP.OrderExpr] -> S.SqlSelect -> S.SqlSelect
-order oes s = S.newSelect { S.tables = [("", s)]
+order oes s = S.newSelect { S.tables = [anonTable s]
                           , S.orderby = map (SD.toSqlOrder SD.defaultSqlGenerator) oes }
 
 limit :: PQ.LimitOp -> S.SqlSelect -> S.SqlSelect
-limit lo s = S.newSelect { S.tables = [("", s)]
+limit lo s = S.newSelect { S.tables = [anonTable s]
                          , S.extra = extra }
   where extra = case lo of
           PQ.LimitOp n         -> [limit' n]
@@ -63,3 +63,6 @@ limit lo s = S.newSelect { S.tables = [("", s)]
           PQ.LimitOffsetOp l o -> [limit' l, offset o]
         limit' n = "LIMIT " ++ show n
         offset n = "OFFSET " ++ show n
+
+anonTable :: S.SqlSelect -> (String, S.SqlSelect)
+anonTable s = ("", s)
