@@ -8,11 +8,7 @@ import qualified Opaleye.Internal.Sql as Old
 
 import qualified Database.HaskellDB.PrimQuery as HP
 import qualified Database.HaskellDB.Sql as S
-import qualified Database.HaskellDB.Sql.Print as PP
 import qualified Database.HaskellDB.Sql.Default as SD
-
-import qualified Text.PrettyPrint.HughesPJ as HPJ
-import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty)
 
 import qualified Data.Maybe as M
 
@@ -107,63 +103,3 @@ data Select = SelectFrom From
             | Table S.SqlTable
             | SelectLeftJoin LeftJoin
             deriving Show
-
-ppSql :: Select -> Doc
-ppSql (SelectFrom s) = ppSelectFrom s
-ppSql (Table name) = text name
-ppSql (SelectLeftJoin j) = ppSelectLeftJoin j
-
-ppSelectFrom :: From -> Doc
-ppSelectFrom s = text "SELECT"
-                 <+> ppAttrs (attrs s)
-                 $$  ppTables (tables s)
-                 $$  PP.ppWhere (criteria s)
-                 $$  ppGroupBy (groupBy s)
-                 $$  PP.ppOrderBy (orderBy s)
-                 $$  ppLimit (limit s)
-                 $$  ppOffset (offset s)
-
-
-ppSelectLeftJoin :: LeftJoin -> Doc
-ppSelectLeftJoin j = text "SELECT"
-                     <+> ppAttrs (jAttrs j)
-                     $$  text "FROM"
-                     $$  ppTable (tableAlias 1 s1)
-                     $$  text "LEFT OUTER JOIN"
-                     $$  ppTable (tableAlias 2 s2)
-                     $$  text "ON"
-                     $$  PP.ppSqlExpr (jCond j)
-  where (s1, s2) = jTables j
-
-ppAttrs :: [(S.SqlExpr, Maybe S.SqlColumn)] -> Doc
-ppAttrs [] = text "*"
-ppAttrs xs = PP.commaV nameAs xs
-
--- This is pretty much just nameAs from HaskellDB
-nameAs :: (S.SqlExpr, Maybe S.SqlColumn) -> Doc
-nameAs (expr, name) = PP.ppAs (M.fromMaybe "" name) (PP.ppSqlExpr expr)
-
-ppTables :: [Select] -> Doc
-ppTables [] = empty
-ppTables ts = text "FROM" <+> PP.commaV ppTable (zipWith tableAlias [1..] ts)
-
-tableAlias :: Int -> Select -> (S.SqlTable, Select)
-tableAlias i select = ("T" ++ show i, select)
-
-ppTable :: (S.SqlTable, Select) -> Doc
-ppTable (alias, select) = case select of
-  Table name -> PP.ppAs alias (text name)
-  SelectFrom selectFrom -> PP.ppAs alias (HPJ.parens (ppSelectFrom selectFrom))
-  SelectLeftJoin slj -> PP.ppAs alias (HPJ.parens (ppSelectLeftJoin slj))
-
-ppGroupBy :: [S.SqlExpr] -> Doc
-ppGroupBy [] = empty
-ppGroupBy xs = (PP.ppGroupBy . S.Columns . map (\expr -> ("", expr))) xs
-
-ppLimit :: Maybe Int -> Doc
-ppLimit Nothing = empty
-ppLimit (Just n) = text ("LIMIT " ++ show n)
-
-ppOffset :: Maybe Int -> Doc
-ppOffset Nothing = empty
-ppOffset (Just n) = text ("OFFSET " ++ show n)
