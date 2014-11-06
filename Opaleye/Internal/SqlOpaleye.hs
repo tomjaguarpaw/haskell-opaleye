@@ -12,6 +12,35 @@ import qualified Database.HaskellDB.Sql.Default as SD
 
 import qualified Data.Maybe as M
 
+
+data Select = SelectFrom From
+            | Table S.SqlTable
+            | SelectLeftJoin LeftJoin
+            deriving Show
+
+data From = From {
+  attrs     :: [(S.SqlExpr, Maybe S.SqlColumn)],
+  tables    :: [Select],
+  criteria  :: [S.SqlExpr],
+  groupBy   :: [S.SqlExpr],
+  orderBy   :: [(S.SqlExpr, S.SqlOrder)],
+  limit     :: Maybe Int,
+  offset    :: Maybe Int
+  }
+          deriving Show
+
+data LeftJoin = LeftJoin {
+  jAttrs  :: [(S.SqlExpr, Maybe S.SqlColumn)],
+  jTables :: (Select, Select),
+  jCond   :: S.SqlExpr
+  }
+                deriving Show
+
+data Distinct = Distinct
+
+data TableName = String
+
+
 sqlQueryGenerator :: PQ.PrimQueryFold Select
 sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, leftJoin)
 
@@ -74,32 +103,3 @@ newSelect = From {
   limit     = Nothing,
   offset    = Nothing
   }
-
---
-
-data Distinct = Distinct
-
-data TableName = String
-
-data From = From {
-  attrs     :: [(S.SqlExpr, Maybe S.SqlColumn)],
-  tables    :: [Select],
-  criteria  :: [S.SqlExpr],
-  groupBy   :: [S.SqlExpr],
-  orderBy   :: [(S.SqlExpr, S.SqlOrder)],
-  limit     :: Maybe Int,
-  offset    :: Maybe Int
-  }
-          deriving Show
-
-data LeftJoin = LeftJoin {
-  jAttrs  :: [(S.SqlExpr, Maybe S.SqlColumn)],
-  jTables :: (Select, Select),
-  jCond   :: S.SqlExpr
-  }
-                deriving Show
-
-data Select = SelectFrom From
-            | Table S.SqlTable
-            | SelectLeftJoin LeftJoin
-            deriving Show
