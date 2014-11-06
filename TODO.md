@@ -3,7 +3,7 @@
     * UNION
     * UNION ALL
 * VALUES
-* LEFT JOIN
+* RIGHT JOIN, FULL OUTER JOIN
 * Product-valued case statements
 * General type families for improving instance resolution (product-profunctors)
 * Manipulation
