@@ -4,6 +4,7 @@ module Opaleye.Join where
 
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.PrimQuery as PQ
+import qualified Opaleye.Internal.PackMap as PM
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.QueryArr as Q
 import           Opaleye.Column (Column(Column), Nullable)
@@ -52,13 +53,12 @@ leftJoinExplicit unpackA unpackB nullmaker qA qB cond = Q.simpleQueryArr q where
           primQueryR = PQ.LeftJoin (ljPEsA ++ ljPEsB) cond' primQueryA primQueryB
 
 extractLeftJoinFields :: Int -> HPQ.PrimExpr
-            -> S.State ([(String, HPQ.PrimExpr)], Int) HPQ.PrimExpr
+            -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
 extractLeftJoinFields n pe = do
-            (ljPEs, i) <- S.get
-            let s = "result" ++ show n ++ "_" ++ show i
-            S.put (ljPEs ++ [(s, pe)], i + 1)
-            return (HPQ.AttrExpr s)
-
+  i <- PM.new
+  let s = "result" ++ show n ++ "_" ++ i
+  PM.write (s, pe)
+  return (HPQ.AttrExpr s)
 
 instance D.Default NullMaker (Column a) (Column (Nullable a)) where
   def = NullMaker C.unsafeCoerce

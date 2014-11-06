@@ -3,6 +3,7 @@ module Opaleye.Internal.Distinct where
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
+import qualified Opaleye.Internal.PackMap as PM
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
 import qualified Control.Monad.Trans.State as S
@@ -21,7 +22,7 @@ distinctU unpack (columns, primQ, t) = (newColumns, primQ', t)
 extractAggregateFields :: HPQ.PrimExpr
       -> S.State ([(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)], Int) HPQ.PrimExpr
 extractAggregateFields pe = do
-          (groupPEs, i) <- S.get
-          let s = "result" ++ show i
-          S.put (groupPEs ++ [(s, Nothing, pe)], i+1)
-          return (HPQ.AttrExpr s)
+  i <- PM.new
+  let s = "result" ++ i
+  PM.write (s, Nothing, pe)
+  return (HPQ.AttrExpr s)

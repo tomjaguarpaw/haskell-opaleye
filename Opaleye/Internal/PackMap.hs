@@ -3,6 +3,7 @@
 module Opaleye.Internal.PackMap where
 
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
+import qualified Control.Monad.Trans.State as S
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
@@ -19,6 +20,20 @@ packmap (PackMap f) = f
 
 over :: PackMap a b s t -> (a -> b) -> s -> t
 over p f = I.runIdentity . packmap p (I.Identity . f)
+
+
+type PM a = S.State (a, Int)
+
+new :: PM a String
+new = do
+  (a, i) <- S.get
+  S.put (a, i + 1)
+  return (show i)
+
+write :: a -> PM [a] ()
+write a = do
+  (as, i) <- S.get
+  S.put (as ++ [a], i)
 
 -- {
 
