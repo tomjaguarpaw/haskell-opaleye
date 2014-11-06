@@ -16,8 +16,6 @@ import qualified Data.Profunctor.Product.Default as D
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
-import qualified Control.Monad.Trans.State as S
-
 data NullMaker a b = NullMaker (a -> b)
 
 toNullable :: NullMaker a b -> a -> b
@@ -42,10 +40,10 @@ leftJoinExplicit unpackA unpackB nullmaker qA qB cond = Q.simpleQueryArr q where
     where (columnsA, primQueryA, midTag) = Q.runSimpleQueryArr qA ((), startTag)
           (columnsB, primQueryB, endTag) = Q.runSimpleQueryArr qB ((), midTag)
 
-          (newColumnsA, (ljPEsA, _)) =
-            S.runState (U.runUnpackspec unpackA (extractLeftJoinFields 1) columnsA) ([], 0)
-          (newColumnsB, (ljPEsB, _)) =
-            S.runState (U.runUnpackspec unpackB (extractLeftJoinFields 2) columnsB) ([], 0)
+          (newColumnsA, ljPEsA) =
+            PM.run (U.runUnpackspec unpackA (extractLeftJoinFields 1) columnsA)
+          (newColumnsB, ljPEsB) =
+            PM.run (U.runUnpackspec unpackB (extractLeftJoinFields 2) columnsB)
 
           nullableColumnsB = toNullable nullmaker newColumnsB
 

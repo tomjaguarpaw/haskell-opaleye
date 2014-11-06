@@ -35,6 +35,10 @@ write a = do
   (as, i) <- S.get
   S.put (as ++ [a], i)
 
+run :: PM [a] r -> (r, [a])
+run m = (r, as)
+  where (r, (as, _)) = S.runState m ([], 0)
+
 -- {
 
 -- Boilerplate instance definitions.  There's no choice here apart

@@ -1,7 +1,6 @@
 module Opaleye.Internal.Aggregate where
 
 import           Control.Applicative (Applicative, pure, (<*>))
-import qualified Control.Monad.Trans.State as S
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
@@ -32,10 +31,10 @@ runAggregator (Aggregator a) = PM.packmap a
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
 aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
-  where (c1, (projPEs', _)) =
-          S.runState (runAggregator agg (extractAggregateFields t0) c0) ([], 0)
+  where (c1, projPEs) =
+          PM.run (runAggregator agg (extractAggregateFields t0) c0)
 
-        primQ' = PQ.Aggregate projPEs' primQ
+        primQ' = PQ.Aggregate projPEs primQ
 
 extractAggregateFields :: T.Tag -> (HPQ.PrimExpr, Maybe HPQ.AggrOp)
       -> PM.PM [(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)] HPQ.PrimExpr
