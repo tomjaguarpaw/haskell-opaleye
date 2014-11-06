@@ -5,7 +5,7 @@ module Main where
 
 import qualified Opaleye.Table as T
 import           Opaleye.Table (TableColumn)
-import           Opaleye.Column (Column)
+import           Opaleye.Column (Column, Nullable)
 import qualified Opaleye.Column as C
 import           Opaleye.Operators ((.==))
 import qualified Opaleye.Operators as O
@@ -277,7 +277,7 @@ testDistinctAndAggregate = testG q expected
                                       [(1 :: Int, 400 :: Integer), (2, 300)]
 
 aLeftJoin :: Query ((Column Int, Column Int),
-                    (Column (C.Nullable Int), Column (C.Nullable Int)))
+                    (Column (Nullable Int), Column (Nullable Int)))
 aLeftJoin = J.leftJoin table1Q table3Q (\(l, r) -> fst l .== fst r)
 
 testLeftJoin :: Test
@@ -288,12 +288,29 @@ testLeftJoin = testG aLeftJoin (== expected)
                    , ((1, 200), (Just 1, Just 50))
                    , ((2, 300), (Nothing, Nothing)) ]
 
+testLeftJoinNullable :: Test
+testLeftJoinNullable = const (return True)
+testLeftJoinNullableClass = testG q (== expected)
+  where q :: Query ((Column Int, Column Int),
+                    ((Column (Nullable Int), Column (Nullable Int)),
+                     (Column (Nullable Int),
+                      Column (Nullable Int))))
+        q = J.leftJoin table3Q aLeftJoin cond
+
+        cond (x, y) = fst x .== fst (fst y)
+
+        expected :: [((Int, Int), ((Maybe Int, Maybe Int), (Maybe Int, Maybe Int)))]
+        expected = [ ((1, 50), ((Just 1, Just 100), (Just 1, Just 50)))
+                   , ((1, 50), ((Just 1, Just 100), (Just 1, Just 50)))
+                   , ((1, 50), ((Just 1, Just 200), (Just 1, Just 50))) ]
+
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
-            testLeftJoin]
+            testLeftJoin, testLeftJoinNullable]
 
 main :: IO ()
 main = do
