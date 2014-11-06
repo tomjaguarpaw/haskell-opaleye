@@ -108,8 +108,6 @@ data Select = SelectFrom (From Select)
             | SelectLeftJoin (LeftJoin Select)
             deriving Show
 
-type SelectFold s = (From Select -> s, S.SqlTable -> s)
-
 ppSql :: Select -> Doc
 ppSql (SelectFrom s) = ppSelectFrom s
 ppSql (Table name) = text name
