@@ -51,3 +51,7 @@ times q q' = Product (NE.NEList q [q']) []
 
 restrict :: PQ.PrimExpr -> PrimQuery -> PrimQuery
 restrict cond primQ = Product (NE.singleton primQ) [cond]
+
+isUnit :: PrimQuery -> Bool
+isUnit Unit = True
+isUnit _    = False
