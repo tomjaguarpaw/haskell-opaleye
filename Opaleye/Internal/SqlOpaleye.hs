@@ -68,7 +68,7 @@ leftJoin columns cond s1 s2 = SelectLeftJoin LeftJoin { jAttrs = mkAttrs columns
                                                       , jCond = Old.sqlExpr cond }
   where mkAttrs = map (\(sym, pe) -> (Old.sqlExpr pe, Just sym))
 
-newSelect :: From Select
+newSelect :: From
 newSelect = From {
   attrs     = [],
   tables    = [],
@@ -85,9 +85,9 @@ data Distinct = Distinct
 
 data TableName = String
 
-data From s = From {
+data From = From {
   attrs     :: [(S.SqlExpr, Maybe S.SqlColumn)],
-  tables    :: [s],
+  tables    :: [Select],
   criteria  :: [S.SqlExpr],
   groupBy   :: [S.SqlExpr],
   orderBy   :: [(S.SqlExpr, S.SqlOrder)],
@@ -96,16 +96,16 @@ data From s = From {
   }
           deriving Show
 
-data LeftJoin s = LeftJoin {
+data LeftJoin = LeftJoin {
   jAttrs  :: [(S.SqlExpr, Maybe S.SqlColumn)],
-  jTables :: (s, s),
+  jTables :: (Select, Select),
   jCond   :: S.SqlExpr
   }
                 deriving Show
 
-data Select = SelectFrom (From Select)
+data Select = SelectFrom From
             | Table S.SqlTable
-            | SelectLeftJoin (LeftJoin Select)
+            | SelectLeftJoin LeftJoin
             deriving Show
 
 ppSql :: Select -> Doc
@@ -113,7 +113,7 @@ ppSql (SelectFrom s) = ppSelectFrom s
 ppSql (Table name) = text name
 ppSql (SelectLeftJoin j) = ppSelectLeftJoin j
 
-ppSelectFrom :: From Select -> Doc
+ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
                  <+> ppAttrs (attrs s)
                  $$  ppTables (tables s)
@@ -124,7 +124,7 @@ ppSelectFrom s = text "SELECT"
                  $$  ppOffset (offset s)
 
 
-ppSelectLeftJoin :: LeftJoin Select -> Doc
+ppSelectLeftJoin :: LeftJoin -> Doc
 ppSelectLeftJoin j = text "SELECT"
                      <+> ppAttrs (jAttrs j)
                      $$  text "FROM"
