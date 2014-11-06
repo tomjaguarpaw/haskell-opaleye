@@ -17,6 +17,7 @@ data BinOp = Difference | Union | UnionAll
 data PrimQuery = Unit
                | BaseTable String [(Symbol, String)]
                | Product (NE.NEList PrimQuery) [PQ.PrimExpr]
+                 -- TODO: we probably don't need a symbol for group bys
                | Aggregate [(Symbol, Maybe PQ.AggrOp, PQ.PrimExpr)] PrimQuery
                | Order [PQ.OrderExpr] PrimQuery
                | Limit LimitOp PrimQuery

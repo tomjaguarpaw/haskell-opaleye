@@ -6,7 +6,7 @@ import qualified Database.HaskellDB.PrimQuery as HPQ
 import qualified Database.HaskellDB.Sql.Print as P
 
 import qualified Opaleye.Internal.Unpackspec as U
-import qualified Opaleye.Internal.Sql as Sql
+import qualified Opaleye.Internal.SqlOpaleye as Sql
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.QueryArr as Q
 
@@ -31,4 +31,4 @@ showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> 
 showSqlForPostgresUnoptExplicit = error "showSqlForPostgresUnoptExplicit not implemented"
 
 formatAndShowSQL :: (PQ.PrimQuery, [HPQ.PrimExpr]) -> String
-formatAndShowSQL = show . P.ppSql . Sql.sql
+formatAndShowSQL = show . Sql.ppSql . Sql.sql

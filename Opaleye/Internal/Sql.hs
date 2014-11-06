@@ -50,8 +50,8 @@ aggregate aggrs s = S.newSelect { S.attrs = attrs
         groupBy' = case groupBy of [] -> Nothing
                                    _  -> Just (S.Columns groupBy)
 
-        aggrExpr :: Maybe HP.AggrOp -> HP.PrimExpr -> HP.PrimExpr
-        aggrExpr = maybe id HP.AggrExpr
+aggrExpr :: Maybe HP.AggrOp -> HP.PrimExpr -> HP.PrimExpr
+aggrExpr = maybe id HP.AggrExpr
 
 order :: [HP.OrderExpr] -> S.SqlSelect -> S.SqlSelect
 order oes s = S.newSelect { S.tables = [anonTable s]
