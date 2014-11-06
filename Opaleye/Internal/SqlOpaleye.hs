@@ -39,7 +39,7 @@ product ss pes = SelectFrom $
     newSelect { tables = NE.toList ss
               , criteria = map Old.sqlExpr pes }
 
-aggregate :: [(Maybe (PQ.Symbol, HP.AggrOp), HP.PrimExpr)] -> Select -> Select
+aggregate :: [(PQ.Symbol, Maybe HP.AggrOp, HP.PrimExpr)] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = map attr aggrs
                                            , tables = [s]
                                            , groupBy = groupBy' }
