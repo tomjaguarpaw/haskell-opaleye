@@ -108,11 +108,6 @@ data Select = SelectFrom (From Select)
 
 type SelectFold s = (From Select -> s, S.SqlTable -> s)
 
-foldSelect :: SelectFold s -> Select -> s
-foldSelect (selectFrom, table) = fold
-  where fold (SelectFrom s) = selectFrom s
-        fold (Table t)      = table t
-
 ppSql :: Select -> Doc
 ppSql (SelectFrom s) = ppSelectFrom s
 ppSql (Table name) = text name
