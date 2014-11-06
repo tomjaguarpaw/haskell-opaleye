@@ -15,7 +15,9 @@ import qualified Data.Maybe as M
 type SqlQueryGenerator = PQ.PrimQueryFold S.SqlSelect
 
 sqlQueryGenerator :: SqlQueryGenerator
-sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit)
+sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit, undefined)
+
+leftJoin = undefined
 
 sql :: (PQ.PrimQuery, [HP.PrimExpr]) -> S.SqlSelect
 sql (pq, pes) = S.newSelect { S.attrs = attrs

@@ -26,6 +26,7 @@ library
   exposed-modules: Opaleye.Aggregate,
                    Opaleye.Column,
                    Opaleye.Distinct,
+                   Opaleye.Join,
                    Opaleye.Operators,
                    Opaleye.Order,
                    Opaleye.QueryArr,

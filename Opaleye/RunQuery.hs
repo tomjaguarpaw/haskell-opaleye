@@ -11,7 +11,8 @@ import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.String as S
 import           Control.Applicative (Applicative, pure, (<*>))
 
-import           Opaleye.Column (Column)
+import           Opaleye.Column (Column, Nullable)
+import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Sql as S
 import           Opaleye.QueryArr (Query)
@@ -62,6 +63,10 @@ instance D.Default QueryRunner (Column Integer) Integer where
 
 instance D.Default QueryRunner (Column Double) Double where
   def = fieldQueryRunner
+
+-- The unsafeCoerce is a bit silly here
+instance D.Default QueryRunner (Column (Nullable Int)) (Maybe Int) where
+  def = P.lmap C.unsafeCoerce fieldQueryRunner
 
 -- {
 

@@ -14,6 +14,7 @@ import qualified Opaleye.RunQuery as RQ
 import qualified Opaleye.Order as Order
 import qualified Opaleye.Distinct as Dis
 import qualified Opaleye.Aggregate as Agg
+import qualified Opaleye.Join as J
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Profunctor.Product.Default as D
@@ -119,11 +120,17 @@ table1 = twoIntTable "table1"
 table2 :: T.Table (TableColumn Int, TableColumn Int)
 table2 = twoIntTable "table2"
 
+table3 :: T.Table (TableColumn Int, TableColumn Int)
+table3 = twoIntTable "table3"
+
 table1Q :: Query (Column Int, Column Int)
 table1Q = T.queryTable table1
 
 table2Q :: Query (Column Int, Column Int)
 table2Q = T.queryTable table2
+
+table3Q :: Query (Column Int, Column Int)
+table3Q = T.queryTable table3
 
 table1data :: [(Int, Int)]
 table1data = [ (1, 100)
@@ -269,11 +276,24 @@ testDistinctAndAggregate = testG q expected
         expectedResult = A.liftA2 (,) (L.nub table1data)
                                       [(1 :: Int, 400 :: Integer), (2, 300)]
 
+aLeftJoin :: Query ((Column Int, Column Int),
+                    (Column (C.Nullable Int), Column (C.Nullable Int)))
+aLeftJoin = J.leftJoin table1Q table3Q (\(l, r) -> fst l .== fst r)
+
+testLeftJoin :: Test
+testLeftJoin = testG aLeftJoin (== expected)
+  where expected :: [((Int, Int), (Maybe Int, Maybe Int))]
+        expected = [ ((1, 100), (Just 1, Just 50))
+                   , ((1, 100), (Just 1, Just 50))
+                   , ((1, 200), (Just 1, Just 50))
+                   , ((2, 300), (Nothing, Nothing)) ]
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
-            testLimitOffset, testOffsetLimit, testDistinctAndAggregate]
+            testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
+            testLeftJoin]
 
 main :: IO ()
 main = do

@@ -4,6 +4,7 @@ import qualified Database.HaskellDB.PrimQuery as PQ
 import qualified Database.HaskellDB.Query as Q
 
 newtype Column a = Column PQ.PrimExpr deriving Show
+data Nullable a = Nullable
 
 unColumn :: Column a -> PQ.PrimExpr
 unColumn (Column e) = e

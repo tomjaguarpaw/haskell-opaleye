@@ -62,8 +62,11 @@ limit_ lo s = SelectFrom $ newSelect { tables = [s]
           PQ.OffsetOp n        -> (Nothing, Just n)
           PQ.LimitOffsetOp l o -> (Just l, Just o)
 
-leftJoin :: [(Symbol, PQ.PrimExpr)] -> PQ.PrimExpr -> Select -> Select -> Select
-leftJoin 
+leftJoin :: [(PQ.Symbol, HP.PrimExpr)] -> HP.PrimExpr -> Select -> Select -> Select
+leftJoin columns cond s1 s2 = SelectLeftJoin LeftJoin { jAttrs = mkAttrs columns
+                                                      , jTables = (s1, s2)
+                                                      , jCond = Old.sqlExpr cond }
+  where mkAttrs = map (\(sym, pe) -> (Old.sqlExpr pe, Just sym))
 
 newSelect :: From Select
 newSelect = From {
@@ -94,16 +97,15 @@ data From s = From {
           deriving Show
 
 data LeftJoin s = LeftJoin {
-  attrs :: [(S.SqlExpr, Maybe S.SqlColumn)],
-  left  :: s,
-  right :: s,
-  cond  :: S.SqlExpr
+  jAttrs  :: [(S.SqlExpr, Maybe S.SqlColumn)],
+  jTables :: (s, s),
+  jCond   :: S.SqlExpr
   }
                 deriving Show
 
 data Select = SelectFrom (From Select)
             | Table S.SqlTable
-            | LeftJoin Select Select S.SqlExpr
+            | SelectLeftJoin (LeftJoin Select)
             deriving Show
 
 type SelectFold s = (From Select -> s, S.SqlTable -> s)
@@ -111,6 +113,7 @@ type SelectFold s = (From Select -> s, S.SqlTable -> s)
 ppSql :: Select -> Doc
 ppSql (SelectFrom s) = ppSelectFrom s
 ppSql (Table name) = text name
+ppSql (SelectLeftJoin j) = ppSelectLeftJoin j
 
 ppSelectFrom :: From Select -> Doc
 ppSelectFrom s = text "SELECT"
@@ -121,6 +124,18 @@ ppSelectFrom s = text "SELECT"
                  $$  PP.ppOrderBy (orderBy s)
                  $$  ppLimit (limit s)
                  $$  ppOffset (offset s)
+
+
+ppSelectLeftJoin :: LeftJoin Select -> Doc
+ppSelectLeftJoin j = text "SELECT"
+                     <+> ppAttrs (jAttrs j)
+                     $$  text "FROM"
+                     $$  ppTable (tableAlias 1 s1)
+                     $$  text "LEFT OUTER JOIN"
+                     $$  ppTable (tableAlias 2 s2)
+                     $$  text "ON"
+                     $$  PP.ppSqlExpr (jCond j)
+  where (s1, s2) = jTables j
 
 ppAttrs :: [(S.SqlExpr, Maybe S.SqlColumn)] -> Doc
 ppAttrs [] = text "*"
@@ -133,13 +148,15 @@ nameAs (expr, name) = PP.ppAs (M.fromMaybe "" name) (PP.ppSqlExpr expr)
 ppTables :: [Select] -> Doc
 ppTables [] = empty
 ppTables ts = text "FROM" <+> PP.commaV ppTable (zipWith tableAlias [1..] ts)
-  where tableAlias :: Int -> Select -> (S.SqlTable, Select)
-        tableAlias i select = ("T" ++ show i, select)
+
+tableAlias :: Int -> Select -> (S.SqlTable, Select)
+tableAlias i select = ("T" ++ show i, select)
 
 ppTable :: (S.SqlTable, Select) -> Doc
 ppTable (alias, select) = case select of
   Table name -> PP.ppAs alias (text name)
   SelectFrom selectFrom -> PP.ppAs alias (HPJ.parens (ppSelectFrom selectFrom))
+  SelectLeftJoin slj -> PP.ppAs alias (HPJ.parens (ppSelectLeftJoin slj))
 
 ppGroupBy :: [S.SqlExpr] -> Doc
 ppGroupBy [] = empty
