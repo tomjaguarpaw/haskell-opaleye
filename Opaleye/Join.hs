@@ -59,15 +59,10 @@ leftJoinExplicit unpackA unpackB nullmaker qA qB cond = Q.simpleQueryArr q where
           Column cond' = cond (columnsA, columnsB)
           primQueryR = PQ.LeftJoin (ljPEsA ++ ljPEsB) cond' primQueryA primQueryB
 
-
-class PGType a where
-
-instance PGType Int where
-
-instance PGType a => D.Default NullMaker (Column a) (Column (Nullable a)) where
+instance D.Default NullMaker (Column a) (Column (Nullable a)) where
   def = NullMaker C.unsafeCoerce
 
-instance PGType a => D.Default NullMaker (Column (Nullable a)) (Column (Nullable a)) where
+instance D.Default NullMaker (Column (Nullable a)) (Column (Nullable a)) where
   def = NullMaker C.unsafeCoerce
 
 -- { Boilerplate instances
