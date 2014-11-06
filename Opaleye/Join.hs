@@ -41,23 +41,24 @@ leftJoinExplicit unpackA unpackB nullmaker qA qB cond = Q.simpleQueryArr q where
     where (columnsA, primQueryA, midTag) = Q.runSimpleQueryArr qA ((), startTag)
           (columnsB, primQueryB, endTag) = Q.runSimpleQueryArr qB ((), midTag)
 
-          f :: Int -> HPQ.PrimExpr
-            -> S.State ([(String, HPQ.PrimExpr)], Int) HPQ.PrimExpr
-          f n pe = do
-            (ljPEs, i) <- S.get
-            let s = "result" ++ show n ++ "_" ++ show i
-            S.put (ljPEs ++ [(s, pe)], i + 1)
-            return (HPQ.AttrExpr s)
-
           (newColumnsA, (ljPEsA, _)) =
-            S.runState (U.runUnpackspec unpackA (f 1) columnsA) ([], 0)
+            S.runState (U.runUnpackspec unpackA (extractLeftJoinFields 1) columnsA) ([], 0)
           (newColumnsB, (ljPEsB, _)) =
-            S.runState (U.runUnpackspec unpackB (f 2) columnsB) ([], 0)
+            S.runState (U.runUnpackspec unpackB (extractLeftJoinFields 2) columnsB) ([], 0)
 
           nullableColumnsB = toNullable nullmaker newColumnsB
 
           Column cond' = cond (columnsA, columnsB)
           primQueryR = PQ.LeftJoin (ljPEsA ++ ljPEsB) cond' primQueryA primQueryB
+
+extractLeftJoinFields :: Int -> HPQ.PrimExpr
+            -> S.State ([(String, HPQ.PrimExpr)], Int) HPQ.PrimExpr
+extractLeftJoinFields n pe = do
+            (ljPEs, i) <- S.get
+            let s = "result" ++ show n ++ "_" ++ show i
+            S.put (ljPEs ++ [(s, pe)], i + 1)
+            return (HPQ.AttrExpr s)
+
 
 instance D.Default NullMaker (Column a) (Column (Nullable a)) where
   def = NullMaker C.unsafeCoerce

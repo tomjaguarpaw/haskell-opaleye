@@ -32,18 +32,18 @@ runAggregator (Aggregator a) = PM.packmap a
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
 aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
-  where f :: (HPQ.PrimExpr, Maybe HPQ.AggrOp)
-          -> S.State ([(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)], Int) HPQ.PrimExpr
-        f (pe, maggrop) = do
-          (projPEs, i) <- S.get
-          let s = T.tagWith t0 ("result" ++ show i)
-          S.put (projPEs ++ [(s, maggrop, pe)], i+1)
-          return (HPQ.AttrExpr s)
-
-        (c1, (projPEs', _)) =
-          S.runState (runAggregator agg f c0) ([], 0)
+  where (c1, (projPEs', _)) =
+          S.runState (runAggregator agg (extractAggregateFields t0) c0) ([], 0)
 
         primQ' = PQ.Aggregate projPEs' primQ
+
+extractAggregateFields :: T.Tag -> (HPQ.PrimExpr, Maybe HPQ.AggrOp)
+      -> S.State ([(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)], Int) HPQ.PrimExpr
+extractAggregateFields tag (pe, maggrop) = do
+          (projPEs, i) <- S.get
+          let s = T.tagWith tag ("result" ++ show i)
+          S.put (projPEs ++ [(s, maggrop, pe)], i+1)
+          return (HPQ.AttrExpr s)
 
 -- { Boilerplate instances
 
