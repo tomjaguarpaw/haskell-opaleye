@@ -142,6 +142,9 @@ table2data :: [(Int, Int)]
 table2data = [ (1, 100)
              , (3, 400) ]
 
+table3data :: [(Int, Int)]
+table3data = [ (1, 50) ]
+
 type Test = SQL.Connection -> IO Bool
 
 testG :: D.Default RQ.QueryRunner wires haskells =>
@@ -303,13 +306,17 @@ testLeftJoinNullable = testG q (== expected)
                    , ((1, 50), ((Just 1, Just 100), (Just 1, Just 50)))
                    , ((1, 50), ((Just 1, Just 200), (Just 1, Just 50))) ]
 
+testThreeWayProduct :: Test
+testThreeWayProduct = testG q (== expected)
+  where q = A.liftA3 (,,) table1Q table2Q table3Q
+        expected = A.liftA3 (,,) table1data table2data table3data
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
-            testLeftJoin, testLeftJoinNullable]
+            testLeftJoin, testLeftJoinNullable, testThreeWayProduct]
 
 main :: IO ()
 main = do
