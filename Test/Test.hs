@@ -289,8 +289,7 @@ testLeftJoin = testG aLeftJoin (== expected)
                    , ((2, 300), (Nothing, Nothing)) ]
 
 testLeftJoinNullable :: Test
-testLeftJoinNullable = const (return True)
-testLeftJoinNullableClass = testG q (== expected)
+testLeftJoinNullable = testG q (== expected)
   where q :: Query ((Column Int, Column Int),
                     ((Column (Nullable Int), Column (Nullable Int)),
                      (Column (Nullable Int),
