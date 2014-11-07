@@ -282,21 +282,25 @@ testDistinctAndAggregate = testG q expected
 one :: QueryArr () (Column Int)
 one = Arr.arr (const (1 :: Column Int))
 
+-- The point of the "double" tests is to ensure that we do not
+-- introduce name clashes in the operations which create new column names
+testDoubleG :: (Eq haskells, D.Default RQ.QueryRunner columns haskells) =>
+               (QueryArr () (Column Int) -> QueryArr () columns) -> [haskells]
+               -> Test
+testDoubleG q expected1 = testG (q one &&& q one) (== expected2)
+  where expected2 = A.liftA2 (,) expected1 expected1
+
 testDoubleDistinct :: Test
-testDoubleDistinct = testG (q &&& q) (== expected)
-  where q = Dis.distinct one
-        expected = [(1 :: Int, 1 :: Int)]
+testDoubleDistinct = testDoubleG Dis.distinct [1 :: Int]
 
 testDoubleAggregate :: Test
-testDoubleAggregate = testG (q &&& q) (== expected)
-  where q = Agg.aggregate Agg.count one
-        expected = [(1 :: Integer, 1 :: Integer)]
+testDoubleAggregate = testDoubleG (Agg.aggregate Agg.count) [1 :: Integer]
 
 testDoubleLeftJoin :: Test
-testDoubleLeftJoin = testG (q &&& q) (== expected)
-  where q :: Query (Column Int, Column (Nullable Int))
-        q = J.leftJoin one one (uncurry (.==))
-        expected = [((1 :: Int, Just (1 :: Int)), (1 :: Int, Just (1 :: Int)))]
+testDoubleLeftJoin = testDoubleG lj [(1 :: Int, Just (1 :: Int))]
+  where lj :: QueryArr () (Column Int)
+          -> Query (Column Int, Column (Nullable Int))
+        lj q = J.leftJoin q q (uncurry (.==))
 
 aLeftJoin :: Query ((Column Int, Column Int),
                     (Column (Nullable Int), Column (Nullable Int)))
