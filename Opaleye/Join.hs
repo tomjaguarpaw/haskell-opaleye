@@ -3,6 +3,7 @@
 module Opaleye.Join where
 
 import qualified Opaleye.Internal.Unpackspec as U
+import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import           Opaleye.QueryArr (Query)
@@ -36,25 +37,25 @@ leftJoinExplicit :: U.Unpackspec columnsA columnsA
                  -> ((columnsA, columnsB) -> Column Bool)
                  -> Query (columnsA, nullableColumnsB)
 leftJoinExplicit unpackA unpackB nullmaker qA qB cond = Q.simpleQueryArr q where
-  q ((), startTag) = ((newColumnsA, nullableColumnsB), primQueryR, endTag)
+  q ((), startTag) = ((newColumnsA, nullableColumnsB), primQueryR, T.next endTag)
     where (columnsA, primQueryA, midTag) = Q.runSimpleQueryArr qA ((), startTag)
           (columnsB, primQueryB, endTag) = Q.runSimpleQueryArr qB ((), midTag)
 
           (newColumnsA, ljPEsA) =
-            PM.run (U.runUnpackspec unpackA (extractLeftJoinFields 1) columnsA)
+            PM.run (U.runUnpackspec unpackA (extractLeftJoinFields endTag 1) columnsA)
           (newColumnsB, ljPEsB) =
-            PM.run (U.runUnpackspec unpackB (extractLeftJoinFields 2) columnsB)
+            PM.run (U.runUnpackspec unpackB (extractLeftJoinFields endTag 2) columnsB)
 
           nullableColumnsB = toNullable nullmaker newColumnsB
 
           Column cond' = cond (columnsA, columnsB)
           primQueryR = PQ.LeftJoin (ljPEsA ++ ljPEsB) cond' primQueryA primQueryB
 
-extractLeftJoinFields :: Int -> HPQ.PrimExpr
+extractLeftJoinFields :: T.Tag -> Int -> HPQ.PrimExpr
             -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
-extractLeftJoinFields n pe = do
+extractLeftJoinFields tag n pe = do
   i <- PM.new
-  let s = "result" ++ show n ++ "_" ++ i
+  let s = T.tagWith tag ("result" ++ show n ++ "_" ++ i)
   PM.write (s, pe)
   return (HPQ.AttrExpr s)
 

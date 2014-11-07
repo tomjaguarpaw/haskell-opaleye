@@ -279,6 +279,25 @@ testDistinctAndAggregate = testG q expected
         expectedResult = A.liftA2 (,) (L.nub table1data)
                                       [(1 :: Int, 400 :: Integer), (2, 300)]
 
+one :: QueryArr () (Column Int)
+one = Arr.arr (const (1 :: Column Int))
+
+testDoubleDistinct :: Test
+testDoubleDistinct = testG (q &&& q) (== expected)
+  where q = Dis.distinct one
+        expected = [(1 :: Int, 1 :: Int)]
+
+testDoubleAggregate :: Test
+testDoubleAggregate = testG (q &&& q) (== expected)
+  where q = Agg.aggregate Agg.count one
+        expected = [(1 :: Integer, 1 :: Integer)]
+
+testDoubleLeftJoin :: Test
+testDoubleLeftJoin = testG (q &&& q) (== expected)
+  where q :: Query (Column Int, Column (Nullable Int))
+        q = J.leftJoin one one (uncurry (.==))
+        expected = [((1 :: Int, Just (1 :: Int)), (1 :: Int, Just (1 :: Int)))]
+
 aLeftJoin :: Query ((Column Int, Column Int),
                     (Column (Nullable Int), Column (Nullable Int)))
 aLeftJoin = J.leftJoin table1Q table3Q (\(l, r) -> fst l .== fst r)
@@ -316,6 +335,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
+            testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct]
 
 main :: IO ()
