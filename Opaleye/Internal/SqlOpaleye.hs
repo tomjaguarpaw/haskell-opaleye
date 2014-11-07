@@ -4,11 +4,11 @@ import           Prelude hiding (product)
 
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.NEList as NE
-import qualified Opaleye.Internal.Sql as Old
 
 import qualified Database.HaskellDB.PrimQuery as HP
 import qualified Database.HaskellDB.Sql as S
 import qualified Database.HaskellDB.Sql.Default as SD
+import qualified Database.HaskellDB.Sql.Generate as SG
 
 import qualified Data.Maybe as M
 
@@ -49,7 +49,7 @@ sql (pq, pes) = SelectFrom $ newSelect { attrs = makeAttrs pes
                                        , tables = [pqSelect] }
   where pqSelect = PQ.foldPrimQuery sqlQueryGenerator pq
         makeAttrs = flip (zipWith makeAttr) [1..]
-        makeAttr pe i = (Old.sqlExpr pe, Just ("result" ++ show (i :: Int)))
+        makeAttr pe i = (sqlExpr pe, Just ("result" ++ show (i :: Int)))
 
 unit :: Select
 unit = SelectFrom newSelect { attrs  = [(S.ConstSqlExpr "0", Nothing)] }
@@ -62,16 +62,19 @@ baseTable name columns = SelectFrom $
 product :: NE.NEList Select -> [HP.PrimExpr] -> Select
 product ss pes = SelectFrom $
     newSelect { tables = NE.toList ss
-              , criteria = map Old.sqlExpr pes }
+              , criteria = map sqlExpr pes }
 
 aggregate :: [(PQ.Symbol, Maybe HP.AggrOp, HP.PrimExpr)] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = map attr aggrs
                                            , tables = [s]
                                            , groupBy = groupBy' }
-  where groupBy' = (map Old.sqlExpr
+  where groupBy' = (map sqlExpr
                     . map (\(_, _, e) -> e)
                     . filter (\(_, x, _) -> M.isNothing x)) aggrs
-        attr (x, aggrOp, pe) = (Old.sqlExpr (Old.aggrExpr aggrOp pe), Just x)
+        attr (x, aggrOp, pe) = (sqlExpr (aggrExpr aggrOp pe), Just x)
+
+aggrExpr :: Maybe HP.AggrOp -> HP.PrimExpr -> HP.PrimExpr
+aggrExpr = maybe id HP.AggrExpr
 
 order :: [HP.OrderExpr] -> Select -> Select
 order oes s = SelectFrom $
@@ -90,8 +93,8 @@ limit_ lo s = SelectFrom $ newSelect { tables = [s]
 leftJoin :: [(PQ.Symbol, HP.PrimExpr)] -> HP.PrimExpr -> Select -> Select -> Select
 leftJoin columns cond s1 s2 = SelectLeftJoin LeftJoin { jAttrs = mkAttrs columns
                                                       , jTables = (s1, s2)
-                                                      , jCond = Old.sqlExpr cond }
-  where mkAttrs = map (\(sym, pe) -> (Old.sqlExpr pe, Just sym))
+                                                      , jCond = sqlExpr cond }
+  where mkAttrs = map (\(sym, pe) -> (sqlExpr pe, Just sym))
 
 newSelect :: From
 newSelect = From {
@@ -103,3 +106,6 @@ newSelect = From {
   limit     = Nothing,
   offset    = Nothing
   }
+
+sqlExpr :: HP.PrimExpr -> S.SqlExpr
+sqlExpr = SG.sqlExpr SD.defaultSqlGenerator
