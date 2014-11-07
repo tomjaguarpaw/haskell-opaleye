@@ -5,7 +5,7 @@ module Opaleye.Sql where
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
 import qualified Opaleye.Internal.Unpackspec as U
-import qualified Opaleye.Internal.SqlOpaleye as Sql
+import qualified Opaleye.Internal.Sql as Sql
 import qualified Opaleye.Internal.Print as Pr
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Optimize as Op

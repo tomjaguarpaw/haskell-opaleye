@@ -2,11 +2,11 @@ module Opaleye.Internal.Print where
 
 import           Prelude hiding (product)
 
-import qualified Opaleye.Internal.SqlOpaleye as Sql
-import           Opaleye.Internal.SqlOpaleye (Select(SelectFrom, Table,
-                                                     SelectLeftJoin),
-                                              From,
-                                              LeftJoin)
+import qualified Opaleye.Internal.Sql as Sql
+import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
+                                              SelectLeftJoin),
+                                       From,
+                                       LeftJoin)
 
 import qualified Database.HaskellDB.Sql as S
 import qualified Database.HaskellDB.Sql.Print as PP

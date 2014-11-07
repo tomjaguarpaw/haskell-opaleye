@@ -1,4 +1,4 @@
-module Opaleye.Internal.SqlOpaleye where
+module Opaleye.Internal.Sql where
 
 import           Prelude hiding (product)
 
