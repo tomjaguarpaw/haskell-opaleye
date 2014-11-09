@@ -12,10 +12,9 @@ import qualified Database.HaskellDB.Sql.Generate as SG
 
 import qualified Data.Maybe as M
 
-
 data Select = SelectFrom From
             | Table S.SqlTable
-            | SelectLeftJoin LeftJoin
+            | SelectJoin Join
             deriving Show
 
 data From = From {
@@ -29,20 +28,22 @@ data From = From {
   }
           deriving Show
 
-data LeftJoin = LeftJoin {
-  jAttrs  :: [(S.SqlExpr, Maybe S.SqlColumn)],
-  jTables :: (Select, Select),
-  jCond   :: S.SqlExpr
+data Join = Join {
+  jJoinType   :: JoinType,
+  jAttrs      :: [(S.SqlExpr, Maybe S.SqlColumn)],
+  jTables     :: (Select, Select),
+  jCond       :: S.SqlExpr
   }
                 deriving Show
 
+data JoinType = LeftJoin deriving Show
 data Distinct = Distinct
 
 data TableName = String
 
 
 sqlQueryGenerator :: PQ.PrimQueryFold Select
-sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, leftJoin)
+sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join)
 
 sql :: (PQ.PrimQuery, [HP.PrimExpr]) -> Select
 sql (pq, pes) = SelectFrom $ newSelect { attrs = makeAttrs pes
@@ -90,11 +91,16 @@ limit_ lo s = SelectFrom $ newSelect { tables = [s]
           PQ.OffsetOp n        -> (Nothing, Just n)
           PQ.LimitOffsetOp l o -> (Just l, Just o)
 
-leftJoin :: [(PQ.Symbol, HP.PrimExpr)] -> HP.PrimExpr -> Select -> Select -> Select
-leftJoin columns cond s1 s2 = SelectLeftJoin LeftJoin { jAttrs = mkAttrs columns
-                                                      , jTables = (s1, s2)
-                                                      , jCond = sqlExpr cond }
+join :: PQ.JoinType -> [(PQ.Symbol, HP.PrimExpr)] -> HP.PrimExpr -> Select -> Select
+     -> Select
+join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
+                                            , jAttrs = mkAttrs columns
+                                            , jTables = (s1, s2)
+                                            , jCond = sqlExpr cond }
   where mkAttrs = map (\(sym, pe) -> (sqlExpr pe, Just sym))
+
+joinType :: PQ.JoinType -> JoinType
+joinType PQ.LeftJoin = LeftJoin
 
 newSelect :: From
 newSelect = From {

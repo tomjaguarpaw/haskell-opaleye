@@ -4,9 +4,8 @@ import           Prelude hiding (product)
 
 import qualified Opaleye.Internal.Sql as Sql
 import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
-                                              SelectLeftJoin),
-                                       From,
-                                       LeftJoin)
+                                              SelectJoin),
+                                       From, Join)
 
 import qualified Database.HaskellDB.Sql as S
 import qualified Database.HaskellDB.Sql.Print as PP
@@ -19,7 +18,7 @@ import qualified Data.Maybe as M
 ppSql :: Select -> Doc
 ppSql (SelectFrom s) = ppSelectFrom s
 ppSql (Table name) = text name
-ppSql (SelectLeftJoin j) = ppSelectLeftJoin j
+ppSql (SelectJoin j) = ppSelectJoin j
 
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
@@ -32,16 +31,19 @@ ppSelectFrom s = text "SELECT"
                  $$  ppOffset (Sql.offset s)
 
 
-ppSelectLeftJoin :: LeftJoin -> Doc
-ppSelectLeftJoin j = text "SELECT"
-                     <+> ppAttrs (Sql.jAttrs j)
-                     $$  text "FROM"
-                     $$  ppTable (tableAlias 1 s1)
-                     $$  text "LEFT OUTER JOIN"
-                     $$  ppTable (tableAlias 2 s2)
-                     $$  text "ON"
-                     $$  PP.ppSqlExpr (Sql.jCond j)
+ppSelectJoin :: Join -> Doc
+ppSelectJoin j = text "SELECT"
+                 <+> ppAttrs (Sql.jAttrs j)
+                 $$  text "FROM"
+                 $$  ppTable (tableAlias 1 s1)
+                 $$  ppJoinType (Sql.jJoinType j)
+                 $$  ppTable (tableAlias 2 s2)
+                 $$  text "ON"
+                 $$  PP.ppSqlExpr (Sql.jCond j)
   where (s1, s2) = Sql.jTables j
+
+ppJoinType :: Sql.JoinType -> Doc
+ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 
 ppAttrs :: [(S.SqlExpr, Maybe S.SqlColumn)] -> Doc
 ppAttrs [] = text "*"
@@ -62,7 +64,7 @@ ppTable :: (S.SqlTable, Select) -> Doc
 ppTable (alias, select) = case select of
   Table name -> PP.ppAs alias (text name)
   SelectFrom selectFrom -> PP.ppAs alias (HPJ.parens (ppSelectFrom selectFrom))
-  SelectLeftJoin slj -> PP.ppAs alias (HPJ.parens (ppSelectLeftJoin slj))
+  SelectJoin slj -> PP.ppAs alias (HPJ.parens (ppSelectJoin slj))
 
 ppGroupBy :: [S.SqlExpr] -> Doc
 ppGroupBy [] = empty
