@@ -26,7 +26,9 @@ import           Control.Applicative (Applicative, pure, (<*>))
 --    FALSE.
 
 -- 2. Postgres's type inference of constants is pretty poor so we will
---    sometimes have to give explicit type signatures.  The future ShowConstant class will  have the same problem.  NB  We don't actually currently address this problem.
+--    sometimes have to give explicit type signatures.  The future
+--    ShowConstant class will have the same problem.  NB We don't
+--    actually currently address this problem.
 
 valuesU :: U.Unpackspec columns columns'
         -> Valuesspec columns columns'
