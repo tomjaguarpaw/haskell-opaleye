@@ -22,6 +22,7 @@ data PrimQuery = Unit
                | Order [PQ.OrderExpr] PrimQuery
                | Limit LimitOp PrimQuery
                | Join JoinType [(Symbol, PQ.PrimExpr)] PQ.PrimExpr PrimQuery PrimQuery
+               | Values [Symbol] [[PQ.PrimExpr]]
 --               | Binary BinOp [(PQ.PrimExpr, PQ.PrimExpr)] (PrimQuery, PrimQuery)
                  deriving Show
 
@@ -32,11 +33,12 @@ type PrimQueryFold p = ( p
                        , [PQ.OrderExpr] -> p -> p
                        , LimitOp -> p -> p
                        , JoinType -> [(Symbol, PQ.PrimExpr)] -> PQ.PrimExpr -> p -> p -> p
+                       , [Symbol] -> [[PQ.PrimExpr]] -> p
 --                       , BinOp -> [(PQ.PrimExpr, PQ.PrimExpr)] -> (p, p) -> p
                        )
 
 foldPrimQuery :: PrimQueryFold p -> PrimQuery -> p
-foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join)
+foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values)
   = fold where fold primQ = case primQ of
                  Unit                       -> unit
                  BaseTable n s              -> baseTable n s
@@ -45,6 +47,7 @@ foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join)
                  Order pes pq               -> order pes (fold pq)
                  Limit op pq                -> limit op (fold pq)
                  Join j pes cond q1 q2      -> join j pes cond (fold q1) (fold q2)
+                 Values ss pes              -> values ss pes
 --          Binary binop pes (pq, pq') -> binary binop pes (fold pq, fold pq')
 
 times :: PrimQuery -> PrimQuery -> PrimQuery

@@ -15,6 +15,7 @@ import qualified Opaleye.Order as Order
 import qualified Opaleye.Distinct as Dis
 import qualified Opaleye.Aggregate as Agg
 import qualified Opaleye.Join as J
+import qualified Opaleye.Values as V
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Profunctor.Product.Default as D
@@ -302,6 +303,13 @@ testDoubleLeftJoin = testDoubleG lj [(1 :: Int, Just (1 :: Int))]
           -> Query (Column Int, Column (Nullable Int))
         lj q = J.leftJoin q q (uncurry (.==))
 
+{- FIXME: does not yet work
+testDoubleValues :: Test
+testDoubleValues = testDoubleG v [1 :: Int]
+  where v :: Query (Column Int) -> Query (Column Int)
+        v _ = V.values [1]
+-}
+
 aLeftJoin :: Query ((Column Int, Column Int),
                     (Column (Nullable Int), Column (Nullable Int)))
 aLeftJoin = J.leftJoin table1Q table3Q (\(l, r) -> fst l .== fst r)
@@ -334,13 +342,34 @@ testThreeWayProduct = testG q (== expected)
   where q = A.liftA3 (,,) table1Q table2Q table3Q
         expected = A.liftA3 (,,) table1data table2data table3data
 
+testValues :: Test
+testValues = testG (V.values values) (values' ==)
+  where values :: [(Column Int, Column Int)]
+        values = [ (1, 10)
+                 , (2, 100) ]
+        values' :: [(Int, Int)]
+        values' = [ (1, 10)
+                  , (2, 100) ]
+
+{- FIXME: does not yet work
+testValuesDouble :: Test
+testValuesDouble = testG (V.values values) (values' ==)
+  where values :: [(Column Int, Column Double)]
+        values = [ (1, 10.0)
+                 , (2, 100.0) ]
+        values' :: [(Int, Double)]
+        values' = [ (1, 10.0)
+                  , (2, 100.0) ]
+-}
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
-            testLeftJoin, testLeftJoinNullable, testThreeWayProduct]
+            testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues
+           ]
 
 main :: IO ()
 main = do

@@ -4,14 +4,15 @@ import           Prelude hiding (product)
 
 import qualified Opaleye.Internal.Sql as Sql
 import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
-                                              SelectJoin),
-                                       From, Join)
+                                              SelectJoin,
+                                              SelectValues),
+                                       From, Join, Values)
 
 import qualified Database.HaskellDB.Sql as S
 import qualified Database.HaskellDB.Sql.Print as PP
 
-import qualified Text.PrettyPrint.HughesPJ as HPJ
-import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty)
+import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
+                                            parens)
 
 import qualified Data.Maybe as M
 
@@ -19,6 +20,7 @@ ppSql :: Select -> Doc
 ppSql (SelectFrom s) = ppSelectFrom s
 ppSql (Table name) = text name
 ppSql (SelectJoin j) = ppSelectJoin j
+ppSql (SelectValues v) = ppSelectValues v
 
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
@@ -42,6 +44,12 @@ ppSelectJoin j = text "SELECT"
                  $$  PP.ppSqlExpr (Sql.jCond j)
   where (s1, s2) = Sql.jTables j
 
+ppSelectValues :: Values -> Doc
+ppSelectValues v = text "SELECT"
+                   <+> PP.commaV text (Sql.vAttrs v)
+                   $$  text "FROM"
+                   $$  ppValues (Sql.vValues v)
+
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 
@@ -60,11 +68,13 @@ ppTables ts = text "FROM" <+> PP.commaV ppTable (zipWith tableAlias [1..] ts)
 tableAlias :: Int -> Select -> (S.SqlTable, Select)
 tableAlias i select = ("T" ++ show i, select)
 
+-- TODO: duplication with ppSql
 ppTable :: (S.SqlTable, Select) -> Doc
 ppTable (alias, select) = case select of
   Table name -> PP.ppAs alias (text name)
-  SelectFrom selectFrom -> PP.ppAs alias (HPJ.parens (ppSelectFrom selectFrom))
-  SelectJoin slj -> PP.ppAs alias (HPJ.parens (ppSelectJoin slj))
+  SelectFrom selectFrom -> PP.ppAs alias (parens (ppSelectFrom selectFrom))
+  SelectJoin slj -> PP.ppAs alias (parens (ppSelectJoin slj))
+  SelectValues slv -> PP.ppAs alias (parens (ppSelectValues slv))
 
 ppGroupBy :: [S.SqlExpr] -> Doc
 ppGroupBy [] = empty
@@ -77,3 +87,9 @@ ppLimit (Just n) = text ("LIMIT " ++ show n)
 ppOffset :: Maybe Int -> Doc
 ppOffset Nothing = empty
 ppOffset (Just n) = text ("OFFSET " ++ show n)
+
+ppValues :: [[S.SqlExpr]] -> Doc
+ppValues v = PP.ppAs "V" (parens (text "VALUES" $$ PP.commaV ppValuesRow v))
+
+ppValuesRow :: [S.SqlExpr] -> Doc
+ppValuesRow = parens . PP.commaH PP.ppSqlExpr

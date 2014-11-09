@@ -33,6 +33,7 @@ library
                    Opaleye.RunQuery,
                    Opaleye.Sql,
                    Opaleye.Table,
+                   Opaleye.Values,
                    Opaleye.Internal.Aggregate,
                    Opaleye.Internal.Distinct,
                    Opaleye.Internal.NEList,

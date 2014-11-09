@@ -15,6 +15,7 @@ import qualified Data.Maybe as M
 data Select = SelectFrom From
             | Table S.SqlTable
             | SelectJoin Join
+            | SelectValues Values
             deriving Show
 
 data From = From {
@@ -36,6 +37,11 @@ data Join = Join {
   }
                 deriving Show
 
+data Values = Values {
+  vAttrs  :: [S.SqlColumn],
+  vValues :: [[S.SqlExpr]]
+} deriving Show
+
 data JoinType = LeftJoin deriving Show
 data Distinct = Distinct
 
@@ -43,7 +49,8 @@ data TableName = String
 
 
 sqlQueryGenerator :: PQ.PrimQueryFold Select
-sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join)
+sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
+                     values)
 
 sql :: (PQ.PrimQuery, [HP.PrimExpr]) -> Select
 sql (pq, pes) = SelectFrom $ newSelect { attrs = makeAttrs pes
@@ -98,6 +105,10 @@ join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
                                             , jTables = (s1, s2)
                                             , jCond = sqlExpr cond }
   where mkAttrs = map (\(sym, pe) -> (sqlExpr pe, Just sym))
+
+values :: [PQ.Symbol] -> [[HP.PrimExpr]] -> Select
+values columns pes = SelectValues Values { vAttrs  = columns
+                                         , vValues = (map . map) sqlExpr pes }
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
