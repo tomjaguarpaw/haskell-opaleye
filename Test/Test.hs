@@ -279,7 +279,7 @@ testDistinctAndAggregate = testG q expected
         expectedResult = A.liftA2 (,) (L.nub table1data)
                                       [(1 :: Int, 400 :: Integer), (2, 300)]
 
-one :: QueryArr () (Column Int)
+one :: Query (Column Int)
 one = Arr.arr (const (1 :: Column Int))
 
 -- The point of the "double" tests is to ensure that we do not
@@ -298,7 +298,7 @@ testDoubleAggregate = testDoubleG (Agg.aggregate Agg.count) [1 :: Integer]
 
 testDoubleLeftJoin :: Test
 testDoubleLeftJoin = testDoubleG lj [(1 :: Int, Just (1 :: Int))]
-  where lj :: QueryArr () (Column Int)
+  where lj :: Query (Column Int)
           -> Query (Column Int, Column (Nullable Int))
         lj q = J.leftJoin q q (uncurry (.==))
 
