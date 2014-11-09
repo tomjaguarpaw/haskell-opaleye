@@ -14,6 +14,7 @@ distinctU unpack (columns, primQ, t) = (newColumns, primQ', T.next t)
 
         primQ' = PQ.Aggregate groupPEs primQ
 
+-- TODO: Should this be in the singular?
 extractAggregateFields :: T.Tag -> HPQ.PrimExpr
       -> PM.PM [(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)] HPQ.PrimExpr
 extractAggregateFields tag pe = do
