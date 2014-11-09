@@ -1,9 +1,10 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 
 module Opaleye.Values where
 
 import qualified Opaleye.QueryArr as Q
 import           Opaleye.QueryArr (Query)
+import           Opaleye.Column (Column(Column))
 
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
@@ -11,33 +12,45 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
-import qualified Data.Profunctor.Product.Default as D
+import           Data.Profunctor (Profunctor, dimap, rmap)
+import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
+import qualified Data.Profunctor.Product as PP
+import           Data.Profunctor.Product.Default (Default, def)
 
-values :: D.Default U.Unpackspec columns columns =>
+import           Control.Applicative (Applicative, pure, (<*>))
+
+values :: (Default Valuesspec columns columns,
+           Default U.Unpackspec columns columns) =>
           [columns] -> Q.Query columns
-values = valuesExplicit D.def
+values = valuesExplicit def def
 
 valuesExplicit :: U.Unpackspec columns columns'
+               -> Valuesspec columns columns'
                -> [columns] -> Query columns'
-valuesExplicit unpack columns = Q.simpleQueryArr (valuesU unpack columns)
+valuesExplicit unpack valuesspec columns =
+  Q.simpleQueryArr (valuesU unpack valuesspec columns)
 
 valuesU :: U.Unpackspec columns columns'
+        -> Valuesspec columns columns'
         -> [columns]
         -> ((), T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
-valuesU unpack rows ((), t) = (newColumns, primQ', T.next t)
+valuesU unpack valuesspec rows ((), t) = (newColumns, primQ', T.next t)
   where runRow row = valuesRow
            where (_, valuesRow) =
                    PM.run (U.runUnpackspec unpack extractValuesEntry row)
 
+        (newColumns, valuesPEs_nulls) =
+          PM.run (runValuesspec valuesspec (extractValuesField t))
+
+        valuesPEs = map fst valuesPEs_nulls
+        nulls = map snd valuesPEs_nulls
+
         values' :: [[HPQ.PrimExpr]]
-        values' = map runRow rows
+        (values', wrap) = if null rows
+                         then ([nulls], PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False)))
+                         else (map runRow rows, id)
 
-        (newColumns, valuesPEs) =
-          -- FIXME: danger!
-          PM.run (U.runUnpackspec unpack (extractValuesField t) (rows !! 0))
-
-        primQ' = PQ.Values valuesPEs values'
-
+        primQ' = wrap (PQ.Values valuesPEs values')
 
 -- We don't actually use the return value of this.  It might be better
 -- to come up with another Applicative instance for specifically doing
@@ -47,9 +60,40 @@ extractValuesEntry pe = do
   PM.write pe
   return pe
 
-extractValuesField :: T.Tag -> HPQ.PrimExpr -> PM.PM [String] HPQ.PrimExpr
-extractValuesField t _ = do
+extractValuesField :: T.Tag -> HPQ.PrimExpr
+                   -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
+extractValuesField t theNull = do
   i <- PM.new
   let s = T.tagWith t ("values" ++ i)
-  PM.write s
+  PM.write (s, theNull)
   return (HPQ.AttrExpr s)
+
+data Valuesspec columns columns' =
+  Valuesspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
+
+runValuesspec :: Applicative f => Valuesspec columns columns'
+              -> (HPQ.PrimExpr -> f HPQ.PrimExpr) -> f columns'
+runValuesspec (Valuesspec v) f = PM.packmap v f ()
+
+instance Default Valuesspec (Column Int) (Column Int) where
+  def = Valuesspec (PM.PackMap (\f () -> fmap Column (f (HPQ.ConstExpr HPQ.NullLit))))
+
+-- {
+
+-- Boilerplate instance definitions.  Theoretically, these are derivable.
+
+instance Functor (Valuesspec a) where
+  fmap f (Valuesspec g) = Valuesspec (fmap f g)
+
+instance Applicative (Valuesspec a) where
+  pure = Valuesspec . pure
+  Valuesspec f <*> Valuesspec x = Valuesspec (f <*> x)
+
+instance Profunctor Valuesspec where
+  dimap _ g (Valuesspec q) = Valuesspec (rmap g q)
+
+instance ProductProfunctor Valuesspec where
+  empty = PP.defaultEmpty
+  (***!) = PP.defaultProfunctorProduct
+
+-- }
