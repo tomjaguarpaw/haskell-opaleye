@@ -32,10 +32,13 @@ valuesU unpack valuesspec rows ((), t) = (newColumns, primQ', T.next t)
         valuesPEs = map fst valuesPEs_nulls
         nulls = map snd valuesPEs_nulls
 
+        yieldNoRows :: PQ.PrimQuery -> PQ.PrimQuery
+        yieldNoRows = PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False))
+
         values' :: [[HPQ.PrimExpr]]
         (values', wrap) = if null rows
-                         then ([nulls], PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False)))
-                         else (map runRow rows, id)
+                          then ([nulls], yieldNoRows)
+                          else (map runRow rows, id)
 
         primQ' = wrap (PQ.Values valuesPEs values')
 
