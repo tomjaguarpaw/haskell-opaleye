@@ -24,7 +24,7 @@ valuesExplicit unpack columns = Q.simpleQueryArr (valuesU unpack columns)
 valuesU :: U.Unpackspec columns columns'
         -> [columns]
         -> ((), T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
-valuesU unpack rows ((), t) = (newColumns, primQ', t)
+valuesU unpack rows ((), t) = (newColumns, primQ', T.next t)
   where runRow row = valuesRow
            where (_, valuesRow) =
                    PM.run (U.runUnpackspec unpack extractValuesEntry row)
@@ -34,7 +34,7 @@ valuesU unpack rows ((), t) = (newColumns, primQ', t)
 
         (newColumns, valuesPEs) =
           -- FIXME: danger!
-          PM.run (U.runUnpackspec unpack extractValuesField (rows !! 0))
+          PM.run (U.runUnpackspec unpack (extractValuesField t) (rows !! 0))
 
         primQ' = PQ.Values valuesPEs values'
 
@@ -48,9 +48,9 @@ extractValuesEntry pe = do
   return pe
 
 -- FIXME: need to use a tag
-extractValuesField :: HPQ.PrimExpr -> PM.PM [String] HPQ.PrimExpr
-extractValuesField _ = do
+extractValuesField :: T.Tag -> HPQ.PrimExpr -> PM.PM [String] HPQ.PrimExpr
+extractValuesField t _ = do
   i <- PM.new
-  let s = "values" ++ i
+  let s = T.tagWith t ("values" ++ i)
   PM.write s
   return (HPQ.AttrExpr s)

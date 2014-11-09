@@ -30,12 +30,6 @@ new = do
   S.put (a, i + 1)
   return (show i)
 
-newOneIndexed :: PM a String
-newOneIndexed = do
-  (a, i) <- S.get
-  S.put (a, i + 1)
-  return (show (i+1))
-
 write :: a -> PM [a] ()
 write a = do
   (as, i) <- S.get

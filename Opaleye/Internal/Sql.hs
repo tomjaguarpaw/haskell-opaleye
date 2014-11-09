@@ -38,7 +38,7 @@ data Join = Join {
                 deriving Show
 
 data Values = Values {
-  vAttrs  :: [S.SqlColumn],
+  vAttrs  :: [(S.SqlExpr, Maybe S.SqlColumn)],
   vValues :: [[S.SqlExpr]]
 } deriving Show
 
@@ -107,8 +107,10 @@ join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
   where mkAttrs = map (\(sym, pe) -> (sqlExpr pe, Just sym))
 
 values :: [PQ.Symbol] -> [[HP.PrimExpr]] -> Select
-values columns pes = SelectValues Values { vAttrs  = columns
+values columns pes = SelectValues Values { vAttrs  = mkColumns columns
                                          , vValues = (map . map) sqlExpr pes }
+  where mkColumns = zipWith (\i column -> ((sqlExpr . HP.AttrExpr) ("column" ++ show (i::Int)),
+                                           Just column)) [1..]
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin

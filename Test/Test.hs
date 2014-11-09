@@ -303,12 +303,10 @@ testDoubleLeftJoin = testDoubleG lj [(1 :: Int, Just (1 :: Int))]
           -> Query (Column Int, Column (Nullable Int))
         lj q = J.leftJoin q q (uncurry (.==))
 
-{- FIXME: does not yet work
 testDoubleValues :: Test
 testDoubleValues = testDoubleG v [1 :: Int]
   where v :: Query (Column Int) -> Query (Column Int)
         v _ = V.values [1]
--}
 
 aLeftJoin :: Query ((Column Int, Column Int),
                     (Column (Nullable Int), Column (Nullable Int)))
@@ -368,6 +366,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
+            testDoubleValues,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues
            ]
 

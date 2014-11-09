@@ -46,7 +46,7 @@ ppSelectJoin j = text "SELECT"
 
 ppSelectValues :: Values -> Doc
 ppSelectValues v = text "SELECT"
-                   <+> PP.commaV text (Sql.vAttrs v)
+                   <+> ppAttrs (Sql.vAttrs v)
                    $$  text "FROM"
                    $$  ppValues (Sql.vValues v)
 
