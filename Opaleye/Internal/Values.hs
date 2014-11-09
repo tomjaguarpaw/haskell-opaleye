@@ -17,6 +17,17 @@ import           Data.Profunctor.Product.Default (Default, def)
 
 import           Control.Applicative (Applicative, pure, (<*>))
 
+-- There are two annoyances with creating SQL VALUES statements
+--
+-- 1. SQL does not allow empty VALUES statements so if we want to
+--    create a VALUES statement from an empty list we have to fake it
+--    somehow.  The current approach is to make a VALUES statement
+--    with a single row of NULLs and then restrict it with WHERE
+--    FALSE.
+
+-- 2. Postgres's type inference of constants is pretty poor so we will
+--    sometimes have to give explicit type signatures.  The future ShowConstant class will  have the same problem.  NB  We don't actually currently address this problem.
+
 valuesU :: U.Unpackspec columns columns'
         -> Valuesspec columns columns'
         -> [columns]
