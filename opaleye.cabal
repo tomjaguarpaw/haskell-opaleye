@@ -46,7 +46,8 @@ library
                    Opaleye.Internal.Table,
                    Opaleye.Internal.TableMaker,
                    Opaleye.Internal.Tag,
-                   Opaleye.Internal.Unpackspec
+                   Opaleye.Internal.Unpackspec,
+                   Opaleye.Internal.Values
 
   ghc-options:     -Wall
 
