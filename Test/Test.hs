@@ -360,6 +360,15 @@ testValuesDouble = testG (V.values values) (values' ==)
                   , (2, 100.0) ]
 -}
 
+{- FIXME: does not yet work
+testValuesEmpty :: Test
+testValuesEmpty = testG (V.values values) (values' ==)
+  where values :: [(Column Int, Column Double)]
+        values = []
+        values' :: [(Int, Double)]
+        values' = []
+-}
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
