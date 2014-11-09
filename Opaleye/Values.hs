@@ -47,7 +47,6 @@ extractValuesEntry pe = do
   PM.write pe
   return pe
 
--- FIXME: need to use a tag
 extractValuesField :: T.Tag -> HPQ.PrimExpr -> PM.PM [String] HPQ.PrimExpr
 extractValuesField t _ = do
   i <- PM.new
