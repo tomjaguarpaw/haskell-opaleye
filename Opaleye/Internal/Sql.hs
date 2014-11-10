@@ -128,7 +128,7 @@ binary op pes (select1, select2) = SelectBinary Binary {
   bSelect2 = SelectFrom newSelect { attrs = map (mkColumn snd) pes,
                                     tables = [select2] }
   }
-  where mkColumn e (sym, pes) = (sqlExpr (e pes), Just sym)
+  where mkColumn e (sym, pes') = (sqlExpr (e pes'), Just sym)
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
