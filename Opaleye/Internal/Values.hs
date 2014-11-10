@@ -64,8 +64,8 @@ extractValuesEntry pe = do
   return pe
 
 -- TODO: move this to PackMap
-extractAttr :: (String -> String) -> T.Tag -> HPQ.PrimExpr
-               -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
+extractAttr :: (String -> String) -> T.Tag -> a
+               -> PM.PM [(String, a)] HPQ.PrimExpr
 extractAttr mkName t pe = do
   i <- PM.new
   let s = T.tagWith t (mkName i)
