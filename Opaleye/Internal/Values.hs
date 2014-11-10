@@ -63,13 +63,18 @@ extractValuesEntry pe = do
   PM.write pe
   return pe
 
+-- TODO: move this to PackMap
+extractAttr :: (String -> String) -> T.Tag -> HPQ.PrimExpr
+               -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
+extractAttr mkName t pe = do
+  i <- PM.new
+  let s = T.tagWith t (mkName i)
+  PM.write (s, pe)
+  return (HPQ.AttrExpr s)
+
 extractValuesField :: T.Tag -> HPQ.PrimExpr
                    -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
-extractValuesField t theNull = do
-  i <- PM.new
-  let s = T.tagWith t ("values" ++ i)
-  PM.write (s, theNull)
-  return (HPQ.AttrExpr s)
+extractValuesField = extractAttr ("values" ++)
 
 data Valuesspec columns columns' =
   Valuesspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
