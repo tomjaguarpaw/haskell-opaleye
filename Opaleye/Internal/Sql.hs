@@ -50,7 +50,6 @@ data Binary = Binary {
 } deriving Show
 
 data JoinType = LeftJoin deriving Show
-data Distinct = Distinct
 data BinOp = Except | Union | UnionAll deriving Show
 
 data TableName = String
