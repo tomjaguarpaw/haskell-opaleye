@@ -31,17 +31,17 @@ unionAllExplicit binaryspec q1 q2 = Q.simpleQueryArr q where
           (columns2, primQuery2, endTag) = Q.runSimpleQueryArr q2 ((), midTag)
 
           (newColumns, pes) =
-            PM.run (runBinaryspec binaryspec extractBinaryFields
+            PM.run (runBinaryspec binaryspec (extractBinaryFields endTag)
                                   (columns1, columns2))
 
           newPrimQuery = PQ.Binary PQ.UnionAll pes (primQuery1, primQuery2)
 
-extractBinaryFields :: (HPQ.PrimExpr, HPQ.PrimExpr)
+extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
                     -> PM.PM [(String, (HPQ.PrimExpr, HPQ.PrimExpr))]
                              HPQ.PrimExpr
-extractBinaryFields pes = do
+extractBinaryFields t pes = do
   i <- PM.new
-  let s = "binary" ++ i
+  let s = T.tagWith t ("binary" ++ i)
   PM.write (s, pes)
   return (HPQ.AttrExpr s)
 

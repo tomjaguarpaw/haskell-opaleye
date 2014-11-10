@@ -309,6 +309,10 @@ testDoubleValues = testDoubleG v [1 :: Int]
   where v :: Query (Column Int) -> Query (Column Int)
         v _ = V.values [1]
 
+testDoubleUnionAll :: Test
+testDoubleUnionAll = testDoubleG u [1 :: Int, 1]
+  where u q = q `B.unionAll` q
+
 aLeftJoin :: Query ((Column Int, Column Int),
                     (Column (Nullable Int), Column (Nullable Int)))
 aLeftJoin = J.leftJoin table1Q table3Q (\(l, r) -> fst l .== fst r)
@@ -378,7 +382,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
-            testDoubleValues,
+            testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
             testValuesEmpty, testUnionAll
            ]
