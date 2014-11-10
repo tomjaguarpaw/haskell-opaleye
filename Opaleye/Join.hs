@@ -51,6 +51,7 @@ leftJoinExplicit unpackA unpackB nullmaker qA qB cond = Q.simpleQueryArr q where
           Column cond' = cond (columnsA, columnsB)
           primQueryR = PQ.Join PQ.LeftJoin (ljPEsA ++ ljPEsB) cond' primQueryA primQueryB
 
+-- TODO: Move this to Internal
 extractLeftJoinFields :: T.Tag -> Int -> HPQ.PrimExpr
             -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
 extractLeftJoinFields tag n pe = do
