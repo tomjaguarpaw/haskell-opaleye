@@ -5,8 +5,9 @@ import           Prelude hiding (product)
 import qualified Opaleye.Internal.Sql as Sql
 import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
                                               SelectJoin,
-                                              SelectValues),
-                                       From, Join, Values)
+                                              SelectValues,
+                                              SelectBinary),
+                                       From, Join, Values, Binary)
 
 import qualified Database.HaskellDB.Sql as S
 import qualified Database.HaskellDB.Sql.Print as PP
@@ -21,6 +22,7 @@ ppSql (SelectFrom s) = ppSelectFrom s
 ppSql (Table name) = text name
 ppSql (SelectJoin j) = ppSelectJoin j
 ppSql (SelectValues v) = ppSelectValues v
+ppSql (SelectBinary v) = ppSelectBinary v
 
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
@@ -50,6 +52,11 @@ ppSelectValues v = text "SELECT"
                    $$  text "FROM"
                    $$  ppValues (Sql.vValues v)
 
+ppSelectBinary :: Binary -> Doc
+ppSelectBinary b = ppSql (Sql.bSelect1 b)
+                   $$ ppBinOp (Sql.bOp b)
+                   $$ ppSql (Sql.bSelect2 b)
+
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 
@@ -75,6 +82,7 @@ ppTable (alias, select) = case select of
   SelectFrom selectFrom -> PP.ppAs alias (parens (ppSelectFrom selectFrom))
   SelectJoin slj -> PP.ppAs alias (parens (ppSelectJoin slj))
   SelectValues slv -> PP.ppAs alias (parens (ppSelectValues slv))
+  SelectBinary slb -> PP.ppAs alias (parens (ppSelectBinary slb))
 
 ppGroupBy :: [S.SqlExpr] -> Doc
 ppGroupBy [] = empty
@@ -93,3 +101,9 @@ ppValues v = PP.ppAs "V" (parens (text "VALUES" $$ PP.commaV ppValuesRow v))
 
 ppValuesRow :: [S.SqlExpr] -> Doc
 ppValuesRow = parens . PP.commaH PP.ppSqlExpr
+
+ppBinOp :: Sql.BinOp -> Doc
+ppBinOp o = text $ case o of
+  Sql.Union    -> "UNION"
+  Sql.UnionAll -> "UNION ALL"
+  Sql.Except   -> "EXCEPT"

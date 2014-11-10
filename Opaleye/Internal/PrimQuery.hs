@@ -10,7 +10,7 @@ type Symbol = String
 data LimitOp = LimitOp Int | OffsetOp Int | LimitOffsetOp Int Int
              deriving Show
 
-data BinOp = Difference | Union | UnionAll
+data BinOp = Except | Union | UnionAll deriving Show
 data JoinType = LeftJoin deriving Show
 
 -- We use an NEList for Product because otherwise we'd have to check
@@ -23,7 +23,7 @@ data PrimQuery = Unit
                | Limit LimitOp PrimQuery
                | Join JoinType [(Symbol, PQ.PrimExpr)] PQ.PrimExpr PrimQuery PrimQuery
                | Values [Symbol] [[PQ.PrimExpr]]
---               | Binary BinOp [(PQ.PrimExpr, PQ.PrimExpr)] (PrimQuery, PrimQuery)
+               | Binary BinOp [(Symbol, (PQ.PrimExpr, PQ.PrimExpr))] (PrimQuery, PrimQuery)
                  deriving Show
 
 type PrimQueryFold p = ( p
@@ -34,11 +34,12 @@ type PrimQueryFold p = ( p
                        , LimitOp -> p -> p
                        , JoinType -> [(Symbol, PQ.PrimExpr)] -> PQ.PrimExpr -> p -> p -> p
                        , [Symbol] -> [[PQ.PrimExpr]] -> p
---                       , BinOp -> [(PQ.PrimExpr, PQ.PrimExpr)] -> (p, p) -> p
+                       , BinOp -> [(Symbol, (PQ.PrimExpr, PQ.PrimExpr))] -> (p, p) -> p
                        )
 
 foldPrimQuery :: PrimQueryFold p -> PrimQuery -> p
-foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values)
+foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
+               binary)
   = fold where fold primQ = case primQ of
                  Unit                       -> unit
                  BaseTable n s              -> baseTable n s
@@ -48,7 +49,7 @@ foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values)
                  Limit op pq                -> limit op (fold pq)
                  Join j pes cond q1 q2      -> join j pes cond (fold q1) (fold q2)
                  Values ss pes              -> values ss pes
---          Binary binop pes (pq, pq') -> binary binop pes (fold pq, fold pq')
+                 Binary binop pes (pq, pq') -> binary binop pes (fold pq, fold pq')
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
 times q q' = Product (NE.NEList q [q']) []

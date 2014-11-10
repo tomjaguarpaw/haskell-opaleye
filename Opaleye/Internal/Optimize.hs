@@ -10,7 +10,8 @@ optimize = mergeProduct . removeUnit
 
 removeUnit :: PQ.PrimQuery -> PQ.PrimQuery
 removeUnit = PQ.foldPrimQuery (PQ.Unit, PQ.BaseTable, product, PQ.Aggregate,
-                                PQ.Order, PQ.Limit, PQ.Join, PQ.Values)
+                                PQ.Order, PQ.Limit, PQ.Join, PQ.Values,
+                                PQ.Binary)
   where product pqs pes = flip PQ.Product pes $ case notUnit of
           []   -> NE.NEList PQ.Unit []
           x:xs -> NE.NEList x       xs
@@ -18,7 +19,8 @@ removeUnit = PQ.foldPrimQuery (PQ.Unit, PQ.BaseTable, product, PQ.Aggregate,
 
 mergeProduct :: PQ.PrimQuery -> PQ.PrimQuery
 mergeProduct = PQ.foldPrimQuery (PQ.Unit, PQ.BaseTable, product, PQ.Aggregate,
-                                PQ.Order, PQ.Limit, PQ.Join, PQ.Values)
+                                PQ.Order, PQ.Limit, PQ.Join, PQ.Values,
+                                PQ.Binary)
   where product pqs pes = PQ.Product pqs' (pes ++ pes')
           where pqs' = pqs >>= queries
                 queries (PQ.Product qs _) = qs

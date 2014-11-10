@@ -24,6 +24,7 @@ library
     , transformers >= 0.3 && < 0.4
 
   exposed-modules: Opaleye.Aggregate,
+                   Opaleye.Binary,
                    Opaleye.Column,
                    Opaleye.Distinct,
                    Opaleye.Join,

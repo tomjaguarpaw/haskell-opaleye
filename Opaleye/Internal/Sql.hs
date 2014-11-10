@@ -16,6 +16,7 @@ data Select = SelectFrom From
             | Table S.SqlTable
             | SelectJoin Join
             | SelectValues Values
+            | SelectBinary Binary
             deriving Show
 
 data From = From {
@@ -42,15 +43,22 @@ data Values = Values {
   vValues :: [[S.SqlExpr]]
 } deriving Show
 
+data Binary = Binary {
+  bOp :: BinOp,
+  bSelect1 :: Select,
+  bSelect2 :: Select
+} deriving Show
+
 data JoinType = LeftJoin deriving Show
 data Distinct = Distinct
+data BinOp = Except | Union | UnionAll deriving Show
 
 data TableName = String
 
 
 sqlQueryGenerator :: PQ.PrimQueryFold Select
 sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
-                     values)
+                     values, binary)
 
 sql :: (PQ.PrimQuery, [HP.PrimExpr]) -> Select
 sql (pq, pes) = SelectFrom $ newSelect { attrs = makeAttrs pes
@@ -112,8 +120,25 @@ values columns pes = SelectValues Values { vAttrs  = mkColumns columns
   where mkColumns = zipWith (\i column -> ((sqlExpr . HP.AttrExpr) ("column" ++ show (i::Int)),
                                            Just column)) [1..]
 
+binary :: PQ.BinOp -> [(PQ.Symbol, (HP.PrimExpr, HP.PrimExpr))]
+       -> (Select, Select) -> Select
+binary op pes (select1, select2) = SelectBinary Binary {
+  bOp = binOp op,
+  bSelect1 = SelectFrom newSelect { attrs = map (mkColumn fst) pes,
+                                    tables = [select1] },
+  bSelect2 = SelectFrom newSelect { attrs = map (mkColumn snd) pes,
+                                    tables = [select2] }
+  }
+  where mkColumn e (sym, pes) = (sqlExpr (e pes), Just sym)
+
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
+
+binOp :: PQ.BinOp -> BinOp
+binOp o = case o of
+  PQ.Except   -> Except
+  PQ.Union    -> Union
+  PQ.UnionAll -> UnionAll
 
 newSelect :: From
 newSelect = From {

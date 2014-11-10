@@ -16,6 +16,7 @@ import qualified Opaleye.Distinct as Dis
 import qualified Opaleye.Aggregate as Agg
 import qualified Opaleye.Join as J
 import qualified Opaleye.Values as V
+import qualified Opaleye.Binary as B
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Profunctor.Product.Default as D
@@ -367,6 +368,10 @@ testValuesEmpty = testG (V.values values) (values' ==)
         values' :: [Int]
         values' = []
 
+testUnionAll :: Test
+testUnionAll = testG (table1Q `B.unionAll` table2Q)
+                     (\r -> L.sort (table1data ++ table2data) == L.sort r)
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
@@ -375,7 +380,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
             testDoubleValues,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
-            testValuesEmpty
+            testValuesEmpty, testUnionAll
            ]
 
 main :: IO ()
