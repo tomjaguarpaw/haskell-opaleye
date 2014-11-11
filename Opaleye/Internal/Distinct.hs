@@ -14,6 +14,8 @@ distinctU unpack (columns, primQ, t) = (newColumns, primQ', T.next t)
 
         primQ' = PQ.Aggregate groupPEs primQ
 
+-- FIXME: Just do this in terms of a newtype for aggregator and a
+-- default instance which is a group by.
 -- TODO: Should this be in the singular?
 extractAggregateFields :: T.Tag -> HPQ.PrimExpr
       -> PM.PM [(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)] HPQ.PrimExpr
