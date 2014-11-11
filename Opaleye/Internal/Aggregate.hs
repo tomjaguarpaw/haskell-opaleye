@@ -27,7 +27,6 @@ runAggregator :: Applicative f => Aggregator a b
               -> ((HPQ.PrimExpr, Maybe HPQ.AggrOp) -> f HPQ.PrimExpr) -> a -> f b
 runAggregator (Aggregator a) = PM.packmap a
 
--- TODO: duplication with distinctU
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
 aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
