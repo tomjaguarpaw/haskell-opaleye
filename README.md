@@ -94,8 +94,9 @@ Conny Andersson, Martin Andersson, Mary Bergman, Victor Blomqvist,
 Bjorn Bringert, Anders Hockersten, Torbjorn Martin, Jeremy Shaw and
 Justin Bailey.
 
-Erik Hesselink, Adam Bergmark, Christopher Lewis, Renzo Carbonara,
-Daniel Patterson and Oliver Charles contributed code to the project.
+Silk (Erik Hesselink, Adam Bergmark), Karamaan (Christopher Lewis),
+Fynder (Renzo Carbonara, Oliver Charles) and Daniel Patterson
+contributed code to the project.
 
 Joseph Abrahamson, Alfredo Di Napoli and Mietek Bak performed useful
 reviews of early versions which helped improve the codebase.
