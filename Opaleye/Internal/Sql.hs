@@ -3,13 +3,13 @@ module Opaleye.Internal.Sql where
 import           Prelude hiding (product)
 
 import qualified Opaleye.Internal.PrimQuery as PQ
-import qualified Opaleye.Internal.NEList as NE
 
 import qualified Database.HaskellDB.PrimQuery as HP
 import qualified Database.HaskellDB.Sql as S
 import qualified Database.HaskellDB.Sql.Default as SD
 import qualified Database.HaskellDB.Sql.Generate as SG
 
+import qualified Data.List.NonEmpty as NEL
 import qualified Data.Maybe as M
 
 data Select = SelectFrom From
@@ -74,9 +74,9 @@ baseTable name columns = SelectFrom $
     newSelect { attrs = map (\(sym, col) -> (sqlExpr col, Just sym)) columns
               , tables = [Table name] }
 
-product :: NE.NEList Select -> [HP.PrimExpr] -> Select
+product :: NEL.NonEmpty Select -> [HP.PrimExpr] -> Select
 product ss pes = SelectFrom $
-    newSelect { tables = NE.toList ss
+    newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
 
 aggregate :: [(PQ.Symbol, Maybe HP.AggrOp, HP.PrimExpr)] -> Select -> Select
