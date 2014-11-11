@@ -1,26 +1,44 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Opaleye.Internal.Distinct where
 
-import qualified Opaleye.Internal.Unpackspec as U
-import qualified Opaleye.Internal.Tag as T
-import qualified Opaleye.Internal.PrimQuery as PQ
-import qualified Opaleye.Internal.PackMap as PM
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import           Opaleye.QueryArr (Query)
+import           Opaleye.Column (Column)
+import           Opaleye.Aggregate (Aggregator, groupBy, aggregate)
 
-distinctU :: U.Unpackspec columns columns'
-          -> (columns, PQ.PrimQuery, T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
-distinctU unpack (columns, primQ, t) = (newColumns, primQ', T.next t)
-  where (newColumns, groupPEs) =
-          PM.run (U.runUnpackspec unpack (extractAggregateFields t) columns)
+import           Control.Applicative (Applicative, pure, (<*>))
 
-        primQ' = PQ.Aggregate groupPEs primQ
+import qualified Data.Profunctor as P
+import qualified Data.Profunctor.Product as PP
+import           Data.Profunctor.Product.Default (Default, def)
 
--- FIXME: Just do this in terms of a newtype for aggregator and a
--- default instance which is a group by.
--- TODO: Should this be in the singular?
-extractAggregateFields :: T.Tag -> HPQ.PrimExpr
-      -> PM.PM [(String, Maybe HPQ.AggrOp, HPQ.PrimExpr)] HPQ.PrimExpr
-extractAggregateFields tag pe = do
-  i <- PM.new
-  let s = T.tagWith tag ("result" ++ i)
-  PM.write (s, Nothing, pe)
-  return (HPQ.AttrExpr s)
+-- We implement distinct simply by grouping by all columns.  We could
+-- instead implement it as SQL's DISTINCT but implementing it in terms
+-- of something else that we already have is easier at this point.
+
+distinctExplicit :: Distinctspec columns columns'
+                 -> Query columns -> Query columns'
+distinctExplicit (Distinctspec agg) = aggregate agg
+
+data Distinctspec a b = Distinctspec (Aggregator a b)
+
+instance Default Distinctspec (Column a) (Column a) where
+  def = Distinctspec groupBy
+
+-- { Boilerplate instances
+
+instance Functor (Distinctspec a) where
+  fmap f (Distinctspec g) = Distinctspec (fmap f g)
+
+instance Applicative (Distinctspec a) where
+  pure = Distinctspec . pure
+  Distinctspec f <*> Distinctspec x = Distinctspec (f <*> x)
+
+instance P.Profunctor Distinctspec where
+  dimap f g (Distinctspec q) = Distinctspec (P.dimap f g q)
+
+instance PP.ProductProfunctor Distinctspec where
+  empty = PP.defaultEmpty
+  (***!) = PP.defaultProfunctorProduct
+
+-- }

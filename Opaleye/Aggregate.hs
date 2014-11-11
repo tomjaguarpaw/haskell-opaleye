@@ -1,4 +1,4 @@
-module Opaleye.Aggregate where
+module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator)
