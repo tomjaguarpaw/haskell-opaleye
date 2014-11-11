@@ -53,14 +53,14 @@ many operators and instances.  This is a very small amount of work and
 would be a good starter project.  Patches for this are welcome.  For
 example
 
-    * `RunQuery` is fully implemented but most of the `QueryRunner`
-      instances just need to be written down.
-    * Support for numeric, boolean, etc. operators is fully
-      implemented but many of them still need to be written down.
-    * Support for binary set operations and `OUTER JOIN`s is fully
-      implemented but the definitions of `UNION`, `INTERSECT`,
-      `INTERSECT ALL`, `RIGHT JOIN`, `FULL OUTER JOIN` etc. still need
-      to be written down.
+* `RunQuery` is fully implemented but most of the `QueryRunner`
+  instances just need to be written down.
+* Support for numeric, boolean, etc. operators is fully
+  implemented but many of them still need to be written down.
+* Support for binary set operations and `OUTER JOIN`s is fully
+  implemented but the definitions of `UNION`, `INTERSECT`,
+  `INTERSECT ALL`, `RIGHT JOIN`, `FULL OUTER JOIN` etc. still need
+  to be written down.
 
 Opaleye 0 and Opaleye 1 can exist together in the same codebase
 because they have different package names and different module
