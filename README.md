@@ -28,6 +28,12 @@ The namespace has changed from Karamaan.Opaleye to Opaleye.  Many of
 the version 0 modules were very cluttered with deprecated names.  They
 have been cleaned and tidied.
 
+### `Nullable` is no longer a synonym for `Maybe`
+
+`Nullable` is now a new type independent of `Maybe`.  `runQuery` still
+converts it to `Maybe` but Opaleye-side code should use `Nullable`
+instead of `Maybe`.
+
 ## Internal changes
 
 ### SQL generation
