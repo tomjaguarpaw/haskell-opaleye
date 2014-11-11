@@ -13,10 +13,14 @@
 
 ### Very easy
 
+* Functions for working with Nullable columns
 * RIGHT JOIN, FULL OUTER JOIN
 * Set operations
-    * DIFFERENCE
+    * EXCEPT
+    * EXCEPT ALL
     * UNION
+    * INTERSECT
+    * INTERSECT ALL
 
 ### Require a bit of work
 
