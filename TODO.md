@@ -1,5 +1,7 @@
 # High priority
 
+* Make a forked HaskellDB package called haskelldb-opaleye that is
+  just for the use of Opaleye
 * Manipulation
     * Insert
     * Update
