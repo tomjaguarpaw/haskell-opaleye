@@ -1,5 +1,8 @@
 module Opaleye.Internal.NEList where
 
+import Control.Applicative (Applicative(..))
+
+
 data NEList a = NEList a [a] deriving Show
 
 singleton :: a -> NEList a
@@ -13,6 +16,11 @@ neCat (NEList a as) bs = NEList a (as ++ toList bs)
 
 instance Functor NEList where
   fmap f (NEList a as) = NEList (f a) (fmap f as)
+
+instance Applicative NEList where
+  pure = flip NEList []
+  f <*> x = let (y:ys) = toList f <*> toList x
+            in NEList y ys
 
 instance Monad NEList where
   return = flip NEList []
