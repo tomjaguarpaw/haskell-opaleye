@@ -55,17 +55,12 @@ fieldQueryRunnerUnclassed :: FieldParser a -> QueryRunner (Column a) a
 fieldQueryRunnerUnclassed = QueryRunner (P.rmap (const ()) U.unpackspecColumn)
                             . fieldWith
 
-instance D.Default QueryRunner (Column Int) Int where
-  def = fieldQueryRunner
-
-instance D.Default QueryRunner (Column Integer) Integer where
-  def = fieldQueryRunner
-
-instance D.Default QueryRunner (Column Double) Double where
+instance FromField a => D.Default QueryRunner (Column a) a where
   def = fieldQueryRunner
 
 -- The unsafeCoerce is a bit silly here
-instance D.Default QueryRunner (Column (Nullable Int)) (Maybe Int) where
+instance (FromField a, D.Default QueryRunner (Column a) a)
+      => D.Default QueryRunner (Column (Nullable a)) (Maybe a) where
   def = P.lmap C.unsafeCoerce fieldQueryRunner
 
 -- {
