@@ -119,6 +119,11 @@ ways.
 twoIntTable :: String -> T.Table (TableColumn Int, TableColumn Int)
 twoIntTable n = T.makeTable (T.Table n ("column1", "column2"))
 
+twoIntWriteable :: String
+                -> T.Writeable (Column Int, Column Int) (Column Int, Column Int)
+twoIntWriteable n =
+  T.Writeable n (PP.p2 (T.required "column1", T.required "column2"))
+
 table1 :: T.Table (TableColumn Int, TableColumn Int)
 table1 = twoIntTable "table1"
 
@@ -129,16 +134,13 @@ table3 :: T.Table (TableColumn Int, TableColumn Int)
 table3 = twoIntTable "table3"
 
 writeable1 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
-writeable1 = T.Writeable "table1"
-                         (PP.p2 (T.required "column1", T.required "column2"))
+writeable1 = twoIntWriteable "table1"
 
 writeable2 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
-writeable2 = T.Writeable "table2"
-                         (PP.p2 (T.required "column1", T.required "column2"))
+writeable2 = twoIntWriteable "table2"
 
 writeable3 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
-writeable3 = T.Writeable "table3"
-                         (PP.p2 (T.required "column1", T.required "column2"))
+writeable3 = twoIntWriteable "table3"
 
 table1Q :: Query (Column Int, Column Int)
 table1Q = T.queryTable table1
