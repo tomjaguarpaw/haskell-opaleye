@@ -28,6 +28,7 @@ library
                    Opaleye.Column,
                    Opaleye.Distinct,
                    Opaleye.Join,
+                   Opaleye.Manipulation,
                    Opaleye.Operators,
                    Opaleye.Order,
                    Opaleye.QueryArr,

@@ -17,6 +17,7 @@ import qualified Opaleye.Aggregate as Agg
 import qualified Opaleye.Join as J
 import qualified Opaleye.Values as V
 import qualified Opaleye.Binary as B
+import qualified Opaleye.Manipulation as M
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Profunctor.Product.Default as D
@@ -25,6 +26,8 @@ import qualified Data.Profunctor as P
 import qualified Data.Ord as Ord
 import qualified Data.List as L
 import           Data.Monoid ((<>))
+import qualified Data.String as St
+
 import qualified System.Exit as Exit
 
 import qualified Control.Applicative as A
@@ -119,6 +122,10 @@ twoIntTable n = T.makeTable (T.Table n ("column1", "column2"))
 table1 :: T.Table (TableColumn Int, TableColumn Int)
 table1 = twoIntTable "table1"
 
+writeable1 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
+writeable1 = T.Writeable "table1"
+                         (PP.p2 (T.required "column1", T.required "column2"))
+
 table2 :: T.Table (TableColumn Int, TableColumn Int)
 table2 = twoIntTable "table2"
 
@@ -140,12 +147,28 @@ table1data = [ (1, 100)
              , (1, 200)
              , (2, 300) ]
 
+table1columndata :: [(Column Int, Column Int)]
+table1columndata = [ (1, 100)
+                   , (1, 100)
+                   , (1, 200)
+                   , (2, 300) ]
+
 table2data :: [(Int, Int)]
 table2data = [ (1, 100)
              , (3, 400) ]
 
 table3data :: [(Int, Int)]
 table3data = [ (1, 50) ]
+
+dropAndCreateTable :: String -> SQL.Query
+dropAndCreateTable t = St.fromString ("DROP TABLE IF EXISTS " ++ t ++ ";"
+                                      ++ "CREATE TABLE " ++ t
+                                      ++ " (column1 integer, column2 integer);")
+
+dropAndCreateDB :: SQL.Connection -> IO ()
+dropAndCreateDB conn = do
+  mapM_ execute ["table1"]
+  where execute = SQL.execute_ conn . dropAndCreateTable
 
 type Test = SQL.Connection -> IO Bool
 
@@ -390,6 +413,10 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
 main :: IO ()
 main = do
   conn <- SQL.connect connectInfo
+
+  dropAndCreateDB conn
+
+  mapM_ (M.runInsert conn writeable1) table1columndata
 
   results <- mapM ($ conn) allTests
 
