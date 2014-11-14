@@ -141,17 +141,17 @@ table2Q = T.queryTable table2
 table3Q :: Query (Column Int, Column Int)
 table3Q = T.queryTable table3
 
+table1dataG :: Num a => [(a, a)]
+table1dataG = [ (1, 100)
+              , (1, 100)
+              , (1, 200)
+              , (2, 300) ]
+
 table1data :: [(Int, Int)]
-table1data = [ (1, 100)
-             , (1, 100)
-             , (1, 200)
-             , (2, 300) ]
+table1data = table1dataG
 
 table1columndata :: [(Column Int, Column Int)]
-table1columndata = [ (1, 100)
-                   , (1, 100)
-                   , (1, 200)
-                   , (2, 300) ]
+table1columndata = table1dataG
 
 table2data :: [(Int, Int)]
 table2data = [ (1, 100)
