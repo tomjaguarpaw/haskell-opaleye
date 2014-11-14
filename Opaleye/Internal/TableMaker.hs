@@ -16,6 +16,7 @@ import           Control.Applicative (Applicative, pure, (<*>))
 import qualified Database.HaskellDB.PrimQuery as PQ
 
 
+-- TODO: This should be the equivalent of a Control.Lens.Setter
 newtype TableColumnMaker strings tablecolumns =
   TableColumnMaker (PM.PackMap () () strings tablecolumns)
 

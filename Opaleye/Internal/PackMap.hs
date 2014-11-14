@@ -12,6 +12,19 @@ import qualified Data.Functor.Identity as I
 -- This is rather like a Control.Lens.Traversal with the type
 -- parameters switched but I'm not sure if it should be required to
 -- obey the same laws.
+--
+-- TODO: We should actually generalise this to
+--
+-- data LensLike f a b s t = LensLike ((a -> f b) -> s -> f t)
+--
+-- i.e. a wrapped, argument-flipped Control.Lens.LensLike
+--
+-- This would allow us to do the Profunctor and ProductProfunctor
+-- instances (requiring just Functor f and Applicative f respectively)
+-- and share them between many different restrictions of f.  For
+-- example, TableColumnMaker is like a Setter so we would restrict f
+-- to the Distributive case.  There are probably other examples but I
+-- haven't looked yet.
 data PackMap a b s t = PackMap (Applicative f =>
                                 (a -> f b) -> s -> f t)
 
