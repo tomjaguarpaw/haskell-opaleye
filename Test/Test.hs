@@ -122,15 +122,23 @@ twoIntTable n = T.makeTable (T.Table n ("column1", "column2"))
 table1 :: T.Table (TableColumn Int, TableColumn Int)
 table1 = twoIntTable "table1"
 
-writeable1 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
-writeable1 = T.Writeable "table1"
-                         (PP.p2 (T.required "column1", T.required "column2"))
-
 table2 :: T.Table (TableColumn Int, TableColumn Int)
 table2 = twoIntTable "table2"
 
 table3 :: T.Table (TableColumn Int, TableColumn Int)
 table3 = twoIntTable "table3"
+
+writeable1 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
+writeable1 = T.Writeable "table1"
+                         (PP.p2 (T.required "column1", T.required "column2"))
+
+writeable2 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
+writeable2 = T.Writeable "table2"
+                         (PP.p2 (T.required "column1", T.required "column2"))
+
+writeable3 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
+writeable3 = T.Writeable "table3"
+                         (PP.p2 (T.required "column1", T.required "column2"))
 
 table1Q :: Query (Column Int, Column Int)
 table1Q = T.queryTable table1
@@ -153,12 +161,24 @@ table1data = table1dataG
 table1columndata :: [(Column Int, Column Int)]
 table1columndata = table1dataG
 
+table2dataG :: Num a => [(a, a)]
+table2dataG = [ (1, 100)
+              , (3, 400) ]
+
 table2data :: [(Int, Int)]
-table2data = [ (1, 100)
-             , (3, 400) ]
+table2data = table2dataG
+
+table2columndata :: [(Column Int, Column Int)]
+table2columndata = table2dataG
+
+table3dataG :: Num a => [(a, a)]
+table3dataG = [ (1, 50) ]
 
 table3data :: [(Int, Int)]
-table3data = [ (1, 50) ]
+table3data = table3dataG
+
+table3columndata :: [(Column Int, Column Int)]
+table3columndata = table3dataG
 
 dropAndCreateTable :: String -> SQL.Query
 dropAndCreateTable t = St.fromString ("DROP TABLE IF EXISTS " ++ t ++ ";"
@@ -167,7 +187,7 @@ dropAndCreateTable t = St.fromString ("DROP TABLE IF EXISTS " ++ t ++ ";"
 
 dropAndCreateDB :: SQL.Connection -> IO ()
 dropAndCreateDB conn = do
-  mapM_ execute ["table1"]
+  mapM_ execute ["table1", "table2", "table3"]
   where execute = SQL.execute_ conn . dropAndCreateTable
 
 type Test = SQL.Connection -> IO Bool
@@ -417,6 +437,8 @@ main = do
   dropAndCreateDB conn
 
   mapM_ (M.runInsert conn writeable1) table1columndata
+  mapM_ (M.runInsert conn writeable2) table2columndata
+  mapM_ (M.runInsert conn writeable3) table3columndata
 
   results <- mapM ($ conn) allTests
 
