@@ -438,9 +438,12 @@ main = do
 
   dropAndCreateDB conn
 
-  mapM_ (M.runInsert conn writeable1) table1columndata
-  mapM_ (M.runInsert conn writeable2) table2columndata
-  mapM_ (M.runInsert conn writeable3) table3columndata
+  let insert (writeable, columndata) =
+        mapM_ (M.runInsert conn writeable) columndata
+
+  mapM_ insert [ (writeable1, table1columndata)
+               , (writeable2, table2columndata)
+               , (writeable3, table3columndata) ]
 
   results <- mapM ($ conn) allTests
 
