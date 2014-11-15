@@ -14,6 +14,12 @@ data SingleOrder a = SingleOrder HPQ.OrderOp (a -> HPQ.PrimExpr)
 instance C.Contravariant SingleOrder where
   contramap f (SingleOrder op g) = SingleOrder op (P.lmap f g)
 
+{-|
+An `Order` represents an expression to order on and a sort
+direction. Multiple `Order`s can be composed with
+`Data.Monoid.mappend`.  If two rows are equal according to the first
+`Order`, the second is used, and so on.
+-}
 newtype Order a = Order [SingleOrder a]
 
 instance C.Contravariant Order where
