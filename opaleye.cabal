@@ -38,6 +38,7 @@ library
                    Opaleye.Values,
                    Opaleye.Internal.Aggregate,
                    Opaleye.Internal.Distinct,
+                   Opaleye.Internal.Join,
                    Opaleye.Internal.NEList,
                    Opaleye.Internal.Order,
                    Opaleye.Internal.Optimize,
