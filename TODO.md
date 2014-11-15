@@ -11,6 +11,7 @@
 
 ### Very easy
 
+* A Prelude module for re-exporting everything
 * There may be some missing operators that just need to be written down
 * RIGHT JOIN, FULL OUTER JOIN
 * Set operations
