@@ -12,7 +12,6 @@
 ### Very easy
 
 * There may be some missing operators that just need to be written down
-* Functions for working with Nullable columns
 * RIGHT JOIN, FULL OUTER JOIN
 * Set operations
     * EXCEPT
