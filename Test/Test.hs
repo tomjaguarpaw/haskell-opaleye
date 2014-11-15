@@ -4,7 +4,6 @@
 module Main where
 
 import qualified Opaleye.Table as T
-import           Opaleye.Table (TableColumn)
 import           Opaleye.Column (Column, Nullable)
 import qualified Opaleye.Column as C
 import           Opaleye.Operators ((.==))
@@ -116,7 +115,7 @@ ways.
 
 -}
 
-twoIntTable :: String -> T.Table (TableColumn Int, TableColumn Int)
+twoIntTable :: String -> T.Table (Column Int, Column Int)
 twoIntTable n = T.makeTable (T.Table n ("column1", "column2"))
 
 twoIntWriteable :: String
@@ -124,13 +123,17 @@ twoIntWriteable :: String
 twoIntWriteable n =
   T.Writeable n (PP.p2 (T.required "column1", T.required "column2"))
 
-table1 :: T.Table (TableColumn Int, TableColumn Int)
+table1 :: T.Table (Column Int, Column Int)
 table1 = twoIntTable "table1"
 
-table2 :: T.Table (TableColumn Int, TableColumn Int)
+table1F :: T.Table (Column Int, Column Int)
+table1F = T.Table name (col1 + col2, col1 - col2)
+  where T.Table name (col1, col2) = table1
+
+table2 :: T.Table (Column Int, Column Int)
 table2 = twoIntTable "table2"
 
-table3 :: T.Table (TableColumn Int, TableColumn Int)
+table3 :: T.Table (Column Int, Column Int)
 table3 = twoIntTable "table3"
 
 writeable1 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
@@ -421,6 +424,12 @@ testUnionAll :: Test
 testUnionAll = testG (table1Q `B.unionAll` table2Q)
                      (\r -> L.sort (table1data ++ table2data) == L.sort r)
 
+testTableFunctor :: Test
+testTableFunctor = testG table1FQ (result ==)
+  where result = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1data
+        table1FQ :: Query (Column Int, Column Int)
+        table1FQ = T.queryTable table1F
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
@@ -429,7 +438,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
             testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
-            testValuesEmpty, testUnionAll
+            testValuesEmpty, testUnionAll, testTableFunctor
            ]
 
 main :: IO ()

@@ -69,9 +69,9 @@ sql (pq, pes) = SelectFrom $ newSelect { attrs = makeAttrs pes
 unit :: Select
 unit = SelectFrom newSelect { attrs  = [(S.ConstSqlExpr "0", Nothing)] }
 
-baseTable :: String -> [(PQ.Symbol, String)] -> Select
+baseTable :: String -> [(PQ.Symbol, HP.PrimExpr)] -> Select
 baseTable name columns = SelectFrom $
-    newSelect { attrs = map (\(sym, col) -> (S.ColumnSqlExpr col, Just sym)) columns
+    newSelect { attrs = map (\(sym, col) -> (sqlExpr col, Just sym)) columns
               , tables = [Table name] }
 
 product :: NE.NEList Select -> [HP.PrimExpr] -> Select

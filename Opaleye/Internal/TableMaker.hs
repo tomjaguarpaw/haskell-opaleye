@@ -2,7 +2,6 @@
 
 module Opaleye.Internal.TableMaker where
 
-import qualified Opaleye.Internal.Table as T
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.PackMap as PM
 
@@ -17,11 +16,11 @@ import qualified Database.HaskellDB.PrimQuery as PQ
 
 
 -- TODO: This should be the equivalent of a Control.Lens.Setter
-newtype TableColumnMaker strings tablecolumns =
-  TableColumnMaker (PM.PackMap () () strings tablecolumns)
+newtype TableColumnMaker strings columns =
+  TableColumnMaker (PM.PackMap () () strings columns)
 
-newtype ColumnMaker tablecolumns columns =
-  ColumnMaker (PM.PackMap String String tablecolumns columns)
+newtype ColumnMaker columns columns' =
+  ColumnMaker (PM.PackMap PQ.PrimExpr PQ.PrimExpr columns columns')
 
 runTableColumnMaker :: TableColumnMaker strings tablecolumns ->
                        strings -> tablecolumns
@@ -29,24 +28,24 @@ runTableColumnMaker (TableColumnMaker f) = PM.over f id
 
 runColumnMaker :: Applicative f
                   => ColumnMaker tablecolumns columns
-                  -> (String -> f (String))
+                  -> (PQ.PrimExpr -> f PQ.PrimExpr)
                   -> tablecolumns -> f columns
 runColumnMaker (ColumnMaker f) = PM.packmap f
 
 -- There's surely a way of simplifying this implementation
-tableColumn :: TableColumnMaker String (T.TableColumn a)
+tableColumn :: TableColumnMaker String (C.Column a)
 tableColumn = TableColumnMaker
-              (PM.PackMap (\f s -> fmap (const (T.TableColumn s)) (f ())))
+              (PM.PackMap (\f s -> fmap (const ((C.Column . PQ.AttrExpr) s)) (f ())))
 
-column :: ColumnMaker (T.TableColumn a) (C.Column a)
+column :: ColumnMaker (C.Column a) (C.Column a)
 column = ColumnMaker
-         (PM.PackMap (\f (T.TableColumn s)
-                      -> fmap (C.Column . PQ.AttrExpr) (f s)))
+         (PM.PackMap (\f (C.Column s)
+                      -> fmap C.Column (f s)))
 
-instance Default TableColumnMaker String (T.TableColumn a) where
+instance Default TableColumnMaker String (C.Column a) where
   def = tableColumn
 
-instance Default ColumnMaker (T.TableColumn a) (C.Column a) where
+instance Default ColumnMaker (C.Column a) (C.Column a) where
   def = column
 
 -- {

@@ -11,6 +11,7 @@ import qualified Opaleye.Internal.Table as T
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.Values as V
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
@@ -39,26 +40,31 @@ queryTableExplicit :: TM.ColumnMaker tablecolumns columns ->
                       Table tablecolumns -> QA.Query columns
 queryTableExplicit cm table = QA.simpleQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
-    (retwires, primQ) = queryTable' cm table (Tag.tagWith t0)
+    (retwires, primQ) = queryTable' cm table t0
 
 queryTable' :: TM.ColumnMaker tablecolumns columns
             -> Table tablecolumns
-            -> (String -> String)
+            -> Tag.Tag
             -> (columns, PQ.PrimQuery)
 queryTable' cm table tag = (primExprs, primQ) where
   (Table tableName tableCols) = table
-  (projcols, primExprs) = runColumnMaker cm tag tableCols
+  (primExprs, projcols) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
   primQ = PQ.BaseTable tableName projcols
 
 runColumnMaker :: TM.ColumnMaker tablecolumns columns
-                  -> (HPQ.Attribute -> String)
+                  -> Tag.Tag
                   -> tablecolumns
-                  -> ([(String, String)], columns)
-runColumnMaker cm tag tableCols = TM.runColumnMaker cm f tableCols where
-  -- Using or abusing the instance
-  -- Monoid a => Applicative (a, b)
-  f s = ([(tag s, s)], tag s)
+                  -> (columns, [(String, HPQ.PrimExpr)])
+runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) where
+  f = V.extractAttrPE mkName tag
+  -- The non-AttrExpr PrimExprs are not created by 'makeTable' or a
+  -- 'TableColumnMaker' so could only arise from an fmap (if we
+  -- implemented a Functor instance) or a direct manipulation of the
+  -- tablecols contained in the Table (which would be naughty)
+  mkName pe i = (++ i) $ case pe of
+    HPQ.AttrExpr columnName -> columnName
+    _ -> "tablecolumn"
 
 -- TODO: This should be the equivalent of a Control.Lens.Fold
 data Writer columns a = Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())

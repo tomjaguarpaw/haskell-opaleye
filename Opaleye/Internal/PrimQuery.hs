@@ -16,7 +16,7 @@ data JoinType = LeftJoin deriving Show
 -- We use an NEList for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
 data PrimQuery = Unit
-               | BaseTable String [(Symbol, String)]
+               | BaseTable String [(Symbol, PQ.PrimExpr)]
                | Product (NE.NEList PrimQuery) [PQ.PrimExpr]
                | Aggregate [(Symbol, Maybe PQ.AggrOp, PQ.PrimExpr)] PrimQuery
                | Order [PQ.OrderExpr] PrimQuery
@@ -27,7 +27,7 @@ data PrimQuery = Unit
                  deriving Show
 
 type PrimQueryFold p = ( p
-                       , String -> [(Symbol, String)] -> p
+                       , String -> [(Symbol, PQ.PrimExpr)] -> p
                        , NE.NEList p -> [PQ.PrimExpr] -> p
                        , [(Symbol, Maybe PQ.AggrOp, PQ.PrimExpr)] -> p -> p
                        , [PQ.OrderExpr] -> p -> p
