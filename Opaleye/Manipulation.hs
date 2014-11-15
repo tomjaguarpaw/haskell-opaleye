@@ -20,7 +20,7 @@ infixr 8 .:
 infixr 8 .::
 
 (.::) :: (r -> z) -> (a -> b -> c -> d -> r) -> a -> b -> c -> d -> z
-(.::) f g a b c d= f (g a b c d)
+(.::) f g a b c d = f (g a b c d)
 
 arrangeInsert :: T.Writeable columns columns' -> columns -> HSql.SqlInsert
 arrangeInsert (T.Writeable tableName writer) columns = insert
