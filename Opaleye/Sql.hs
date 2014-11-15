@@ -10,7 +10,7 @@ import qualified Opaleye.Internal.Print as Pr
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Optimize as Op
 import           Opaleye.Internal.Helpers ((.:))
-import qualified Opaleye.QueryArr as Q
+import qualified Opaleye.Internal.QueryArr as Q
 
 import qualified Data.Profunctor.Product.Default as D
 

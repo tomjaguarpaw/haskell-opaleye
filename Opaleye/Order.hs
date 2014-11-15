@@ -2,7 +2,7 @@ module Opaleye.Order (module Opaleye.Order, O.Order) where
 
 import qualified Opaleye.Column as C
 import           Opaleye.QueryArr (Query)
-import qualified Opaleye.QueryArr as Q
+import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Order as O
 
 import qualified Database.HaskellDB.PrimQuery as HPQ

@@ -44,6 +44,7 @@ library
                    Opaleye.Internal.PackMap,
                    Opaleye.Internal.PrimQuery,
                    Opaleye.Internal.Print,
+                   Opaleye.Internal.QueryArr,
                    Opaleye.Internal.Sql,
                    Opaleye.Internal.Table,
                    Opaleye.Internal.TableMaker,

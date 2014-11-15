@@ -2,7 +2,7 @@
 
 module Opaleye.Values where
 
-import qualified Opaleye.QueryArr as Q
+import qualified Opaleye.Internal.QueryArr as Q
 import           Opaleye.QueryArr (Query)
 import           Opaleye.Internal.Values as V
 import qualified Opaleye.Internal.Unpackspec as U

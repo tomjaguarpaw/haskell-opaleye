@@ -7,7 +7,7 @@ module Opaleye.Operators (module Opaleye.Operators,
 import           Opaleye.Internal.Column (Column(Column), (.==), case_, (.>),
                                           ifThenElse)
 import qualified Opaleye.Internal.Column as C
-import           Opaleye.QueryArr (QueryArr(QueryArr))
+import           Opaleye.Internal.QueryArr (QueryArr(QueryArr))
 import qualified Opaleye.Internal.PrimQuery as PQ
 
 import qualified Database.HaskellDB.PrimQuery as HPQ

@@ -4,7 +4,7 @@ module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator)
 import           Opaleye.QueryArr (Query)
-import qualified Opaleye.QueryArr as Q
+import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
 
 import qualified Database.HaskellDB.PrimQuery as HPQ

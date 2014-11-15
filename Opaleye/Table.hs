@@ -7,7 +7,7 @@ module Opaleye.Table (module Opaleye.Table,
                       TableProperties) where
 
 import           Opaleye.Internal.Column (Column(Column))
-import qualified Opaleye.QueryArr as QA
+import qualified Opaleye.Internal.QueryArr as QA
 import qualified Opaleye.Internal.Table as T
 import           Opaleye.Internal.Table (View(View), Writer(Writer),
                                          Table, TableProperties)
