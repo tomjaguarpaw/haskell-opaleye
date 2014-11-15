@@ -29,7 +29,7 @@ data Binaryspec columns columns' =
 runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> ((HPQ.PrimExpr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
                  -> (columns, columns) -> f columns'
-runBinaryspec (Binaryspec b) f = PM.packmap b f
+runBinaryspec (Binaryspec b) = PM.packmap b
 
 instance Default Binaryspec (Column a) (Column a) where
   def = Binaryspec (PM.PackMap (\f (Column e, Column e')

@@ -11,4 +11,4 @@ restrict = QueryArr f where
   f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
 
 doubleOfInt :: Column Int -> Column Double
-doubleOfInt (Column e) = (Column (HPQ.CastExpr "double precision" e))
+doubleOfInt (Column e) = Column (HPQ.CastExpr "double precision" e)

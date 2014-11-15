@@ -9,15 +9,9 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.QueryArr as Q
-import           Opaleye.Column (Column(Column), Nullable)
-import qualified Opaleye.Column as C
-import qualified Opaleye.Internal.Values as V
+import           Opaleye.Column (Column(Column))
 
-import           Data.Profunctor (Profunctor, dimap)
-import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
-
-import qualified Database.HaskellDB.PrimQuery as HPQ
 
 leftJoin  :: (D.Default U.Unpackspec columnsA columnsA,
               D.Default U.Unpackspec columnsB columnsB,

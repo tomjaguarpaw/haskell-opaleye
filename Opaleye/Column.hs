@@ -42,7 +42,7 @@ instance (Q.ShowConstant a, Num a) => Num (Column a) where
 
   -- We can't use Postgres's 'sign' function because it returns only a
   -- numeric or a double
-  signum c = case_ [((c .> 0), 1), ((c .== 0), 0)] (-1)
+  signum c = case_ [(c .> 0, 1), (c .== 0, 0)] (-1)
 
 instance (Q.ShowConstant a, Fractional a) => Fractional (Column a) where
   fromRational = constant . fromRational

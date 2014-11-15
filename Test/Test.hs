@@ -207,8 +207,7 @@ dropAndCreateTable t = St.fromString ("DROP TABLE IF EXISTS " ++ t ++ ";"
                                       ++ " (column1 integer, column2 integer);")
 
 dropAndCreateDB :: SQL.Connection -> IO ()
-dropAndCreateDB conn = do
-  mapM_ execute ["table1", "table2", "table3", "table4"]
+dropAndCreateDB conn = mapM_ execute ["table1", "table2", "table3", "table4"]
   where execute = SQL.execute_ conn . dropAndCreateTable
 
 type Test = SQL.Connection -> IO Bool
@@ -255,7 +254,7 @@ testDiv = testG query expected
         query = proc () -> do
           t <- Arr.arr (O.doubleOfInt *** O.doubleOfInt) <<< table1Q -< ()
           Arr.returnA -< op t
-        expected = \r -> L.sort (map (op . toDoubles) table1data) == L.sort r
+        expected r = L.sort (map (op . toDoubles) table1data) == L.sort r
         op :: Fractional a => (a, a) -> a
         -- Choosing 0.5 here as it should be exactly representable in
         -- floating point
@@ -287,14 +286,14 @@ aggregateCoerceFIXME' = C.unsafeCoerce
 
 testAggregate :: Test
 testAggregate = testG (Arr.second aggregateCoerceFIXME
-                        <<< (Agg.aggregate (PP.p2 (Agg.groupBy, Agg.sum))
-                                           table1Q))
+                        <<< Agg.aggregate (PP.p2 (Agg.groupBy, Agg.sum))
+                                           table1Q)
                       (\r -> [(1, 400) :: (Int, Integer), (2, 300)] == L.sort r)
 
 testAggregateProfunctor :: Test
 testAggregateProfunctor = testG q expected
-  where q = (Agg.aggregate (PP.p2 (Agg.groupBy, countsum)) table1Q)
-        expected = (\r -> [(1, 1200) :: (Int, Integer), (2, 300)] == L.sort r)
+  where q = Agg.aggregate (PP.p2 (Agg.groupBy, countsum)) table1Q
+        expected r = [(1, 1200) :: (Int, Integer), (2, 300)] == L.sort r
         countsum = P.dimap (\x -> (x,x))
                            (\(x, y) -> aggregateCoerceFIXME' x * y)
                            (PP.p2 (Agg.sum, Agg.count))

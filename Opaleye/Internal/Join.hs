@@ -2,13 +2,9 @@
 
 module Opaleye.Internal.Join where
 
-import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
-import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
-import           Opaleye.QueryArr (Query)
-import qualified Opaleye.QueryArr as Q
-import           Opaleye.Column (Column(Column), Nullable)
+import           Opaleye.Column (Column, Nullable)
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Values as V
 

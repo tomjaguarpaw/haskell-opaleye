@@ -23,7 +23,7 @@ unpackspecColumn = Unpackspec
 runUnpackspec :: Applicative f
                  => Unpackspec columns b
                  -> (PQ.PrimExpr -> f PQ.PrimExpr)
-                 -> (columns -> f b)
+                 -> columns -> f b
 runUnpackspec (Unpackspec f) = PM.packmap f
 
 instance D.Default Unpackspec (C.Column a) (C.Column a) where

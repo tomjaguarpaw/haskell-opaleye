@@ -62,7 +62,7 @@ instance Functor (PackMap a b s) where
 
 instance Applicative (PackMap a b s) where
   pure x = PackMap (pure (pure (pure x)))
-  PackMap f <*> PackMap x = PackMap ((liftA2 (liftA2 (<*>))) f x)
+  PackMap f <*> PackMap x = PackMap (liftA2 (liftA2 (<*>)) f x)
 
 instance Profunctor (PackMap a b) where
   dimap f g (PackMap q) = PackMap (fmap (dimap f (fmap g)) q)
