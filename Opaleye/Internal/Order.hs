@@ -23,8 +23,8 @@ instance M.Monoid (Order a) where
   mempty = Order M.mempty
   Order o `mappend` Order o' = Order (o `M.mappend` o')
 
-orderSpec :: HPQ.OrderOp -> (a -> C.Column b) -> Order a
-orderSpec op f = C.contramap f (Order [SingleOrder op C.unColumn])
+order :: HPQ.OrderOp -> (a -> C.Column b) -> Order a
+order op f = C.contramap f (Order [SingleOrder op C.unColumn])
 
 orderByU :: Order a -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 orderByU os (columns, primQ, t) = (columns, primQ', t)

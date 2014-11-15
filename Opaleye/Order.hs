@@ -12,10 +12,10 @@ orderBy os q =
   Q.simpleQueryArr (O.orderByU os . Q.runSimpleQueryArr q)
 
 desc :: (a -> C.Column b) -> O.Order a
-desc = O.orderSpec HPQ.OpDesc
+desc = O.order HPQ.OpDesc
 
 asc :: (a -> C.Column b) -> O.Order a
-asc = O.orderSpec HPQ.OpAsc
+asc = O.order HPQ.OpAsc
 
 limit :: Int -> Query a -> Query a
 limit n a = Q.simpleQueryArr (O.limit' n . Q.runSimpleQueryArr a)
