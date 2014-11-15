@@ -17,7 +17,7 @@ import qualified Data.Functor.Identity as I
 -- parameters switched but I'm not sure if it should be required to
 -- obey the same laws.
 --
--- TODO: We should actually generalise this to
+-- TODO: We could attempt to generalise this to
 --
 -- data LensLike f a b s t = LensLike ((a -> f b) -> s -> f t)
 --
@@ -27,8 +27,7 @@ import qualified Data.Functor.Identity as I
 -- instances (requiring just Functor f and Applicative f respectively)
 -- and share them between many different restrictions of f.  For
 -- example, TableColumnMaker is like a Setter so we would restrict f
--- to the Distributive case.  There are probably other examples but I
--- haven't looked yet.
+-- to the Distributive case.
 data PackMap a b s t = PackMap (Applicative f =>
                                 (a -> f b) -> s -> f t)
 

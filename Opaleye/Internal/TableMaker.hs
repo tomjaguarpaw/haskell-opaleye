@@ -16,7 +16,8 @@ import           Control.Applicative (Applicative, pure, (<*>))
 import qualified Database.HaskellDB.PrimQuery as PQ
 
 
--- TODO: This should be the equivalent of a Control.Lens.Setter
+-- If we switch to a more lens-like approach to PackMap this should be
+-- the equivalent of a Setter
 newtype ViewColumnMaker strings columns =
   ViewColumnMaker (PM.PackMap () () strings columns)
 

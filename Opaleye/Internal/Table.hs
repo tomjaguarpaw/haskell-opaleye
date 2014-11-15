@@ -23,7 +23,8 @@ data TableProperties writerColumns viewColumns =
 
 data View columns = View columns
 
--- TODO: This should be the equivalent of a Control.Lens.Fold
+-- If we switch to a more lens-like approach to PackMap this should be
+-- the equivalent of a Fold
 
 -- There's no reason the second parameter should exist except that we
 -- use ProductProfunctors more than ProductContravariants so it makes
