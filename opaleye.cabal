@@ -37,6 +37,7 @@ library
                    Opaleye.Table,
                    Opaleye.Values,
                    Opaleye.Internal.Aggregate,
+                   Opaleye.Internal.Binary,
                    Opaleye.Internal.Distinct,
                    Opaleye.Internal.Join,
                    Opaleye.Internal.NEList,
