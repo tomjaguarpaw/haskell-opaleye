@@ -1,4 +1,4 @@
-module Opaleye.Order (module Opaleye.Order, O.OrderSpec) where
+module Opaleye.Order (module Opaleye.Order, O.Order) where
 
 import qualified Opaleye.Column as C
 import           Opaleye.QueryArr (Query)
@@ -7,14 +7,14 @@ import qualified Opaleye.Internal.Order as O
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
-orderBy :: O.OrderSpec a -> Query a -> Query a
+orderBy :: O.Order a -> Query a -> Query a
 orderBy os q =
   Q.simpleQueryArr (O.orderByU os . Q.runSimpleQueryArr q)
 
-desc :: (a -> C.Column b) -> O.OrderSpec a
+desc :: (a -> C.Column b) -> O.Order a
 desc = O.orderSpec HPQ.OpDesc
 
-asc :: (a -> C.Column b) -> O.OrderSpec a
+asc :: (a -> C.Column b) -> O.Order a
 asc = O.orderSpec HPQ.OpAsc
 
 limit :: Int -> Query a -> Query a

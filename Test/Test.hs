@@ -299,7 +299,7 @@ testAggregateProfunctor = testG q expected
                            (\(x, y) -> aggregateCoerceFIXME' x * y)
                            (PP.p2 (Agg.sum, Agg.count))
 
-testOrderByG :: Order.OrderSpec (Column Int, Column Int)
+testOrderByG :: Order.Order (Column Int, Column Int)
                 -> ((Int, Int) -> (Int, Int) -> Ordering)
                 -> Test
 testOrderByG orderQ order = testG (Order.orderBy orderQ table1Q)
