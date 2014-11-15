@@ -19,9 +19,15 @@ constant = Column . PQ.ConstExpr . Q.showConstant
 binOp :: PQ.BinOp -> Column a -> Column b -> Column c
 binOp op (Column e) (Column e') = Column (PQ.BinExpr op e e')
 
+unOp :: PQ.UnOp -> Column a -> Column b
+unOp op (Column e) = Column (PQ.UnExpr op e)
+
 case_ :: [(Column Bool, Column a)] -> Column a -> Column a
 case_ alts (Column otherwise_) = Column (PQ.CaseExpr (unColumns alts) otherwise_)
   where unColumns = map (\(Column e, Column e') -> (e, e'))
+
+ifThenElse :: Column Bool -> Column a -> Column a -> Column a
+ifThenElse cond t f = case_ [(cond, t)] f
 
 (.>) :: Column a -> Column a -> Column Bool
 (.>) = binOp PQ.OpGt
