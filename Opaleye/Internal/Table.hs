@@ -18,33 +18,38 @@ import qualified Data.Profunctor.Product as PP
 import qualified Data.Profunctor.Product.Default as D
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
-data Table tablecols = Table String tablecols
+data View columns = View String columns
 
-makeTable :: D.Default TM.TableColumnMaker strings tablecolumns =>
-             Table strings -> Table tablecolumns
-makeTable = makeTableExplicit D.def
+-- TODO: This should be the equivalent of a Control.Lens.Fold
+data Writer columns a = Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())
 
-queryTable :: D.Default TM.ColumnMaker columns columns =>
-              Table columns -> QA.Query columns
-queryTable = queryTableExplicit D.def
+data Writeable columns a = Writeable String (Writer columns a)
 
-makeTableExplicit :: TM.TableColumnMaker strings tablecolumns ->
-                     Table strings -> Table tablecolumns
-makeTableExplicit t (Table n strings) =
-  Table n (TM.runTableColumnMaker t strings)
+makeView :: D.Default TM.ViewColumnMaker strings tablecolumns =>
+             View strings -> View tablecolumns
+makeView = makeViewExplicit D.def
 
-queryTableExplicit :: TM.ColumnMaker tablecolumns columns ->
-                      Table tablecolumns -> QA.Query columns
-queryTableExplicit cm table = QA.simpleQueryArr f where
+queryView :: D.Default TM.ColumnMaker columns columns =>
+              View columns -> QA.Query columns
+queryView = queryViewExplicit D.def
+
+makeViewExplicit :: TM.ViewColumnMaker strings tablecolumns ->
+                     View strings -> View tablecolumns
+makeViewExplicit t (View n strings) =
+  View n (TM.runViewColumnMaker t strings)
+
+queryViewExplicit :: TM.ColumnMaker tablecolumns columns ->
+                      View tablecolumns -> QA.Query columns
+queryViewExplicit cm table = QA.simpleQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
-    (retwires, primQ) = queryTable' cm table t0
+    (retwires, primQ) = queryView' cm table t0
 
-queryTable' :: TM.ColumnMaker tablecolumns columns
-            -> Table tablecolumns
+queryView' :: TM.ColumnMaker tablecolumns columns
+            -> View tablecolumns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
-queryTable' cm table tag = (primExprs, primQ) where
-  (Table tableName tableCols) = table
+queryView' cm table tag = (primExprs, primQ) where
+  (View tableName tableCols) = table
   (primExprs, projcols) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
   primQ = PQ.BaseTable tableName projcols
@@ -55,18 +60,13 @@ runColumnMaker :: TM.ColumnMaker tablecolumns columns
                   -> (columns, [(String, HPQ.PrimExpr)])
 runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) where
   f = V.extractAttrPE mkName tag
-  -- The non-AttrExpr PrimExprs are not created by 'makeTable' or a
-  -- 'TableColumnMaker' so could only arise from an fmap (if we
+  -- The non-AttrExpr PrimExprs are not created by 'makeView' or a
+  -- 'ViewColumnMaker' so could only arise from an fmap (if we
   -- implemented a Functor instance) or a direct manipulation of the
-  -- tablecols contained in the Table (which would be naughty)
+  -- tablecols contained in the View (which would be naughty)
   mkName pe i = (++ i) $ case pe of
     HPQ.AttrExpr columnName -> columnName
     _ -> "tablecolumn"
-
--- TODO: This should be the equivalent of a Control.Lens.Fold
-data Writer columns a = Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())
-
-data Writeable columns a = Writeable String (Writer columns a)
 
 runWriter :: Writer columns columns' -> columns -> [(HPQ.PrimExpr, String)]
 runWriter (Writer (PM.PackMap f)) columns = outColumns

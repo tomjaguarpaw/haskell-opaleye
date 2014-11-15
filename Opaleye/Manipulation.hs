@@ -36,34 +36,34 @@ arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
 runInsert :: PG.Connection -> T.Writeable columns columns' -> columns -> IO Int64
 runInsert conn = PG.execute_ conn . fromString .: arrangeInsertSql
 
-arrangeUpdate :: T.Table columnsR -> T.Writeable columnsW columns'
+arrangeUpdate :: T.View columnsR -> T.Writeable columnsW columns'
               -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
               -> HSql.SqlUpdate
-arrangeUpdate (T.Table tableName tableCols) (T.Writeable _ writer) update cond =
+arrangeUpdate (T.View tableName tableCols) (T.Writeable _ writer) update cond =
   HSql.SqlUpdate tableName (update' tableCols) [S.sqlExpr condExpr]
   where update' = map (\(x, y) -> (y, S.sqlExpr x))
                    . TI.runWriter writer
                    . update
         Column condExpr = cond tableCols
 
-arrangeUpdateSql :: T.Table columnsR -> T.Writeable columnsW columns'
+arrangeUpdateSql :: T.View columnsR -> T.Writeable columnsW columns'
               -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
               -> String
 arrangeUpdateSql = show . HPrint.ppUpdate .:: arrangeUpdate
 
-runUpdate :: PG.Connection -> T.Table columnsR -> T.Writeable columnsW columns'
+runUpdate :: PG.Connection -> T.View columnsR -> T.Writeable columnsW columns'
           -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
           -> IO Int64
 runUpdate conn = PG.execute_ conn . fromString .:: arrangeUpdateSql
 
-arrangeDelete :: T.Table columnsR -> (columnsR -> Column Bool) -> HSql.SqlDelete
-arrangeDelete (T.Table tableName tableCols) cond =
+arrangeDelete :: T.View columnsR -> (columnsR -> Column Bool) -> HSql.SqlDelete
+arrangeDelete (T.View tableName tableCols) cond =
   HSql.SqlDelete tableName [S.sqlExpr condExpr]
   where Column condExpr = cond tableCols
 
-arrangeDeleteSql :: T.Table columnsR -> (columnsR -> Column Bool) -> String
+arrangeDeleteSql :: T.View columnsR -> (columnsR -> Column Bool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
-runDelete :: PG.Connection -> T.Table columnsR -> (columnsR -> Column Bool)
+runDelete :: PG.Connection -> T.View columnsR -> (columnsR -> Column Bool)
           -> IO Int64
 runDelete conn = PG.execute_ conn . fromString .: arrangeDeleteSql

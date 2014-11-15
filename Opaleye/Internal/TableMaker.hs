@@ -16,15 +16,15 @@ import qualified Database.HaskellDB.PrimQuery as PQ
 
 
 -- TODO: This should be the equivalent of a Control.Lens.Setter
-newtype TableColumnMaker strings columns =
-  TableColumnMaker (PM.PackMap () () strings columns)
+newtype ViewColumnMaker strings columns =
+  ViewColumnMaker (PM.PackMap () () strings columns)
 
 newtype ColumnMaker columns columns' =
   ColumnMaker (PM.PackMap PQ.PrimExpr PQ.PrimExpr columns columns')
 
-runTableColumnMaker :: TableColumnMaker strings tablecolumns ->
+runViewColumnMaker :: ViewColumnMaker strings tablecolumns ->
                        strings -> tablecolumns
-runTableColumnMaker (TableColumnMaker f) = PM.over f id
+runViewColumnMaker (ViewColumnMaker f) = PM.over f id
 
 runColumnMaker :: Applicative f
                   => ColumnMaker tablecolumns columns
@@ -33,8 +33,8 @@ runColumnMaker :: Applicative f
 runColumnMaker (ColumnMaker f) = PM.packmap f
 
 -- There's surely a way of simplifying this implementation
-tableColumn :: TableColumnMaker String (C.Column a)
-tableColumn = TableColumnMaker
+tableColumn :: ViewColumnMaker String (C.Column a)
+tableColumn = ViewColumnMaker
               (PM.PackMap (\f s -> fmap (const ((C.Column . PQ.AttrExpr) s)) (f ())))
 
 column :: ColumnMaker (C.Column a) (C.Column a)
@@ -42,7 +42,7 @@ column = ColumnMaker
          (PM.PackMap (\f (C.Column s)
                       -> fmap C.Column (f s)))
 
-instance Default TableColumnMaker String (C.Column a) where
+instance Default ViewColumnMaker String (C.Column a) where
   def = tableColumn
 
 instance Default ColumnMaker (C.Column a) (C.Column a) where
@@ -52,17 +52,17 @@ instance Default ColumnMaker (C.Column a) (C.Column a) where
 
 -- Boilerplate instance definitions.  Theoretically, these are derivable.
 
-instance Functor (TableColumnMaker a) where
-  fmap f (TableColumnMaker g) = TableColumnMaker (fmap f g)
+instance Functor (ViewColumnMaker a) where
+  fmap f (ViewColumnMaker g) = ViewColumnMaker (fmap f g)
 
-instance Applicative (TableColumnMaker a) where
-  pure = TableColumnMaker . pure
-  TableColumnMaker f <*> TableColumnMaker x = TableColumnMaker (f <*> x)
+instance Applicative (ViewColumnMaker a) where
+  pure = ViewColumnMaker . pure
+  ViewColumnMaker f <*> ViewColumnMaker x = ViewColumnMaker (f <*> x)
 
-instance Profunctor TableColumnMaker where
-  dimap f g (TableColumnMaker q) = TableColumnMaker (dimap f g q)
+instance Profunctor ViewColumnMaker where
+  dimap f g (ViewColumnMaker q) = ViewColumnMaker (dimap f g q)
 
-instance ProductProfunctor TableColumnMaker where
+instance ProductProfunctor ViewColumnMaker where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 

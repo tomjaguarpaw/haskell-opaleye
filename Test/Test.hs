@@ -115,28 +115,28 @@ ways.
 
 -}
 
-twoIntTable :: String -> T.Table (Column Int, Column Int)
-twoIntTable n = T.makeTable (T.Table n ("column1", "column2"))
+twoIntTable :: String -> T.View (Column Int, Column Int)
+twoIntTable n = T.makeView (T.View n ("column1", "column2"))
 
 twoIntWriteable :: String
                 -> T.Writeable (Column Int, Column Int) (Column Int, Column Int)
 twoIntWriteable n =
   T.Writeable n (PP.p2 (T.required "column1", T.required "column2"))
 
-table1 :: T.Table (Column Int, Column Int)
+table1 :: T.View (Column Int, Column Int)
 table1 = twoIntTable "table1"
 
-table1F :: T.Table (Column Int, Column Int)
-table1F = T.Table name (col1 + col2, col1 - col2)
-  where T.Table name (col1, col2) = table1
+table1F :: T.View (Column Int, Column Int)
+table1F = T.View name (col1 + col2, col1 - col2)
+  where T.View name (col1, col2) = table1
 
-table2 :: T.Table (Column Int, Column Int)
+table2 :: T.View (Column Int, Column Int)
 table2 = twoIntTable "table2"
 
-table3 :: T.Table (Column Int, Column Int)
+table3 :: T.View (Column Int, Column Int)
 table3 = twoIntTable "table3"
 
-table4 :: T.Table (Column Int, Column Int)
+table4 :: T.View (Column Int, Column Int)
 table4 = twoIntTable "table4"
 
 writeable1 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
@@ -152,13 +152,13 @@ writeable4 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
 writeable4 = twoIntWriteable "table4"
 
 table1Q :: Query (Column Int, Column Int)
-table1Q = T.queryTable table1
+table1Q = T.queryView table1
 
 table2Q :: Query (Column Int, Column Int)
-table2Q = T.queryTable table2
+table2Q = T.queryView table2
 
 table3Q :: Query (Column Int, Column Int)
-table3Q = T.queryTable table3
+table3Q = T.queryView table3
 
 table1dataG :: Num a => [(a, a)]
 table1dataG = [ (1, 100)
@@ -440,7 +440,7 @@ testUnionAll = testG (table1Q `B.unionAll` table2Q)
                      (\r -> L.sort (table1data ++ table2data) == L.sort r)
 
 testTableFunctor :: Test
-testTableFunctor = testG (T.queryTable table1F) (result ==)
+testTableFunctor = testG (T.queryView table1F) (result ==)
   where result = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1data
 
 testUpdate :: Test
@@ -464,7 +464,7 @@ testUpdate conn = do
                    , (22, -18)]
         expectedD :: [(Int, Int)]
         expectedD = [(1, 10)]
-        runQueryTable4 = RQ.runQuery conn (T.queryTable table4)
+        runQueryTable4 = RQ.runQuery conn (T.queryView table4)
 
 
 
