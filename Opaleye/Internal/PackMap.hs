@@ -2,6 +2,10 @@
 
 module Opaleye.Internal.PackMap where
 
+import qualified Opaleye.Internal.Tag as T
+
+import qualified Database.HaskellDB.PrimQuery as HPQ
+
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Monad.Trans.State as S
 import           Data.Profunctor (Profunctor, dimap)
@@ -35,6 +39,8 @@ over :: PackMap a b s t -> (a -> b) -> s -> t
 over p f = I.runIdentity . packmap p (I.Identity . f)
 
 
+-- { A helpful monad for writing columns in the AST
+
 type PM a = S.State (a, Int)
 
 new :: PM a String
@@ -51,6 +57,29 @@ write a = do
 run :: PM [a] r -> (r, [a])
 run m = (r, as)
   where (r, (as, _)) = S.runState m ([], 0)
+
+-- }
+
+
+-- { General functions for writing columns in the AST
+
+-- This one ignores the 'a' when making the internal column name.
+extractAttr :: (String -> String) -> T.Tag -> a
+               -> PM [(String, a)] HPQ.PrimExpr
+extractAttr = extractAttrPE . const
+
+-- This one can make the internal column name depend on the 'a' in
+-- question (probably a PrimExpr)
+extractAttrPE :: (a -> String -> String) -> T.Tag -> a
+               -> PM [(String, a)] HPQ.PrimExpr
+extractAttrPE mkName t pe = do
+  i <- new
+  let s = T.tagWith t (mkName pe i)
+  write (s, pe)
+  return (HPQ.AttrExpr s)
+
+-- }
+
 
 -- {
 

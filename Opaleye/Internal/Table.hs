@@ -7,7 +7,6 @@ import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
-import qualified Opaleye.Internal.Values as V
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
@@ -47,7 +46,7 @@ runColumnMaker :: TM.ColumnMaker tablecolumns columns
                   -> tablecolumns
                   -> (columns, [(String, HPQ.PrimExpr)])
 runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) where
-  f = V.extractAttrPE mkName tag
+  f = PM.extractAttrPE mkName tag
   -- The non-AttrExpr PrimExprs are not created by 'makeView' or a
   -- 'ViewColumnMaker' so could only arise from an fmap (if we
   -- implemented a Functor instance) or a direct manipulation of the

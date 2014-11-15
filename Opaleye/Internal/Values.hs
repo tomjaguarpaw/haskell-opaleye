@@ -63,26 +63,9 @@ extractValuesEntry pe = do
   PM.write pe
   return pe
 
--- TODO: move this to PackMap
--- This one ignores the 'a' when making the internal column name.
-extractAttr :: (String -> String) -> T.Tag -> a
-               -> PM.PM [(String, a)] HPQ.PrimExpr
-extractAttr = extractAttrPE . const
-
--- TODO: move this to PackMap
--- This one can make the internal column name depend on the 'a' in
--- question (probably a PrimExpr)
-extractAttrPE :: (a -> String -> String) -> T.Tag -> a
-               -> PM.PM [(String, a)] HPQ.PrimExpr
-extractAttrPE mkName t pe = do
-  i <- PM.new
-  let s = T.tagWith t (mkName pe i)
-  PM.write (s, pe)
-  return (HPQ.AttrExpr s)
-
 extractValuesField :: T.Tag -> HPQ.PrimExpr
                    -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
-extractValuesField = extractAttr ("values" ++)
+extractValuesField = PM.extractAttr ("values" ++)
 
 data Valuesspec columns columns' =
   Valuesspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')

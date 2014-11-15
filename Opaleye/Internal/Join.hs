@@ -6,7 +6,6 @@ import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
 import           Opaleye.Internal.Column (Column, Nullable)
 import qualified Opaleye.Column as C
-import qualified Opaleye.Internal.Values as V
 
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
@@ -21,7 +20,7 @@ toNullable (NullMaker f) = f
 
 extractLeftJoinFields :: Int -> T.Tag -> HPQ.PrimExpr
             -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
-extractLeftJoinFields n = V.extractAttr (\i -> "result" ++ show n ++ "_" ++ i)
+extractLeftJoinFields n = PM.extractAttr (\i -> "result" ++ show n ++ "_" ++ i)
 
 instance D.Default NullMaker (Column a) (Column (Nullable a)) where
   def = NullMaker C.unsafeCoerce

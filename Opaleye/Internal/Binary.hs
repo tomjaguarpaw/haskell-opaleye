@@ -5,7 +5,6 @@ module Opaleye.Internal.Binary where
 import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
-import qualified Opaleye.Internal.Values as V
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
@@ -20,7 +19,7 @@ import           Control.Arrow ((***))
 extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
                     -> PM.PM [(String, (HPQ.PrimExpr, HPQ.PrimExpr))]
                              HPQ.PrimExpr
-extractBinaryFields = V.extractAttr ("binary" ++)
+extractBinaryFields = PM.extractAttr ("binary" ++)
 
 data Binaryspec columns columns' =
   Binaryspec (PM.PackMap (HPQ.PrimExpr, HPQ.PrimExpr) HPQ.PrimExpr
