@@ -3,7 +3,7 @@ module Opaleye.Manipulation where
 import qualified Opaleye.Internal.Sql as S
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
-import           Opaleye.Column (Column(Column))
+import           Opaleye.Internal.Column (Column(Column))
 
 import qualified Database.HaskellDB.Sql as HSql
 import qualified Database.HaskellDB.Sql.Print as HPrint

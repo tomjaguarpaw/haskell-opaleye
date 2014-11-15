@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.Table where
 
-import           Opaleye.Column (Column(Column))
+import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.PrimQuery as PQ

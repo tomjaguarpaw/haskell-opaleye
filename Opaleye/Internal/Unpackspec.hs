@@ -3,6 +3,7 @@
 module Opaleye.Internal.Unpackspec where
 
 import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Column as C
 
 import           Control.Applicative (Applicative, pure, (<*>))
@@ -18,7 +19,7 @@ newtype Unpackspec columns columns' =
 
 unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
 unpackspecColumn = Unpackspec
-                   (PM.PackMap (\f (C.Column pe) -> fmap C.Column (f pe)))
+                   (PM.PackMap (\f (IC.Column pe) -> fmap IC.Column (f pe)))
 
 runUnpackspec :: Applicative f
                  => Unpackspec columns b

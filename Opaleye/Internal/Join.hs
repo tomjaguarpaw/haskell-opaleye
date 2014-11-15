@@ -4,7 +4,7 @@ module Opaleye.Internal.Join where
 
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
-import           Opaleye.Column (Column, Nullable)
+import           Opaleye.Internal.Column (Column, Nullable)
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Values as V
 

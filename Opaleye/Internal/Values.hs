@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.Values where
 
-import           Opaleye.Column (Column(Column))
+import           Opaleye.Internal.Column (Column(Column))
 
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T

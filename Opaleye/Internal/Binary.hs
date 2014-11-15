@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.Binary where
 
-import           Opaleye.Column (Column(Column))
+import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.Values as V

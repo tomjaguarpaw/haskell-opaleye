@@ -11,7 +11,8 @@ import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.String as S
 import           Control.Applicative (Applicative, pure, (<*>))
 
-import           Opaleye.Column (Column, Nullable)
+import           Opaleye.Column (Column)
+import           Opaleye.Internal.Column (Nullable)
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Sql as S

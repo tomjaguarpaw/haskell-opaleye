@@ -1,6 +1,7 @@
 module Opaleye.Internal.Order where
 
 import qualified Opaleye.Column as C
+import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
 
@@ -30,7 +31,7 @@ instance M.Monoid (Order a) where
   Order o `mappend` Order o' = Order (o `M.mappend` o')
 
 order :: HPQ.OrderOp -> (a -> C.Column b) -> Order a
-order op f = C.contramap f (Order [SingleOrder op C.unColumn])
+order op f = C.contramap f (Order [SingleOrder op IC.unColumn])
 
 orderByU :: Order a -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 orderByU os (columns, primQ, t) = (columns, primQ', t)

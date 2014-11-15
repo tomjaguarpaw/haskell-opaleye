@@ -3,6 +3,7 @@
 module Opaleye.Internal.TableMaker where
 
 import qualified Opaleye.Column as C
+import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.PackMap as PM
 
 import           Data.Profunctor (Profunctor, dimap)
@@ -35,12 +36,12 @@ runColumnMaker (ColumnMaker f) = PM.packmap f
 -- There's surely a way of simplifying this implementation
 tableColumn :: ViewColumnMaker String (C.Column a)
 tableColumn = ViewColumnMaker
-              (PM.PackMap (\f s -> fmap (const ((C.Column . PQ.AttrExpr) s)) (f ())))
+              (PM.PackMap (\f s -> fmap (const ((IC.Column . PQ.AttrExpr) s)) (f ())))
 
 column :: ColumnMaker (C.Column a) (C.Column a)
 column = ColumnMaker
-         (PM.PackMap (\f (C.Column s)
-                      -> fmap C.Column (f s)))
+         (PM.PackMap (\f (IC.Column s)
+                      -> fmap IC.Column (f s)))
 
 instance Default ViewColumnMaker String (C.Column a) where
   def = tableColumn

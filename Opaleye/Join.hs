@@ -9,7 +9,7 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.QueryArr as Q
-import           Opaleye.Column (Column(Column))
+import           Opaleye.Internal.Column (Column(Column))
 
 import qualified Data.Profunctor.Product.Default as D
 

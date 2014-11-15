@@ -8,7 +8,7 @@ import qualified Data.Profunctor.Product as PP
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Tag as T
-import qualified Opaleye.Column as C
+import qualified Opaleye.Internal.Column as C
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
