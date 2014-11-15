@@ -1,9 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Opaleye.Table (module Opaleye.Table,
-                      View(..),
-                      Writer(..),
-                      Table(..),
+                      View,
+                      Writer,
+                      Table(Table),
                       TableProperties) where
 
 import           Opaleye.Column (Column(Column))
