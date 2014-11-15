@@ -4,6 +4,7 @@ import qualified Opaleye.Internal.Sql as S
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Helpers ((.:), (.:.))
 
 import qualified Database.HaskellDB.Sql as HSql
 import qualified Database.HaskellDB.Sql.Print as HPrint
@@ -12,16 +13,6 @@ import qualified Database.PostgreSQL.Simple as PG
 
 import           Data.Int (Int64)
 import           Data.String (fromString)
-
-infixr 8 .:
-
-(.:) :: (r -> z) -> (a -> b -> r) -> a -> b -> z
-(.:) f g x y = f (g x y)
-
-infixr 8 .:.
-
-(.:.) :: (r -> z) -> (a -> b -> c -> r) -> a -> b -> c -> z
-(.:.) f g a b c = f (g a b c)
 
 arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert (T.Table tableName (TI.TableProperties writer _)) columns = insert
