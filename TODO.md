@@ -2,10 +2,6 @@
 
 * Make a forked HaskellDB package called haskelldb-opaleye that is
   just for the use of Opaleye
-* Manipulation
-    * Insert
-    * Update
-    * Delete
 
 # Low priority
 
@@ -24,6 +20,7 @@
     * UNION
     * INTERSECT
     * INTERSECT ALL
+* INSERT, UPDATE, DELETE RETURNING
 
 ### Require a bit of work
 
