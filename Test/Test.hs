@@ -425,10 +425,8 @@ testUnionAll = testG (table1Q `B.unionAll` table2Q)
                      (\r -> L.sort (table1data ++ table2data) == L.sort r)
 
 testTableFunctor :: Test
-testTableFunctor = testG table1FQ (result ==)
+testTableFunctor = testG (T.queryTable table1F) (result ==)
   where result = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1data
-        table1FQ :: Query (Column Int, Column Int)
-        table1FQ = T.queryTable table1F
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,

@@ -27,8 +27,8 @@ makeTable :: D.Default TM.TableColumnMaker strings tablecolumns =>
              Table strings -> Table tablecolumns
 makeTable = makeTableExplicit D.def
 
-queryTable :: D.Default TM.ColumnMaker tablecolumns columns =>
-              Table tablecolumns -> QA.Query columns
+queryTable :: D.Default TM.ColumnMaker columns columns =>
+              Table columns -> QA.Query columns
 queryTable = queryTableExplicit D.def
 
 makeTableExplicit :: TM.TableColumnMaker strings tablecolumns ->
