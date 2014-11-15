@@ -12,6 +12,16 @@ import qualified Database.PostgreSQL.Simple as PG
 import           Data.Int (Int64)
 import           Data.String (fromString)
 
+infixr 8 .:
+
+(.:) :: (r -> z) -> (a -> b -> r) -> a -> b -> z
+(.:) f g x y = f (g x y)
+
+infixr 8 .::
+
+(.::) :: (r -> z) -> (a -> b -> c -> d -> r) -> a -> b -> c -> d -> z
+(.::) f g a b c d= f (g a b c d)
+
 arrangeInsert :: T.Writeable columns columns' -> columns -> HSql.SqlInsert
 arrangeInsert (T.Writeable tableName writer) columns = insert
   where outColumns = T.runWriter writer columns
@@ -19,12 +29,11 @@ arrangeInsert (T.Writeable tableName writer) columns = insert
         outColumnSqlExprs = map (S.sqlExpr . fst) outColumns
         insert = HSql.SqlInsert tableName outColumnNames outColumnSqlExprs
 
--- TODO: use .:
 arrangeInsertSql :: T.Writeable columns columns' -> columns -> String
-arrangeInsertSql w c = (show . HPrint.ppInsert) (arrangeInsert w c)
+arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
 
 runInsert :: PG.Connection -> T.Writeable columns columns' -> columns -> IO Int64
-runInsert conn w c = (PG.execute_ conn . fromString) (arrangeInsertSql w c)
+runInsert conn = PG.execute_ conn . fromString .: arrangeInsertSql
 
 arrangeUpdate :: T.Table columnsR -> T.Writeable columnsW columns'
               -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
@@ -36,17 +45,15 @@ arrangeUpdate (T.Table tableName tableCols) (T.Writeable _ writer) update cond =
                    . update
         Column condExpr = cond tableCols
 
--- TODO: use .::
 arrangeUpdateSql :: T.Table columnsR -> T.Writeable columnsW columns'
               -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
               -> String
-arrangeUpdateSql t w u c = (show . HPrint.ppUpdate) (arrangeUpdate t w u c)
+arrangeUpdateSql = show . HPrint.ppUpdate .:: arrangeUpdate
 
 runUpdate :: PG.Connection -> T.Table columnsR -> T.Writeable columnsW columns'
           -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
           -> IO Int64
-runUpdate conn t w u c = (PG.execute_ conn . fromString)
-                         (arrangeUpdateSql t w u c)
+runUpdate conn = PG.execute_ conn . fromString .:: arrangeUpdateSql
 
 arrangeDelete :: T.Table columnsR -> (columnsR -> Column Bool)
               -> HSql.SqlDelete
@@ -54,11 +61,10 @@ arrangeDelete (T.Table tableName tableCols) cond =
   HSql.SqlDelete tableName [S.sqlExpr condExpr]
   where Column condExpr = cond tableCols
 
--- TODO: use .:
 arrangeDeleteSql :: T.Table columnsR -> (columnsR -> Column Bool)
                     -> String
-arrangeDeleteSql t c = (show . HPrint.ppDelete) (arrangeDelete t c)
+arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
 runDelete :: PG.Connection -> T.Table columnsR -> (columnsR -> Column Bool)
           -> IO Int64
-runDelete conn t c = (PG.execute_ conn . fromString) (arrangeDeleteSql t c)
+runDelete conn = PG.execute_ conn . fromString .: arrangeDeleteSql
