@@ -1,13 +1,10 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.Table
-       ( module Opaleye.Table
-       , T.TableColumn) where
+module Opaleye.Table where
 
 import           Opaleye.Column (Column(Column))
 import qualified Opaleye.QueryArr as QA
 import qualified Opaleye.Internal.TableMaker as TM
-import qualified Opaleye.Internal.Table as T
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
