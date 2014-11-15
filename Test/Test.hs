@@ -4,7 +4,7 @@
 module Main where
 
 import qualified Opaleye.Table as T
-import           Opaleye.Column (Column, Nullable)
+import           Opaleye.Column (Column, Nullable, (.>))
 import qualified Opaleye.Column as C
 import           Opaleye.Operators ((.==))
 import qualified Opaleye.Operators as O
@@ -136,6 +136,9 @@ table2 = twoIntTable "table2"
 table3 :: T.Table (Column Int, Column Int)
 table3 = twoIntTable "table3"
 
+table4 :: T.Table (Column Int, Column Int)
+table4 = twoIntTable "table4"
+
 writeable1 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
 writeable1 = twoIntWriteable "table1"
 
@@ -144,6 +147,9 @@ writeable2 = twoIntWriteable "table2"
 
 writeable3 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
 writeable3 = twoIntWriteable "table3"
+
+writeable4 :: T.Writeable (Column Int, Column Int) (Column Int, Column Int)
+writeable4 = twoIntWriteable "table4"
 
 table1Q :: Query (Column Int, Column Int)
 table1Q = T.queryTable table1
@@ -185,6 +191,16 @@ table3data = table3dataG
 table3columndata :: [(Column Int, Column Int)]
 table3columndata = table3dataG
 
+table4dataG :: Num a => [(a, a)]
+table4dataG = [ (1, 10)
+              , (2, 20) ]
+
+table4data :: [(Int, Int)]
+table4data = table4dataG
+
+table4columndata :: [(Column Int, Column Int)]
+table4columndata = table4dataG
+
 dropAndCreateTable :: String -> SQL.Query
 dropAndCreateTable t = St.fromString ("DROP TABLE IF EXISTS " ++ t ++ ";"
                                       ++ "CREATE TABLE " ++ t
@@ -192,7 +208,7 @@ dropAndCreateTable t = St.fromString ("DROP TABLE IF EXISTS " ++ t ++ ";"
 
 dropAndCreateDB :: SQL.Connection -> IO ()
 dropAndCreateDB conn = do
-  mapM_ execute ["table1", "table2", "table3"]
+  mapM_ execute ["table1", "table2", "table3", "table4"]
   where execute = SQL.execute_ conn . dropAndCreateTable
 
 type Test = SQL.Connection -> IO Bool
@@ -428,6 +444,17 @@ testTableFunctor :: Test
 testTableFunctor = testG (T.queryTable table1F) (result ==)
   where result = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1data
 
+testUpdate :: Test
+testUpdate conn = do
+  _ <- M.runUpdate conn table4 writeable4 update cond
+  result <- RQ.runQuery (T.queryTable table4) conn
+  return (result == expected)
+  where update (x, y) = (x + y, x - y)
+        cond (_, y) = y .> 15
+        expected :: [(Int, Int)]
+        expected = [ (1, 10)
+                   , (22, -18)]
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateProfunctor,
@@ -436,7 +463,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
             testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
-            testValuesEmpty, testUnionAll, testTableFunctor
+            testValuesEmpty, testUnionAll, testTableFunctor, testUpdate
            ]
 
 main :: IO ()
@@ -450,7 +477,8 @@ main = do
 
   mapM_ insert [ (writeable1, table1columndata)
                , (writeable2, table2columndata)
-               , (writeable3, table3columndata) ]
+               , (writeable3, table3columndata)
+               , (writeable4, table4columndata) ]
 
   results <- mapM ($ conn) allTests
 
