@@ -25,6 +25,10 @@ data TableProperties writerColumns viewColumns =
 data View columns = View columns
 
 -- TODO: This should be the equivalent of a Control.Lens.Fold
+
+-- There's no reason the second parameter should exist except that we
+-- use ProductProfunctors more than ProductContravariants so it makes
+-- things easier if we make it one of the former.
 data Writer columns dummy =
   Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())
 
