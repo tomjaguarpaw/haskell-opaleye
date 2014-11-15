@@ -12,6 +12,11 @@ import qualified Opaleye.Column as C
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
+{-|
+An 'Aggregator' takes a collection of rows of type @a@, groups
+them, and transforms each group into a single row of type @b@. This
+corresponds to aggregators using @GROUP BY@ in SQL.
+-}
 newtype Aggregator a b = Aggregator
                          (PM.PackMap (HPQ.PrimExpr, Maybe HPQ.AggrOp) HPQ.PrimExpr
                                      a b)
