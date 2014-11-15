@@ -55,14 +55,12 @@ runUpdate :: PG.Connection -> T.Table columnsR -> T.Writeable columnsW columns'
           -> IO Int64
 runUpdate conn = PG.execute_ conn . fromString .:: arrangeUpdateSql
 
-arrangeDelete :: T.Table columnsR -> (columnsR -> Column Bool)
-              -> HSql.SqlDelete
+arrangeDelete :: T.Table columnsR -> (columnsR -> Column Bool) -> HSql.SqlDelete
 arrangeDelete (T.Table tableName tableCols) cond =
   HSql.SqlDelete tableName [S.sqlExpr condExpr]
   where Column condExpr = cond tableCols
 
-arrangeDeleteSql :: T.Table columnsR -> (columnsR -> Column Bool)
-                    -> String
+arrangeDeleteSql :: T.Table columnsR -> (columnsR -> Column Bool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
 runDelete :: PG.Connection -> T.Table columnsR -> (columnsR -> Column Bool)
