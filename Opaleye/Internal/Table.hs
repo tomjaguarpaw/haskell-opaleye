@@ -3,7 +3,6 @@
 module Opaleye.Internal.Table where
 
 import           Opaleye.Column (Column(Column))
-import qualified Opaleye.QueryArr as QA
 import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -15,7 +14,6 @@ import qualified Database.HaskellDB.PrimQuery as HPQ
 import           Data.Profunctor (Profunctor, dimap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
-import qualified Data.Profunctor.Product.Default as D
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
 data View columns = View String columns
@@ -24,25 +22,6 @@ data View columns = View String columns
 data Writer columns a = Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())
 
 data Writeable columns a = Writeable String (Writer columns a)
-
-makeView :: D.Default TM.ViewColumnMaker strings tablecolumns =>
-             View strings -> View tablecolumns
-makeView = makeViewExplicit D.def
-
-queryView :: D.Default TM.ColumnMaker columns columns =>
-              View columns -> QA.Query columns
-queryView = queryViewExplicit D.def
-
-makeViewExplicit :: TM.ViewColumnMaker strings tablecolumns ->
-                     View strings -> View tablecolumns
-makeViewExplicit t (View n strings) =
-  View n (TM.runViewColumnMaker t strings)
-
-queryViewExplicit :: TM.ColumnMaker tablecolumns columns ->
-                      View tablecolumns -> QA.Query columns
-queryViewExplicit cm table = QA.simpleQueryArr f where
-  f ((), t0) = (retwires, primQ, Tag.next t0) where
-    (retwires, primQ) = queryView' cm table t0
 
 queryView' :: TM.ColumnMaker tablecolumns columns
             -> View tablecolumns
