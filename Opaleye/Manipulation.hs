@@ -2,6 +2,7 @@ module Opaleye.Manipulation where
 
 import qualified Opaleye.Internal.Sql as S
 import qualified Opaleye.Table as T
+import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Column (Column(Column))
 
 import qualified Database.HaskellDB.Sql as HSql
@@ -24,7 +25,7 @@ infixr 8 .::
 
 arrangeInsert :: T.Writeable columns columns' -> columns -> HSql.SqlInsert
 arrangeInsert (T.Writeable tableName writer) columns = insert
-  where outColumns = T.runWriter writer columns
+  where outColumns = TI.runWriter writer columns
         outColumnNames = map snd outColumns
         outColumnSqlExprs = map (S.sqlExpr . fst) outColumns
         insert = HSql.SqlInsert tableName outColumnNames outColumnSqlExprs
@@ -41,7 +42,7 @@ arrangeUpdate :: T.Table columnsR -> T.Writeable columnsW columns'
 arrangeUpdate (T.Table tableName tableCols) (T.Writeable _ writer) update cond =
   HSql.SqlUpdate tableName (update' tableCols) [S.sqlExpr condExpr]
   where update' = map (\(x, y) -> (y, S.sqlExpr x))
-                   . T.runWriter writer
+                   . TI.runWriter writer
                    . update
         Column condExpr = cond tableCols
 
