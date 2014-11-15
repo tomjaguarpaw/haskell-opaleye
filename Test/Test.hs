@@ -447,13 +447,27 @@ testTableFunctor = testG (T.queryTable table1F) (result ==)
 testUpdate :: Test
 testUpdate conn = do
   _ <- M.runUpdate conn table4 writeable4 update cond
-  result <- RQ.runQuery (T.queryTable table4) conn
-  return (result == expected)
+  result <- runQueryTable4
+
+  if result /= expected
+    then return False
+    else do
+    _ <- M.runDelete conn table4 condD
+    resultD <- runQueryTable4
+
+    return (resultD == expectedD)
+
   where update (x, y) = (x + y, x - y)
         cond (_, y) = y .> 15
+        condD (x, _) = x .> 20
         expected :: [(Int, Int)]
         expected = [ (1, 10)
                    , (22, -18)]
+        expectedD :: [(Int, Int)]
+        expectedD = [(1, 10)]
+        runQueryTable4 = RQ.runQuery (T.queryTable table4) conn
+
+
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
