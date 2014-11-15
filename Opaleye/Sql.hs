@@ -9,13 +9,12 @@ import qualified Opaleye.Internal.Sql as Sql
 import qualified Opaleye.Internal.Print as Pr
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Optimize as Op
+import           Opaleye.Internal.Helpers ((.:))
 import qualified Opaleye.QueryArr as Q
 
 import qualified Data.Profunctor.Product.Default as D
 
 import qualified Control.Arrow as Arr
-
-import           Karamaan.Plankton ((.:))
 
 showSqlForPostgres :: forall columns . D.Default U.Unpackspec columns columns =>
                       Q.Query columns -> String
