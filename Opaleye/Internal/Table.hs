@@ -25,7 +25,8 @@ data TableProperties writerColumns viewColumns =
 data View columns = View columns
 
 -- TODO: This should be the equivalent of a Control.Lens.Fold
-data Writer columns a = Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())
+data Writer columns dummy =
+  Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())
 
 queryTable :: TM.ColumnMaker viewColumns columns
             -> Table writerColumns viewColumns
