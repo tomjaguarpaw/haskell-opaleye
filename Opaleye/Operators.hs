@@ -1,6 +1,6 @@
-module Opaleye.Operators (module Opaleye.Operators, (.==), case_) where
+module Opaleye.Operators (module Opaleye.Operators, (.==), (.>), case_) where
 
-import           Opaleye.Internal.Column (Column(Column), (.==), case_)
+import           Opaleye.Internal.Column (Column(Column), (.==), case_, (.>))
 import           Opaleye.QueryArr (QueryArr(QueryArr))
 import qualified Opaleye.Internal.PrimQuery as PQ
 

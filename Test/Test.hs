@@ -4,9 +4,9 @@
 module Main where
 
 import qualified Opaleye.Table as T
-import           Opaleye.Column (Column, Nullable, (.>))
+import           Opaleye.Column (Column, Nullable)
 import qualified Opaleye.Column as C
-import           Opaleye.Operators ((.==))
+import           Opaleye.Operators ((.==), (.>))
 import qualified Opaleye.Operators as O
 import           Opaleye.QueryArr (Query, QueryArr)
 import qualified Opaleye.RunQuery as RQ
