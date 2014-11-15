@@ -219,7 +219,7 @@ testG :: D.Default RQ.QueryRunner wires haskells =>
          -> SQL.Connection
          -> IO b
 testG q p conn = do
-  result <- RQ.runQuery q conn
+  result <- RQ.runQuery conn q
   return (p result)
 
 testSelect :: Test
@@ -465,7 +465,7 @@ testUpdate conn = do
                    , (22, -18)]
         expectedD :: [(Int, Int)]
         expectedD = [(1, 10)]
-        runQueryTable4 = RQ.runQuery (T.queryTable table4) conn
+        runQueryTable4 = RQ.runQuery conn (T.queryTable table4)
 
 
 

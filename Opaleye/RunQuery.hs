@@ -26,20 +26,18 @@ import qualified Data.Profunctor.Product.Default as D
 data QueryRunner columns haskells = QueryRunner (U.Unpackspec columns ())
                                                 (RowParser haskells)
 
--- FIXME: should conn argument come first?
 runQueryExplicit :: QueryRunner columns haskells
-                 -> Query columns
                  -> SQL.Connection
+                 -> Query columns
                  -> IO [haskells]
-runQueryExplicit (QueryRunner u rowParser) q conn =
+runQueryExplicit (QueryRunner u rowParser) conn q =
   SQL.queryWith_ rowParser conn sql
   where sql :: SQL.Query
         sql = S.fromString (S.showSqlForPostgresExplicit u q)
 
--- FIXME: should conn argument come first?
 runQuery :: D.Default QueryRunner columns haskells
-         => Query columns
-         -> SQL.Connection
+         => SQL.Connection
+         -> Query columns
          -> IO [haskells]
 runQuery = runQueryExplicit D.def
 
