@@ -18,52 +18,54 @@ infixr 8 .:
 (.:) :: (r -> z) -> (a -> b -> r) -> a -> b -> z
 (.:) f g x y = f (g x y)
 
-infixr 8 .::
+infixr 8 .:.
 
-(.::) :: (r -> z) -> (a -> b -> c -> d -> r) -> a -> b -> c -> d -> z
-(.::) f g a b c d = f (g a b c d)
+(.:.) :: (r -> z) -> (a -> b -> c -> r) -> a -> b -> c -> z
+(.:.) f g a b c = f (g a b c)
 
-arrangeInsert :: T.Writeable columns columns' -> columns -> HSql.SqlInsert
-arrangeInsert (T.Writeable tableName writer) columns = insert
+arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
+arrangeInsert (T.Table tableName (TI.TableProperties writer _)) columns = insert
   where outColumns = TI.runWriter writer columns
         outColumnNames = map snd outColumns
         outColumnSqlExprs = map (S.sqlExpr . fst) outColumns
         insert = HSql.SqlInsert tableName outColumnNames outColumnSqlExprs
 
-arrangeInsertSql :: T.Writeable columns columns' -> columns -> String
+arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
 
-runInsert :: PG.Connection -> T.Writeable columns columns' -> columns -> IO Int64
+runInsert :: PG.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PG.execute_ conn . fromString .: arrangeInsertSql
 
-arrangeUpdate :: T.View columnsR -> T.Writeable columnsW columns'
+arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
               -> HSql.SqlUpdate
-arrangeUpdate (T.View tableName tableCols) (T.Writeable _ writer) update cond =
+arrangeUpdate (TI.Table tableName (TI.TableProperties writer (TI.View tableCols)))
+              update cond =
   HSql.SqlUpdate tableName (update' tableCols) [S.sqlExpr condExpr]
   where update' = map (\(x, y) -> (y, S.sqlExpr x))
                    . TI.runWriter writer
                    . update
         Column condExpr = cond tableCols
 
-arrangeUpdateSql :: T.View columnsR -> T.Writeable columnsW columns'
+arrangeUpdateSql :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
               -> String
-arrangeUpdateSql = show . HPrint.ppUpdate .:: arrangeUpdate
+arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
 
-runUpdate :: PG.Connection -> T.View columnsR -> T.Writeable columnsW columns'
+runUpdate :: PG.Connection -> T.Table columnsW columnsR
           -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
           -> IO Int64
-runUpdate conn = PG.execute_ conn . fromString .:: arrangeUpdateSql
+runUpdate conn = PG.execute_ conn . fromString .:. arrangeUpdateSql
 
-arrangeDelete :: T.View columnsR -> (columnsR -> Column Bool) -> HSql.SqlDelete
-arrangeDelete (T.View tableName tableCols) cond =
+arrangeDelete :: T.Table a columnsR -> (columnsR -> Column Bool) -> HSql.SqlDelete
+arrangeDelete (TI.Table tableName (TI.TableProperties _ (TI.View tableCols)))
+              cond =
   HSql.SqlDelete tableName [S.sqlExpr condExpr]
   where Column condExpr = cond tableCols
 
-arrangeDeleteSql :: T.View columnsR -> (columnsR -> Column Bool) -> String
+arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column Bool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
-runDelete :: PG.Connection -> T.View columnsR -> (columnsR -> Column Bool)
+runDelete :: PG.Connection -> T.Table a columnsR -> (columnsR -> Column Bool)
           -> IO Int64
 runDelete conn = PG.execute_ conn . fromString .: arrangeDeleteSql

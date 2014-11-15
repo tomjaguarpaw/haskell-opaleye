@@ -16,19 +16,23 @@ import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
-data View columns = View String columns
+data Table writerColumns viewColumns =
+  Table String (TableProperties writerColumns viewColumns)
+
+data TableProperties writerColumns viewColumns =
+  TableProperties (Writer writerColumns viewColumns) (View viewColumns)
+
+data View columns = View columns
 
 -- TODO: This should be the equivalent of a Control.Lens.Fold
 data Writer columns a = Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())
 
-data Writeable columns a = Writeable String (Writer columns a)
-
-queryView' :: TM.ColumnMaker tablecolumns columns
-            -> View tablecolumns
+queryTable :: TM.ColumnMaker viewColumns columns
+            -> Table writerColumns viewColumns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
-queryView' cm table tag = (primExprs, primQ) where
-  (View tableName tableCols) = table
+queryTable cm table tag = (primExprs, primQ) where
+  (Table tableName (TableProperties _ (View tableCols))) = table
   (primExprs, projcols) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
   primQ = PQ.BaseTable tableName projcols
@@ -79,5 +83,23 @@ instance Profunctor Writer where
 instance ProductProfunctor Writer where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
+
+instance Functor (TableProperties a) where
+  fmap f (TableProperties w (View v)) = TableProperties (fmap f w) (View (f v))
+
+instance Applicative (TableProperties a) where
+  pure x = TableProperties (pure x) (View x)
+  TableProperties fw (View fv) <*> TableProperties xw (View xv) =
+    TableProperties (fw <*> xw) (View (fv xv))
+
+instance Profunctor TableProperties where
+  dimap f g (TableProperties w (View v)) = TableProperties (dimap f g w)
+                                                            (View (g v))
+instance ProductProfunctor TableProperties where
+  empty = PP.defaultEmpty
+  (***!) = PP.defaultProfunctorProduct
+
+instance Functor (Table a) where
+  fmap f (Table s tp) = Table s (fmap f tp)
 
 -- }
