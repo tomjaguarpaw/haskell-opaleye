@@ -12,6 +12,9 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
+{-| Restrict query results to a particular condition.  Corresponds to
+    the guard method of the MonadPlus class.
+-}
 restrict :: QueryArr (Column Bool) ()
 restrict = QueryArr f where
   f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
