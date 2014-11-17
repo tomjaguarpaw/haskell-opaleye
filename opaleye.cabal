@@ -17,6 +17,7 @@ library
     , pretty              >= 1.1.1.0 && < 1.2
     , product-profunctors >= 0.5     && < 0.6
     , profunctors         >= 4.0     && < 4.3
+    , semigroups          >= 0.15 && < 0.16
     , transformers        >= 0.3     && < 0.4
 
   exposed-modules: Opaleye.Aggregate,
@@ -38,7 +39,6 @@ library
                    Opaleye.Internal.Distinct,
                    Opaleye.Internal.Helpers,
                    Opaleye.Internal.Join,
-                   Opaleye.Internal.NEList,
                    Opaleye.Internal.Order,
                    Opaleye.Internal.Optimize,
                    Opaleye.Internal.PackMap,
