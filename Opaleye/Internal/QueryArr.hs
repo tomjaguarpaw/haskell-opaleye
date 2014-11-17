@@ -9,7 +9,7 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
-import qualified Control.Arrow as A
+import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), arr)
 import qualified Control.Category as C
 import           Control.Category ((<<<), id)
@@ -46,7 +46,7 @@ instance C.Category QueryArr where
   id = QueryArr id
   QueryArr f . QueryArr g = QueryArr (f . g)
 
-instance A.Arrow QueryArr where
+instance Arr.Arrow QueryArr where
   arr f   = QueryArr (first3 f)
   first f = QueryArr g
     where g ((b, d), primQ, t0) = ((c, d), primQ', t1)

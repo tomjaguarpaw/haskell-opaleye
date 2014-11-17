@@ -9,8 +9,8 @@ import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
                                               SelectBinary),
                                        From, Join, Values, Binary)
 
-import qualified Database.HaskellDB.Sql as S
-import qualified Database.HaskellDB.Sql.Print as PP
+import qualified Database.HaskellDB.Sql as HSql
+import qualified Database.HaskellDB.Sql.Print as HPrint
 
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)
@@ -28,9 +28,9 @@ ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
                  <+> ppAttrs (Sql.attrs s)
                  $$  ppTables (Sql.tables s)
-                 $$  PP.ppWhere (Sql.criteria s)
+                 $$  HPrint.ppWhere (Sql.criteria s)
                  $$  ppGroupBy (Sql.groupBy s)
-                 $$  PP.ppOrderBy (Sql.orderBy s)
+                 $$  HPrint.ppOrderBy (Sql.orderBy s)
                  $$  ppLimit (Sql.limit s)
                  $$  ppOffset (Sql.offset s)
 
@@ -43,7 +43,7 @@ ppSelectJoin j = text "SELECT"
                  $$  ppJoinType (Sql.jJoinType j)
                  $$  ppTable (tableAlias 2 s2)
                  $$  text "ON"
-                 $$  PP.ppSqlExpr (Sql.jCond j)
+                 $$  HPrint.ppSqlExpr (Sql.jCond j)
   where (s1, s2) = Sql.jTables j
 
 ppSelectValues :: Values -> Doc
@@ -60,33 +60,33 @@ ppSelectBinary b = ppSql (Sql.bSelect1 b)
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 
-ppAttrs :: [(S.SqlExpr, Maybe S.SqlColumn)] -> Doc
+ppAttrs :: [(HSql.SqlExpr, Maybe HSql.SqlColumn)] -> Doc
 ppAttrs [] = text "*"
-ppAttrs xs = PP.commaV nameAs xs
+ppAttrs xs = HPrint.commaV nameAs xs
 
 -- This is pretty much just nameAs from HaskellDB
-nameAs :: (S.SqlExpr, Maybe S.SqlColumn) -> Doc
-nameAs (expr, name) = PP.ppAs (M.fromMaybe "" name) (PP.ppSqlExpr expr)
+nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
+nameAs (expr, name) = HPrint.ppAs (M.fromMaybe "" name) (HPrint.ppSqlExpr expr)
 
 ppTables :: [Select] -> Doc
 ppTables [] = empty
-ppTables ts = text "FROM" <+> PP.commaV ppTable (zipWith tableAlias [1..] ts)
+ppTables ts = text "FROM" <+> HPrint.commaV ppTable (zipWith tableAlias [1..] ts)
 
-tableAlias :: Int -> Select -> (S.SqlTable, Select)
+tableAlias :: Int -> Select -> (HSql.SqlTable, Select)
 tableAlias i select = ("T" ++ show i, select)
 
 -- TODO: duplication with ppSql
-ppTable :: (S.SqlTable, Select) -> Doc
+ppTable :: (HSql.SqlTable, Select) -> Doc
 ppTable (alias, select) = case select of
-  Table name -> PP.ppAs alias (text name)
-  SelectFrom selectFrom -> PP.ppAs alias (parens (ppSelectFrom selectFrom))
-  SelectJoin slj -> PP.ppAs alias (parens (ppSelectJoin slj))
-  SelectValues slv -> PP.ppAs alias (parens (ppSelectValues slv))
-  SelectBinary slb -> PP.ppAs alias (parens (ppSelectBinary slb))
+  Table name -> HPrint.ppAs alias (text name)
+  SelectFrom selectFrom -> HPrint.ppAs alias (parens (ppSelectFrom selectFrom))
+  SelectJoin slj -> HPrint.ppAs alias (parens (ppSelectJoin slj))
+  SelectValues slv -> HPrint.ppAs alias (parens (ppSelectValues slv))
+  SelectBinary slb -> HPrint.ppAs alias (parens (ppSelectBinary slb))
 
-ppGroupBy :: [S.SqlExpr] -> Doc
+ppGroupBy :: [HSql.SqlExpr] -> Doc
 ppGroupBy [] = empty
-ppGroupBy xs = (PP.ppGroupBy . S.Columns . map (\expr -> ("", expr))) xs
+ppGroupBy xs = (HPrint.ppGroupBy . HSql.Columns . map (\expr -> ("", expr))) xs
 
 ppLimit :: Maybe Int -> Doc
 ppLimit Nothing = empty
@@ -96,11 +96,11 @@ ppOffset :: Maybe Int -> Doc
 ppOffset Nothing = empty
 ppOffset (Just n) = text ("OFFSET " ++ show n)
 
-ppValues :: [[S.SqlExpr]] -> Doc
-ppValues v = PP.ppAs "V" (parens (text "VALUES" $$ PP.commaV ppValuesRow v))
+ppValues :: [[HSql.SqlExpr]] -> Doc
+ppValues v = HPrint.ppAs "V" (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
 
-ppValuesRow :: [S.SqlExpr] -> Doc
-ppValuesRow = parens . PP.commaH PP.ppSqlExpr
+ppValuesRow :: [HSql.SqlExpr] -> Doc
+ppValuesRow = parens . HPrint.commaH HPrint.ppSqlExpr
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of

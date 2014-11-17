@@ -3,7 +3,7 @@ module Opaleye.Internal.PrimQuery where
 import           Prelude hiding (product)
 
 import qualified Data.List.NonEmpty as NEL
-import qualified Database.HaskellDB.PrimQuery as PQ
+import qualified Database.HaskellDB.PrimQuery as HPQ
 
 type Symbol = String
 
@@ -16,25 +16,25 @@ data JoinType = LeftJoin deriving Show
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
 data PrimQuery = Unit
-               | BaseTable String [(Symbol, PQ.PrimExpr)]
-               | Product (NEL.NonEmpty PrimQuery) [PQ.PrimExpr]
-               | Aggregate [(Symbol, Maybe PQ.AggrOp, PQ.PrimExpr)] PrimQuery
-               | Order [PQ.OrderExpr] PrimQuery
+               | BaseTable String [(Symbol, HPQ.PrimExpr)]
+               | Product (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]
+               | Aggregate [(Symbol, Maybe HPQ.AggrOp, HPQ.PrimExpr)] PrimQuery
+               | Order [HPQ.OrderExpr] PrimQuery
                | Limit LimitOp PrimQuery
-               | Join JoinType [(Symbol, PQ.PrimExpr)] PQ.PrimExpr PrimQuery PrimQuery
-               | Values [Symbol] [[PQ.PrimExpr]]
-               | Binary BinOp [(Symbol, (PQ.PrimExpr, PQ.PrimExpr))] (PrimQuery, PrimQuery)
+               | Join JoinType [(Symbol, HPQ.PrimExpr)] HPQ.PrimExpr PrimQuery PrimQuery
+               | Values [Symbol] [[HPQ.PrimExpr]]
+               | Binary BinOp [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] (PrimQuery, PrimQuery)
                  deriving Show
 
 type PrimQueryFold p = ( p
-                       , String -> [(Symbol, PQ.PrimExpr)] -> p
-                       , NEL.NonEmpty p -> [PQ.PrimExpr] -> p
-                       , [(Symbol, Maybe PQ.AggrOp, PQ.PrimExpr)] -> p -> p
-                       , [PQ.OrderExpr] -> p -> p
+                       , String -> [(Symbol, HPQ.PrimExpr)] -> p
+                       , NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
+                       , [(Symbol, Maybe HPQ.AggrOp, HPQ.PrimExpr)] -> p -> p
+                       , [HPQ.OrderExpr] -> p -> p
                        , LimitOp -> p -> p
-                       , JoinType -> [(Symbol, PQ.PrimExpr)] -> PQ.PrimExpr -> p -> p -> p
-                       , [Symbol] -> [[PQ.PrimExpr]] -> p
-                       , BinOp -> [(Symbol, (PQ.PrimExpr, PQ.PrimExpr))] -> (p, p) -> p
+                       , JoinType -> [(Symbol, HPQ.PrimExpr)] -> HPQ.PrimExpr -> p -> p -> p
+                       , [Symbol] -> [[HPQ.PrimExpr]] -> p
+                       , BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
                        )
 
 foldPrimQuery :: PrimQueryFold p -> PrimQuery -> p
@@ -54,7 +54,7 @@ foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
 times :: PrimQuery -> PrimQuery -> PrimQuery
 times q q' = Product (q NEL.:| [q']) []
 
-restrict :: PQ.PrimExpr -> PrimQuery -> PrimQuery
+restrict :: HPQ.PrimExpr -> PrimQuery -> PrimQuery
 restrict cond primQ = Product (return primQ) [cond]
 
 isUnit :: PrimQuery -> Bool

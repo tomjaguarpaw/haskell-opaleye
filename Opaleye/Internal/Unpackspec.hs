@@ -12,10 +12,10 @@ import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Profunctor.Product.Default as D
 
-import qualified Database.HaskellDB.PrimQuery as PQ
+import qualified Database.HaskellDB.PrimQuery as HPQ
 
 newtype Unpackspec columns columns' =
-  Unpackspec (PM.PackMap PQ.PrimExpr PQ.PrimExpr columns columns')
+  Unpackspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
 
 unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
 unpackspecColumn = Unpackspec
@@ -23,7 +23,7 @@ unpackspecColumn = Unpackspec
 
 runUnpackspec :: Applicative f
                  => Unpackspec columns b
-                 -> (PQ.PrimExpr -> f PQ.PrimExpr)
+                 -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                  -> columns -> f b
 runUnpackspec (Unpackspec f) = PM.packmap f
 

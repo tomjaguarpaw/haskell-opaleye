@@ -18,14 +18,14 @@ import qualified Opaleye.Values as V
 import qualified Opaleye.Binary as B
 import qualified Opaleye.Manipulation as M
 
-import qualified Database.PostgreSQL.Simple as SQL
+import qualified Database.PostgreSQL.Simple as PGS
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Profunctor as P
 import qualified Data.Ord as Ord
 import qualified Data.List as L
 import           Data.Monoid ((<>))
-import qualified Data.String as St
+import qualified Data.String as String
 
 import qualified System.Exit as Exit
 
@@ -38,12 +38,12 @@ import           Control.Arrow ((&&&), (***), (<<<), (>>>))
 --   database must already exist and the test user must have
 --   permissions to modify it.
 
-connectInfo :: SQL.ConnectInfo
-connectInfo =  SQL.ConnectInfo { SQL.connectHost = "localhost"
-                               , SQL.connectPort = 25433
-                               , SQL.connectUser = "tom"
-                               , SQL.connectPassword = "tom"
-                               , SQL.connectDatabase = "opaleye_test" }
+connectInfo :: PGS.ConnectInfo
+connectInfo =  PGS.ConnectInfo { PGS.connectHost = "localhost"
+                               , PGS.connectPort = 25433
+                               , PGS.connectUser = "tom"
+                               , PGS.connectPassword = "tom"
+                               , PGS.connectDatabase = "opaleye_test" }
 
 -- }
 
@@ -184,21 +184,21 @@ table4data = table4dataG
 table4columndata :: [(Column Int, Column Int)]
 table4columndata = table4dataG
 
-dropAndCreateTable :: String -> SQL.Query
-dropAndCreateTable t = St.fromString ("DROP TABLE IF EXISTS " ++ t ++ ";"
-                                      ++ "CREATE TABLE " ++ t
-                                      ++ " (column1 integer, column2 integer);")
+dropAndCreateTable :: String -> PGS.Query
+dropAndCreateTable t = String.fromString ("DROP TABLE IF EXISTS " ++ t ++ ";"
+                                          ++ "CREATE TABLE " ++ t
+                                          ++ " (column1 integer, column2 integer);")
 
-dropAndCreateDB :: SQL.Connection -> IO ()
+dropAndCreateDB :: PGS.Connection -> IO ()
 dropAndCreateDB conn = mapM_ execute ["table1", "table2", "table3", "table4"]
-  where execute = SQL.execute_ conn . dropAndCreateTable
+  where execute = PGS.execute_ conn . dropAndCreateTable
 
-type Test = SQL.Connection -> IO Bool
+type Test = PGS.Connection -> IO Bool
 
 testG :: D.Default RQ.QueryRunner wires haskells =>
          Query wires
          -> ([haskells] -> b)
-         -> SQL.Connection
+         -> PGS.Connection
          -> IO b
 testG q p conn = do
   result <- RQ.runQuery conn q
@@ -464,7 +464,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
 
 main :: IO ()
 main = do
-  conn <- SQL.connect connectInfo
+  conn <- PGS.connect connectInfo
 
   dropAndCreateDB conn
 

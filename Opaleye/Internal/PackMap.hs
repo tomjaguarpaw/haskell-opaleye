@@ -7,7 +7,7 @@ import qualified Opaleye.Internal.Tag as T
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
-import qualified Control.Monad.Trans.State as S
+import qualified Control.Monad.Trans.State as State
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
@@ -40,22 +40,22 @@ over p f = I.runIdentity . packmap p (I.Identity . f)
 
 -- { A helpful monad for writing columns in the AST
 
-type PM a = S.State (a, Int)
+type PM a = State.State (a, Int)
 
 new :: PM a String
 new = do
-  (a, i) <- S.get
-  S.put (a, i + 1)
+  (a, i) <- State.get
+  State.put (a, i + 1)
   return (show i)
 
 write :: a -> PM [a] ()
 write a = do
-  (as, i) <- S.get
-  S.put (as ++ [a], i)
+  (as, i) <- State.get
+  State.put (as ++ [a], i)
 
 run :: PM [a] r -> (r, [a])
 run m = (r, as)
-  where (r, (as, _)) = S.runState m ([], 0)
+  where (r, (as, _)) = State.runState m ([], 0)
 
 -- }
 

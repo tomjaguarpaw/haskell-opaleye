@@ -7,8 +7,8 @@ import           Database.PostgreSQL.Simple.FromField (FieldParser, FromField,
                                                        fromField)
 import           Database.PostgreSQL.Simple.FromRow (fieldWith)
 
-import qualified Database.PostgreSQL.Simple as SQL
-import qualified Data.String as S
+import qualified Database.PostgreSQL.Simple as PGS
+import qualified Data.String as String
 import           Control.Applicative (Applicative, pure, (<*>))
 
 import           Opaleye.Column (Column)
@@ -28,16 +28,16 @@ data QueryRunner columns haskells = QueryRunner (U.Unpackspec columns ())
                                                 (RowParser haskells)
 
 runQueryExplicit :: QueryRunner columns haskells
-                 -> SQL.Connection
+                 -> PGS.Connection
                  -> Query columns
                  -> IO [haskells]
 runQueryExplicit (QueryRunner u rowParser) conn q =
-  SQL.queryWith_ rowParser conn sql
-  where sql :: SQL.Query
-        sql = S.fromString (S.showSqlForPostgresExplicit u q)
+  PGS.queryWith_ rowParser conn sql
+  where sql :: PGS.Query
+        sql = String.fromString (S.showSqlForPostgresExplicit u q)
 
 runQuery :: D.Default QueryRunner columns haskells
-         => SQL.Connection
+         => PGS.Connection
          -> Query columns
          -> IO [haskells]
 runQuery = runQueryExplicit D.def

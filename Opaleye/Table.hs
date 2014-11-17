@@ -7,7 +7,7 @@ module Opaleye.Table (module Opaleye.Table,
                       TableProperties) where
 
 import           Opaleye.Internal.Column (Column(Column))
-import qualified Opaleye.Internal.QueryArr as QA
+import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
 import           Opaleye.Internal.Table (View(View), Writer(Writer),
                                          Table, TableProperties)
@@ -21,12 +21,12 @@ import           Control.Applicative (Applicative, pure)
 import qualified Database.HaskellDB.PrimQuery as HPQ
 
 queryTable :: D.Default TM.ColumnMaker columns columns =>
-              Table a columns -> QA.Query columns
+              Table a columns -> Q.Query columns
 queryTable = queryTableExplicit D.def
 
 queryTableExplicit :: TM.ColumnMaker tablecolumns columns ->
-                     Table a tablecolumns -> QA.Query columns
-queryTableExplicit cm table = QA.simpleQueryArr f where
+                     Table a tablecolumns -> Q.Query columns
+queryTableExplicit cm table = Q.simpleQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
     (retwires, primQ) = T.queryTable cm table t0
 

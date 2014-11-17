@@ -13,7 +13,7 @@ import           Data.Profunctor.Product.Default (Default, def)
 
 import           Control.Applicative (Applicative, pure, (<*>))
 
-import qualified Database.HaskellDB.PrimQuery as PQ
+import qualified Database.HaskellDB.PrimQuery as HPQ
 
 
 -- If we switch to a more lens-like approach to PackMap this should be
@@ -22,7 +22,7 @@ newtype ViewColumnMaker strings columns =
   ViewColumnMaker (PM.PackMap () () strings columns)
 
 newtype ColumnMaker columns columns' =
-  ColumnMaker (PM.PackMap PQ.PrimExpr PQ.PrimExpr columns columns')
+  ColumnMaker (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
 
 runViewColumnMaker :: ViewColumnMaker strings tablecolumns ->
                        strings -> tablecolumns
@@ -30,14 +30,14 @@ runViewColumnMaker (ViewColumnMaker f) = PM.over f id
 
 runColumnMaker :: Applicative f
                   => ColumnMaker tablecolumns columns
-                  -> (PQ.PrimExpr -> f PQ.PrimExpr)
+                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                   -> tablecolumns -> f columns
 runColumnMaker (ColumnMaker f) = PM.packmap f
 
 -- There's surely a way of simplifying this implementation
 tableColumn :: ViewColumnMaker String (C.Column a)
 tableColumn = ViewColumnMaker
-              (PM.PackMap (\f s -> fmap (const ((IC.Column . PQ.AttrExpr) s)) (f ())))
+              (PM.PackMap (\f s -> fmap (const ((IC.Column . HPQ.AttrExpr) s)) (f ())))
 
 column :: ColumnMaker (C.Column a) (C.Column a)
 column = ColumnMaker
