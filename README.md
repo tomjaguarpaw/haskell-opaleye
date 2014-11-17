@@ -28,11 +28,24 @@ The namespace has changed from Karamaan.Opaleye to Opaleye.  Many of
 the version 0 modules were very cluttered with deprecated names.  They
 have been cleaned and tidied.
 
+### Tables have type parameters for writing and reading
+
+Tables now have two type parameters.  One indicates how to use it for
+writing, the other for reading.
+
 ### `Nullable` is no longer a synonym for `Maybe`
 
 `Nullable` is now a new type independent of `Maybe`.  `runQuery` still
 converts it to `Maybe` but Opaleye-side code should use `Nullable`
 instead of `Maybe`.
+
+### `ShowConstant` doesn't exist
+
+The `ShowConstant` typeclass for lifting Haskell values into Opaleye
+does not exist anymore.  Instead there is a `PGTypes` module with
+individual functions for lifting values.  If after due consideration
+it seems like the typeclass was needed after all it can be added back
+in.
 
 ## Internal changes
 
