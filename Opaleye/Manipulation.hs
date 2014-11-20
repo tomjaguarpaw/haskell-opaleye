@@ -1,15 +1,23 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Opaleye.Manipulation where
 
 import qualified Opaleye.Internal.Sql as Sql
+import qualified Opaleye.Internal.Print as Print
+import qualified Opaleye.RunQuery as RQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column(Column))
-import           Opaleye.Internal.Helpers ((.:), (.:.))
+import           Opaleye.Internal.Helpers ((.:), (.:.), (.::))
+import qualified Opaleye.Internal.Unpackspec as U
 
+import qualified Database.HaskellDB.PrimQuery as HPQ
 import qualified Database.HaskellDB.Sql as HSql
 import qualified Database.HaskellDB.Sql.Print as HPrint
 
 import qualified Database.PostgreSQL.Simple as PGS
+
+import qualified Data.Profunctor.Product.Default as D
 
 import           Data.Int (Int64)
 import           Data.String (fromString)
@@ -60,3 +68,49 @@ arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 runDelete :: PGS.Connection -> T.Table a columnsR -> (columnsR -> Column Bool)
           -> IO Int64
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
+
+arrangeInsertReturning :: U.Unpackspec returned a
+                       -> T.Table columnsW columnsR
+                       -> columnsW
+                       -> (columnsR -> returned)
+                       -> Sql.Returning HSql.SqlInsert
+arrangeInsertReturning unpackspec table columns returningf =
+  Sql.Returning insert returningSEs
+  where insert = arrangeInsert table columns
+        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
+        returning = returningf columnsR
+        -- TODO: duplication with runQueryArrUnpack
+        f pe = ([pe], pe)
+        returningPEs :: [HPQ.PrimExpr]
+        (returningPEs, _) = U.runUnpackspec unpackspec f returning
+        returningSEs = map Sql.sqlExpr returningPEs
+
+arrangeInsertReturningSql :: U.Unpackspec returned a
+                          -> T.Table columnsW columnsR
+                          -> columnsW
+                          -> (columnsR -> returned)
+                          -> String
+arrangeInsertReturningSql = show
+                            . Print.ppInsertReturning
+                            .:: arrangeInsertReturning
+
+runInsertReturningExplicit :: RQ.QueryRunner returned haskells
+                           -> U.Unpackspec returned returned
+                           -> PGS.Connection
+                           -> T.Table columnsW columnsR
+                           -> columnsW
+                           -> (columnsR -> returned)
+                           -> IO [haskells]
+runInsertReturningExplicit qr u conn = PGS.queryWith_ rowParser conn
+                                       . fromString
+                                       .:. arrangeInsertReturningSql u
+  where RQ.QueryRunner _ rowParser = qr
+
+runInsertReturning :: (D.Default RQ.QueryRunner returned haskells,
+                       D.Default U.Unpackspec returned returned)
+                      => PGS.Connection
+                      -> T.Table columnsW columnsR
+                      -> columnsW
+                      -> (columnsR -> returned)
+                      -> IO [haskells]
+runInsertReturning = runInsertReturningExplicit D.def D.def

@@ -54,6 +54,7 @@ data BinOp = Except | Union | UnionAll deriving Show
 
 data TableName = String
 
+data Returning a = Returning a [HSql.SqlExpr]
 
 sqlQueryGenerator :: PQ.PrimQueryFold Select
 sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,

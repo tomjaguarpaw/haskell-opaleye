@@ -107,3 +107,9 @@ ppBinOp o = text $ case o of
   Sql.Union    -> "UNION"
   Sql.UnionAll -> "UNION ALL"
   Sql.Except   -> "EXCEPT"
+
+ppInsertReturning :: Sql.Returning HSql.SqlInsert -> Doc
+ppInsertReturning (Sql.Returning insert returnExprs) =
+  HPrint.ppInsert insert
+  $$ text "RETURNING"
+  <+> HPrint.commaV HPrint.ppSqlExpr returnExprs

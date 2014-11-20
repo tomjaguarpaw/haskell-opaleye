@@ -426,6 +426,7 @@ testTableFunctor :: Test
 testTableFunctor = testG (T.queryTable table1F) (result ==)
   where result = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1data
 
+-- TODO: This is getting too complicated
 testUpdate :: Test
 testUpdate conn = do
   _ <- M.runUpdate conn table4 update cond
@@ -437,7 +438,13 @@ testUpdate conn = do
     _ <- M.runDelete conn table4 condD
     resultD <- runQueryTable4
 
-    return (resultD == expectedD)
+    if resultD /= expectedD
+      then return False
+      else do
+      returned <- M.runInsertReturning conn table4 insertT returning
+      resultI <- runQueryTable4
+
+      return ((resultI == expectedI) && (returned == expectedR))
 
   where update (x, y) = (x + y, x - y)
         cond (_, y) = y .> 15
@@ -449,6 +456,14 @@ testUpdate conn = do
         expectedD = [(1, 10)]
         runQueryTable4 = RQ.runQuery conn (T.queryTable table4)
 
+        insertT :: (Column Int, Column Int)
+        insertT = (1, 2)
+
+        expectedI :: [(Int, Int)]
+        expectedI = [(1, 10), (1, 2)]
+        returning (x, y) = x - y
+        expectedR :: [Int]
+        expectedR = [-1]
 
 
 allTests :: [Test]
