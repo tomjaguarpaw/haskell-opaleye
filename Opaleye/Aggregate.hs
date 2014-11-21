@@ -38,3 +38,9 @@ type @a@, apply the aggregator to the results of the query.
 -}
 aggregate :: Aggregator a b -> Query a -> Query b
 aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
+
+boolOr :: Aggregator (C.Column Bool) (C.Column Bool)
+boolOr = A.makeAggr (HPQ.AggrOther "bool_or")
+
+boolAnd :: Aggregator (C.Column Bool) (C.Column Bool)
+boolAnd = A.makeAggr (HPQ.AggrOther "bool_and")
