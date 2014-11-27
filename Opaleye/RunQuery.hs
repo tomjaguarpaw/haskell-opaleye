@@ -26,8 +26,17 @@ import qualified Data.Profunctor.Product.Default as D
 
 import           GHC.Int (Int64)
 
+data QueryRunnerColumn coltype haskell =
+  QueryRunnerColumn (U.Unpackspec (Column coltype) ()) (FieldParser haskell)
+
 data QueryRunner columns haskells = QueryRunner (U.Unpackspec columns ())
                                                 (RowParser haskells)
+
+runQuery :: D.Default QueryRunner columns haskells
+         => PGS.Connection
+         -> Query columns
+         -> IO [haskells]
+runQuery = runQueryExplicit D.def
 
 runQueryExplicit :: QueryRunner columns haskells
                  -> PGS.Connection
@@ -38,49 +47,45 @@ runQueryExplicit (QueryRunner u rowParser) conn q =
   where sql :: PGS.Query
         sql = String.fromString (S.showSqlForPostgresExplicit u q)
 
-runQuery :: D.Default QueryRunner columns haskells
-         => PGS.Connection
-         -> Query columns
-         -> IO [haskells]
-runQuery = runQueryExplicit D.def
+fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn coltype haskell
+fieldQueryRunnerColumn =
+  QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) fromField
 
-fieldQueryRunner :: FromField a => QueryRunner (Column a) a
-fieldQueryRunner = fieldQueryRunnerF id
+queryRunner :: QueryRunnerColumn a b -> QueryRunner (Column a) b
+queryRunner qrc = QueryRunner u (fieldWith fp)
+    where QueryRunnerColumn u fp = qrc
 
-fieldQueryRunnerF :: FromField a => (a -> b) -> QueryRunner (Column b) b
-fieldQueryRunnerF = fieldQueryRunnerUnclassed . flip fmapFieldParser fromField
+queryRunnerColumnNullable :: QueryRunnerColumn a b
+                       -> QueryRunnerColumn (Nullable a) (Maybe b)
+queryRunnerColumnNullable qr =
+  QueryRunnerColumn (P.lmap C.unsafeCoerce u) (fromField' fp)
+  where QueryRunnerColumn u fp = qr
+        fromField' :: FieldParser a -> FieldParser (Maybe a)
+        fromField' _ _ Nothing = pure Nothing
+        fromField' fp' f bs = fmap Just (fp' f bs)
 
-fmapFieldParser :: (a -> b) -> FieldParser a -> FieldParser b
-fmapFieldParser = fmap . fmap . fmap
+instance D.Default QueryRunnerColumn a b =>
+         D.Default QueryRunnerColumn (Nullable a) (Maybe b) where
+  def = queryRunnerColumnNullable D.def
 
--- TODO: May want to make this "(Column b) a" in the future
-fieldQueryRunnerUnclassed :: FieldParser a -> QueryRunner (Column a) a
-fieldQueryRunnerUnclassed = QueryRunner (P.rmap (const ()) U.unpackspecColumn)
-                            . fieldWith
+instance D.Default QueryRunnerColumn a b =>
+         D.Default QueryRunner (Column a) b where
+  def = queryRunner D.def
 
-instance D.Default QueryRunner (Column Int) Int where
-  def = fieldQueryRunner
+instance D.Default QueryRunnerColumn Int Int where
+  def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunner (Column Int64) Int64 where
-  def = fieldQueryRunner
+instance D.Default QueryRunnerColumn Int64 Int64 where
+  def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunner (Column Integer) Integer where
-  def = fieldQueryRunner
+instance D.Default QueryRunnerColumn Integer Integer where
+  def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunner (Column Double) Double where
-  def = fieldQueryRunner
+instance D.Default QueryRunnerColumn String String where
+  def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunner (Column String) String where
-  def = fieldQueryRunner
-
--- The unsafeCoerce is a bit silly here
-instance D.Default QueryRunner (Column (Nullable Int)) (Maybe Int) where
-  def = P.lmap C.unsafeCoerce fieldQueryRunner
-
-instance D.Default QueryRunner (Column (Nullable String)) (Maybe String) where
-  def = P.lmap C.unsafeCoerce fieldQueryRunner
-
--- {
+instance D.Default QueryRunnerColumn Double Double where
+  def = fieldQueryRunnerColumn
 
 -- Boilerplate instances
 
