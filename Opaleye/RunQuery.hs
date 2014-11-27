@@ -7,7 +7,8 @@ module Opaleye.RunQuery (module Opaleye.RunQuery,
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Data.String as String
 
-import           Opaleye.Column (Column)
+-- It seems that we need the import of unsafeCoerce for Haddock
+import           Opaleye.Column (Column, unsafeCoerce)
 import qualified Opaleye.Sql as S
 import           Opaleye.QueryArr (Query)
 import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
@@ -37,7 +38,7 @@ runQueryExplicit (QueryRunner u rowParser) conn q =
 -- @
 -- newtype Foo = Foo Int
 -- instance Default QueryRunnerColumn Foo Foo where
---    def = queryRunnerColumn (unsafeCoerce :: Column Foo -> Column Int) Foo def
+--    def = queryRunnerColumn ('unsafeCoerce' :: Column Foo -> Column Int) Foo def
 -- @
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
                   -> IRQ.QueryRunnerColumn a b -> IRQ.QueryRunnerColumn a' b'
