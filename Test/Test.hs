@@ -33,6 +33,8 @@ import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), (<<<), (>>>))
 
+import           GHC.Int (Int64)
+
 -- { Set your test database info here.  Then invoke the 'main'
 --   function to run the tests, or just use 'cabal test'.  The test
 --   database must already exist and the test user must have
@@ -261,22 +263,22 @@ testDistinct = testG (Dis.distinct table1Q)
 -- FIXME: the unsafeCoerce is currently needed because the type
 -- changes required for aggregation are not currently dealt with by
 -- Opaleye.
-aggregateCoerceFIXME :: QueryArr (Column Int) (Column Integer)
+aggregateCoerceFIXME :: QueryArr (Column Int) (Column Int64)
 aggregateCoerceFIXME = Arr.arr aggregateCoerceFIXME'
 
-aggregateCoerceFIXME' :: Column a -> Column Integer
+aggregateCoerceFIXME' :: Column a -> Column Int64
 aggregateCoerceFIXME' = C.unsafeCoerce
 
 testAggregate :: Test
 testAggregate = testG (Arr.second aggregateCoerceFIXME
                         <<< Agg.aggregate (PP.p2 (Agg.groupBy, Agg.sum))
                                            table1Q)
-                      (\r -> [(1, 400) :: (Int, Integer), (2, 300)] == L.sort r)
+                      (\r -> [(1, 400) :: (Int, Int64), (2, 300)] == L.sort r)
 
 testAggregateProfunctor :: Test
 testAggregateProfunctor = testG q expected
   where q = Agg.aggregate (PP.p2 (Agg.groupBy, countsum)) table1Q
-        expected r = [(1, 1200) :: (Int, Integer), (2, 300)] == L.sort r
+        expected r = [(1, 1200) :: (Int, Int64), (2, 300)] == L.sort r
         countsum = P.dimap (\x -> (x,x))
                            (\(x, y) -> aggregateCoerceFIXME' x * y)
                            (PP.p2 (Agg.sum, Agg.count))
@@ -325,7 +327,7 @@ testDistinctAndAggregate = testG q expected
                  <<< Agg.aggregate (PP.p2 (Agg.groupBy, Agg.sum)) table1Q)
         expected r = L.sort r == L.sort expectedResult
         expectedResult = A.liftA2 (,) (L.nub table1data)
-                                      [(1 :: Int, 400 :: Integer), (2, 300)]
+                                      [(1 :: Int, 400 :: Int64), (2, 300)]
 
 one :: Query (Column Int)
 one = Arr.arr (const (1 :: Column Int))
@@ -342,7 +344,7 @@ testDoubleDistinct :: Test
 testDoubleDistinct = testDoubleG Dis.distinct [1 :: Int]
 
 testDoubleAggregate :: Test
-testDoubleAggregate = testDoubleG (Agg.aggregate Agg.count) [1 :: Integer]
+testDoubleAggregate = testDoubleG (Agg.aggregate Agg.count) [1 :: Int64]
 
 testDoubleLeftJoin :: Test
 testDoubleLeftJoin = testDoubleG lj [(1 :: Int, Just (1 :: Int))]

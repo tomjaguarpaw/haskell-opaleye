@@ -3,6 +3,8 @@ module Opaleye.Internal.Column where
 import qualified Database.HaskellDB.PrimQuery as HPQ
 import qualified Database.HaskellDB.Query as Q
 
+import           GHC.Int (Int64)
+
 newtype Column a = Column HPQ.PrimExpr deriving Show
 data Nullable a = Nullable
 
@@ -34,6 +36,10 @@ ifThenElse cond t f = case_ [(cond, t)] f
 
 (.==) :: Column a -> Column a -> Column Bool
 (.==) = binOp HPQ.OpEq
+
+-- Naughty orphan instance
+instance Q.ShowConstant Int64 where
+  showConstant = HPQ.IntegerLit . fromIntegral
 
 -- The constraints here are not really appropriate.  There should be
 -- some restriction to a numeric Postgres type

@@ -24,6 +24,8 @@ import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product (empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
 
+import           GHC.Int (Int64)
+
 data QueryRunner columns haskells = QueryRunner (U.Unpackspec columns ())
                                                 (RowParser haskells)
 
@@ -57,6 +59,9 @@ fieldQueryRunnerUnclassed = QueryRunner (P.rmap (const ()) U.unpackspecColumn)
                             . fieldWith
 
 instance D.Default QueryRunner (Column Int) Int where
+  def = fieldQueryRunner
+
+instance D.Default QueryRunner (Column Int64) Int64 where
   def = fieldQueryRunner
 
 instance D.Default QueryRunner (Column Integer) Integer where
