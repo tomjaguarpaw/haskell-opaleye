@@ -77,6 +77,9 @@ instance D.Default QueryRunner (Column String) String where
 instance D.Default QueryRunner (Column (Nullable Int)) (Maybe Int) where
   def = P.lmap C.unsafeCoerce fieldQueryRunner
 
+instance D.Default QueryRunner (Column (Nullable String)) (Maybe String) where
+  def = P.lmap C.unsafeCoerce fieldQueryRunner
+
 -- {
 
 -- Boilerplate instances
