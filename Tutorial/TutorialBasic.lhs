@@ -717,7 +717,7 @@ type signatures on everything in sight to minimize the number of
 confusing error messages!
 
 > runTwentiesQuery :: PGS.Connection -> IO [(String, Int, String)]
-> runTwentiesQuery connection = runQuery connectInfo twentiesAtAddress
+> runTwentiesQuery connection = runQuery connection twentiesAtAddress
 
 Conclusion
 ==========
