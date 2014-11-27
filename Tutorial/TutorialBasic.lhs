@@ -9,9 +9,10 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye.QueryArr (Query, QueryArr)
-> import           Opaleye.Column (Column, Nullable)
+> import           Opaleye.Column (Column, Nullable, matchNullable, isNull)
 > import           Opaleye.Table (Table(Table), required, queryTable)
-> import           Opaleye.Operators (restrict, (.==), (.<=), (.&&), (.<))
+> import           Opaleye.Operators (restrict, (.==), (.<=), (.&&), (.<),
+>                                     (.++), ifThenElse)
 > import           Opaleye.PGTypes (pgString)
 > import           Opaleye.Aggregate (aggregate, groupBy, count, avg, sum)
 > import           Opaleye.Join (leftJoin)
@@ -357,6 +358,92 @@ FROM (SELECT name as name0,
              birthday as birthday1
       FROM birthdayTable as T1)
 WHERE name0 == name1
+
+
+Nullability
+===========
+
+NULLs in SQL have been the source of a lot of complaints, but as
+Haskell programmers we know that there is nothing wrong with
+nullability as long is it is reflected in the type system.  Nullable
+columns are indicated with the `Nullable` type constructor.
+
+For example, suppose we have an employee table which records the name
+of each employee and the name of their boss.  If their boss is
+recorded as NULL then that means they have no boss!
+
+> employeeTable :: Table (Column String, Column (Nullable String))
+>                        (Column String, Column (Nullable String))
+> employeeTable = Table "employeeTable" (p2 ( required "name"
+>                                           , required "boss" ))
+
+We can write a query that returns as string indicating for each
+employee whether they have a boss.
+
+> hasBoss :: Query (Column String)
+> hasBoss = proc () -> do
+>   (name, nullableBoss) <- queryTable employeeTable -< ()
+>
+>   let aOrNo = ifThenElse (isNull nullableBoss) (pgString "no") (pgString "a")
+>
+>   returnA -< name .++ pgString " has " .++ aOrNo .++ pgString " boss"
+
+SELECT (((name0_1) || ' has ')
+       || (CASE WHEN boss1_1 IS NULL THEN 'no' ELSE 'a' END))
+       || ' boss' as result1
+FROM (SELECT *
+      FROM (SELECT name as name0_1,
+                   boss as boss1_1
+            FROM employeeTable as T1) as T1) as T1
+
+Idealized SQL:
+
+SELECT name || ' has '
+            || CASE WHEN boss IS NULL THEN 'no' ELSE 'a' END || ' boss'
+FROM employeeTable
+
+But we can do much more than just check for NULL of course.  We can
+write a query arrow to produce a string describing each employee's
+status along with the name of their boss, if any.  The combinator
+`matchNullable` checks whether `nullableBoss` is NULL.  If so it
+returns its first argument.  If not it passes the non-NULL value to
+the function that is the second argument.
+
+> bossQuery :: QueryArr (Column String, Column (Nullable String)) (Column String)
+> bossQuery = proc (name, nullableBoss) -> do
+>   returnA -< matchNullable (name .++ pgString " has no boss")
+>                            (\boss -> pgString "The boss of " .++ name
+>                                      .++ pgString " is " .++ boss)
+>                            nullableBoss
+
+Note that `matchNullable` corresponds to Haskell's
+
+    maybe :: b -> (a -> b) -> Maybe a -> b
+
+and in pure Haskell the same computation could be expressed as
+
+> boss :: (String, Maybe String) -> String
+> boss (name, nullableBoss) = maybe (name ++ " has no boss")
+>                             (\boss -> "The boss of " ++ name ++ " is " ++ boss)
+>                             nullableBoss
+
+Then we get the following SQL.
+
+ghci> printSql (bossQuery <<< queryTable employeeTable)
+SELECT CASE WHEN boss1_1 IS NULL THEN (name0_1) || ' has no boss'
+     ELSE (('The boss of ' || (name0_1)) || ' is ') || (boss1_1) END as result1
+FROM (SELECT *
+      FROM (SELECT name as name0_1,
+                   boss as boss1_1
+            FROM employeeTable as T1) as T1) as T1
+
+Idealized SQL:
+
+SELECT CASE WHEN boss IS NULL
+            THEN name0_1 || ' has no boss'
+            ELSE 'The boss of ' || name || ' is ' || boss
+            END
+FROM employeeTable
 
 
 Composability
