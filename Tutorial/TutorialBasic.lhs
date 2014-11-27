@@ -720,6 +720,14 @@ confusing error messages!
 > runTwentiesQuery :: PGS.Connection -> IO [(String, Int, String)]
 > runTwentiesQuery connection = runQuery connection twentiesAtAddress
 
+Note that nullable columns are indicated with the Nullable type
+constructor, and these are converted to Maybe when executed.  If we
+have a table with a nullable column then Nullable columns turn into
+Maybes.
+
+> runEmployeesQuery :: PGS.Connection -> IO [(String, Maybe String)]
+> runEmployeesQuery connection = runQuery connection (queryTable employeeTable)
+
 Conclusion
 ==========
 
