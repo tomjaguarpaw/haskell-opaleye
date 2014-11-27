@@ -35,9 +35,11 @@ case_ alts (Column otherwise_) = Column (HPQ.CaseExpr (unColumns alts) otherwise
 ifThenElse :: Column Bool -> Column a -> Column a -> Column a
 ifThenElse cond t f = case_ [(cond, t)] f
 
+infix 4 .>
 (.>) :: Column a -> Column a -> Column Bool
 (.>) = binOp HPQ.OpGt
 
+infix 4 .==
 (.==) :: Column a -> Column a -> Column Bool
 (.==) = binOp HPQ.OpEq
 
