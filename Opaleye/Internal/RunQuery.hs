@@ -45,6 +45,8 @@ queryRunnerColumnNullable qr =
         fromField' _ _ Nothing = pure Nothing
         fromField' fp' f bs = fmap Just (fp' f bs)
 
+-- { Instances for automatic derivation
+
 instance D.Default QueryRunnerColumn a b =>
          D.Default QueryRunnerColumn (Nullable a) (Maybe b) where
   def = queryRunnerColumnNullable D.def
@@ -52,6 +54,11 @@ instance D.Default QueryRunnerColumn a b =>
 instance D.Default QueryRunnerColumn a b =>
          D.Default QueryRunner (Column a) b where
   def = queryRunner D.def
+
+-- }
+
+-- { Instances that must be provided once for each type.  Instances
+--   for Nullable are derived automatically from these.
 
 instance D.Default QueryRunnerColumn Int Int where
   def = fieldQueryRunnerColumn
@@ -67,6 +74,8 @@ instance D.Default QueryRunnerColumn String String where
 
 instance D.Default QueryRunnerColumn Double Double where
   def = fieldQueryRunnerColumn
+
+-- }
 
 -- Boilerplate instances
 
