@@ -70,6 +70,9 @@ instance D.Default QueryRunner (Column Integer) Integer where
 instance D.Default QueryRunner (Column Double) Double where
   def = fieldQueryRunner
 
+instance D.Default QueryRunner (Column String) String where
+  def = fieldQueryRunner
+
 -- The unsafeCoerce is a bit silly here
 instance D.Default QueryRunner (Column (Nullable Int)) (Maybe Int) where
   def = P.lmap C.unsafeCoerce fieldQueryRunner
