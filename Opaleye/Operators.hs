@@ -51,3 +51,9 @@ not = C.unOp HPQ.OpNot
 
 (./=) :: Column a -> Column a -> Column Bool
 (./=) = C.binOp HPQ.OpNotEq
+
+lower :: Column a -> Column a
+lower = C.unOp (HPQ.UnOpOther "lower")
+
+upper :: Column a -> Column a
+upper = C.unOp (HPQ.UnOpOther "upper")
