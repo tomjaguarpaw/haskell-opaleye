@@ -104,6 +104,17 @@ package could be provided that maps from the old names to the new
 names, but I suspect this is likely to be more work than just changing
 all the old uses by hand.
 
+## `Internal` modules
+
+Opaleye exports a number of modules named `Opaleye.Internal....`.
+They are provided in case of urgent need for access to the internals,
+but they are not intended to be used by API consumers and if you find
+yourself repeatedly accessing them this is a sign that either you or
+Opaleye are doing something wrong.  In such a case please file a bug.
+
+The interface of `Internal` modules does not follow the PVP and may
+break between minor releases, so be careful.
+
 # Contributors
 
 The Opaleye Project was founded by Tom Ellis, inspired by theoretical
