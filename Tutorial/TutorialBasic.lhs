@@ -422,10 +422,11 @@ Note that `matchNullable` corresponds to Haskell's
 
 and in pure Haskell the same computation could be expressed as
 
-> boss :: (String, Maybe String) -> String
-> boss (name, nullableBoss) = maybe (name ++ " has no boss")
->                             (\boss -> "The boss of " ++ name ++ " is " ++ boss)
->                             nullableBoss
+> bossHaskell :: (String, Maybe String) -> String
+> bossHaskell (name, nullableBoss) = maybe (name ++ " has no boss")
+>                                          (\boss -> "The boss of " ++ name
+>                                                    ++ " is " ++ boss)
+>                                          nullableBoss
 
 Then we get the following SQL.
 
