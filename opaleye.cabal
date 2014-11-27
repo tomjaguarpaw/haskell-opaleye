@@ -70,3 +70,15 @@ test-suite test
     product-profunctors,
     opaleye
   ghc-options: -Wall
+
+test-suite tutorial
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  hs-source-dirs: Tutorial
+  build-depends:
+    base >= 4 && < 5,
+    profunctors,
+    product-profunctors,
+    time,
+    opaleye
+  ghc-options: -Wall
