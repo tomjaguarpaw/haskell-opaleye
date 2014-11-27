@@ -5,6 +5,7 @@ module Opaleye.Manipulation where
 import qualified Opaleye.Internal.Sql as Sql
 import qualified Opaleye.Internal.Print as Print
 import qualified Opaleye.RunQuery as RQ
+import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column(Column))
@@ -104,7 +105,7 @@ runInsertReturningExplicit :: RQ.QueryRunner returned haskells
 runInsertReturningExplicit qr u conn = PGS.queryWith_ rowParser conn
                                        . fromString
                                        .:. arrangeInsertReturningSql u
-  where RQ.QueryRunner _ rowParser = qr
+  where IRQ.QueryRunner _ rowParser = qr
 
 runInsertReturning :: (D.Default RQ.QueryRunner returned haskells,
                        D.Default U.Unpackspec returned returned)
