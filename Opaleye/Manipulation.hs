@@ -70,7 +70,7 @@ runDelete :: PGS.Connection -> T.Table a columnsR -> (columnsR -> Column Bool)
           -> IO Int64
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 
-arrangeInsertReturning :: U.Unpackspec returned a
+arrangeInsertReturning :: U.Unpackspec returned returned
                        -> T.Table columnsW columnsR
                        -> columnsW
                        -> (columnsR -> returned)
@@ -86,7 +86,7 @@ arrangeInsertReturning unpackspec table columns returningf =
         (returningPEs, _) = U.runUnpackspec unpackspec f returning
         returningSEs = map Sql.sqlExpr returningPEs
 
-arrangeInsertReturningSql :: U.Unpackspec returned a
+arrangeInsertReturningSql :: U.Unpackspec returned returned
                           -> T.Table columnsW columnsR
                           -> columnsW
                           -> (columnsR -> returned)
