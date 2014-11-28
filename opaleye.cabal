@@ -1,6 +1,6 @@
 name:     opaleye
 version:  0.1
-synopsis: A relational query language for Haskell
+synopsis: An SQL-generating DSL targeting PostgreSQL
 author:   Purely Agile
 build-type: Simple
 cabal-version: >= 1.8
