@@ -44,9 +44,6 @@ use them to generate selects, joins and filters; use the API of
 Opaleye to make your queries more composable; and finally run the
 queries on Postgres.
 
-Opaleye uses HaskellDB's SQL generator.  You should make sure you use
-the version suggested in README.md.
-
 Schema
 ======
 
