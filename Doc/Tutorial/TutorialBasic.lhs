@@ -47,6 +47,10 @@ queries on Postgres.
 Schema
 ======
 
+Opaleye assumes that a Postgres database already exists.  Currently
+there is no support for creating databases or tables, though these
+features may be added later according to demand.
+
 A table is defined with the `Table` constructor.  The syntax is
 simple.  You specify the types of the columns, the name of the table
 and the names of the columns in the underlying database, and whether
