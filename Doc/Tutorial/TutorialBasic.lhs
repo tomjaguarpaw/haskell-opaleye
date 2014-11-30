@@ -66,7 +66,7 @@ us what columns we can write to the table and the second what columns
 we can read from the table.  In this document we will always make all
 columns required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
-advanced tutorial you can see an example of when they might differ.
+manipulation tutorial you can see an example of when they might differ.
 
 > personTable :: Table (Column String, Column Int, Column String)
 >                      (Column String, Column Int, Column String)
