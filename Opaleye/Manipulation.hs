@@ -15,6 +15,8 @@ import qualified Opaleye.Internal.Unpackspec as U
 import qualified Database.HaskellDB.PrimQuery as HPQ
 import qualified Database.HaskellDB.Sql as HSql
 import qualified Database.HaskellDB.Sql.Print as HPrint
+import qualified Database.HaskellDB.Sql.Default as SD
+import qualified Database.HaskellDB.Sql.Generate as SG
 
 import qualified Database.PostgreSQL.Simple as PGS
 
@@ -25,10 +27,10 @@ import           Data.String (fromString)
 
 arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert (T.Table tableName (TI.TableProperties writer _)) columns = insert
-  where outColumns = TI.runWriter writer columns
-        outColumnNames = map snd outColumns
-        outColumnSqlExprs = map (Sql.sqlExpr . fst) outColumns
-        insert = HSql.SqlInsert tableName outColumnNames outColumnSqlExprs
+  where outColumns' = (map (\(x, y) -> (y, x))
+                       . TI.runWriter writer) columns
+        insert = SD.defaultSqlInsert SD.defaultSqlGenerator tableName outColumns'
+        -- ^^ FIXME: Need to add sqlInsert back into Generator
 
 arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
@@ -41,8 +43,8 @@ arrangeUpdate :: T.Table columnsW columnsR
               -> HSql.SqlUpdate
 arrangeUpdate (TI.Table tableName (TI.TableProperties writer (TI.View tableCols)))
               update cond =
-  HSql.SqlUpdate tableName (update' tableCols) [Sql.sqlExpr condExpr]
-  where update' = map (\(x, y) -> (y, Sql.sqlExpr x))
+  SG.sqlUpdate SD.defaultSqlGenerator tableName [condExpr] (update' tableCols)
+  where update' = map (\(x, y) -> (y, x))
                    . TI.runWriter writer
                    . update
         Column condExpr = cond tableCols
@@ -60,7 +62,7 @@ runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
 arrangeDelete :: T.Table a columnsR -> (columnsR -> Column Bool) -> HSql.SqlDelete
 arrangeDelete (TI.Table tableName (TI.TableProperties _ (TI.View tableCols)))
               cond =
-  HSql.SqlDelete tableName [Sql.sqlExpr condExpr]
+  SG.sqlDelete SD.defaultSqlGenerator tableName [condExpr]
   where Column condExpr = cond tableCols
 
 arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column Bool) -> String
