@@ -5,7 +5,11 @@ import qualified Opaleye.Internal.HaskellDB.Query as Q
 
 import           GHC.Int (Int64)
 
+-- | The 'Num' and 'Fractional' instances for 'Column' 'a' are too
+-- general.  For example, they allow you to add two 'Column'
+-- 'String's.  This will be fixed in a subsequent release.
 newtype Column a = Column HPQ.PrimExpr deriving Show
+
 data Nullable a = Nullable
 
 unColumn :: Column a -> HPQ.PrimExpr
