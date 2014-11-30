@@ -12,7 +12,6 @@ library
   build-depends:
       base                >= 4       && < 5
     , contravariant       >= 0.4.4   && < 1.3
-    , haskelldb           == 2.2.3.0.0.0.1
     , old-locale          >= 1.0     && < 1.1
     , postgresql-simple   >= 0.3     && < 0.5
     , pretty              >= 1.1.1.0 && < 1.2
@@ -57,6 +56,13 @@ library
                    Opaleye.Internal.Tag,
                    Opaleye.Internal.Unpackspec,
                    Opaleye.Internal.Values
+                   Opaleye.Internal.HaskellDB.PrimQuery,
+                   Opaleye.Internal.HaskellDB.Query,
+                   Opaleye.Internal.HaskellDB.Sql,
+                   Opaleye.Internal.HaskellDB.Sql.Default,
+                   Opaleye.Internal.HaskellDB.Sql.Generate,
+                   Opaleye.Internal.HaskellDB.Sql.Print
+
 
   ghc-options:     -Wall
 

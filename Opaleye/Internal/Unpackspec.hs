@@ -12,7 +12,7 @@ import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Profunctor.Product.Default as D
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 newtype Unpackspec columns columns' =
   Unpackspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')

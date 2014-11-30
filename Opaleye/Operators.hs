@@ -10,7 +10,7 @@ import qualified Opaleye.Internal.Column as C
 import           Opaleye.Internal.QueryArr (QueryArr(QueryArr))
 import qualified Opaleye.Internal.PrimQuery as PQ
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 {-| Restrict query results to a particular condition.  Corresponds to
     the guard method of the MonadPlus class.

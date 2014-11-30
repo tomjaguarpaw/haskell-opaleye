@@ -3,7 +3,7 @@ module Opaleye.Internal.PrimQuery where
 import           Prelude hiding (product)
 
 import qualified Data.List.NonEmpty as NEL
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 type Symbol = String
 

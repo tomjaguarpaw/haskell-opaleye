@@ -7,7 +7,7 @@ import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import           GHC.Int (Int64)
 

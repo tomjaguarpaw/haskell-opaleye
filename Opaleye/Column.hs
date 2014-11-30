@@ -6,7 +6,7 @@ module Opaleye.Column (module Opaleye.Column,
 import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerce)
 import qualified Opaleye.Internal.Column as C
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 -- | A NULL of any type
 null :: Column (Nullable a)

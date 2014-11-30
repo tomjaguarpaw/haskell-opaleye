@@ -4,10 +4,10 @@ import           Prelude hiding (product)
 
 import qualified Opaleye.Internal.PrimQuery as PQ
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
-import qualified Database.HaskellDB.Sql as HSql
-import qualified Database.HaskellDB.Sql.Default as SD
-import qualified Database.HaskellDB.Sql.Generate as SG
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.Sql as HSql
+import qualified Opaleye.Internal.HaskellDB.Sql.Default as SD
+import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
 
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Maybe as M

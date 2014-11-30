@@ -2,7 +2,7 @@
 
 module Opaleye.Sql where
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Sql as Sql

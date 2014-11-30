@@ -9,8 +9,8 @@ import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
                                               SelectBinary),
                                        From, Join, Values, Binary)
 
-import qualified Database.HaskellDB.Sql as HSql
-import qualified Database.HaskellDB.Sql.Print as HPrint
+import qualified Opaleye.Internal.HaskellDB.Sql as HSql
+import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)

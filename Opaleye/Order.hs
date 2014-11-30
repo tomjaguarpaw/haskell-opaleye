@@ -5,7 +5,7 @@ import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Order as O
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 {-| Order the rows of a `Query` according to the `Order`. -}
 orderBy :: O.Order a -> Query a -> Query a

@@ -4,7 +4,7 @@ module Opaleye.Internal.PackMap where
 
 import qualified Opaleye.Internal.Tag as T
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Monad.Trans.State as State

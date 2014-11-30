@@ -7,7 +7,7 @@ import qualified Opaleye.Internal.Tag as Tag
 import           Opaleye.Internal.Tag (Tag)
 import qualified Opaleye.Internal.PrimQuery as PQ
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), arr)

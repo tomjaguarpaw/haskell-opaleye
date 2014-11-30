@@ -18,7 +18,7 @@ import qualified Opaleye.Internal.PackMap as PM
 import qualified Data.Profunctor.Product.Default as D
 import           Control.Applicative (Applicative, pure)
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 queryTable :: D.Default TM.ColumnMaker columns columns =>
               Table a columns -> Q.Query columns

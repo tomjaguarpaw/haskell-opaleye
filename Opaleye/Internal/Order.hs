@@ -5,7 +5,7 @@ import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Data.Functor.Contravariant as C
 import qualified Data.Profunctor as P
 import qualified Data.Monoid as M

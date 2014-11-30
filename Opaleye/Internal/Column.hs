@@ -1,7 +1,7 @@
 module Opaleye.Internal.Column where
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
-import qualified Database.HaskellDB.Query as Q
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.Query as Q
 
 import           GHC.Int (Int64)
 

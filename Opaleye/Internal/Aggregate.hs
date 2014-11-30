@@ -10,7 +10,7 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.Column as C
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 {-|
 An 'Aggregator' takes a collection of rows of type @a@, groups

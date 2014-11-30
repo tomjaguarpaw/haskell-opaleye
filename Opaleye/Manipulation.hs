@@ -12,11 +12,11 @@ import           Opaleye.Internal.Column (Column(Column))
 import           Opaleye.Internal.Helpers ((.:), (.:.), (.::))
 import qualified Opaleye.Internal.Unpackspec as U
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
-import qualified Database.HaskellDB.Sql as HSql
-import qualified Database.HaskellDB.Sql.Print as HPrint
-import qualified Database.HaskellDB.Sql.Default as SD
-import qualified Database.HaskellDB.Sql.Generate as SG
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.Sql as HSql
+import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
+import qualified Opaleye.Internal.HaskellDB.Sql.Default as SD
+import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
 
 import qualified Database.PostgreSQL.Simple as PGS
 

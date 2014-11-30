@@ -3,7 +3,7 @@ module Opaleye.PGTypes where
 import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.Column as C
 
-import qualified Database.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Text as Text
 import qualified Data.Time as Time
