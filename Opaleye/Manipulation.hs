@@ -29,8 +29,7 @@ arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert (T.Table tableName (TI.TableProperties writer _)) columns = insert
   where outColumns' = (map (\(x, y) -> (y, x))
                        . TI.runWriter writer) columns
-        insert = SD.defaultSqlInsert SD.defaultSqlGenerator tableName outColumns'
-        -- ^^ FIXME: Need to add sqlInsert back into Generator
+        insert = SG.sqlInsert SD.defaultSqlGenerator tableName outColumns'
 
 arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
