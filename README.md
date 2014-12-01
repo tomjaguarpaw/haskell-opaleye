@@ -9,8 +9,8 @@ your Postgres database.
 
 Please get started with Opaleye by referring to these two tutorials
 
-* [Basic tutorial](Doc/Tutorial/TutorialBasic.md)
-* [Manipulation tutorial](Doc/Tutorial/TutorialManipulation.md)
+* [Basic tutorial](Doc/Tutorial/TutorialBasic.lhs)
+* [Manipulation tutorial](Doc/Tutorial/TutorialManipulation.lhs)
 
 # Contact
 
