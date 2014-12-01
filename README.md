@@ -3,7 +3,17 @@
 Opaleye is a Haskell library which provides an SQL-generating embedded
 domain specific language for targeting Postgres.  You need Opaleye if
 you want to use Haskell to write typesafe and composable code to query
-your Postgres database.
+a Postgres database.
+
+Opaleye allows you to define your database tables and write queries
+against them in Haskell code, and aims to be typesafe in the sense
+that if your code compiles then the generated SQL query will not fail
+at runtime.  A wide range of SQL functionality is supported including
+inner and outer joins, restriction, aggregation, distinct, sorting and
+limiting, unions and differences.  Facilities to insert to, update and
+delete from tables are also provided.  Code written using Opaleye is
+composable at a very fine level of granularity, promoting code reuse
+and high levels of abstraction.
 
 ## Tutorials
 
