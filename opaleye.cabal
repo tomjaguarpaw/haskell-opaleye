@@ -4,7 +4,7 @@ synopsis:      An SQL-generating DSL targeting PostgreSQL
 description:   An SQL-generating DSL targeting PostgreSQL.  Allows
                Postgres queries to be written within Haskell in a
                typesafe and composable fashion.
-homepage:      https://github.com/tomjaguarpaw/opaleye
+homepage:      https://github.com/tomjaguarpaw/haskell-opaleye
 license:       BSD3
 license-File:  LICENSE
 author:        Purely Agile
@@ -15,7 +15,7 @@ cabal-version: >= 1.8
 
 source-repository head
   Type:     git
-  Location: https://github.com/tomjaguarpaw/opaleye
+  Location: https://github.com/tomjaguarpaw/haskell-opaleye
 
 library
   build-depends:
