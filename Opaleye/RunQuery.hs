@@ -2,7 +2,8 @@
 
 module Opaleye.RunQuery (module Opaleye.RunQuery,
                          QueryRunner,
-                         IRQ.QueryRunnerColumn) where
+                         IRQ.QueryRunnerColumn,
+                         IRQ.fieldQueryRunnerColumn) where
 
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Data.String as String
