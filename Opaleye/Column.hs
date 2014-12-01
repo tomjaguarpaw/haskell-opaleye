@@ -7,6 +7,7 @@ import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerce)
 import qualified Opaleye.Internal.Column as C
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import           Prelude hiding (null)
 
 -- | A NULL of any type
 null :: Column (Nullable a)
@@ -27,3 +28,6 @@ fromNullable = flip matchNullable id
 
 toNullable :: Column a -> Column (Nullable a)
 toNullable = unsafeCoerce
+
+maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
+maybeToNullable = maybe null toNullable

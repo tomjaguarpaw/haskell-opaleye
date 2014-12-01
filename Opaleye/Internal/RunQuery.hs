@@ -75,6 +75,9 @@ instance D.Default QueryRunnerColumn String String where
 instance D.Default QueryRunnerColumn Double Double where
   def = fieldQueryRunnerColumn
 
+instance D.Default QueryRunnerColumn Bool Bool where
+  def = fieldQueryRunnerColumn
+
 -- }
 
 -- Boilerplate instances

@@ -22,18 +22,23 @@ restrict = QueryArr f where
 doubleOfInt :: Column Int -> Column Double
 doubleOfInt (Column e) = Column (HPQ.CastExpr "double precision" e)
 
+infix 4 .<
 (.<) :: Column a -> Column a -> Column Bool
 (.<) = C.binOp HPQ.OpLt
 
+infix 4 .<=
 (.<=) :: Column a -> Column a -> Column Bool
 (.<=) = C.binOp HPQ.OpLtEq
 
+infix 4 .>=
 (.>=) :: Column a -> Column a -> Column Bool
 (.>=) = C.binOp HPQ.OpGtEq
 
+infixr 3 .&&
 (.&&) :: Column Bool -> Column Bool -> Column Bool
 (.&&) = C.binOp HPQ.OpAnd
 
+infixr 2 .||
 (.||) :: Column Bool -> Column Bool -> Column Bool
 (.||) = C.binOp HPQ.OpOr
 
@@ -46,3 +51,9 @@ not = C.unOp HPQ.OpNot
 
 (./=) :: Column a -> Column a -> Column Bool
 (./=) = C.binOp HPQ.OpNotEq
+
+lower :: Column a -> Column a
+lower = C.unOp (HPQ.UnOpOther "lower")
+
+upper :: Column a -> Column a
+upper = C.unOp (HPQ.UnOpOther "upper")
