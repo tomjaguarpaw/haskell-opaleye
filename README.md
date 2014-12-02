@@ -50,6 +50,11 @@ Opaleye are doing something wrong.  In such a case please file a bug.
 The interface of `Internal` modules does not follow the PVP and may
 break between minor releases, so be careful.
 
+# Commercial support
+
+Commercial support for Opaleye is provided by [Purely
+Agile](http://www.purelyagile.com/).
+
 # Contributors
 
 The Opaleye Project was founded by Tom Ellis, inspired by theoretical
