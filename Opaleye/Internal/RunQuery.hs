@@ -20,6 +20,10 @@ import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product (empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
 
+import qualified Data.Text as ST
+import qualified Data.Text.Lazy as LT
+import           Data.Time (UTCTime)
+import           Data.UUID (UUID)
 import           GHC.Int (Int64)
 
 data QueryRunnerColumn coltype haskell =
@@ -76,6 +80,18 @@ instance D.Default QueryRunnerColumn Double Double where
   def = fieldQueryRunnerColumn
 
 instance D.Default QueryRunnerColumn Bool Bool where
+  def = fieldQueryRunnerColumn
+
+instance D.Default QueryRunnerColumn UUID UUID where
+  def = fieldQueryRunnerColumn
+
+instance D.Default QueryRunnerColumn ST.Text ST.Text where
+  def = fieldQueryRunnerColumn
+
+instance D.Default QueryRunnerColumn LT.Text LT.Text where
+  def = fieldQueryRunnerColumn
+
+instance D.Default QueryRunnerColumn UTCTime UTCTime where
   def = fieldQueryRunnerColumn
 
 -- }

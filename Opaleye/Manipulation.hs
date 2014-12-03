@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.Manipulation where
+module Opaleye.Manipulation (module Opaleye.Manipulation,
+                             U.Unpackspec) where
 
 import qualified Opaleye.Internal.Sql as Sql
 import qualified Opaleye.Internal.Print as Print
