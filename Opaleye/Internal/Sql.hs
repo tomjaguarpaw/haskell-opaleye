@@ -60,6 +60,8 @@ sqlQueryGenerator :: PQ.PrimQueryFold Select
 sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
                      values, binary)
 
+-- FIXME: we really ought to use a unique tag in the name of the
+-- "result" column
 sql :: (PQ.PrimQuery, [HPQ.PrimExpr]) -> Select
 sql (pq, pes) = SelectFrom $ newSelect { attrs = makeAttrs pes
                                        , tables = [pqSelect] }
