@@ -24,7 +24,7 @@ data JoinType = LeftJoin deriving Show
 data PrimQuery = Unit
                | BaseTable String [(Symbol, HPQ.PrimExpr)]
                | Product (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]
-               | Aggregate [(Symbol, Maybe HPQ.AggrOp, HPQ.PrimExpr)] PrimQuery
+               | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] PrimQuery
                | Order [HPQ.OrderExpr] PrimQuery
                | Limit LimitOp PrimQuery
                | Join JoinType [(Symbol, HPQ.PrimExpr)] HPQ.PrimExpr PrimQuery PrimQuery
@@ -35,7 +35,7 @@ data PrimQuery = Unit
 type PrimQueryFold p = ( p
                        , String -> [(Symbol, HPQ.PrimExpr)] -> p
                        , NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-                       , [(Symbol, Maybe HPQ.AggrOp, HPQ.PrimExpr)] -> p -> p
+                       , [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
                        , [HPQ.OrderExpr] -> p -> p
                        , LimitOp -> p -> p
                        , JoinType -> [(Symbol, HPQ.PrimExpr)] -> HPQ.PrimExpr -> p -> p -> p
