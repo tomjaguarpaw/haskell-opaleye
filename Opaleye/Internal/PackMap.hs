@@ -64,16 +64,16 @@ run m = (r, as)
 
 -- This one ignores the 'a' when making the internal column name.
 extractAttr :: (String -> String) -> T.Tag -> a
-               -> PM [(String, a)] HPQ.PrimExpr
+               -> PM [(HPQ.Symbol, a)] HPQ.PrimExpr
 extractAttr = extractAttrPE . const
 
 -- This one can make the internal column name depend on the 'a' in
 -- question (probably a PrimExpr)
 extractAttrPE :: (a -> String -> String) -> T.Tag -> a
-               -> PM [(String, a)] HPQ.PrimExpr
+               -> PM [(HPQ.Symbol, a)] HPQ.PrimExpr
 extractAttrPE mkName t pe = do
   i <- new
-  let s = T.tagWith t (mkName pe i)
+  let s = HPQ.Symbol (T.tagWith t (mkName pe i))
   write (s, pe)
   return (HPQ.AttrExpr s)
 

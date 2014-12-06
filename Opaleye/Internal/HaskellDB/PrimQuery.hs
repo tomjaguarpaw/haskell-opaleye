@@ -10,8 +10,10 @@ type Name = String
 type Scheme     = [Attribute]
 type Assoc      = [(Attribute,PrimExpr)]
 
+newtype Symbol = Symbol String deriving (Read, Show)
 
-data PrimExpr   = AttrExpr  Attribute
+data PrimExpr   = AttrExpr  Symbol
+                | BaseTableAttrExpr Attribute
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
                 | AggrExpr  AggrOp PrimExpr

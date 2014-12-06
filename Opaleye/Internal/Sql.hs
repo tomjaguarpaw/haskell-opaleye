@@ -5,6 +5,7 @@ import           Prelude hiding (product)
 import qualified Opaleye.Internal.PrimQuery as PQ
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import           Opaleye.Internal.HaskellDB.PrimQuery (Symbol(Symbol))
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Default as SD
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
@@ -72,7 +73,7 @@ sql (pq, pes) = SelectFrom $ newSelect { attrs = makeAttrs pes
 unit :: Select
 unit = SelectFrom newSelect { attrs  = [(HSql.ConstSqlExpr "0", Nothing)] }
 
-baseTable :: String -> [(PQ.Symbol, HPQ.PrimExpr)] -> Select
+baseTable :: String -> [(Symbol, HPQ.PrimExpr)] -> Select
 baseTable name columns = SelectFrom $
     newSelect { attrs = map sqlBinding columns
               , tables = [Table name] }
@@ -82,7 +83,7 @@ product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
 
-aggregate :: [(PQ.Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
+aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = map attr aggrs
                                            , tables = [s]
                                            , groupBy = groupBy' }
@@ -111,7 +112,7 @@ limit_ lo s = SelectFrom $ newSelect { tables = [s]
           PQ.OffsetOp n        -> (Nothing, Just n)
           PQ.LimitOffsetOp l o -> (Just l, Just o)
 
-join :: PQ.JoinType -> [(PQ.Symbol, HPQ.PrimExpr)] -> HPQ.PrimExpr -> Select -> Select
+join :: PQ.JoinType -> [(Symbol, HPQ.PrimExpr)] -> HPQ.PrimExpr -> Select -> Select
      -> Select
 join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
                                             , jAttrs = mkAttrs columns
@@ -122,13 +123,13 @@ join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
 -- Postgres seems to name columns of VALUES clauses "column1",
 -- "column2", ... . I'm not sure to what extent it is customisable or
 -- how robust it is to rely on this
-values :: [PQ.Symbol] -> [[HPQ.PrimExpr]] -> Select
+values :: [Symbol] -> [[HPQ.PrimExpr]] -> Select
 values columns pes = SelectValues Values { vAttrs  = mkColumns columns
                                          , vValues = (map . map) sqlExpr pes }
   where mkColumns = zipWith (flip (curry (sqlBinding . Arr.second mkColumn))) [1..]
-        mkColumn i = (HPQ.AttrExpr . ("column" ++) . show) (i::Int)
+        mkColumn i = (HPQ.AttrExpr . Symbol . ("column" ++) . show) (i::Int)
 
-binary :: PQ.BinOp -> [(PQ.Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
+binary :: PQ.BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
        -> (Select, Select) -> Select
 binary op pes (select1, select2) = SelectBinary Binary {
   bOp = binOp op,
@@ -162,5 +163,5 @@ newSelect = From {
 sqlExpr :: HPQ.PrimExpr -> HSql.SqlExpr
 sqlExpr = SG.sqlExpr SD.defaultSqlGenerator
 
-sqlBinding :: (PQ.Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe PQ.Symbol)
-sqlBinding (sym, pe) = (sqlExpr pe, Just sym)
+sqlBinding :: (Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe String)
+sqlBinding (Symbol sym, pe) = (sqlExpr pe, Just sym)
