@@ -5,6 +5,12 @@ import           Prelude hiding (product)
 import qualified Data.List.NonEmpty as NEL
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+-- I really want to make this abstract, i.e. `newtype Symbol = Symbol
+-- String`, and then later improve it so that carries around a unique
+-- ID, i.e. `data Symbol = Symbol String Int`.  This will make our SQL
+-- generation a bit neater.  However we currently conflate column
+-- names in base tables with our own internal column names and use
+-- PrimQuery(AttrExpr) for both.
 type Symbol = String
 
 data LimitOp = LimitOp Int | OffsetOp Int | LimitOffsetOp Int Int
