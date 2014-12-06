@@ -119,6 +119,9 @@ join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
                                             , jCond = sqlExpr cond }
   where mkAttrs = map sqlBinding
 
+-- Postgres seems to name columns of VALUES clauses "column1",
+-- "column2", ... . I'm not sure to what extent it is customisable or
+-- how robust it is to rely on this
 values :: [PQ.Symbol] -> [[HPQ.PrimExpr]] -> Select
 values columns pes = SelectValues Values { vAttrs  = mkColumns columns
                                          , vValues = (map . map) sqlExpr pes }
