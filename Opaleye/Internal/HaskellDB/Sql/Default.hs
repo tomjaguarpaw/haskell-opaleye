@@ -62,7 +62,8 @@ defaultSqlDelete gen name criteria = SqlDelete name (map (sqlExpr gen) criteria)
 defaultSqlExpr :: SqlGenerator -> PrimExpr -> SqlExpr
 defaultSqlExpr gen expr = 
     case expr of
-      AttrExpr a       -> ColumnSqlExpr a
+      AttrExpr (Symbol a) -> ColumnSqlExpr a
+      BaseTableAttrExpr a -> ColumnSqlExpr a
       BinExpr op e1 e2 ->
         let leftE = sqlExpr gen e1
             rightE = sqlExpr gen e2

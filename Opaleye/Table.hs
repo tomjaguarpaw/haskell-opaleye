@@ -33,11 +33,11 @@ queryTableExplicit cm table = Q.simpleQueryArr f where
 required :: String -> TableProperties (Column a) (Column a)
 required columnName = T.TableProperties
   (Writer (PM.PackMap (\f (Column primExpr) -> f (primExpr, columnName))))
-  (View (Column (HPQ.AttrExpr columnName)))
+  (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 optional :: String -> TableProperties (Maybe (Column a)) (Column a)
 optional columnName = T.TableProperties
   (Writer (PM.PackMap (\f c -> case c of
                           Nothing -> pure ()
                           Just (Column primExpr) -> f (primExpr, columnName))))
-  (View (Column (HPQ.AttrExpr columnName)))
+  (View (Column (HPQ.BaseTableAttrExpr columnName)))

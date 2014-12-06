@@ -19,8 +19,8 @@ toNullable :: NullMaker a b -> a -> b
 toNullable (NullMaker f) = f
 
 extractLeftJoinFields :: Int -> T.Tag -> HPQ.PrimExpr
-            -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
-extractLeftJoinFields n = PM.extractAttr (\i -> "result" ++ show n ++ "_" ++ i)
+            -> PM.PM [(HPQ.Symbol, HPQ.PrimExpr)] HPQ.PrimExpr
+extractLeftJoinFields n = PM.extractAttr ("result" ++ show n ++ "_")
 
 instance D.Default NullMaker (Column a) (Column (Nullable a)) where
   def = NullMaker C.unsafeCoerce

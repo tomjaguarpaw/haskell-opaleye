@@ -45,7 +45,7 @@ queryTable cm table tag = (primExprs, primQ) where
 runColumnMaker :: TM.ColumnMaker tablecolumns columns
                   -> Tag.Tag
                   -> tablecolumns
-                  -> (columns, [(String, HPQ.PrimExpr)])
+                  -> (columns, [(HPQ.Symbol, HPQ.PrimExpr)])
 runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) where
   f = PM.extractAttrPE mkName tag
   -- The non-AttrExpr PrimExprs are not created by 'makeView' or a
@@ -53,7 +53,7 @@ runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) wher
   -- implemented a Functor instance) or a direct manipulation of the
   -- tablecols contained in the View (which would be naughty)
   mkName pe i = (++ i) $ case pe of
-    HPQ.AttrExpr columnName -> columnName
+    HPQ.BaseTableAttrExpr columnName -> columnName
     _ -> "tablecolumn"
 
 runWriter :: Writer columns columns' -> columns -> [(HPQ.PrimExpr, String)]

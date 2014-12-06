@@ -17,9 +17,9 @@ import           Control.Applicative (Applicative, pure, (<*>))
 import           Control.Arrow ((***))
 
 extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
-                    -> PM.PM [(String, (HPQ.PrimExpr, HPQ.PrimExpr))]
+                    -> PM.PM [(HPQ.Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
                              HPQ.PrimExpr
-extractBinaryFields = PM.extractAttr ("binary" ++)
+extractBinaryFields = PM.extractAttr "binary"
 
 data Binaryspec columns columns' =
   Binaryspec (PM.PackMap (HPQ.PrimExpr, HPQ.PrimExpr) HPQ.PrimExpr

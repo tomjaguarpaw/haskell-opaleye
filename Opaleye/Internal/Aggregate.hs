@@ -18,18 +18,18 @@ them, and transforms each group into a single row of type @b@. This
 corresponds to aggregators using @GROUP BY@ in SQL.
 -}
 newtype Aggregator a b = Aggregator
-                         (PM.PackMap (HPQ.PrimExpr, Maybe HPQ.AggrOp) HPQ.PrimExpr
+                         (PM.PackMap (Maybe HPQ.AggrOp, HPQ.PrimExpr) HPQ.PrimExpr
                                      a b)
 
 makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr' m = Aggregator (PM.PackMap
-                          (\f (C.Column e) -> fmap C.Column (f (e, m))))
+                          (\f (C.Column e) -> fmap C.Column (f (m, e))))
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr = makeAggr' . Just
 
 runAggregator :: Applicative f => Aggregator a b
-              -> ((HPQ.PrimExpr, Maybe HPQ.AggrOp) -> f HPQ.PrimExpr) -> a -> f b
+              -> ((Maybe HPQ.AggrOp, HPQ.PrimExpr) -> f HPQ.PrimExpr) -> a -> f b
 runAggregator (Aggregator a) = PM.packmap a
 
 aggregateU :: Aggregator a b
@@ -40,13 +40,9 @@ aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
 
         primQ' = PQ.Aggregate projPEs primQ
 
-extractAggregateFields :: T.Tag -> (HPQ.PrimExpr, Maybe HPQ.AggrOp)
-      -> PM.PM [(String, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] HPQ.PrimExpr
-extractAggregateFields tag (pe, maggrop) = do
-  i <- PM.new
-  let s = T.tagWith tag ("result" ++ i)
-  PM.write (s, (maggrop, pe))
-  return (HPQ.AttrExpr s)
+extractAggregateFields :: T.Tag -> (Maybe HPQ.AggrOp, HPQ.PrimExpr)
+      -> PM.PM [(HPQ.Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] HPQ.PrimExpr
+extractAggregateFields = PM.extractAttr "result"
 
 -- { Boilerplate instances
 

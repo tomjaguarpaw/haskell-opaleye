@@ -65,8 +65,8 @@ extractValuesEntry pe = do
   return pe
 
 extractValuesField :: T.Tag -> HPQ.PrimExpr
-                   -> PM.PM [(String, HPQ.PrimExpr)] HPQ.PrimExpr
-extractValuesField = PM.extractAttr ("values" ++)
+                   -> PM.PM [(HPQ.Symbol, HPQ.PrimExpr)] HPQ.PrimExpr
+extractValuesField = PM.extractAttr "values"
 
 data Valuesspec columns columns' =
   Valuesspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
