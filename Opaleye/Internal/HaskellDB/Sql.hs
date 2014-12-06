@@ -13,7 +13,6 @@ module Opaleye.Internal.HaskellDB.Sql (
 	                       SqlInsert(..), 
 
                                SqlExpr(..),
-                               Mark(..),
 	                      ) where
 
 
@@ -30,10 +29,6 @@ type SqlName = String
 
 data SqlOrder = SqlAsc | SqlDesc
   deriving Show
-
-data Mark = Columns [SqlExpr]
-  deriving Show
-
 
 -- | Expressions in SQL statements.
 data SqlExpr = ColumnSqlExpr  SqlColumn

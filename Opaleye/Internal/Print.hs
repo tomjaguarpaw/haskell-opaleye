@@ -85,7 +85,7 @@ ppTable (alias, select) = case select of
 
 ppGroupBy :: [HSql.SqlExpr] -> Doc
 ppGroupBy [] = empty
-ppGroupBy xs = HPrint.ppGroupBy (HSql.Columns xs)
+ppGroupBy xs = HPrint.ppGroupBy xs
 
 ppLimit :: Maybe Int -> Doc
 ppLimit Nothing = empty

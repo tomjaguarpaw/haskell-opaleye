@@ -15,7 +15,7 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
                                      commaH
 	                            ) where
 
-import Opaleye.Internal.HaskellDB.Sql (Mark(Columns), SqlColumn(..), SqlDelete(..),
+import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
                                SqlUpdate(..))
 
@@ -30,8 +30,8 @@ ppWhere es = text "WHERE"
              <+> hsep (intersperse (text "AND")
                        (map (parens . ppSqlExpr) es))
 
-ppGroupBy :: Mark -> Doc
-ppGroupBy (Columns es) = text "GROUP BY" <+> ppGroupAttrs es
+ppGroupBy :: [SqlExpr] -> Doc
+ppGroupBy es = text "GROUP BY" <+> ppGroupAttrs es
   where
     ppGroupAttrs :: [SqlExpr] -> Doc
     ppGroupAttrs cs = commaV nameOrExpr cs
