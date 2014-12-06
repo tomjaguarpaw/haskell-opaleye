@@ -1,5 +1,5 @@
-import TutorialBasic
-import TutorialManipulation
+import TutorialBasic ()
+import TutorialManipulation ()
 
 main :: IO ()
 main = return ()
