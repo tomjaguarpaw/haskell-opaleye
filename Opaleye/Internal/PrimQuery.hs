@@ -5,6 +5,12 @@ import           Prelude hiding (product)
 import qualified Data.List.NonEmpty as NEL
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+-- I really want to make this abstract, i.e. `newtype Symbol = Symbol
+-- String`, and then later improve it so that carries around a unique
+-- ID, i.e. `data Symbol = Symbol String Int`.  This will make our SQL
+-- generation a bit neater.  However we currently conflate column
+-- names in base tables with our own internal column names and use
+-- PrimQuery(AttrExpr) for both.
 type Symbol = String
 
 data LimitOp = LimitOp Int | OffsetOp Int | LimitOffsetOp Int Int
@@ -18,7 +24,7 @@ data JoinType = LeftJoin deriving Show
 data PrimQuery = Unit
                | BaseTable String [(Symbol, HPQ.PrimExpr)]
                | Product (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]
-               | Aggregate [(Symbol, Maybe HPQ.AggrOp, HPQ.PrimExpr)] PrimQuery
+               | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] PrimQuery
                | Order [HPQ.OrderExpr] PrimQuery
                | Limit LimitOp PrimQuery
                | Join JoinType [(Symbol, HPQ.PrimExpr)] HPQ.PrimExpr PrimQuery PrimQuery
@@ -29,7 +35,7 @@ data PrimQuery = Unit
 type PrimQueryFold p = ( p
                        , String -> [(Symbol, HPQ.PrimExpr)] -> p
                        , NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-                       , [(Symbol, Maybe HPQ.AggrOp, HPQ.PrimExpr)] -> p -> p
+                       , [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
                        , [HPQ.OrderExpr] -> p -> p
                        , LimitOp -> p -> p
                        , JoinType -> [(Symbol, HPQ.PrimExpr)] -> HPQ.PrimExpr -> p -> p -> p

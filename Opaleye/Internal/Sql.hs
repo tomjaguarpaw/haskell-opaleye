@@ -12,6 +12,8 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Maybe as M
 
+import qualified Control.Arrow as Arr
+
 data Select = SelectFrom From
             | Table HSql.SqlTable
             | SelectJoin Join
@@ -74,7 +76,7 @@ unit = SelectFrom newSelect { attrs  = [(HSql.ConstSqlExpr "0", Nothing)] }
 
 baseTable :: String -> [(PQ.Symbol, HPQ.PrimExpr)] -> Select
 baseTable name columns = SelectFrom $
-    newSelect { attrs = map (\(sym, col) -> (sqlExpr col, Just sym)) columns
+    newSelect { attrs = map sqlBinding columns
               , tables = [Table name] }
 
 product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
@@ -82,14 +84,17 @@ product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
 
-aggregate :: [(PQ.Symbol, Maybe HPQ.AggrOp, HPQ.PrimExpr)] -> Select -> Select
+aggregate :: [(PQ.Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = map attr aggrs
                                            , tables = [s]
                                            , groupBy = groupBy' }
   where groupBy' = (map sqlExpr
-                    . map (\(_, _, e) -> e)
-                    . filter (\(_, x, _) -> M.isNothing x)) aggrs
-        attr (x, aggrOp, pe) = (sqlExpr (aggrExpr aggrOp pe), Just x)
+                    . map expr
+                    . filter (M.isNothing . aggrOp)) aggrs
+        attr = sqlBinding . Arr.second (uncurry aggrExpr)
+        expr (_, (_, e)) = e
+        aggrOp (_, (x, _)) = x
+
 
 aggrExpr :: Maybe HPQ.AggrOp -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = maybe id HPQ.AggrExpr
@@ -114,13 +119,16 @@ join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
                                             , jAttrs = mkAttrs columns
                                             , jTables = (s1, s2)
                                             , jCond = sqlExpr cond }
-  where mkAttrs = map (\(sym, pe) -> (sqlExpr pe, Just sym))
+  where mkAttrs = map sqlBinding
 
+-- Postgres seems to name columns of VALUES clauses "column1",
+-- "column2", ... . I'm not sure to what extent it is customisable or
+-- how robust it is to rely on this
 values :: [PQ.Symbol] -> [[HPQ.PrimExpr]] -> Select
 values columns pes = SelectValues Values { vAttrs  = mkColumns columns
                                          , vValues = (map . map) sqlExpr pes }
-  where mkColumns = zipWith (\i column -> ((sqlExpr . HPQ.AttrExpr) ("column" ++ show (i::Int)),
-                                           Just column)) [1..]
+  where mkColumns = zipWith (flip (curry (sqlBinding . Arr.second mkColumn))) [1..]
+        mkColumn i = (HPQ.AttrExpr . ("column" ++) . show) (i::Int)
 
 binary :: PQ.BinOp -> [(PQ.Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
        -> (Select, Select) -> Select
@@ -131,7 +139,7 @@ binary op pes (select1, select2) = SelectBinary Binary {
   bSelect2 = SelectFrom newSelect { attrs = map (mkColumn snd) pes,
                                     tables = [select2] }
   }
-  where mkColumn e (sym, pes') = (sqlExpr (e pes'), Just sym)
+  where mkColumn e = sqlBinding . Arr.second e
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
@@ -155,3 +163,6 @@ newSelect = From {
 
 sqlExpr :: HPQ.PrimExpr -> HSql.SqlExpr
 sqlExpr = SG.sqlExpr SD.defaultSqlGenerator
+
+sqlBinding :: (PQ.Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe PQ.Symbol)
+sqlBinding (sym, pe) = (sqlExpr pe, Just sym)
