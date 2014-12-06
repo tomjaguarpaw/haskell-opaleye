@@ -15,7 +15,7 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
                                      commaH
 	                            ) where
 
-import Opaleye.Internal.HaskellDB.Sql (Mark(Columns), SqlColumn, SqlDelete(..),
+import Opaleye.Internal.HaskellDB.Sql (Mark(Columns), SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
                                SqlUpdate(..))
 
@@ -33,11 +33,11 @@ ppWhere es = text "WHERE"
 ppGroupBy :: Mark -> Doc
 ppGroupBy (Columns es) = text "GROUP BY" <+> ppGroupAttrs es
   where
-    ppGroupAttrs :: [(SqlColumn, SqlExpr)] -> Doc
+    ppGroupAttrs :: [SqlExpr] -> Doc
     ppGroupAttrs cs = commaV nameOrExpr cs
-    nameOrExpr :: (SqlColumn, SqlExpr) -> Doc
-    nameOrExpr (_, ColumnSqlExpr col) = text col
-    nameOrExpr (_, expr) = parens (ppSqlExpr expr)
+    nameOrExpr :: SqlExpr -> Doc
+    nameOrExpr (ColumnSqlExpr (SqlColumn col)) = text col
+    nameOrExpr expr = parens (ppSqlExpr expr)
     
 ppOrderBy :: [(SqlExpr,SqlOrder)] -> Doc
 ppOrderBy [] = empty
@@ -59,7 +59,7 @@ ppUpdate (SqlUpdate name assigns criteria)
         $$ text "SET" <+> commaV ppAssign assigns
         $$ ppWhere criteria
     where
-      ppAssign (c,e) = text c <+> equals <+> ppSqlExpr e
+      ppAssign (c,e) = ppColumn c <+> equals <+> ppSqlExpr e
 
 
 ppDelete :: SqlDelete -> Doc
@@ -71,14 +71,17 @@ ppInsert :: SqlInsert -> Doc
 
 ppInsert (SqlInsert table names values)
     = text "INSERT INTO" <+> text table 
-      <+> parens (commaV text names)
+      <+> parens (commaV ppColumn names)
       $$ text "VALUES" <+> parens (commaV ppSqlExpr values)
+
+ppColumn :: SqlColumn -> Doc
+ppColumn (SqlColumn s) = text s
 
 
 ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =
     case expr of
-      ColumnSqlExpr c     -> text c
+      ColumnSqlExpr c     -> ppColumn c
       ParensSqlExpr e -> parens (ppSqlExpr e)
       BinSqlExpr op e1 e2 -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2 
       PrefixSqlExpr op e  -> text op <+> ppSqlExpr e
