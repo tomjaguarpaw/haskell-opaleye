@@ -12,6 +12,9 @@ data LimitOp = LimitOp Int | OffsetOp Int | LimitOffsetOp Int Int
 data BinOp = Except | Union | UnionAll deriving Show
 data JoinType = LeftJoin deriving Show
 
+-- In the future it may make sense to introduce this datatype
+-- type Bindings a = [(Symbol, a)]
+
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
 data PrimQuery = Unit
