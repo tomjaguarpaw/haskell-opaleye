@@ -63,9 +63,9 @@ run m = (r, as)
 -- { General functions for writing columns in the AST
 
 -- This one ignores the 'a' when making the internal column name.
-extractAttr :: (String -> String) -> T.Tag -> a
+extractAttr :: String -> T.Tag -> a
                -> PM [(HPQ.Symbol, a)] HPQ.PrimExpr
-extractAttr = extractAttrPE . const
+extractAttr s = extractAttrPE (const (s ++))
 
 -- This one can make the internal column name depend on the 'a' in
 -- question (probably a PrimExpr)

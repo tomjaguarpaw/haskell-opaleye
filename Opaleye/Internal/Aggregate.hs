@@ -42,7 +42,7 @@ aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
 
 extractAggregateFields :: T.Tag -> (Maybe HPQ.AggrOp, HPQ.PrimExpr)
       -> PM.PM [(HPQ.Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] HPQ.PrimExpr
-extractAggregateFields = PM.extractAttr ("result" ++)
+extractAggregateFields = PM.extractAttr "result"
 
 -- { Boilerplate instances
 
