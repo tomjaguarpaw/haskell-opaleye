@@ -39,7 +39,7 @@ runQueryExplicit (QueryRunner u rowParser) conn q =
 -- @
 -- newtype Foo = Foo Int
 -- instance Default QueryRunnerColumn Foo Foo where
---    def = queryRunnerColumn ('unsafeCoerce' :: Column Foo -> Column Int) Foo def
+--    def = queryRunnerColumn ('unsafeCoerce' :: Column Foo -> Column PGInt4) Foo def
 -- @
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
                   -> IRQ.QueryRunnerColumn a b -> IRQ.QueryRunnerColumn a' b'

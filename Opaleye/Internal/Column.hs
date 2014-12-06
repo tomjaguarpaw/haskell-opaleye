@@ -3,8 +3,6 @@ module Opaleye.Internal.Column where
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Query as Q
 
-import           GHC.Int (Int64)
-
 -- | The 'Num' and 'Fractional' instances for 'Column' 'a' are too
 -- general.  For example, they allow you to add two 'Column'
 -- 'String's.  This will be fixed in a subsequent release.
@@ -28,29 +26,25 @@ binOp op (Column e) (Column e') = Column (HPQ.BinExpr op e e')
 unOp :: HPQ.UnOp -> Column a -> Column b
 unOp op (Column e) = Column (HPQ.UnExpr op e)
 
-case_ :: [(Column Bool, Column a)] -> Column a -> Column a
-case_ alts (Column otherwise_) = Column (HPQ.CaseExpr (unColumns alts) otherwise_)
+-- For import order reasons we can't make the return type PGBool
+unsafeCase_ :: [(Column pgBool, Column a)] -> Column a -> Column a
+unsafeCase_ alts (Column otherwise_) = Column (HPQ.CaseExpr (unColumns alts) otherwise_)
   where unColumns = map (\(Column e, Column e') -> (e, e'))
 
-ifThenElse :: Column Bool -> Column a -> Column a -> Column a
-ifThenElse cond t f = case_ [(cond, t)] f
+unsafeIfThenElse :: Column pgBool -> Column a -> Column a -> Column a
+unsafeIfThenElse cond t f = unsafeCase_ [(cond, t)] f
 
-infix 4 .>
-(.>) :: Column a -> Column a -> Column Bool
-(.>) = binOp HPQ.OpGt
+unsafeGt :: Column a -> Column a -> Column pgBool
+unsafeGt = binOp HPQ.OpGt
 
-infix 4 .==
-(.==) :: Column a -> Column a -> Column Bool
-(.==) = binOp HPQ.OpEq
+unsafeEq :: Column a -> Column a -> Column pgBool
+unsafeEq = binOp HPQ.OpEq
 
--- Naughty orphan instance
-instance Q.ShowConstant Int64 where
-  showConstant = HPQ.IntegerLit . fromIntegral
+class PGNum a where
+  pgFromInteger :: Integer -> Column a
 
--- The constraints here are not really appropriate.  There should be
--- some restriction to a numeric Postgres type
-instance (Q.ShowConstant a, Num a) => Num (Column a) where
-  fromInteger = constant . fromInteger
+instance PGNum a => Num (Column a) where
+  fromInteger = pgFromInteger
   (*) = binOp HPQ.OpMul
   (+) = binOp HPQ.OpPlus
   (-) = binOp HPQ.OpMinus
@@ -60,8 +54,11 @@ instance (Q.ShowConstant a, Num a) => Num (Column a) where
 
   -- We can't use Postgres's 'sign' function because it returns only a
   -- numeric or a double
-  signum c = case_ [(c .> 0, 1), (c .== 0, 0)] (-1)
+  signum c = unsafeCase_ [(c `unsafeGt` 0, 1), (c `unsafeEq` 0, 0)] (-1)
 
-instance (Q.ShowConstant a, Fractional a) => Fractional (Column a) where
-  fromRational = constant . fromRational
+class PGFractional a where
+  pgFromRational :: Rational -> Column a
+
+instance (PGNum a, PGFractional a) => Fractional (Column a) where
+  fromRational = pgFromRational
   (/) = binOp HPQ.OpDiv

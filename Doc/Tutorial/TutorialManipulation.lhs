@@ -3,6 +3,7 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye.Column (Column)
+> import           Opaleye.PGTypes (PGFloat8, PGInt4)
 > import           Opaleye.Table (Table(Table), required, optional)
 > import           Opaleye.Operators ((.==), (.<))
 > import           Opaleye.Manipulation (arrangeDeleteSql, arrangeInsertSql,
@@ -30,8 +31,8 @@ it is wrapped in a Maybe.  That means we don't necessarily need to
 specify it when writing to the table.  The database will automatically
 fill in a value for us.
 
-> table :: Table (Maybe (Column Int), Column Double, Column Double)
->                (Column Int, Column Double, Column Double)
+> table :: Table (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8)
+>                (Column PGInt4, Column PGFloat8, Column PGFloat8)
 > table = Table "tablename" (p3 (optional "id", required "x", required "y"))
 
 To perform a delete we provide an expression from our read type to

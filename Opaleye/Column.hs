@@ -5,22 +5,22 @@ module Opaleye.Column (module Opaleye.Column,
 
 import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerce)
 import qualified Opaleye.Internal.Column as C
-
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.PGTypes as T
 import           Prelude hiding (null)
 
 -- | A NULL of any type
 null :: Column (Nullable a)
 null = unsafeCoerce (C.Column (HPQ.ConstExpr HPQ.NullLit))
 
-isNull :: Column (Nullable a) -> Column Bool
+isNull :: Column (Nullable a) -> Column T.PGBool
 isNull = C.unOp HPQ.OpIsNull
 
 -- | The Opaleye equivalent of the maybe function
 matchNullable :: Column b -> (Column a -> Column b) -> Column (Nullable a)
               -> Column b
-matchNullable replacement f x = C.ifThenElse (isNull x) replacement
-                                             (f (unsafeCoerce x))
+matchNullable replacement f x = C.unsafeIfThenElse (isNull x) replacement
+                                                   (f (unsafeCoerce x))
 
 -- | The Opaleye equivalent of the fromMaybe function
 fromNullable :: Column a -> Column (Nullable a) -> Column a

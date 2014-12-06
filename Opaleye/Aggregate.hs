@@ -6,10 +6,8 @@ import           Opaleye.Internal.Aggregate (Aggregator)
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
-
+import qualified Opaleye.PGTypes as T
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
-
-import           GHC.Int (Int64)
 
 -- This page of Postgres documentation tell us what aggregate
 -- functions are available
@@ -25,11 +23,11 @@ sum :: Aggregator (C.Column a) (C.Column a)
 sum = A.makeAggr HPQ.AggrSum
 
 -- | Count the number of non-null rows in a group.
-count :: Aggregator (C.Column a) (C.Column Int64)
+count :: Aggregator (C.Column a) (C.Column T.PGInt8)
 count = A.makeAggr HPQ.AggrCount
 
 -- | Average of a group
-avg :: Aggregator (C.Column Double) (C.Column Double)
+avg :: Aggregator (C.Column T.PGFloat8) (C.Column T.PGFloat8)
 avg = A.makeAggr HPQ.AggrAvg
 
 {-|
@@ -39,8 +37,8 @@ type @a@, apply the aggregator to the results of the query.
 aggregate :: Aggregator a b -> Query a -> Query b
 aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
-boolOr :: Aggregator (C.Column Bool) (C.Column Bool)
+boolOr :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)
 boolOr = A.makeAggr (HPQ.AggrOther "bool_or")
 
-boolAnd :: Aggregator (C.Column Bool) (C.Column Bool)
+boolAnd :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)
 boolAnd = A.makeAggr (HPQ.AggrOther "bool_and")
