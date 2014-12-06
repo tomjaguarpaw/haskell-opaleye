@@ -30,6 +30,14 @@ count = A.makeAggr HPQ.AggrCount
 avg :: Aggregator (C.Column T.PGFloat8) (C.Column T.PGFloat8)
 avg = A.makeAggr HPQ.AggrAvg
 
+-- | Maximum of a group
+max :: Aggregator (C.Column a) (C.Column a)
+max = A.makeAggr HPQ.AggrMax
+
+-- | Maximum of a group
+min :: Aggregator (C.Column a) (C.Column a)
+min = A.makeAggr HPQ.AggrMin
+
 {-|
 Given a 'Query' producing rows of type @a@ and an 'Aggregator' accepting rows of
 type @a@, apply the aggregator to the results of the query.
