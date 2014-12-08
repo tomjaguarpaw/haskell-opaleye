@@ -44,8 +44,8 @@ instance PGNum a => Num (Column a) where
   (+) = binOp HPQ.OpPlus
   (-) = binOp HPQ.OpMinus
 
-  abs (Column e) = Column (HPQ.UnExpr (HPQ.UnOpOther "@") e)
-  negate (Column e) = Column (HPQ.UnExpr (HPQ.UnOpOther "-") e)
+  abs = unOp HPQ.OpAbs
+  negate = unOp HPQ.OpNegate
 
   -- We can't use Postgres's 'sign' function because it returns only a
   -- numeric or a double

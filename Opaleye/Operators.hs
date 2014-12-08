@@ -63,10 +63,10 @@ not = C.unOp HPQ.OpNot
 
 -- FIXME: Should we get rid of this and just use a monoid instance?
 (.++) :: Column T.PGText -> Column T.PGText -> Column T.PGText
-(.++) = C.binOp (HPQ.OpOther "||")
+(.++) = C.binOp HPQ.OpCat
 
 lower :: Column T.PGText -> Column T.PGText
-lower = C.unOp (HPQ.UnOpOther "lower")
+lower = C.unOp HPQ.OpLower
 
 upper :: Column T.PGText -> Column T.PGText
-upper = C.unOp (HPQ.UnOpOther "upper")
+upper = C.unOp HPQ.OpUpper

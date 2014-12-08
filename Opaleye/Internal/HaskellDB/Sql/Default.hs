@@ -119,7 +119,7 @@ showBinOp  OpOr         = "OR"
 showBinOp  OpLike       = "LIKE" 
 showBinOp  OpIn         = "IN" 
 showBinOp  (OpOther s)  = s
-showBinOp  OpCat        = "+" 
+showBinOp  OpCat        = "||" 
 showBinOp  OpPlus       = "+" 
 showBinOp  OpMinus      = "-" 
 showBinOp  OpMul        = "*" 
@@ -139,6 +139,10 @@ sqlUnOp  OpNot         = ("NOT", UnOpPrefix)
 sqlUnOp  OpIsNull      = ("IS NULL", UnOpPostfix)
 sqlUnOp  OpIsNotNull   = ("IS NOT NULL", UnOpPostfix)
 sqlUnOp  OpLength      = ("LENGTH", UnOpFun)
+sqlUnOp  OpAbs         = ("@", UnOpFun)
+sqlUnOp  OpNegate      = ("-", UnOpFun)
+sqlUnOp  OpLower       = ("LOWER", UnOpFun)
+sqlUnOp  OpUpper       = ("UPPER", UnOpFun)
 sqlUnOp  (UnOpOther s) = (s, UnOpFun)
 
 
@@ -152,6 +156,8 @@ showAggrOp AggrStdDev   = "StdDev"
 showAggrOp AggrStdDevP  = "StdDevP" 
 showAggrOp AggrVar      = "Var" 
 showAggrOp AggrVarP     = "VarP"                
+showAggrOp AggrBoolAnd  = "BOOL_AND"
+showAggrOp AggrBoolOr   = "BOOL_OR"
 showAggrOp (AggrOther s)        = s
 
 

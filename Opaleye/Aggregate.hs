@@ -46,7 +46,7 @@ aggregate :: Aggregator a b -> Query a -> Query b
 aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
 boolOr :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)
-boolOr = A.makeAggr (HPQ.AggrOther "bool_or")
+boolOr = A.makeAggr HPQ.AggrBoolOr
 
 boolAnd :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)
-boolAnd = A.makeAggr (HPQ.AggrOther "bool_and")
+boolAnd = A.makeAggr HPQ.AggrBoolAnd
