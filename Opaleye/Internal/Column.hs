@@ -1,7 +1,6 @@
 module Opaleye.Internal.Column where
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
-import qualified Opaleye.Internal.HaskellDB.Query as Q
 
 -- | The 'Num' and 'Fractional' instances for 'Column' 'a' are too
 -- general.  For example, they allow you to add two 'Column'
@@ -15,10 +14,6 @@ unColumn (Column e) = e
 
 unsafeCoerce :: Column a -> Column b
 unsafeCoerce (Column e) = Column e
-
--- This may well end up moving out somewhere else
-constant :: Q.ShowConstant a => a -> Column a
-constant = Column . HPQ.ConstExpr . Q.showConstant
 
 binOp :: HPQ.BinOp -> Column a -> Column b -> Column c
 binOp op (Column e) (Column e') = Column (HPQ.BinExpr op e e')
