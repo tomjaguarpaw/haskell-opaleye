@@ -12,7 +12,4 @@ unsafeUnTag :: Tag -> Int
 unsafeUnTag (UnsafeTag i) = i
 
 tagWith :: Tag -> String -> String
-tagWith t = appendShow (unsafeUnTag t) . (++ "_")
-
-appendShow :: Show a => a -> String -> String
-appendShow = flip (++) . show
+tagWith t s = s ++ "_" ++ show (unsafeUnTag t)
