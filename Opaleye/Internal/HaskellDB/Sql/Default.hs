@@ -156,6 +156,8 @@ showAggrOp AggrStdDev   = "StdDev"
 showAggrOp AggrStdDevP  = "StdDevP" 
 showAggrOp AggrVar      = "Var" 
 showAggrOp AggrVarP     = "VarP"                
+showAggrOp AggrBoolAnd  = "BOOL_AND"
+showAggrOp AggrBoolOr   = "BOOL_OR"
 showAggrOp (AggrOther s)        = s
 
 
