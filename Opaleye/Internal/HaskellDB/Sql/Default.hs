@@ -178,7 +178,6 @@ defaultSqlQuote :: SqlGenerator -> String -> String
 defaultSqlQuote _ s = quote s
 
 -- | Quote a string and escape characters that need escaping
---   FIXME: this is *very* backend dependent.
 --   We use Postgres "escape strings", i.e. strings prefixed
 --   with E, to ensure that escaping with backslash is valid.
 quote :: String -> String 
