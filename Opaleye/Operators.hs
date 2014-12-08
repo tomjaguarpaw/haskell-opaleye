@@ -47,7 +47,7 @@ not = C.unOp HPQ.OpNot
 
 -- FIXME: Should we get rid of this and just use a monoid instance?
 (.++) :: Column String -> Column String -> Column String
-(.++) = C.binOp (HPQ.OpOther "||")
+(.++) = C.binOp HPQ.OpCat
 
 (./=) :: Column a -> Column a -> Column Bool
 (./=) = C.binOp HPQ.OpNotEq
