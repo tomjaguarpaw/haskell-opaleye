@@ -1,8 +1,3 @@
-# High priority
-
-* Make a forked HaskellDB package called haskelldb-opaleye that is
-  just for the use of Opaleye
-
 # Low priority
 
 * General type families for improving instance resolution (product-profunctors)
@@ -11,7 +6,6 @@
 
 ### Very easy
 
-* A Prelude module for re-exporting everything
 * There may be some missing operators that just need to be written down
 * RIGHT JOIN, FULL OUTER JOIN
 * Set operations
