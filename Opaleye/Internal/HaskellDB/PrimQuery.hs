@@ -45,11 +45,16 @@ data BinOp      = OpEq | OpLt | OpLtEq | OpGt | OpGtEq | OpNotEq
                 | OpAsg
                 deriving (Show,Read)
 
-data UnOp	= OpNot 
-		| OpIsNull | OpIsNotNull
-		| OpLength
-		| UnOpOther String
-		deriving (Show,Read)
+data UnOp = OpNot
+          | OpIsNull
+          | OpIsNotNull
+          | OpLength
+          | OpAbs
+          | OpNegate
+          | OpLower
+          | OpUpper
+          | UnOpOther String
+          deriving (Show,Read)
 
 data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrStdDev | AggrStdDevP | AggrVar | AggrVarP

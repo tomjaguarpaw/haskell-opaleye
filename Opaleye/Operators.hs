@@ -53,7 +53,7 @@ not = C.unOp HPQ.OpNot
 (./=) = C.binOp HPQ.OpNotEq
 
 lower :: Column a -> Column a
-lower = C.unOp (HPQ.UnOpOther "lower")
+lower = C.unOp HPQ.OpLower
 
 upper :: Column a -> Column a
-upper = C.unOp (HPQ.UnOpOther "upper")
+upper = C.unOp HPQ.OpUpper

@@ -139,6 +139,10 @@ sqlUnOp  OpNot         = ("NOT", UnOpPrefix)
 sqlUnOp  OpIsNull      = ("IS NULL", UnOpPostfix)
 sqlUnOp  OpIsNotNull   = ("IS NOT NULL", UnOpPostfix)
 sqlUnOp  OpLength      = ("LENGTH", UnOpFun)
+sqlUnOp  OpAbs         = ("@", UnOpFun)
+sqlUnOp  OpNegate      = ("-", UnOpFun)
+sqlUnOp  OpLower       = ("LOWER", UnOpFun)
+sqlUnOp  OpUpper       = ("UPPER", UnOpFun)
 sqlUnOp  (UnOpOther s) = (s, UnOpFun)
 
 
