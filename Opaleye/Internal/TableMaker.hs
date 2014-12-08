@@ -38,7 +38,7 @@ runColumnMaker (ColumnMaker f) = PM.packmap f
 tableColumn :: ViewColumnMaker String (C.Column a)
 tableColumn = ViewColumnMaker
               (PM.PackMap (\f s -> fmap (const (mkColumn s)) (f ())))
-  where mkColumn = IC.Column . HPQ.AttrExpr . HPQ.Symbol
+  where mkColumn = IC.Column . HPQ.BaseTableAttrExpr
 
 column :: ColumnMaker (C.Column a) (C.Column a)
 column = ColumnMaker

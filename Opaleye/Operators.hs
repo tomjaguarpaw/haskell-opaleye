@@ -61,7 +61,6 @@ infixr 2 .||
 not :: Column T.PGBool -> Column T.PGBool
 not = C.unOp HPQ.OpNot
 
--- FIXME: Should we get rid of this and just use a monoid instance?
 (.++) :: Column T.PGText -> Column T.PGText -> Column T.PGText
 (.++) = C.binOp HPQ.OpCat
 

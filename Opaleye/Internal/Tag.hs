@@ -1,6 +1,6 @@
 module Opaleye.Internal.Tag where
 
-data Tag = UnsafeTag Int
+data Tag = UnsafeTag Int deriving (Read, Show)
 
 start :: Tag
 start = UnsafeTag 1
@@ -12,7 +12,4 @@ unsafeUnTag :: Tag -> Int
 unsafeUnTag (UnsafeTag i) = i
 
 tagWith :: Tag -> String -> String
-tagWith t = appendShow (unsafeUnTag t) . (++ "_")
-
-appendShow :: Show a => a -> String -> String
-appendShow = flip (++) . show
+tagWith t s = s ++ "_" ++ show (unsafeUnTag t)
