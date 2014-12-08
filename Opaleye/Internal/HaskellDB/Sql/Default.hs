@@ -30,7 +30,7 @@ toSqlOrder gen (OrderExpr o e) = (sqlExpr gen e, o')
                  OpDesc -> SqlDesc
 
 toSqlAssoc :: SqlGenerator -> Assoc -> [(SqlColumn,SqlExpr)]
-toSqlAssoc gen = map (\(attr,expr) -> (attr, sqlExpr gen expr))
+toSqlAssoc gen = map (\(attr,expr) -> (SqlColumn attr, sqlExpr gen expr))
 
 
 defaultSqlUpdate :: SqlGenerator 
@@ -62,8 +62,8 @@ defaultSqlDelete gen name criteria = SqlDelete name (map (sqlExpr gen) criteria)
 defaultSqlExpr :: SqlGenerator -> PrimExpr -> SqlExpr
 defaultSqlExpr gen expr = 
     case expr of
-      AttrExpr (Symbol a) -> ColumnSqlExpr a
-      BaseTableAttrExpr a -> ColumnSqlExpr a
+      AttrExpr (Symbol a) -> ColumnSqlExpr (SqlColumn a)
+      BaseTableAttrExpr a -> ColumnSqlExpr (SqlColumn a)
       BinExpr op e1 e2 ->
         let leftE = sqlExpr gen e1
             rightE = sqlExpr gen e2

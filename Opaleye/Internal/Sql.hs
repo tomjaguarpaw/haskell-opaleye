@@ -70,7 +70,7 @@ sql (pq, pes) = SelectFrom $ newSelect { attrs = makeAttrs pes
                                        , tables = [pqSelect] }
   where pqSelect = PQ.foldPrimQuery sqlQueryGenerator pq
         makeAttrs = flip (zipWith makeAttr) [1..]
-        makeAttr pe i = (sqlExpr pe, Just ("result" ++ show (i :: Int)))
+        makeAttr pe i = sqlBinding (Symbol ("result" ++ show (i :: Int)), pe)
 
 unit :: Select
 unit = SelectFrom newSelect { attrs  = [(HSql.ConstSqlExpr "0", Nothing)] }
@@ -165,5 +165,5 @@ newSelect = From {
 sqlExpr :: HPQ.PrimExpr -> HSql.SqlExpr
 sqlExpr = SG.sqlExpr SD.defaultSqlGenerator
 
-sqlBinding :: (Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe String)
-sqlBinding (Symbol sym, pe) = (sqlExpr pe, Just sym)
+sqlBinding :: (Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe HSql.SqlColumn)
+sqlBinding (Symbol sym, pe) = (sqlExpr pe, Just (HSql.SqlColumn sym))

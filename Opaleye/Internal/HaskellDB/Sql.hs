@@ -4,7 +4,7 @@
 
 module Opaleye.Internal.HaskellDB.Sql ( 
                                SqlTable,
-                               SqlColumn,
+                               SqlColumn(..),
                                SqlName,
                                SqlOrder(..),
 
@@ -13,7 +13,6 @@ module Opaleye.Internal.HaskellDB.Sql (
 	                       SqlInsert(..), 
 
                                SqlExpr(..),
-                               Mark(..),
 	                      ) where
 
 
@@ -23,17 +22,13 @@ module Opaleye.Internal.HaskellDB.Sql (
 
 type SqlTable = String
 
-type SqlColumn = String
+newtype SqlColumn = SqlColumn String deriving Show
 
 -- | A valid SQL name for a parameter.
 type SqlName = String
 
 data SqlOrder = SqlAsc | SqlDesc
   deriving Show
-
-data Mark = Columns [(SqlColumn, SqlExpr)]
-  deriving Show
-
 
 -- | Expressions in SQL statements.
 data SqlExpr = ColumnSqlExpr  SqlColumn

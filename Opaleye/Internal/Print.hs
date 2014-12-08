@@ -15,8 +15,6 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)
 
-import qualified Data.Maybe as M
-
 ppSql :: Select -> Doc
 ppSql (SelectFrom s) = ppSelectFrom s
 ppSql (Table name) = text name
@@ -66,7 +64,8 @@ ppAttrs xs = HPrint.commaV nameAs xs
 
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
-nameAs (expr, name) = HPrint.ppAs (M.fromMaybe "" name) (HPrint.ppSqlExpr expr)
+nameAs (expr, name) = HPrint.ppAs (maybe "" unColumn name) (HPrint.ppSqlExpr expr)
+  where unColumn (HSql.SqlColumn s) = s
 
 ppTables :: [Select] -> Doc
 ppTables [] = empty
@@ -86,7 +85,7 @@ ppTable (alias, select) = case select of
 
 ppGroupBy :: [HSql.SqlExpr] -> Doc
 ppGroupBy [] = empty
-ppGroupBy xs = (HPrint.ppGroupBy . HSql.Columns . map (\expr -> ("", expr))) xs
+ppGroupBy xs = HPrint.ppGroupBy xs
 
 ppLimit :: Maybe Int -> Doc
 ppLimit Nothing = empty

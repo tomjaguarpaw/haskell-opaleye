@@ -12,6 +12,9 @@ data LimitOp = LimitOp Int | OffsetOp Int | LimitOffsetOp Int Int
 data BinOp = Except | Union | UnionAll deriving Show
 data JoinType = LeftJoin deriving Show
 
+-- In the future it may make sense to introduce this datatype
+-- type Bindings a = [(Symbol, a)]
+
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
 data PrimQuery = Unit
@@ -38,17 +41,18 @@ type PrimQueryFold p = ( p
 
 foldPrimQuery :: PrimQueryFold p -> PrimQuery -> p
 foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
-               binary)
-  = fold where fold primQ = case primQ of
-                 Unit                       -> unit
-                 BaseTable n s              -> baseTable n s
-                 Product pqs pes            -> product (fmap fold pqs) pes
-                 Aggregate aggrs pq         -> aggregate aggrs (fold pq)
-                 Order pes pq               -> order pes (fold pq)
-                 Limit op pq                -> limit op (fold pq)
-                 Join j pes cond q1 q2      -> join j pes cond (fold q1) (fold q2)
-                 Values ss pes              -> values ss pes
-                 Binary binop pes (pq, pq') -> binary binop pes (fold pq, fold pq')
+               binary) = fix fold
+  where fold self primQ = case primQ of
+          Unit                       -> unit
+          BaseTable n s              -> baseTable n s
+          Product pqs pes            -> product (fmap self pqs) pes
+          Aggregate aggrs pq         -> aggregate aggrs (self pq)
+          Order pes pq               -> order pes (self pq)
+          Limit op pq                -> limit op (self pq)
+          Join j pes cond q1 q2      -> join j pes cond (self q1) (self q2)
+          Values ss pes              -> values ss pes
+          Binary binop pes (pq, pq') -> binary binop pes (self pq, self pq')
+        fix f = let x = f x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
 times q q' = Product (q NEL.:| [q']) []
