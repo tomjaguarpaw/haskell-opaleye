@@ -45,7 +45,6 @@ infixr 2 .||
 not :: Column Bool -> Column Bool
 not = C.unOp HPQ.OpNot
 
--- FIXME: Should we get rid of this and just use a monoid instance?
 (.++) :: Column String -> Column String -> Column String
 (.++) = C.binOp HPQ.OpCat
 
