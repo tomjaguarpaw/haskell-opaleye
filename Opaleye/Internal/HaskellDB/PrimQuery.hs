@@ -4,13 +4,15 @@
 
 module Opaleye.Internal.HaskellDB.PrimQuery where
 
+import qualified Opaleye.Internal.Tag as T
+
 type TableName  = String
 type Attribute  = String
 type Name = String
 type Scheme     = [Attribute]
 type Assoc      = [(Attribute,PrimExpr)]
 
-newtype Symbol = Symbol String deriving (Read, Show)
+data Symbol = Symbol String T.Tag deriving (Read, Show)
 
 data PrimExpr   = AttrExpr  Symbol
                 | BaseTableAttrExpr Attribute

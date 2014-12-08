@@ -7,6 +7,7 @@ module Opaleye.Internal.HaskellDB.Sql.Default  where
 import Opaleye.Internal.HaskellDB.PrimQuery
 import Opaleye.Internal.HaskellDB.Sql
 import Opaleye.Internal.HaskellDB.Sql.Generate
+import Opaleye.Internal.Tag (tagWith)
 
 mkSqlGenerator :: SqlGenerator -> SqlGenerator
 mkSqlGenerator gen = SqlGenerator 
@@ -62,7 +63,7 @@ defaultSqlDelete gen name criteria = SqlDelete name (map (sqlExpr gen) criteria)
 defaultSqlExpr :: SqlGenerator -> PrimExpr -> SqlExpr
 defaultSqlExpr gen expr = 
     case expr of
-      AttrExpr (Symbol a) -> ColumnSqlExpr (SqlColumn a)
+      AttrExpr (Symbol a t) -> ColumnSqlExpr (SqlColumn (tagWith t a))
       BaseTableAttrExpr a -> ColumnSqlExpr (SqlColumn a)
       BinExpr op e1 e2 ->
         let leftE = sqlExpr gen e1

@@ -11,10 +11,9 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Optimize as Op
 import           Opaleye.Internal.Helpers ((.:))
 import qualified Opaleye.Internal.QueryArr as Q
+import qualified Opaleye.Internal.Tag as T
 
 import qualified Data.Profunctor.Product.Default as D
-
-import qualified Control.Arrow as Arr
 
 showSqlForPostgres :: forall columns . D.Default U.Unpackspec columns columns =>
                       Q.Query columns -> String
@@ -26,11 +25,11 @@ showSqlForPostgresUnopt = showSqlForPostgresUnoptExplicit (D.def :: U.Unpackspec
 
 showSqlForPostgresExplicit :: U.Unpackspec columns b -> Q.Query columns -> String
 showSqlForPostgresExplicit = formatAndShowSQL
-                             . Arr.first Op.optimize
+                             . (\(x, y, z) -> (x, Op.optimize y, z))
                              .: Q.runQueryArrUnpack
 
 showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> String
 showSqlForPostgresUnoptExplicit = formatAndShowSQL .: Q.runQueryArrUnpack
 
-formatAndShowSQL :: (PQ.PrimQuery, [HPQ.PrimExpr]) -> String
+formatAndShowSQL :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> String
 formatAndShowSQL = show . Pr.ppSql . Sql.sql
