@@ -2,12 +2,10 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye.Column (Column)
-> import           Opaleye.Table (Table(Table), required, optional)
-> import           Opaleye.Operators ((.==), (.<))
-> import           Opaleye.Manipulation (arrangeDeleteSql, arrangeInsertSql,
->                                       arrangeUpdateSql,
->                                       arrangeInsertReturningSql)
+> import           Opaleye (Column, Table(Table),
+>                           required, optional, (.==), (.<),
+>                           arrangeDeleteSql, arrangeInsertSql,
+>                           arrangeUpdateSql, arrangeInsertReturningSql)
 >
 > import           Data.Profunctor.Product (p3)
 > import           Data.Profunctor.Product.Default (Default, def)

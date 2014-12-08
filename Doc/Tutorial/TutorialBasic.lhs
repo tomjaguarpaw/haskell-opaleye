@@ -8,18 +8,12 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye.QueryArr (Query, QueryArr)
-> import           Opaleye.Column (Column, Nullable, matchNullable, isNull)
-> import           Opaleye.Table (Table(Table), required, queryTable)
-> import           Opaleye.Operators (restrict, (.==), (.<=), (.&&), (.<),
->                                     (.++), ifThenElse)
-> import           Opaleye.PGTypes (pgString)
-> import           Opaleye.Aggregate (aggregate, groupBy, count, avg, sum)
-> import           Opaleye.Join (leftJoin)
-> import           Opaleye.RunQuery (runQuery)
->
-> import qualified Opaleye.Sql as Sql
-> import qualified Opaleye.Internal.Unpackspec as U
+> import           Opaleye (Column, Nullable, matchNullable, isNull,
+>                          Table(Table), required, queryTable,
+>                          Query, QueryArr, restrict, (.==), (.<=), (.&&), (.<),
+>                          (.++), ifThenElse, pgString, aggregate, groupBy,
+>                          count, avg, sum, leftJoin, runQuery,
+>                          showSqlForPostgres, Unpackspec)
 >
 > import           Data.Profunctor.Product (p3, p5)
 > import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
@@ -745,5 +739,5 @@ Utilities
 
 This is a little utility function to help with printing generated SQL.
 
-> printSql :: Default U.Unpackspec a a => Query a -> IO ()
-> printSql = putStrLn . Sql.showSqlForPostgres
+> printSql :: Default Unpackspec a a => Query a -> IO ()
+> printSql = putStrLn . showSqlForPostgres
