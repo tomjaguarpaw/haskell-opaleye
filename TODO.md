@@ -20,4 +20,3 @@
 
 * Make VALUES work with more, type checked, value types
 * Product-valued case statements
-* Improve product-profunctor TH so it does not require importing names
