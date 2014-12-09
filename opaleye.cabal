@@ -67,7 +67,6 @@ library
                    Opaleye.Internal.Unpackspec,
                    Opaleye.Internal.Values
                    Opaleye.Internal.HaskellDB.PrimQuery,
-                   Opaleye.Internal.HaskellDB.Query,
                    Opaleye.Internal.HaskellDB.Sql,
                    Opaleye.Internal.HaskellDB.Sql.Default,
                    Opaleye.Internal.HaskellDB.Sql.Generate,

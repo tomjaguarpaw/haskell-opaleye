@@ -9,6 +9,7 @@ import           Opaleye.Internal.HaskellDB.PrimQuery (Symbol(Symbol))
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Default as SD
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
+import qualified Opaleye.Internal.Tag as T
 
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Maybe as M
@@ -63,12 +64,12 @@ sqlQueryGenerator :: PQ.PrimQueryFold Select
 sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
                      values, binary)
 
-sql :: (PQ.PrimQuery, [HPQ.PrimExpr]) -> Select
-sql (pq, pes) = SelectFrom $ newSelect { attrs = makeAttrs pes
-                                       , tables = [pqSelect] }
+sql :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> Select
+sql (pes, pq, t) = SelectFrom $ newSelect { attrs = makeAttrs pes
+                                          , tables = [pqSelect] }
   where pqSelect = PQ.foldPrimQuery sqlQueryGenerator pq
         makeAttrs = flip (zipWith makeAttr) [1..]
-        makeAttr pe i = sqlBinding (Symbol ("result" ++ show (i :: Int)), pe)
+        makeAttr pe i = sqlBinding (Symbol ("result" ++ show (i :: Int)) t, pe)
 
 unit :: Select
 unit = SelectFrom newSelect { attrs  = [(HSql.ConstSqlExpr "0", Nothing)] }
@@ -127,7 +128,7 @@ values :: [Symbol] -> [[HPQ.PrimExpr]] -> Select
 values columns pes = SelectValues Values { vAttrs  = mkColumns columns
                                          , vValues = (map . map) sqlExpr pes }
   where mkColumns = zipWith (flip (curry (sqlBinding . Arr.second mkColumn))) [1..]
-        mkColumn i = (HPQ.AttrExpr . Symbol . ("column" ++) . show) (i::Int)
+        mkColumn i = (HPQ.BaseTableAttrExpr . ("column" ++) . show) (i::Int)
 
 binary :: PQ.BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
        -> (Select, Select) -> Select
@@ -164,4 +165,5 @@ sqlExpr :: HPQ.PrimExpr -> HSql.SqlExpr
 sqlExpr = SG.sqlExpr SD.defaultSqlGenerator
 
 sqlBinding :: (Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe HSql.SqlColumn)
-sqlBinding (Symbol sym, pe) = (sqlExpr pe, Just (HSql.SqlColumn sym))
+sqlBinding (Symbol sym t, pe) =
+  (sqlExpr pe, Just (HSql.SqlColumn (T.tagWith t sym)))

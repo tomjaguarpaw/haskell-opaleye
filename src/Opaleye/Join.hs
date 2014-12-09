@@ -10,6 +10,7 @@ import qualified Opaleye.Internal.PackMap as PM
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import           Opaleye.Internal.Column (Column(Column))
+import qualified Opaleye.PGTypes as T
 
 import qualified Data.Profunctor.Product.Default as D
 
@@ -17,7 +18,7 @@ leftJoin  :: (D.Default U.Unpackspec columnsA columnsA,
               D.Default U.Unpackspec columnsB columnsB,
               D.Default J.NullMaker columnsB nullableColumnsB) =>
              Query columnsA -> Query columnsB
-          -> ((columnsA, columnsB) -> Column Bool)
+          -> ((columnsA, columnsB) -> Column T.PGBool)
           -> Query (columnsA, nullableColumnsB)
 leftJoin = leftJoinExplicit D.def D.def D.def
 
@@ -25,7 +26,7 @@ leftJoinExplicit :: U.Unpackspec columnsA columnsA
                  -> U.Unpackspec columnsB columnsB
                  -> J.NullMaker columnsB nullableColumnsB
                  -> Query columnsA -> Query columnsB
-                 -> ((columnsA, columnsB) -> Column Bool)
+                 -> ((columnsA, columnsB) -> Column T.PGBool)
                  -> Query (columnsA, nullableColumnsB)
 leftJoinExplicit unpackA unpackB nullmaker qA qB cond = Q.simpleQueryArr q where
   q ((), startTag) = ((newColumnsA, nullableColumnsB), primQueryR, T.next endTag)

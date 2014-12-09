@@ -7,6 +7,7 @@ module Opaleye.Internal.HaskellDB.Sql.Default  where
 import Opaleye.Internal.HaskellDB.PrimQuery
 import Opaleye.Internal.HaskellDB.Sql
 import Opaleye.Internal.HaskellDB.Sql.Generate
+import Opaleye.Internal.Tag (tagWith)
 
 mkSqlGenerator :: SqlGenerator -> SqlGenerator
 mkSqlGenerator gen = SqlGenerator 
@@ -62,7 +63,7 @@ defaultSqlDelete gen name criteria = SqlDelete name (map (sqlExpr gen) criteria)
 defaultSqlExpr :: SqlGenerator -> PrimExpr -> SqlExpr
 defaultSqlExpr gen expr = 
     case expr of
-      AttrExpr (Symbol a) -> ColumnSqlExpr (SqlColumn a)
+      AttrExpr (Symbol a t) -> ColumnSqlExpr (SqlColumn (tagWith t a))
       BaseTableAttrExpr a -> ColumnSqlExpr (SqlColumn a)
       BinExpr op e1 e2 ->
         let leftE = sqlExpr gen e1
@@ -119,7 +120,7 @@ showBinOp  OpOr         = "OR"
 showBinOp  OpLike       = "LIKE" 
 showBinOp  OpIn         = "IN" 
 showBinOp  (OpOther s)  = s
-showBinOp  OpCat        = "+" 
+showBinOp  OpCat        = "||" 
 showBinOp  OpPlus       = "+" 
 showBinOp  OpMinus      = "-" 
 showBinOp  OpMul        = "*" 
@@ -139,6 +140,10 @@ sqlUnOp  OpNot         = ("NOT", UnOpPrefix)
 sqlUnOp  OpIsNull      = ("IS NULL", UnOpPostfix)
 sqlUnOp  OpIsNotNull   = ("IS NOT NULL", UnOpPostfix)
 sqlUnOp  OpLength      = ("LENGTH", UnOpFun)
+sqlUnOp  OpAbs         = ("@", UnOpFun)
+sqlUnOp  OpNegate      = ("-", UnOpFun)
+sqlUnOp  OpLower       = ("LOWER", UnOpFun)
+sqlUnOp  OpUpper       = ("UPPER", UnOpFun)
 sqlUnOp  (UnOpOther s) = (s, UnOpFun)
 
 
@@ -152,6 +157,8 @@ showAggrOp AggrStdDev   = "StdDev"
 showAggrOp AggrStdDevP  = "StdDevP" 
 showAggrOp AggrVar      = "Var" 
 showAggrOp AggrVarP     = "VarP"                
+showAggrOp AggrBoolAnd  = "BOOL_AND"
+showAggrOp AggrBoolOr   = "BOOL_OR"
 showAggrOp (AggrOther s)        = s
 
 
@@ -172,7 +179,6 @@ defaultSqlQuote :: SqlGenerator -> String -> String
 defaultSqlQuote _ s = quote s
 
 -- | Quote a string and escape characters that need escaping
---   FIXME: this is *very* backend dependent.
 --   We use Postgres "escape strings", i.e. strings prefixed
 --   with E, to ensure that escaping with backslash is valid.
 quote :: String -> String 

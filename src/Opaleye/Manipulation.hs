@@ -12,6 +12,7 @@ import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column(Column))
 import           Opaleye.Internal.Helpers ((.:), (.:.), (.::))
 import qualified Opaleye.Internal.Unpackspec as U
+import           Opaleye.PGTypes (PGBool)
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
@@ -39,7 +40,7 @@ runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
 arrangeUpdate :: T.Table columnsW columnsR
-              -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
+              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
               -> HSql.SqlUpdate
 arrangeUpdate (TI.Table tableName (TI.TableProperties writer (TI.View tableCols)))
               update cond =
@@ -50,25 +51,25 @@ arrangeUpdate (TI.Table tableName (TI.TableProperties writer (TI.View tableCols)
         Column condExpr = cond tableCols
 
 arrangeUpdateSql :: T.Table columnsW columnsR
-              -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
+              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
               -> String
 arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
 
 runUpdate :: PGS.Connection -> T.Table columnsW columnsR
-          -> (columnsR -> columnsW) -> (columnsR -> Column Bool)
+          -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
           -> IO Int64
 runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
 
-arrangeDelete :: T.Table a columnsR -> (columnsR -> Column Bool) -> HSql.SqlDelete
+arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
 arrangeDelete (TI.Table tableName (TI.TableProperties _ (TI.View tableCols)))
               cond =
   SG.sqlDelete SD.defaultSqlGenerator tableName [condExpr]
   where Column condExpr = cond tableCols
 
-arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column Bool) -> String
+arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
-runDelete :: PGS.Connection -> T.Table a columnsR -> (columnsR -> Column Bool)
+runDelete :: PGS.Connection -> T.Table a columnsR -> (columnsR -> Column PGBool)
           -> IO Int64
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 

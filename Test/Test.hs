@@ -106,31 +106,31 @@ ways.
 -}
 
 twoIntTable :: String
-            -> O.Table (Column Int, Column Int) (Column Int, Column Int)
+            -> O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 twoIntTable n = O.Table n (PP.p2 (O.required "column1", O.required "column2"))
 
-table1 :: O.Table (Column Int, Column Int) (Column Int, Column Int)
+table1 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 table1 = twoIntTable "table1"
 
-table1F :: O.Table (Column Int, Column Int) (Column Int, Column Int)
+table1F :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 table1F = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1
 
-table2 :: O.Table (Column Int, Column Int) (Column Int, Column Int)
+table2 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 table2 = twoIntTable "table2"
 
-table3 :: O.Table (Column Int, Column Int) (Column Int, Column Int)
+table3 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 table3 = twoIntTable "table3"
 
-table4 :: O.Table (Column Int, Column Int) (Column Int, Column Int)
+table4 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 table4 = twoIntTable "table4"
 
-table1Q :: Query (Column Int, Column Int)
+table1Q :: Query (Column O.PGInt4, Column O.PGInt4)
 table1Q = O.queryTable table1
 
-table2Q :: Query (Column Int, Column Int)
+table2Q :: Query (Column O.PGInt4, Column O.PGInt4)
 table2Q = O.queryTable table2
 
-table3Q :: Query (Column Int, Column Int)
+table3Q :: Query (Column O.PGInt4, Column O.PGInt4)
 table3Q = O.queryTable table3
 
 table1dataG :: Num a => [(a, a)]
@@ -142,7 +142,7 @@ table1dataG = [ (1, 100)
 table1data :: [(Int, Int)]
 table1data = table1dataG
 
-table1columndata :: [(Column Int, Column Int)]
+table1columndata :: [(Column O.PGInt4, Column O.PGInt4)]
 table1columndata = table1dataG
 
 table2dataG :: Num a => [(a, a)]
@@ -152,7 +152,7 @@ table2dataG = [ (1, 100)
 table2data :: [(Int, Int)]
 table2data = table2dataG
 
-table2columndata :: [(Column Int, Column Int)]
+table2columndata :: [(Column O.PGInt4, Column O.PGInt4)]
 table2columndata = table2dataG
 
 table3dataG :: Num a => [(a, a)]
@@ -161,7 +161,7 @@ table3dataG = [ (1, 50) ]
 table3data :: [(Int, Int)]
 table3data = table3dataG
 
-table3columndata :: [(Column Int, Column Int)]
+table3columndata :: [(Column O.PGInt4, Column O.PGInt4)]
 table3columndata = table3dataG
 
 table4dataG :: Num a => [(a, a)]
@@ -171,7 +171,7 @@ table4dataG = [ (1, 10)
 table4data :: [(Int, Int)]
 table4data = table4dataG
 
-table4columndata :: [(Column Int, Column Int)]
+table4columndata :: [(Column O.PGInt4, Column O.PGInt4)]
 table4columndata = table4dataG
 
 dropAndCreateTable :: String -> PGS.Query
@@ -213,7 +213,7 @@ testRestrict = testG query
 
 testNum :: Test
 testNum = testG query expected
-  where query :: Query (Column Int)
+  where query :: Query (Column O.PGInt4)
         query = proc () -> do
           t <- table1Q -< ()
           Arr.returnA -< op t
@@ -223,7 +223,7 @@ testNum = testG query expected
 
 testDiv :: Test
 testDiv = testG query expected
-  where query :: Query (Column Double)
+  where query :: Query (Column O.PGFloat8)
         query = proc () -> do
           t <- Arr.arr (O.doubleOfInt *** O.doubleOfInt) <<< table1Q -< ()
           Arr.returnA -< op t
@@ -238,7 +238,7 @@ testDiv = testG query expected
 -- TODO: need to implement and test case_ returning tuples
 testCase :: Test
 testCase = testG q (== expected)
-  where q :: Query (Column Int)
+  where q :: Query (Column O.PGInt4)
         q = table1Q >>> proc (i, j) -> do
           Arr.returnA -< O.case_ [(j .== 100, 12), (i .== 1, 21)] 33
         expected :: [Int]
@@ -251,10 +251,10 @@ testDistinct = testG (O.distinct table1Q)
 -- FIXME: the unsafeCoerce is currently needed because the type
 -- changes required for aggregation are not currently dealt with by
 -- Opaleye.
-aggregateCoerceFIXME :: QueryArr (Column Int) (Column Int64)
+aggregateCoerceFIXME :: QueryArr (Column O.PGInt4) (Column O.PGInt8)
 aggregateCoerceFIXME = Arr.arr aggregateCoerceFIXME'
 
-aggregateCoerceFIXME' :: Column a -> Column Int64
+aggregateCoerceFIXME' :: Column a -> Column O.PGInt8
 aggregateCoerceFIXME' = O.unsafeCoerce
 
 testAggregate :: Test
@@ -271,7 +271,7 @@ testAggregateProfunctor = testG q expected
                            (\(x, y) -> aggregateCoerceFIXME' x * y)
                            (PP.p2 (O.sum, O.count))
 
-testOrderByG :: O.Order (Column Int, Column Int)
+testOrderByG :: O.Order (Column O.PGInt4, Column O.PGInt4)
                 -> ((Int, Int) -> (Int, Int) -> Ordering)
                 -> Test
 testOrderByG orderQ order = testG (O.orderBy orderQ table1Q)
@@ -289,7 +289,7 @@ testOrderBySame :: Test
 testOrderBySame = testOrderByG (O.desc fst <> O.asc fst)
                                (flip (Ord.comparing fst) <> Ord.comparing fst)
 
-testLOG :: (Query (Column Int, Column Int) -> Query (Column Int, Column Int))
+testLOG :: (Query (Column O.PGInt4, Column O.PGInt4) -> Query (Column O.PGInt4, Column O.PGInt4))
            -> ([(Int, Int)] -> [(Int, Int)]) -> Test
 testLOG olQ ol = testG (olQ (orderQ table1Q))
                        (ol (order table1data) ==)
@@ -317,13 +317,13 @@ testDistinctAndAggregate = testG q expected
         expectedResult = A.liftA2 (,) (L.nub table1data)
                                       [(1 :: Int, 400 :: Int64), (2, 300)]
 
-one :: Query (Column Int)
-one = Arr.arr (const (1 :: Column Int))
+one :: Query (Column O.PGInt4)
+one = Arr.arr (const (1 :: Column O.PGInt4))
 
 -- The point of the "double" tests is to ensure that we do not
 -- introduce name clashes in the operations which create new column names
 testDoubleG :: (Eq haskells, D.Default O.QueryRunner columns haskells) =>
-               (QueryArr () (Column Int) -> QueryArr () columns) -> [haskells]
+               (QueryArr () (Column O.PGInt4) -> QueryArr () columns) -> [haskells]
                -> Test
 testDoubleG q expected1 = testG (q one &&& q one) (== expected2)
   where expected2 = A.liftA2 (,) expected1 expected1
@@ -336,21 +336,21 @@ testDoubleAggregate = testDoubleG (O.aggregate O.count) [1 :: Int64]
 
 testDoubleLeftJoin :: Test
 testDoubleLeftJoin = testDoubleG lj [(1 :: Int, Just (1 :: Int))]
-  where lj :: Query (Column Int)
-          -> Query (Column Int, Column (Nullable Int))
+  where lj :: Query (Column O.PGInt4)
+          -> Query (Column O.PGInt4, Column (Nullable O.PGInt4))
         lj q = O.leftJoin q q (uncurry (.==))
 
 testDoubleValues :: Test
 testDoubleValues = testDoubleG v [1 :: Int]
-  where v :: Query (Column Int) -> Query (Column Int)
+  where v :: Query (Column O.PGInt4) -> Query (Column O.PGInt4)
         v _ = O.values [1]
 
 testDoubleUnionAll :: Test
 testDoubleUnionAll = testDoubleG u [1 :: Int, 1]
   where u q = q `O.unionAll` q
 
-aLeftJoin :: Query ((Column Int, Column Int),
-                    (Column (Nullable Int), Column (Nullable Int)))
+aLeftJoin :: Query ((Column O.PGInt4, Column O.PGInt4),
+                    (Column (Nullable O.PGInt4), Column (Nullable O.PGInt4)))
 aLeftJoin = O.leftJoin table1Q table3Q (\(l, r) -> fst l .== fst r)
 
 testLeftJoin :: Test
@@ -363,10 +363,10 @@ testLeftJoin = testG aLeftJoin (== expected)
 
 testLeftJoinNullable :: Test
 testLeftJoinNullable = testG q (== expected)
-  where q :: Query ((Column Int, Column Int),
-                    ((Column (Nullable Int), Column (Nullable Int)),
-                     (Column (Nullable Int),
-                      Column (Nullable Int))))
+  where q :: Query ((Column O.PGInt4, Column O.PGInt4),
+                    ((Column (Nullable O.PGInt4), Column (Nullable O.PGInt4)),
+                     (Column (Nullable O.PGInt4),
+                      Column (Nullable O.PGInt4))))
         q = O.leftJoin table3Q aLeftJoin cond
 
         cond (x, y) = fst x .== fst (fst y)
@@ -383,7 +383,7 @@ testThreeWayProduct = testG q (== expected)
 
 testValues :: Test
 testValues = testG (O.values values) (values' ==)
-  where values :: [(Column Int, Column Int)]
+  where values :: [(Column O.PGInt4, Column O.PGInt4)]
         values = [ (1, 10)
                  , (2, 100) ]
         values' :: [(Int, Int)]
@@ -393,7 +393,7 @@ testValues = testG (O.values values) (values' ==)
 {- FIXME: does not yet work
 testValuesDouble :: Test
 testValuesDouble = testG (O.values values) (values' ==)
-  where values :: [(Column Int, Column Double)]
+  where values :: [(Column O.PGInt4, Column O.PGFloat8)]
         values = [ (1, 10.0)
                  , (2, 100.0) ]
         values' :: [(Int, Double)]
@@ -403,7 +403,7 @@ testValuesDouble = testG (O.values values) (values' ==)
 
 testValuesEmpty :: Test
 testValuesEmpty = testG (O.values values) (values' ==)
-  where values :: [Column Int]
+  where values :: [Column O.PGInt4]
         values = []
         values' :: [Int]
         values' = []
@@ -446,7 +446,7 @@ testUpdate conn = do
         expectedD = [(1, 10)]
         runQueryTable4 = O.runQuery conn (O.queryTable table4)
 
-        insertT :: (Column Int, Column Int)
+        insertT :: (Column O.PGInt4, Column O.PGInt4)
         insertT = (1, 2)
 
         expectedI :: [(Int, Int)]

@@ -13,6 +13,7 @@ import           Opaleye.Column (Column)
 import           Opaleye.Internal.Column (Nullable)
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
+import           Opaleye.PGTypes as T
 
 import qualified Data.Profunctor as P
 import           Data.Profunctor (dimap)
@@ -22,7 +23,7 @@ import qualified Data.Profunctor.Product.Default as D
 
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
-import           Data.Time (UTCTime)
+import qualified Data.Time as Time
 import           Data.UUID (UUID)
 import           GHC.Int (Int64)
 
@@ -64,34 +65,40 @@ instance D.Default QueryRunnerColumn a b =>
 -- { Instances that must be provided once for each type.  Instances
 --   for Nullable are derived automatically from these.
 
-instance D.Default QueryRunnerColumn Int Int where
+instance D.Default QueryRunnerColumn T.PGInt4 Int where
   def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn Int64 Int64 where
+instance D.Default QueryRunnerColumn T.PGInt8 Int64 where
   def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn Integer Integer where
+instance D.Default QueryRunnerColumn T.PGText String where
   def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn String String where
+instance D.Default QueryRunnerColumn T.PGFloat8 Double where
   def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn Double Double where
+instance D.Default QueryRunnerColumn T.PGBool Bool where
   def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn Bool Bool where
+instance D.Default QueryRunnerColumn T.PGUuid UUID where
   def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn UUID UUID where
+instance D.Default QueryRunnerColumn T.PGText ST.Text where
   def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn ST.Text ST.Text where
+instance D.Default QueryRunnerColumn T.PGText LT.Text where
   def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn LT.Text LT.Text where
+instance D.Default QueryRunnerColumn T.PGDate Time.Day where
   def = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn UTCTime UTCTime where
+instance D.Default QueryRunnerColumn T.PGTimestamptz Time.UTCTime where
+  def = fieldQueryRunnerColumn
+
+instance D.Default QueryRunnerColumn T.PGTimestamp Time.LocalTime where
+  def = fieldQueryRunnerColumn
+
+instance D.Default QueryRunnerColumn T.PGTime Time.TimeOfDay where
   def = fieldQueryRunnerColumn
 
 -- }

@@ -73,7 +73,7 @@ extractAttrPE :: (a -> String -> String) -> T.Tag -> a
                -> PM [(HPQ.Symbol, a)] HPQ.PrimExpr
 extractAttrPE mkName t pe = do
   i <- new
-  let s = HPQ.Symbol (T.tagWith t (mkName pe i))
+  let s = HPQ.Symbol (mkName pe i) t
   write (s, pe)
   return (HPQ.AttrExpr s)
 

@@ -4,13 +4,15 @@
 
 module Opaleye.Internal.HaskellDB.PrimQuery where
 
+import qualified Opaleye.Internal.Tag as T
+
 type TableName  = String
 type Attribute  = String
 type Name = String
 type Scheme     = [Attribute]
 type Assoc      = [(Attribute,PrimExpr)]
 
-newtype Symbol = Symbol String deriving (Read, Show)
+data Symbol = Symbol String T.Tag deriving (Read, Show)
 
 data PrimExpr   = AttrExpr  Symbol
                 | BaseTableAttrExpr Attribute
@@ -45,14 +47,20 @@ data BinOp      = OpEq | OpLt | OpLtEq | OpGt | OpGtEq | OpNotEq
                 | OpAsg
                 deriving (Show,Read)
 
-data UnOp	= OpNot 
-		| OpIsNull | OpIsNotNull
-		| OpLength
-		| UnOpOther String
-		deriving (Show,Read)
+data UnOp = OpNot
+          | OpIsNull
+          | OpIsNotNull
+          | OpLength
+          | OpAbs
+          | OpNegate
+          | OpLower
+          | OpUpper
+          | UnOpOther String
+          deriving (Show,Read)
 
 data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrStdDev | AggrStdDevP | AggrVar | AggrVarP
+                | AggrBoolOr | AggrBoolAnd
                 | AggrOther String
                 deriving (Show,Read)
 

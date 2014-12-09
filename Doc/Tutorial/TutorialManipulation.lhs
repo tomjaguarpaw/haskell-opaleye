@@ -5,7 +5,8 @@
 > import           Opaleye (Column, Table(Table),
 >                           required, optional, (.==), (.<),
 >                           arrangeDeleteSql, arrangeInsertSql,
->                           arrangeUpdateSql, arrangeInsertReturningSql)
+>                           arrangeUpdateSql, arrangeInsertReturningSql,
+>                           PGInt4, PGFloat8)
 >
 > import           Data.Profunctor.Product (p3)
 > import           Data.Profunctor.Product.Default (Default, def)
@@ -28,8 +29,8 @@ it is wrapped in a Maybe.  That means we don't necessarily need to
 specify it when writing to the table.  The database will automatically
 fill in a value for us.
 
-> table :: Table (Maybe (Column Int), Column Double, Column Double)
->                (Column Int, Column Double, Column Double)
+> table :: Table (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8)
+>                (Column PGInt4, Column PGFloat8, Column PGFloat8)
 > table = Table "tablename" (p3 (optional "id", required "x", required "y"))
 
 To perform a delete we provide an expression from our read type to
