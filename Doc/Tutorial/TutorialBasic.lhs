@@ -16,13 +16,10 @@
 >                          showSqlForPostgres, Unpackspec,
 >                          PGInt4, PGInt8, PGText, PGDate, PGFloat8, PGBool)
 >
-> import           Data.Profunctor.Product (p3, p5)
+> import           Data.Profunctor.Product (p2, p3)
+> import           Data.Profunctor.Product.Default (Default)
 > import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 > import           Data.Time.Calendar (Day)
->
-> import           Data.Profunctor.Product.Default (Default, def)
-> import           Data.Profunctor (dimap)
-> import           Data.Profunctor.Product (ProductProfunctor, p1, p2)
 >
 > import           Control.Arrow (returnA, (<<<))
 >
