@@ -92,7 +92,8 @@ test-suite tutorial
   main-is: Main.hs
   other-modules: TutorialAdvanced,
                  TutorialBasic,
-                 TutorialManipulation
+                 TutorialManipulation,
+                 DefaultExplanation
   hs-source-dirs: Doc/Tutorial
   build-depends:
     base >= 4 && < 5,

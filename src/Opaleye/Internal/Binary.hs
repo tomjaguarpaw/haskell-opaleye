@@ -30,9 +30,12 @@ runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> (columns, columns) -> f columns'
 runBinaryspec (Binaryspec b) = PM.packmap b
 
+binaryspecColumn :: Binaryspec (Column a) (Column a)
+binaryspecColumn = Binaryspec (PM.PackMap (\f (Column e, Column e')
+                                           -> fmap Column (f (e, e'))))
+
 instance Default Binaryspec (Column a) (Column a) where
-  def = Binaryspec (PM.PackMap (\f (Column e, Column e')
-                                -> fmap Column (f (e, e'))))
+  def = binaryspecColumn
 
 -- {
 
