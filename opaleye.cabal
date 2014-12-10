@@ -1,17 +1,19 @@
-name:          opaleye
-version:       0.2
-synopsis:      An SQL-generating DSL targeting PostgreSQL
-description:   An SQL-generating DSL targeting PostgreSQL.  Allows
-               Postgres queries to be written within Haskell in a
-               typesafe and composable fashion.
-homepage:      https://github.com/tomjaguarpaw/haskell-opaleye
-license:       BSD3
-license-File:  LICENSE
-author:        Purely Agile
-maintainer:    Purely Agile
-category:      Database
-build-type:    Simple
-cabal-version: >= 1.8
+name:            opaleye
+version:         0.2
+synopsis:        An SQL-generating DSL targeting PostgreSQL
+description:     An SQL-generating DSL targeting PostgreSQL.  Allows
+                 Postgres queries to be written within Haskell in a
+                 typesafe and composable fashion.
+homepage:        https://github.com/tomjaguarpaw/haskell-opaleye
+license:         BSD3
+license-File:    LICENSE
+author:          Purely Agile
+maintainer:      Purely Agile
+category:        Database
+build-type:      Simple
+cabal-version:   >= 1.8
+extra-doc-files: *.md,
+                 Doc/*.md
 
 source-repository head
   Type:     git
