@@ -20,6 +20,18 @@ import           Control.Applicative (Applicative, pure)
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+-- | Example type specialization:
+--
+-- @
+-- queryTable :: Table w (Column a, Column b) -> Query (Column a, Column b)
+-- @
+--
+-- Assuming the @makeAdaptorAndInstance@ splice has been run for the
+-- product type @Foo@:
+--
+-- @
+-- queryTable :: Table w (Foo (Column a) (Column b) (Column c)) -> Query (Foo (Column a) (Column b) (Column c))
+-- @
 queryTable :: D.Default TM.ColumnMaker columns columns =>
               Table a columns -> Q.Query columns
 queryTable = queryTableExplicit D.def

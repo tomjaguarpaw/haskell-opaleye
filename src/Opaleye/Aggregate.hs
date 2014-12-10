@@ -14,6 +14,27 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 --
 --   http://www.postgresql.org/docs/9.3/static/functions-aggregate.html
 
+{-|
+Given a 'Query' producing rows of type @a@ and an 'Aggregator' accepting rows of
+type @a@, apply the aggregator to the results of the query.
+
+-}
+-- | Example type specialization:
+--
+-- @
+-- aggregate :: Aggregator (Column a, Column b) (Column a, Column b)
+--           -> Query (Column a, Column b) -> Query (Column a, Column b)
+-- @
+--
+-- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
+--
+-- @
+-- aggregate :: Aggregator (Foo (Column a) (Column b) (Column c)) (Foo (Column a) (Column b) (Column c)) 
+--           -> Query (Foo (Column a) (Column b) (Column c)) -> Query (Foo (Column a) (Column b) (Column c))
+-- @
+aggregate :: Aggregator a b -> Query a -> Query b
+aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
+
 -- | Group the aggregation by equality on the input to 'groupBy'.
 groupBy :: Aggregator (C.Column a) (C.Column a)
 groupBy = A.makeAggr' Nothing
@@ -37,13 +58,6 @@ max = A.makeAggr HPQ.AggrMax
 -- | Maximum of a group
 min :: Aggregator (C.Column a) (C.Column a)
 min = A.makeAggr HPQ.AggrMin
-
-{-|
-Given a 'Query' producing rows of type @a@ and an 'Aggregator' accepting rows of
-type @a@, apply the aggregator to the results of the query.
--}
-aggregate :: Aggregator a b -> Query a -> Query b
-aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
 boolOr :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)
 boolOr = A.makeAggr HPQ.AggrBoolOr

@@ -14,6 +14,14 @@ import qualified Opaleye.PGTypes as T
 
 import qualified Data.Profunctor.Product.Default as D
 
+-- | Example specialization:
+--
+-- @
+-- leftJoin :: Query (Column a, Column b)
+--          -> Query (Column c, Column (Nullable d))
+--          -> (((Column a, Column b), (Column c, Column (Nullable d))) -> Column 'Opaleye.PGTypes.PGBool')
+--          -> Query ((Column a, Column b), (Column (Nullable c), Column (Nullable d)))
+-- @
 leftJoin  :: (D.Default U.Unpackspec columnsA columnsA,
               D.Default U.Unpackspec columnsB columnsB,
               D.Default J.NullMaker columnsB nullableColumnsB) =>

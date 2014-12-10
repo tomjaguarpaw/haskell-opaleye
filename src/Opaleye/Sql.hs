@@ -15,6 +15,18 @@ import qualified Opaleye.Internal.Tag as T
 
 import qualified Data.Profunctor.Product.Default as D
 
+-- | Example type specialization:
+--
+-- @
+-- showSqlForPostgres :: Query (Column a, Column b) -> String
+-- @
+--
+-- Assuming the @makeAdaptorAndInstance@ splice has been run for the
+-- product type @Foo@:
+--
+-- @
+-- showSqlForPostgres :: Query (Foo (Column a) (Column b) (Column c)) -> String
+-- @
 showSqlForPostgres :: forall columns . D.Default U.Unpackspec columns columns =>
                       Q.Query columns -> String
 showSqlForPostgres = showSqlForPostgresExplicit (D.def :: U.Unpackspec columns columns)

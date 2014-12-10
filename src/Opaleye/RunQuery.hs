@@ -8,8 +8,7 @@ module Opaleye.RunQuery (module Opaleye.RunQuery,
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Data.String as String
 
--- It seems that we need the import of unsafeCoerce for Haddock
-import           Opaleye.Column (Column, unsafeCoerce)
+import           Opaleye.Column (Column)
 import qualified Opaleye.Sql as S
 import           Opaleye.QueryArr (Query)
 import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
@@ -18,6 +17,21 @@ import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
 
+-- | Example type specialization:
+--
+-- @
+-- runQuery :: Query (Column 'Opaleye.PGTypes.PGInt4', Column 'Opaleye.PGTypes.PGText') -> IO [(Column Int, Column String)]
+-- @
+--
+-- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
+--
+-- @
+-- runQuery :: Query (Foo (Column 'Opaleye.PGTypes.PGInt4') (Column 'Opaleye.PGTypes.PGText') (Column 'Opaleye.PGTypes.PGBool')
+--          -> IO [(Foo (Column Int) (Column String) (Column Bool)]
+-- @
+--
+-- Opaleye types are converted to Haskell types based on instances of
+-- the 'Opaleye.Internal.RunQuery.QueryRunnerColumn' typeclass.
 runQuery :: D.Default QueryRunner columns haskells
          => PGS.Connection
          -> Query columns
@@ -39,7 +53,7 @@ runQueryExplicit (QueryRunner u rowParser) conn q =
 -- @
 -- newtype Foo = Foo Int
 -- instance Default QueryRunnerColumn Foo Foo where
---    def = queryRunnerColumn ('unsafeCoerce' :: Column Foo -> Column PGInt4) Foo def
+--    def = queryRunnerColumn ('Opaleye.Column.unsafeCoerce' :: Column Foo -> Column PGInt4) Foo def
 -- @
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
                   -> IRQ.QueryRunnerColumn a b -> IRQ.QueryRunnerColumn a' b'

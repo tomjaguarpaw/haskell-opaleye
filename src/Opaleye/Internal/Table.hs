@@ -15,6 +15,31 @@ import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
+-- | Define a table as follows, where \"id\", \"color\", \"location\",
+-- \"quantity\" and \"radius\" are the tables columns in Postgres and
+-- the types are given in the type signature.  The @id@ field is an
+-- autoincrementing field (i.e. optional for writes).
+--
+-- @
+-- data Widget a b c d e = Widget { wid      :: a
+--                                , color    :: b
+--                                , location :: c
+--                                , quantity :: d
+--                                , radius   :: e }
+--
+-- $('Data.Profunctor.Product.TH.makeAdaptorAndInstance' \"pWidget\" ''Widget)
+--
+-- widgetTable :: Table (Widget (Maybe (Column PGInt4)) (Column PGText) (Column PGText)
+--                              (Column PGInt4) (Column PGFloat8))
+--                      (Widget (Column PGText) (Column PGText) (Column PGText)
+--                              (Column PGInt4) (Column PGFloat8))
+-- widgetTable = Table \"widgetTable\"
+--                      (pWidget Widget { wid      = optional \"id\"
+--                                      , color    = required \"color\"
+--                                      , location = required \"location\"
+--                                      , quantity = required \"quantity\"
+--                                      , radius   = required \"radius\" })
+-- @
 data Table writerColumns viewColumns =
   Table String (TableProperties writerColumns viewColumns)
 

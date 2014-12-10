@@ -16,19 +16,29 @@ null = unsafeCoerce (C.Column (HPQ.ConstExpr HPQ.NullLit))
 isNull :: Column (Nullable a) -> Column T.PGBool
 isNull = C.unOp HPQ.OpIsNull
 
--- | The Opaleye equivalent of the maybe function
+-- | If the @Column (Nullable a)@ is NULL then return the @Column b@
+-- otherwise map the underlying @Column a@ using the provided
+-- function.
+--
+-- The Opaleye equivalent of the 'Data.Maybe.maybe' function.
 matchNullable :: Column b -> (Column a -> Column b) -> Column (Nullable a)
               -> Column b
 matchNullable replacement f x = C.unsafeIfThenElse (isNull x) replacement
                                                    (f (unsafeCoerce x))
 
--- | The Opaleye equivalent of the fromMaybe function
+-- | If the @Column (Nullable a)@ is NULL then return the provided
+-- @Column a@ otherwise return the underlying @Column a@.
+--
+-- The Opaleye equivalent of the 'Data.Maybe.fromMaybe' function
 fromNullable :: Column a -> Column (Nullable a) -> Column a
 fromNullable = flip matchNullable id
 
+-- | The Opaleye equivalent of 'Data.Maybe.Just'
 toNullable :: Column a -> Column (Nullable a)
 toNullable = unsafeCoerce
 
+-- | If the argument is 'Data.Maybe.Nothing' return NULL otherwise return the
+-- provided value coerced to a nullable type.
 maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
 maybeToNullable = maybe null toNullable
 
