@@ -1,5 +1,5 @@
 name:            opaleye
-version:         0.2
+version:         0.3
 synopsis:        An SQL-generating DSL targeting PostgreSQL
 description:     An SQL-generating DSL targeting PostgreSQL.  Allows
                  Postgres queries to be written within Haskell in a
