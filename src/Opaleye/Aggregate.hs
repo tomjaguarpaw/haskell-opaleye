@@ -19,19 +19,6 @@ Given a 'Query' producing rows of type @a@ and an 'Aggregator' accepting rows of
 type @a@, apply the aggregator to the results of the query.
 
 -}
--- | Example type specialization:
---
--- @
--- aggregate :: Aggregator (Column a, Column b) (Column a, Column b)
---           -> Query (Column a, Column b) -> Query (Column a, Column b)
--- @
---
--- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
---
--- @
--- aggregate :: Aggregator (Foo (Column a) (Column b) (Column c)) (Foo (Column a) (Column b) (Column c)) 
---           -> Query (Foo (Column a) (Column b) (Column c)) -> Query (Foo (Column a) (Column b) (Column c))
--- @
 aggregate :: Aggregator a b -> Query a -> Query b
 aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
