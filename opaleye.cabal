@@ -88,6 +88,9 @@ test-suite test
 test-suite tutorial
   type: exitcode-stdio-1.0
   main-is: Main.hs
+  other-modules: TutorialAdvanced,
+                 TutorialBasic,
+                 TutorialManipulation
   hs-source-dirs: Doc/Tutorial
   build-depends:
     base >= 4 && < 5,
