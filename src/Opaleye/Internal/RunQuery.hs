@@ -52,54 +52,57 @@ queryRunnerColumnNullable qr =
 
 -- { Instances for automatic derivation
 
-instance D.Default QueryRunnerColumn a b =>
-         D.Default QueryRunnerColumn (Nullable a) (Maybe b) where
-  def = queryRunnerColumnNullable D.def
+instance QueryRunnerColumnDefault a b =>
+         QueryRunnerColumnDefault (Nullable a) (Maybe b) where
+  queryRunnerColumnDefault = queryRunnerColumnNullable queryRunnerColumnDefault
 
-instance D.Default QueryRunnerColumn a b =>
+instance QueryRunnerColumnDefault a b =>
          D.Default QueryRunner (Column a) b where
-  def = queryRunner D.def
+  def = queryRunner queryRunnerColumnDefault
 
 -- }
 
 -- { Instances that must be provided once for each type.  Instances
 --   for Nullable are derived automatically from these.
 
-instance D.Default QueryRunnerColumn T.PGInt4 Int where
-  def = fieldQueryRunnerColumn
+class QueryRunnerColumnDefault a b where
+  queryRunnerColumnDefault :: QueryRunnerColumn a b
 
-instance D.Default QueryRunnerColumn T.PGInt8 Int64 where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGInt4 Int where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGText String where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGInt8 Int64 where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGFloat8 Double where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGText String where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGBool Bool where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGFloat8 Double where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGUuid UUID where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGBool Bool where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGText ST.Text where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGUuid UUID where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGText LT.Text where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGText ST.Text where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGDate Time.Day where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGText LT.Text where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGTimestamptz Time.UTCTime where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGDate Time.Day where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGTimestamp Time.LocalTime where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGTimestamptz Time.UTCTime where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance D.Default QueryRunnerColumn T.PGTime Time.TimeOfDay where
-  def = fieldQueryRunnerColumn
+instance QueryRunnerColumnDefault T.PGTimestamp Time.LocalTime where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+instance QueryRunnerColumnDefault T.PGTime Time.TimeOfDay where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 -- }
 

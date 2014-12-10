@@ -31,7 +31,7 @@ import qualified Data.Profunctor.Product.Default as D
 -- @
 --
 -- Opaleye types are converted to Haskell types based on instances of
--- the 'Opaleye.Internal.RunQuery.QueryRunnerColumn' typeclass.
+-- the 'Opaleye.Internal.RunQuery.QueryRunnerColumnDefault' typeclass.
 runQuery :: D.Default QueryRunner columns haskells
          => PGS.Connection
          -> Query columns
