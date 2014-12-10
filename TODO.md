@@ -15,8 +15,14 @@
     * INTERSECT
     * INTERSECT ALL
 * INSERT, UPDATE, DELETE RETURNING
+* Improve the testing "framework" perhaps by upgrading it to Tasty
 
 ### Require a bit of work
 
+* Make the code generation neater
 * Make VALUES work with more, type checked, value types
 * Product-valued case statements
+* Make the test database parameters more easily configurable
+* Randomised testing in a QuickCheck style
+* distinct, union and aggregate can be made to work with QueryArr
+  rather than just Query if we use LATERAL JOIN
