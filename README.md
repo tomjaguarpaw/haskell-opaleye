@@ -5,6 +5,11 @@ domain specific language for targeting Postgres.  You need Opaleye if
 you want to use Haskell to write typesafe and composable code to query
 a Postgres database.
 
+> "Opaleye really is great. You've managed to bring what is so
+wonderful about relational databases and give it type safety and
+composition (i.e. what is wonderful about Haskell)" &ndash; Daniel
+Patterson, [Position Development](http://www.positiondev.com/)
+
 Opaleye allows you to define your database tables and write queries
 against them in Haskell code, and aims to be typesafe in the sense
 that if your code compiles then the generated SQL query will not fail
