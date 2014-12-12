@@ -21,6 +21,7 @@ import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product (empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
 
+import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
 import qualified Data.Time as Time
@@ -103,6 +104,14 @@ instance QueryRunnerColumnDefault T.PGTimestamp Time.LocalTime where
 
 instance QueryRunnerColumnDefault T.PGTime Time.TimeOfDay where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+instance QueryRunnerColumnDefault T.PGCitext (CI.CI ST.Text) where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+instance QueryRunnerColumnDefault T.PGCitext (CI.CI LT.Text) where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+-- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
 -- }
 

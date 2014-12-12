@@ -7,6 +7,7 @@ import qualified Opaleye.Internal.Column as C
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as SText
 import qualified Data.Text.Lazy as LText
 import qualified Data.Time as Time
@@ -28,6 +29,7 @@ data PGTime
 data PGTimestamp
 data PGTimestamptz
 data PGUuid
+data PGCitext
 
 instance C.PGNum PGFloat8 where
   pgFromInteger = pgDouble . fromInteger
@@ -91,3 +93,12 @@ pgTimeOfDay = unsafePgFormatTime "time" "'%T'"
 
 -- "We recommend not using the type time with time zone"
 -- http://www.postgresql.org/docs/8.3/static/datatype-datetime.html
+
+
+pgCiStrictText :: CI.CI SText.Text -> Column PGCitext
+pgCiStrictText = literalColumn . HPQ.StringLit . SText.unpack . CI.original
+
+pgCiLazyText :: CI.CI LText.Text -> Column PGCitext
+pgCiLazyText = literalColumn . HPQ.StringLit . LText.unpack . CI.original
+
+-- No CI String instance since postgresql-simple doesn't define FromField (CI String)
