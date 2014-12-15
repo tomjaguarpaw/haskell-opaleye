@@ -1,0 +1,13 @@
+## 0.3
+
+* Replace `Default QueryRunner` with a new class `DefaultQueryRunnerColumn`, migrate with `s/Default QueryRunner/DefaultQueryRunnerColumn` and `s/def/queryRunnerColumnDefault/`
+* Remove `ShowConstant`, use the monomorphic functions defined in the new module `Opaleye.PGTypes` instead. You will need to replace `Column Bool` with `Column PGBool` et.c. in query signatures
+* Re-export more modules from `Opaleye`
+* Add `boolAnd`, `boolOr,` `max`, and `min` aggregators
+* Add `lower` and `upper`
+* Add operator fixities
+* Add `maybeToNullable`
+* Add column instances for `Bool`, `UUID`, `Text`, and `UTCTime`
+* Expose fieldQueryRunnerColumn from Opaleye.RunQuery
+* Add `unsafeCast`
+* Re-export `Unpackspec` from `Opaleye.Manipulation`
