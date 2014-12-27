@@ -69,3 +69,6 @@ lower = C.unOp HPQ.OpLower
 
 upper :: Column T.PGText -> Column T.PGText
 upper = C.unOp HPQ.OpUpper
+
+like :: Column T.PGText -> Column T.PGText -> Column T.PGBool
+like = C.binOp HPQ.OpLike
