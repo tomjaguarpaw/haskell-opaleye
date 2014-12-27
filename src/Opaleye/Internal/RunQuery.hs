@@ -27,6 +27,9 @@ import qualified Data.Time as Time
 import           Data.UUID (UUID)
 import           GHC.Int (Int64)
 
+-- We introduce 'QueryRunnerColumn' which is *not* a Product
+-- Profunctor because it is the only way I know of to get the instance
+-- generation to work for non-Nullable and Nullable types at once.
 data QueryRunnerColumn coltype haskell =
   QueryRunnerColumn (U.Unpackspec (Column coltype) ()) (FieldParser haskell)
 
