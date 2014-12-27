@@ -22,7 +22,10 @@ source-repository head
 library
   hs-source-dirs: src
   build-depends:
-      base                >= 4       && < 5
+      -- attoparsec can be removed once postgresql-simple patch in
+      -- Internal.RunQuery is merged upstream
+      attoparsec          >= 0.10.3  && < 0.13
+    , base                >= 4       && < 5
     , contravariant       >= 0.4.4   && < 1.3
     , old-locale          >= 1.0     && < 1.1
     , postgresql-simple   >= 0.3     && < 0.5

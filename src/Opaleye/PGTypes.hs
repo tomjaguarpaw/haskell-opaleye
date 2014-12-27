@@ -28,6 +28,7 @@ data PGTime
 data PGTimestamp
 data PGTimestamptz
 data PGUuid
+data PGArray a
 
 instance C.PGNum PGFloat8 where
   pgFromInteger = pgDouble . fromInteger
