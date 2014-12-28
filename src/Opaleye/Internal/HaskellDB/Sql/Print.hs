@@ -20,8 +20,9 @@ import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlUpdate(..))
 
 import Data.List (intersperse)
-import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, empty, equals,
-                                  hcat, hsep, parens, punctuate, text, vcat)
+import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
+                                  empty, equals, hcat, hsep, parens, punctuate,
+                                  text, vcat)
 
 
 ppWhere :: [SqlExpr] -> Doc
@@ -74,8 +75,13 @@ ppInsert (SqlInsert table names values)
       <+> parens (commaV ppColumn names)
       $$ text "VALUES" <+> parens (commaV ppSqlExpr values)
 
+-- If we wanted to make the SQL slightly more readable this would be
+-- one easy place to do it.  Currently we wrap all column references
+-- in double quotes in case they are keywords.  However, we should be
+-- sure that any column names we generate ourselves are not keywords,
+-- so we only need to double quote base table column names.
 ppColumn :: SqlColumn -> Doc
-ppColumn (SqlColumn s) = text s
+ppColumn (SqlColumn s) = doubleQuotes (text s)
 
 
 ppSqlExpr :: SqlExpr -> Doc

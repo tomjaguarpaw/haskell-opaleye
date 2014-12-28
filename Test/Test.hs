@@ -124,6 +124,10 @@ table3 = twoIntTable "table3"
 table4 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 table4 = twoIntTable "table4"
 
+tableKeywordColNames :: O.Table (Column O.PGInt4, Column O.PGInt4)
+                                (Column O.PGInt4, Column O.PGInt4)
+tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
+
 table1Q :: Query (Column O.PGInt4, Column O.PGInt4)
 table1Q = O.queryTable table1
 
@@ -174,13 +178,27 @@ table4data = table4dataG
 table4columndata :: [(Column O.PGInt4, Column O.PGInt4)]
 table4columndata = table4dataG
 
-dropAndCreateTable :: String -> PGS.Query
-dropAndCreateTable t = String.fromString ("DROP TABLE IF EXISTS " ++ t ++ ";"
-                                          ++ "CREATE TABLE " ++ t
-                                          ++ " (column1 integer, column2 integer);")
+dropAndCreateTable :: (String, [String]) -> PGS.Query
+dropAndCreateTable (t, cols) = String.fromString drop_
+  where drop_ = "DROP TABLE IF EXISTS " ++ t ++ ";"
+                ++ "CREATE TABLE " ++ t
+                ++ " (" ++ commas cols ++ ");"
+        integer c = ("\"" ++ c ++ "\"" ++ " integer")
+        commas = L.intercalate "," . map integer
+        
+type Table_ = (String, [String])
+
+-- This should ideally be derived from the table definition above
+columns2 :: String -> Table_
+columns2 t = (t, ["column1", "column2"])
+
+-- This should ideally be derived from the table definition above
+tables :: [Table_]
+tables = map columns2 ["table1", "table2", "table3", "table4"]
+         ++ [("keywordtable", ["column", "where"])]
 
 dropAndCreateDB :: PGS.Connection -> IO ()
-dropAndCreateDB conn = mapM_ execute ["table1", "table2", "table3", "table4"]
+dropAndCreateDB conn = mapM_ execute tables
   where execute = PGS.execute_ conn . dropAndCreateTable
 
 type Test = PGS.Connection -> IO Bool
@@ -455,6 +473,14 @@ testUpdate conn = do
         expectedR :: [Int]
         expectedR = [-1]
 
+testKeywordColNames :: Test
+testKeywordColNames conn = do
+  let q :: IO [(Int, Int)]
+      q = O.runQuery conn (O.queryTable tableKeywordColNames)
+  _ <- q
+  return True
+
+  
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
@@ -464,7 +490,8 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
             testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
-            testValuesEmpty, testUnionAll, testTableFunctor, testUpdate
+            testValuesEmpty, testUnionAll, testTableFunctor, testUpdate,
+            testKeywordColNames
            ]
 
 main :: IO ()
