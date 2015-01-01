@@ -67,11 +67,12 @@ manipulation tutorial you can see an example of when they might differ.
 To query a table we use `queryTable`.
 
 (Here and in a few other places in Opaleye there is some typeclass
-magic going on behind the scenes.  However, you never *have* to use
-typeclasses.  All the magic that typeclasses do is also available by
-explicitly passing in the "typeclass dictionary".  For this example
-file we will always use the typeclass versions because they are
-simpler to read and the typeclass magic is essentially invisible.)
+magic going on behind the scenes to reduce boilerplate.  However, you
+never *have* to use typeclasses.  All the magic that typeclasses do is
+also available by explicitly passing in the "typeclass dictionary".
+For this example file we will always use the typeclass versions
+because they are simpler to read and the typeclass magic is
+essentially invisible.)
 
 > personQuery :: Query (Column PGText, Column PGInt4, Column PGText)
 > personQuery = queryTable personTable
@@ -702,6 +703,16 @@ FROM (SELECT name as name0,
 ON name0 = name1
 
 
+A comment about type signatures
+-------------------------------
+
+We mentioned that Opaleye uses typeclass magic behind the scenes to
+avoid boilerplate.  One consequence of this is that the compiler
+cannot infer types in some cases. Use of `leftJoin` is one of those
+cases.  You will generally need to provide a type signature yourself.
+If you see the compiler complain that it cannot determine a `Default`
+instance then specify more types.
+
 
 Newtypes
 ========
@@ -780,9 +791,9 @@ the following type
 > --          -> Query columns -> IO [haskells]
 
 It converts a "record" of Opaleye columns to a list of "records" of
-Haskell values.  Because this particular formulation uses typeclasses
-please put type signatures on everything in sight to minimize the
-number of confusing error messages!
+Haskell values.  Like `leftJoin` this particular formulation uses
+typeclasses so please put type signatures on everything in sight to
+minimize the number of confusing error messages!
 
 For example, for the 'twentiesAtAddress' query `runQuery` would have
 the following type:

@@ -14,7 +14,12 @@ import qualified Opaleye.PGTypes as T
 
 import qualified Data.Profunctor.Product.Default as D
 
--- | Example specialization:
+-- | @leftJoin@'s use of the 'D.Default' typeclass means that the
+-- compiler will have trouble inferring types.  It is strongly
+-- recommended that you provide full type signatures when using
+-- @leftJoin@.
+--
+-- Example specialization:
 --
 -- @
 -- leftJoin :: Query (Column a, Column b)

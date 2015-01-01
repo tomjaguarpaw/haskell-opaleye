@@ -110,6 +110,10 @@ runInsertReturningExplicit qr u conn = PGS.queryWith_ rowParser conn
                                        .:. arrangeInsertReturningSql u
   where IRQ.QueryRunner _ rowParser = qr
 
+-- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
+-- compiler will have trouble inferring types.  It is strongly
+-- recommended that you provide full type signatures when using
+-- @runInsertReturning@.
 runInsertReturning :: (D.Default RQ.QueryRunner returned haskells,
                        D.Default U.Unpackspec returned returned)
                       => PGS.Connection
