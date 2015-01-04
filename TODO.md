@@ -21,7 +21,7 @@
 
 * Make the code generation neater
 * Make VALUES work with more, type checked, value types
-* Product-valued case statements
+* Product-valued case statements and (.==)
 * Make the test database parameters more easily configurable
 * Randomised testing in a QuickCheck style
 * distinct, union and aggregate can be made to work with QueryArr
