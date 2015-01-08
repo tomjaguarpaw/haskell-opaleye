@@ -346,7 +346,6 @@ Idealized SQL:
 SELECT name0,
        age0,
        address0,
-       name1,
        birthday1
 FROM (SELECT name as name0,
              age as age0,
