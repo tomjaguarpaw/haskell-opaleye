@@ -25,6 +25,8 @@ import qualified Data.Profunctor.Product.Default as D
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
+import qualified Data.ByteString as SBS
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Time as Time
 import           Data.UUID (UUID)
 import           GHC.Int (Int64)
@@ -106,6 +108,12 @@ instance QueryRunnerColumnDefault T.PGBool Bool where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGUuid UUID where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+instance QueryRunnerColumnDefault T.PGBytea SBS.ByteString where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+instance QueryRunnerColumnDefault T.PGBytea LBS.ByteString where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGText ST.Text where
