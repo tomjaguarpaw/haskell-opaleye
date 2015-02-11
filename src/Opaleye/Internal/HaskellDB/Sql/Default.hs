@@ -8,6 +8,9 @@ import Opaleye.Internal.HaskellDB.PrimQuery
 import Opaleye.Internal.HaskellDB.Sql
 import Opaleye.Internal.HaskellDB.Sql.Generate
 import Opaleye.Internal.Tag (tagWith)
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as BS8
+import qualified Data.ByteString.Base16 as Base16
 
 mkSqlGenerator :: SqlGenerator -> SqlGenerator
 mkSqlGenerator gen = SqlGenerator 
@@ -169,6 +172,8 @@ defaultSqlLiteral _ l =
       DefaultLit    -> "DEFAULT"
       BoolLit True  -> "TRUE"
       BoolLit False -> "FALSE"
+      ByteStringLit s
+                    -> binQuote s
       StringLit s   -> quote s
       IntegerLit i  -> show i
       DoubleLit d   -> show d
@@ -195,3 +200,8 @@ escape '\r' = "\\r"
 escape '\t' = "\\t"
 escape '\\' = "\\\\"
 escape c = [c]
+
+
+-- | Quote binary literals using Postgresql's hex format.
+binQuote :: ByteString -> String
+binQuote s = "E'\\\\x" ++ BS8.unpack (Base16.encode s) ++ "'"

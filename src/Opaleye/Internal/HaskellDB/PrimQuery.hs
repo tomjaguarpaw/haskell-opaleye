@@ -5,6 +5,7 @@
 module Opaleye.Internal.HaskellDB.PrimQuery where
 
 import qualified Opaleye.Internal.Tag as T
+import Data.ByteString (ByteString)
 
 type TableName  = String
 type Attribute  = String
@@ -31,6 +32,7 @@ data Literal = NullLit
 	     | DefaultLit            -- ^ represents a default value
 	     | BoolLit Bool
 	     | StringLit String
+             | ByteStringLit ByteString
 	     | IntegerLit Integer
 	     | DoubleLit Double
 	     | OtherLit String       -- ^ used for hacking in custom SQL

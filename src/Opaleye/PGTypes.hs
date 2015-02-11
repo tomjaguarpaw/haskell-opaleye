@@ -10,6 +10,8 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as SText
 import qualified Data.Text.Lazy as LText
+import qualified Data.ByteString as SByteString
+import qualified Data.ByteString.Lazy as LByteString
 import qualified Data.Time as Time
 import qualified Data.UUID as UUID
 import qualified System.Locale as SL
@@ -31,6 +33,7 @@ data PGTimestamptz
 data PGUuid
 data PGCitext
 data PGArray a
+data PGBytea
 
 instance C.PGNum PGFloat8 where
   pgFromInteger = pgDouble . fromInteger
@@ -49,6 +52,12 @@ literalColumn = Column . HPQ.ConstExpr
 
 pgString :: String -> Column PGText
 pgString = literalColumn . HPQ.StringLit
+
+pgLazyByteString :: LByteString.ByteString -> Column PGBytea
+pgLazyByteString = literalColumn . HPQ.ByteStringLit . LByteString.toStrict
+
+pgStrictByteString :: SByteString.ByteString -> Column PGBytea
+pgStrictByteString = literalColumn . HPQ.ByteStringLit
 
 pgStrictText :: SText.Text -> Column PGText
 pgStrictText = literalColumn . HPQ.StringLit . SText.unpack
