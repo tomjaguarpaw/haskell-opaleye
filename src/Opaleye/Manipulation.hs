@@ -5,8 +5,6 @@ module Opaleye.Manipulation (module Opaleye.Manipulation,
 
 import qualified Opaleye.Internal.Sql as Sql
 import qualified Opaleye.Internal.Print as Print
-import qualified Opaleye.RunQuery as RQ
-import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column(Column))
@@ -20,13 +18,6 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 import qualified Opaleye.Internal.HaskellDB.Sql.Default as SD
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
 
-import qualified Database.PostgreSQL.Simple as PGS
-
-import qualified Data.Profunctor.Product.Default as D
-
-import           Data.Int (Int64)
-import           Data.String (fromString)
-
 arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert (T.Table tableName (TI.TableProperties writer _)) columns = insert
   where outColumns' = (map (\(x, y) -> (y, x))
@@ -35,9 +26,6 @@ arrangeInsert (T.Table tableName (TI.TableProperties writer _)) columns = insert
 
 arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
-
-runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
-runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
 arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
@@ -55,11 +43,6 @@ arrangeUpdateSql :: T.Table columnsW columnsR
               -> String
 arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
 
-runUpdate :: PGS.Connection -> T.Table columnsW columnsR
-          -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
-          -> IO Int64
-runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
-
 arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
 arrangeDelete (TI.Table tableName (TI.TableProperties _ (TI.View tableCols)))
               cond =
@@ -68,10 +51,6 @@ arrangeDelete (TI.Table tableName (TI.TableProperties _ (TI.View tableCols)))
 
 arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
-
-runDelete :: PGS.Connection -> T.Table a columnsR -> (columnsR -> Column PGBool)
-          -> IO Int64
-runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 
 arrangeInsertReturning :: U.Unpackspec returned returned
                        -> T.Table columnsW columnsR
@@ -97,28 +76,3 @@ arrangeInsertReturningSql :: U.Unpackspec returned returned
 arrangeInsertReturningSql = show
                             . Print.ppInsertReturning
                             .:: arrangeInsertReturning
-
-runInsertReturningExplicit :: RQ.QueryRunner returned haskells
-                           -> U.Unpackspec returned returned
-                           -> PGS.Connection
-                           -> T.Table columnsW columnsR
-                           -> columnsW
-                           -> (columnsR -> returned)
-                           -> IO [haskells]
-runInsertReturningExplicit qr u conn = PGS.queryWith_ rowParser conn
-                                       . fromString
-                                       .:. arrangeInsertReturningSql u
-  where IRQ.QueryRunner _ rowParser = qr
-
--- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
--- compiler will have trouble inferring types.  It is strongly
--- recommended that you provide full type signatures when using
--- @runInsertReturning@.
-runInsertReturning :: (D.Default RQ.QueryRunner returned haskells,
-                       D.Default U.Unpackspec returned returned)
-                      => PGS.Connection
-                      -> T.Table columnsW columnsR
-                      -> columnsW
-                      -> (columnsR -> returned)
-                      -> IO [haskells]
-runInsertReturning = runInsertReturningExplicit D.def D.def
