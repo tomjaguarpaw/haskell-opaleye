@@ -8,7 +8,6 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.Order
                , module Opaleye.PGTypes
                , module Opaleye.QueryArr
-               , module Opaleye.RunQuery
                , module Opaleye.Sql
                , module Opaleye.Table
                , module Opaleye.Values
@@ -24,7 +23,6 @@ import Opaleye.Operators
 import Opaleye.Order
 import Opaleye.PGTypes
 import Opaleye.QueryArr
-import Opaleye.RunQuery
 import Opaleye.Sql
 import Opaleye.Table
 import Opaleye.Values
