@@ -43,7 +43,6 @@ infix 4 .>=
 (.>=) :: Column a -> Column a -> Column T.PGBool
 (.>=) = C.binOp HPQ.OpGtEq
 
--- For import order reasons we can't make the return type PGBool
 case_ :: [(Column T.PGBool, Column a)] -> Column a -> Column a
 case_ = unsafeCase_
 
