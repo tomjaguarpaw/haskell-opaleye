@@ -11,7 +11,7 @@ import           Prelude hiding (null)
 
 -- | A NULL of any type
 null :: Column (Nullable a)
-null = unsafeCoerce (C.Column (HPQ.ConstExpr HPQ.NullLit))
+null = C.Column (HPQ.ConstExpr HPQ.NullLit)
 
 isNull :: Column (Nullable a) -> Column T.PGBool
 isNull = C.unOp HPQ.OpIsNull
