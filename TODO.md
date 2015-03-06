@@ -1,6 +1,11 @@
 # Low priority
 
-* General type families for improving instance resolution (product-profunctors)
+* General type families for improving instance resolution
+  (product-profunctors).  (Currently there are three places in Opaleye
+  where instance resolution needs to happen: `runQuery`,
+  `runInsertReturning` and `leftJoin`.  As it happens it seems
+  difficult to make any of these benefit from a general type family
+  approach.)
 
 ## Good starter projects for someone wanting to contribute to Opaleye
 
