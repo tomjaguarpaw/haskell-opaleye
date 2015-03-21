@@ -1,11 +1,14 @@
+## 0.3.1.1
+
+* Bump time to >= 1.5
+
 ## 0.3.1
 
 * SQL code generator escapes column names, so table column names can
   be the same as SQL keywords.
 * Add `like` operator
 * Add the types `PGCitext`, `PGArray`, `PGBytea`
-* 
-	
+
 ## 0.3
 
 * Replace `Default QueryRunner` with a new class `DefaultQueryRunnerColumn`, migrate with `s/Default QueryRunner/DefaultQueryRunnerColumn` and `s/def/queryRunnerColumnDefault/`
