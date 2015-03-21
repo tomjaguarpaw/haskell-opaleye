@@ -14,7 +14,6 @@ import qualified Data.ByteString as SByteString
 import qualified Data.ByteString.Lazy as LByteString
 import qualified Data.Time as Time
 import qualified Data.UUID as UUID
-import qualified System.Locale as SL
 
 import           Data.Int (Int64)
 
@@ -87,7 +86,7 @@ unsafePgFormatTime typeName formatString = Column
                                      . HPQ.ConstExpr
                                      . HPQ.OtherLit
                                      . format
-  where format = Time.formatTime SL.defaultTimeLocale formatString
+  where format = Time.formatTime Time.defaultTimeLocale formatString
 
 pgDay :: Time.Day -> Column PGDate
 pgDay = unsafePgFormatTime "date" "'%F'"
