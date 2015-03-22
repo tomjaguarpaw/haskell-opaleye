@@ -1,3 +1,7 @@
+## 0.3.1.2
+
+* Use time >= 1.4 and time-locale-compat
+
 ## 0.3.1.1
 
 * Bump time to >= 1.5
