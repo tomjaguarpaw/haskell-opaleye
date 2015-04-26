@@ -16,6 +16,8 @@ module Opaleye.Internal.HaskellDB.Sql (
 	                      ) where
 
 
+import qualified Data.List.NonEmpty as NEL
+
 -----------------------------------------------------------
 -- * SQL data type
 -----------------------------------------------------------
@@ -54,3 +56,4 @@ data SqlDelete  = SqlDelete SqlTable [SqlExpr]
 
 --- | Data type for SQL INSERT statements.
 data SqlInsert  = SqlInsert      SqlTable [SqlColumn] [SqlExpr]
+                | SqlInsertMany  SqlTable [SqlColumn] (NEL.NonEmpty [SqlExpr])

@@ -5,12 +5,14 @@
 module Opaleye.Internal.HaskellDB.Sql.Default  where
 
 import Opaleye.Internal.HaskellDB.PrimQuery
+import Opaleye.Internal.HaskellDB.PrimQuery (Assoc, PrimExpr)
 import Opaleye.Internal.HaskellDB.Sql
 import Opaleye.Internal.HaskellDB.Sql.Generate
 import Opaleye.Internal.Tag (tagWith)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Base16 as Base16
+import qualified Data.List.NonEmpty as NEL
 
 mkSqlGenerator :: SqlGenerator -> SqlGenerator
 mkSqlGenerator gen = SqlGenerator 
@@ -18,6 +20,7 @@ mkSqlGenerator gen = SqlGenerator
      sqlUpdate      = defaultSqlUpdate      gen,
      sqlDelete      = defaultSqlDelete      gen,
      sqlInsert      = defaultSqlInsert      gen,
+     sqlInsertMany  = defaultSqlInsertMany  gen,
      sqlExpr        = defaultSqlExpr        gen,
      sqlLiteral     = defaultSqlLiteral     gen,
      sqlQuote       = defaultSqlQuote       gen
@@ -33,8 +36,11 @@ toSqlOrder gen (OrderExpr o e) = (sqlExpr gen e, o')
                  OpAsc  -> SqlAsc
                  OpDesc -> SqlDesc
 
+toSqlColumn :: Attribute -> SqlColumn
+toSqlColumn attr = SqlColumn attr
+
 toSqlAssoc :: SqlGenerator -> Assoc -> [(SqlColumn,SqlExpr)]
-toSqlAssoc gen = map (\(attr,expr) -> (SqlColumn attr, sqlExpr gen expr))
+toSqlAssoc gen = map (\(attr,expr) -> (toSqlColumn attr, sqlExpr gen expr))
 
 
 defaultSqlUpdate :: SqlGenerator 
@@ -54,6 +60,14 @@ defaultSqlInsert :: SqlGenerator
 defaultSqlInsert gen table assoc = SqlInsert table cs es
     where (cs,es) = unzip (toSqlAssoc gen assoc)
 
+
+defaultSqlInsertMany :: SqlGenerator
+                     -> TableName
+                     -> [Attribute]
+                     -> NEL.NonEmpty [PrimExpr]
+                     -> SqlInsert
+defaultSqlInsertMany gen table attrs exprs =
+  SqlInsertMany table (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
 
 defaultSqlDelete :: SqlGenerator 
                  -> TableName -- ^ Name of the table

@@ -90,6 +90,7 @@ test-suite test
     postgresql-simple,
     profunctors,
     product-profunctors,
+    semigroups,
     opaleye
   ghc-options: -Wall
 

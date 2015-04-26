@@ -20,6 +20,7 @@ import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlUpdate(..))
 
 import Data.List (intersperse)
+import qualified Data.List.NonEmpty as NEL
 import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
                                   empty, equals, hcat, hsep, parens, punctuate,
                                   text, vcat)
@@ -73,6 +74,11 @@ ppInsert (SqlInsert table names values)
     = text "INSERT INTO" <+> text table 
       <+> parens (commaV ppColumn names)
       $$ text "VALUES" <+> parens (commaV ppSqlExpr values)
+ppInsert (SqlInsertMany table names values)
+    = text "INSERT INTO" <+> text table 
+      <+> parens (commaV ppColumn names)
+      $$ text "VALUES" <+> commaV (\v -> parens (commaV ppSqlExpr v))
+                                  (NEL.toList values)
 
 -- If we wanted to make the SQL slightly more readable this would be
 -- one easy place to do it.  Currently we wrap all column references

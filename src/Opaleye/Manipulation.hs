@@ -26,6 +26,7 @@ import qualified Data.Profunctor.Product.Default as D
 
 import           Data.Int (Int64)
 import           Data.String (fromString)
+import qualified Data.List.NonEmpty as NEL
 
 arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert (T.Table tableName (TI.TableProperties writer _)) columns = insert
@@ -38,6 +39,22 @@ arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
 
 runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
+
+arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
+arrangeInsertMany (T.Table tableName (TI.TableProperties writer _)) columns = insert
+  where columnNames = TI.runWriterColumnNames writer (NEL.head columns)
+        columnExprs = fmap (TI.runWriterPrimExprs writer) columns
+        insert = SG.sqlInsertMany SD.defaultSqlGenerator
+                      tableName columnNames columnExprs
+
+arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
+arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
+
+runInsertMany :: PGS.Connection
+              -> T.Table columns columns'
+              -> NEL.NonEmpty columns
+              -> IO Int64
+runInsertMany conn = PGS.execute_ conn . fromString .: arrangeInsertManySql
 
 arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)

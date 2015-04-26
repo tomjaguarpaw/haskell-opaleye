@@ -13,6 +13,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Data.Profunctor (Profunctor, dimap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
+import           Data.Monoid (Monoid)
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
 -- | Define a table as follows, where \"id\", \"color\", \"location\",
@@ -81,10 +82,32 @@ runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) wher
     HPQ.BaseTableAttrExpr columnName -> columnName
     _ -> "tablecolumn"
 
+runWriterG :: Monoid m =>
+              ((HPQ.PrimExpr, String) -> (m, ()))
+           -> Writer columns ignored
+           -> columns -> m
+runWriterG extract (Writer (PM.PackMap f)) columns = outColumns
+  where (outColumns, ()) = f extract columns
+        --- ^^ Using the `Monoid m => Applicative ((,) m) instance
+
 runWriter :: Writer columns columns' -> columns -> [(HPQ.PrimExpr, String)]
-runWriter (Writer (PM.PackMap f)) columns = outColumns
+runWriter = runWriterG extractColumns
   where extractColumns t = ([t], ())
-        (outColumns, ()) = f extractColumns columns
+
+-- I don't really like using `runWriterColumnNames` and
+-- `runWriterPrimExprs` separately because we lose the association
+-- between the column names and the PrimExprs.  Furthermore, it seems
+-- like we should be able to extract the column names without having
+-- to provide a value of type `columns`, so something strange is going
+-- on.  However, I don't know any other way of arranging inserts of
+-- multiple rows.
+runWriterColumnNames :: Writer columns columns' -> columns -> [String]
+runWriterColumnNames = runWriterG extractColumnNames
+  where extractColumnNames (_, t) = ([t], ())
+
+runWriterPrimExprs :: Writer columns columns' -> columns -> [HPQ.PrimExpr]
+runWriterPrimExprs = runWriterG extractPrimExprs
+  where extractPrimExprs (t, _) = ([t], ())
 
 required :: String -> Writer (Column a) (Column a)
 required columnName =

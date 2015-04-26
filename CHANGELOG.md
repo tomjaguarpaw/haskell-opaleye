@@ -1,3 +1,5 @@
+* Added `runInsertMany`
+
 ## 0.3.1.2
 
 * Use time >= 1.4 and time-locale-compat
