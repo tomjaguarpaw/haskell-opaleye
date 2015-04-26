@@ -11,6 +11,7 @@ import qualified Opaleye.Internal.PackMap as PM
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+import qualified Data.Functor.Identity as I
 import           Data.Profunctor (Profunctor, dimap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
@@ -85,18 +86,10 @@ runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) wher
     HPQ.BaseTableAttrExpr columnName -> columnName
     _ -> "tablecolumn"
 
-runWriterG :: Monoid m =>
-              ((HPQ.PrimExpr, String) -> m)
-           -> Writer columns ignored
-           -> columns -> m
-runWriterG extract (Writer (PM.PackMap f)) columns = outColumns
-  where (outColumns, ()) = f extract' [columns]
-        extract' (pq, s) = (extract (head pq, s), ())
-        --- ^^ Using the `Monoid m => Applicative ((,) m) instance
-
 runWriter :: Writer columns columns' -> columns -> [(HPQ.PrimExpr, String)]
-runWriter = runWriterG extractColumns
-  where extractColumns t = [t]
+runWriter (Writer (PM.PackMap f)) columns = outColumns
+  where (outColumns, ()) = f extract (I.Identity columns)
+        extract (pes, s) = ([(I.runIdentity pes, s)], ())
 
 runWriter' :: Writer columns columns' -> [columns] -> ([[HPQ.PrimExpr]], [String])
 runWriter' (Writer (PM.PackMap f)) columns = Arr.first unZip outColumns
