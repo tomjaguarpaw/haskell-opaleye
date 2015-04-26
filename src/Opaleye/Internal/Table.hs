@@ -15,6 +15,7 @@ import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import           Data.Monoid (Monoid, mempty, mappend)
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
+import qualified Control.Arrow as Arr
 
 -- | Define a table as follows, where \"id\", \"color\", \"location\",
 -- \"quantity\" and \"radius\" are the tables columns in Postgres and
@@ -110,12 +111,12 @@ runWriterPrimExprs :: Writer columns columns' -> columns -> [HPQ.PrimExpr]
 runWriterPrimExprs = runWriterG extractPrimExprs
   where extractPrimExprs (t, _) = [t]
 
-runWriter' :: Writer columns columns' -> [columns] -> [([HPQ.PrimExpr], String)]
-runWriter' (Writer (PM.PackMap f)) columns = outColumns
+runWriter' :: Writer columns columns' -> [columns] -> ([[HPQ.PrimExpr]], [String])
+runWriter' (Writer (PM.PackMap f)) columns = Arr.first unZip outColumns
   where (outColumns, ()) = f extract columns
-        extract t = ([t], ())
+        extract (pes, s) = ((Zip (map return pes), [s]), ())
 
-data Zip a = Zip [[a]]
+data Zip a = Zip { unZip :: [[a]] }
 
 instance Monoid (Zip a) where
   mempty = Zip mempty'
