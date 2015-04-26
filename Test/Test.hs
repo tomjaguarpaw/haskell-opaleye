@@ -125,6 +125,10 @@ table3 = twoIntTable "table3"
 table4 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 table4 = twoIntTable "table4"
 
+table5 :: O.Table (Maybe (Column O.PGInt4), Maybe (Column  O.PGInt4))
+                  (Column O.PGInt4, Column O.PGInt4)
+table5 = O.Table "table5" (PP.p2 (O.optional "column1", O.optional "column2"))
+
 tableKeywordColNames :: O.Table (Column O.PGInt4, Column O.PGInt4)
                                 (Column O.PGInt4, Column O.PGInt4)
 tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
@@ -186,7 +190,15 @@ dropAndCreateTable (t, cols) = String.fromString drop_
                 ++ " (" ++ commas cols ++ ");"
         integer c = ("\"" ++ c ++ "\"" ++ " integer")
         commas = L.intercalate "," . map integer
-        
+
+dropAndCreateTableSerial :: (String, [String]) -> PGS.Query
+dropAndCreateTableSerial (t, cols) = String.fromString drop_
+  where drop_ = "DROP TABLE IF EXISTS " ++ t ++ ";"
+                ++ "CREATE TABLE " ++ t
+                ++ " (" ++ commas cols ++ ");"
+        integer c = ("\"" ++ c ++ "\"" ++ " SERIAL")
+        commas = L.intercalate "," . map integer
+
 type Table_ = (String, [String])
 
 -- This should ideally be derived from the table definition above
@@ -198,9 +210,15 @@ tables :: [Table_]
 tables = map columns2 ["table1", "table2", "table3", "table4"]
          ++ [("keywordtable", ["column", "where"])]
 
+serialTables :: [Table_]
+serialTables = map columns2 ["table5"]
+
 dropAndCreateDB :: PGS.Connection -> IO ()
-dropAndCreateDB conn = mapM_ execute tables
+dropAndCreateDB conn = do
+  mapM_ execute tables
+  mapM_ executeSerial serialTables
   where execute = PGS.execute_ conn . dropAndCreateTable
+        executeSerial = PGS.execute_ conn . dropAndCreateTableSerial
 
 type Test = PGS.Connection -> IO Bool
 
@@ -485,7 +503,22 @@ testKeywordColNames conn = do
   _ <- q
   return True
 
-  
+testInsertSerial :: Test
+testInsertSerial conn = do
+  _ <- O.runInsert conn table5 (Just 10, Just 20)
+  _ <- O.runInsert conn table5 (Just 30, Nothing)
+--  _ <- O.runInsert conn table5 (Nothing, Nothing)
+  _ <- O.runInsert conn table5 (Nothing, Just 40)
+
+  resultI <- O.runQuery conn (O.queryTable table5)
+
+  return (resultI == expected)
+
+  where expected :: [(Int, Int)]
+        expected = [ (10, 20)
+                   , (30, 1)
+--                   , (1, 2)
+                   , (1, 40) ]
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
@@ -496,7 +529,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
             testValuesEmpty, testUnionAll, testTableFunctor, testUpdate,
-            testKeywordColNames
+            testKeywordColNames, testInsertSerial
            ]
 
 main :: IO ()
