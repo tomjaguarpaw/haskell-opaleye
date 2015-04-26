@@ -55,6 +55,13 @@ data View columns = View columns
 -- There's no reason the second parameter should exist except that we
 -- use ProductProfunctors more than ProductContravariants so it makes
 -- things easier if we make it one of the former.
+--
+-- TODO: This should probably be
+--
+--    PM.PackMap ([HPQ.PrimExpr], String) () [columns] ()
+--
+-- in order to support multiple row inserts more appropriately.  I
+-- haven't worked it through though.
 data Writer columns dummy =
   Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())
 
