@@ -96,21 +96,6 @@ runWriter :: Writer columns columns' -> columns -> [(HPQ.PrimExpr, String)]
 runWriter = runWriterG extractColumns
   where extractColumns t = [t]
 
--- I don't really like using `runWriterColumnNames` and
--- `runWriterPrimExprs` separately because we lose the association
--- between the column names and the PrimExprs.  Furthermore, it seems
--- like we should be able to extract the column names without having
--- to provide a value of type `columns`, so something strange is going
--- on.  However, I don't know any other way of arranging inserts of
--- multiple rows.
-runWriterColumnNames :: Writer columns columns' -> columns -> [String]
-runWriterColumnNames = runWriterG extractColumnNames
-  where extractColumnNames (_, t) = [t]
-
-runWriterPrimExprs :: Writer columns columns' -> columns -> [HPQ.PrimExpr]
-runWriterPrimExprs = runWriterG extractPrimExprs
-  where extractPrimExprs (t, _) = [t]
-
 runWriter' :: Writer columns columns' -> [columns] -> ([[HPQ.PrimExpr]], [String])
 runWriter' (Writer (PM.PackMap f)) columns = Arr.first unZip outColumns
   where (outColumns, ()) = f extract columns
