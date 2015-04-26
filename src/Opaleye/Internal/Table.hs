@@ -59,8 +59,8 @@ data View columns = View columns
 -- use ProductProfunctors more than ProductContravariants so it makes
 -- things easier if we make it one of the former.
 data Writer columns dummy =
-  Writer (forall f. Applicative f =>
-          PM.PackMap (f (HPQ.PrimExpr), String) () (f columns) ())
+  Writer (forall f. Functor f =>
+          PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
 
 queryTable :: TM.ColumnMaker viewColumns columns
             -> Table writerColumns viewColumns
