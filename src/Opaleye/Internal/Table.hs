@@ -90,16 +90,17 @@ runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) wher
     _ -> "tablecolumn"
 
 runWriterG :: Monoid m =>
-              ((HPQ.PrimExpr, String) -> (m, ()))
+              ((HPQ.PrimExpr, String) -> m)
            -> Writer columns ignored
            -> columns -> m
 runWriterG extract (Writer (PM.PackMap f)) columns = outColumns
-  where (outColumns, ()) = f extract columns
+  where (outColumns, ()) = f extract' columns
+        extract' x = (extract x, ())
         --- ^^ Using the `Monoid m => Applicative ((,) m) instance
 
 runWriter :: Writer columns columns' -> columns -> [(HPQ.PrimExpr, String)]
 runWriter = runWriterG extractColumns
-  where extractColumns t = ([t], ())
+  where extractColumns t = [t]
 
 -- I don't really like using `runWriterColumnNames` and
 -- `runWriterPrimExprs` separately because we lose the association
@@ -110,11 +111,11 @@ runWriter = runWriterG extractColumns
 -- multiple rows.
 runWriterColumnNames :: Writer columns columns' -> columns -> [String]
 runWriterColumnNames = runWriterG extractColumnNames
-  where extractColumnNames (_, t) = ([t], ())
+  where extractColumnNames (_, t) = [t]
 
 runWriterPrimExprs :: Writer columns columns' -> columns -> [HPQ.PrimExpr]
 runWriterPrimExprs = runWriterG extractPrimExprs
-  where extractPrimExprs (t, _) = ([t], ())
+  where extractPrimExprs (t, _) = [t]
 
 required :: String -> Writer (Column a) (Column a)
 required columnName =
