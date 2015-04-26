@@ -13,8 +13,7 @@ data SqlGenerator = SqlGenerator
     {
      sqlUpdate      :: TableName -> [PrimExpr] -> Assoc -> SqlUpdate,
      sqlDelete      :: TableName -> [PrimExpr] -> SqlDelete,
-     sqlInsert      :: TableName -> Assoc -> SqlInsert,
-     sqlInsertMany  :: TableName -> [Attribute] -> NEL.NonEmpty [PrimExpr] -> SqlInsert,
+     sqlInsert      :: TableName -> [Attribute] -> NEL.NonEmpty [PrimExpr] -> SqlInsert,
      sqlExpr        :: PrimExpr -> SqlExpr,
      sqlLiteral     :: Literal -> String,
      -- | Turn a string into a quoted string. Quote characters

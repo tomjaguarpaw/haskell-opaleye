@@ -56,5 +56,4 @@ data SqlUpdate  = SqlUpdate SqlTable [(SqlColumn,SqlExpr)] [SqlExpr]
 data SqlDelete  = SqlDelete SqlTable [SqlExpr]
 
 --- | Data type for SQL INSERT statements.
-data SqlInsert  = SqlInsert      SqlTable [SqlColumn] [SqlExpr]
-                | SqlInsertMany  SqlTable [SqlColumn] (NEL.NonEmpty [SqlExpr])
+data SqlInsert  = SqlInsert SqlTable [SqlColumn] (NEL.NonEmpty [SqlExpr])

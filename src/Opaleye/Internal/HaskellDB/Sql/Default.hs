@@ -20,7 +20,6 @@ mkSqlGenerator gen = SqlGenerator
      sqlUpdate      = defaultSqlUpdate      gen,
      sqlDelete      = defaultSqlDelete      gen,
      sqlInsert      = defaultSqlInsert      gen,
-     sqlInsertMany  = defaultSqlInsertMany  gen,
      sqlExpr        = defaultSqlExpr        gen,
      sqlLiteral     = defaultSqlLiteral     gen,
      sqlQuote       = defaultSqlQuote       gen
@@ -53,21 +52,13 @@ defaultSqlUpdate gen name criteria assigns
         = SqlUpdate name (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria) 
 
 
-defaultSqlInsert :: SqlGenerator 
-                 -> TableName -- ^ Name of the table
-	         -> Assoc -- ^ What to insert.
-	         -> SqlInsert
-defaultSqlInsert gen table assoc = SqlInsert table cs es
-    where (cs,es) = unzip (toSqlAssoc gen assoc)
-
-
-defaultSqlInsertMany :: SqlGenerator
-                     -> TableName
-                     -> [Attribute]
-                     -> NEL.NonEmpty [PrimExpr]
-                     -> SqlInsert
-defaultSqlInsertMany gen table attrs exprs =
-  SqlInsertMany table (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
+defaultSqlInsert :: SqlGenerator
+                 -> TableName
+                 -> [Attribute]
+                 -> NEL.NonEmpty [PrimExpr]
+                 -> SqlInsert
+defaultSqlInsert gen table attrs exprs =
+  SqlInsert table (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
 
 defaultSqlDelete :: SqlGenerator 
                  -> TableName -- ^ Name of the table

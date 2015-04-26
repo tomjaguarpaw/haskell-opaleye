@@ -41,7 +41,7 @@ arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
 arrangeInsertMany (T.Table tableName (TI.TableProperties writer _)) columns = insert
   where columnNames = TI.runWriterColumnNames writer (NEL.head columns)
         columnExprs = fmap (TI.runWriterPrimExprs writer) columns
-        insert = SG.sqlInsertMany SD.defaultSqlGenerator
+        insert = SG.sqlInsert SD.defaultSqlGenerator
                       tableName columnNames columnExprs
 
 arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String

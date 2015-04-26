@@ -73,10 +73,6 @@ ppInsert :: SqlInsert -> Doc
 ppInsert (SqlInsert table names values)
     = text "INSERT INTO" <+> text table 
       <+> parens (commaV ppColumn names)
-      $$ text "VALUES" <+> parens (commaV ppSqlExpr values)
-ppInsert (SqlInsertMany table names values)
-    = text "INSERT INTO" <+> text table 
-      <+> parens (commaV ppColumn names)
       $$ text "VALUES" <+> commaV (\v -> parens (commaV ppSqlExpr v))
                                   (NEL.toList values)
 
