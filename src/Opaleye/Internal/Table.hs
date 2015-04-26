@@ -13,7 +13,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Data.Profunctor (Profunctor, dimap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
-import           Data.Monoid (Monoid)
+import           Data.Monoid (Monoid, mempty, mappend)
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
 -- | Define a table as follows, where \"id\", \"color\", \"location\",
@@ -109,6 +109,18 @@ runWriterColumnNames = runWriterG extractColumnNames
 runWriterPrimExprs :: Writer columns columns' -> columns -> [HPQ.PrimExpr]
 runWriterPrimExprs = runWriterG extractPrimExprs
   where extractPrimExprs (t, _) = [t]
+
+runWriter' :: Writer columns columns' -> [columns] -> [([HPQ.PrimExpr], String)]
+runWriter' (Writer (PM.PackMap f)) columns = outColumns
+  where (outColumns, ()) = f extract columns
+        extract t = ([t], ())
+
+data Zip a = Zip [[a]]
+
+instance Monoid (Zip a) where
+  mempty = Zip mempty'
+    where mempty' = [] : mempty'
+  Zip xs `mappend` Zip ys = Zip (zipWith (++) xs ys)
 
 required :: String -> Writer (Column a) (Column a)
 required columnName =
