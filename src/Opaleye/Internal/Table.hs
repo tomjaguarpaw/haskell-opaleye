@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE Rank2Types #-}
 
 module Opaleye.Internal.Table where
 
@@ -57,7 +58,8 @@ data View columns = View columns
 -- use ProductProfunctors more than ProductContravariants so it makes
 -- things easier if we make it one of the former.
 data Writer columns dummy =
-  Writer (PM.PackMap ([HPQ.PrimExpr], String) () [columns] ())
+  Writer (forall f. Applicative f =>
+          PM.PackMap (f (HPQ.PrimExpr), String) () (f columns) ())
 
 queryTable :: TM.ColumnMaker viewColumns columns
             -> Table writerColumns viewColumns
@@ -110,11 +112,11 @@ instance Monoid (Zip a) where
 
 required :: String -> Writer (Column a) (Column a)
 required columnName =
-  Writer (PM.PackMap (\f columns -> f (map unColumn columns, columnName)))
+  Writer (PM.PackMap (\f columns -> f (fmap unColumn columns, columnName)))
 
 optional :: String -> Writer (Maybe (Column a)) (Column a)
 optional columnName =
-  Writer (PM.PackMap (\f columns -> f (map maybeUnColumn columns, columnName)))
+  Writer (PM.PackMap (\f columns -> f (fmap maybeUnColumn columns, columnName)))
   where maybeUnColumn Nothing = HPQ.DefaultInsertExpr
         maybeUnColumn (Just column) = unColumn column
 
@@ -130,7 +132,7 @@ instance Applicative (Writer a) where
   Writer f <*> Writer x = Writer (liftA2 (\_ _ -> ()) f x)
 
 instance Profunctor Writer where
-  dimap f _ (Writer h) = Writer (lmap (map f) h)
+  dimap f _ (Writer h) = Writer (lmap (fmap f) h)
 
 instance ProductProfunctor Writer where
   empty = PP.defaultEmpty
