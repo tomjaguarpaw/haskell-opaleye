@@ -57,7 +57,10 @@ data View columns = View columns
 -- things easier if we make it one of the former.
 --
 -- Writer has become very mysterious.  I really couldn't tell you what
--- it means.
+-- it means.  It seems to be saying that a `Writer` tells you how an
+-- `f columns` contains a list of `(f HPQ.PrimExpr, String)`, i.e. how
+-- it contains each column: a column header and the entries in this
+-- column for all the rows.
 data Writer columns dummy =
   Writer (forall f. Functor f =>
           PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
