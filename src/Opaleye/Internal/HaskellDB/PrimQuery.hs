@@ -26,6 +26,11 @@ data PrimExpr   = AttrExpr  Symbol
                 | ParamExpr (Maybe Name) PrimExpr
                 | FunExpr Name [PrimExpr]
                 | CastExpr Name PrimExpr -- ^ Cast an expression to a given type.
+                | DefaultInsertExpr -- Indicate that we want to insert the
+                                    -- default value into a column.
+                                    -- TODO: I'm not sure this belongs
+                                    -- here.  Perhaps a special type is
+                                    -- needed for insert expressions.
                 deriving (Read,Show)
 
 data Literal = NullLit

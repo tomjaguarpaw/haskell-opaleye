@@ -124,6 +124,7 @@ defaultSqlExpr gen expr =
       ParamExpr n _    -> ParamSqlExpr n PlaceHolderSqlExpr
       FunExpr n exprs  -> FunSqlExpr n (map (sqlExpr gen) exprs)
       CastExpr typ e1 -> CastSqlExpr typ (sqlExpr gen e1)
+      DefaultInsertExpr -> DefaultSqlExpr
 
 showBinOp :: BinOp -> String
 showBinOp  OpEq         = "=" 

@@ -116,7 +116,7 @@ required columnName =
 optional :: String -> Writer (Maybe (Column a)) (Column a)
 optional columnName =
   Writer (PM.PackMap (\f c -> case c of
-                         Nothing -> pure ()
+                         Nothing -> f (HPQ.DefaultInsertExpr, columnName)
                          Just (Column primExpr) -> f (primExpr, columnName)))
 
 -- {

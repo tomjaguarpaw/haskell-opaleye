@@ -108,7 +108,7 @@ ppSqlExpr expr =
       ParamSqlExpr _ v -> ppSqlExpr v
       PlaceHolderSqlExpr -> text "?"
       CastSqlExpr typ e -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)
-    
+      DefaultSqlExpr    -> text "DEFAULT"
 
 commaH :: (a -> Doc) -> [a] -> Doc
 commaH f = hcat . punctuate comma . map f

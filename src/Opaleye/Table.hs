@@ -9,14 +9,12 @@ module Opaleye.Table (module Opaleye.Table,
 import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
-import           Opaleye.Internal.Table (View(View), Writer(Writer),
-                                         Table, TableProperties)
+import           Opaleye.Internal.Table (View(View), Table, Writer,
+                                         TableProperties)
 import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
-import qualified Opaleye.Internal.PackMap as PM
 
 import qualified Data.Profunctor.Product.Default as D
-import           Control.Applicative (Applicative, pure)
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
@@ -44,12 +42,10 @@ queryTableExplicit cm table = Q.simpleQueryArr f where
 
 required :: String -> TableProperties (Column a) (Column a)
 required columnName = T.TableProperties
-  (Writer (PM.PackMap (\f (Column primExpr) -> f (primExpr, columnName))))
+  (T.required columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 optional :: String -> TableProperties (Maybe (Column a)) (Column a)
 optional columnName = T.TableProperties
-  (Writer (PM.PackMap (\f c -> case c of
-                          Nothing -> pure ()
-                          Just (Column primExpr) -> f (primExpr, columnName))))
+  (T.optional columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))

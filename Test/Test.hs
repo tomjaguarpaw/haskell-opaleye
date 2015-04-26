@@ -507,7 +507,7 @@ testInsertSerial :: Test
 testInsertSerial conn = do
   _ <- O.runInsert conn table5 (Just 10, Just 20)
   _ <- O.runInsert conn table5 (Just 30, Nothing)
---  _ <- O.runInsert conn table5 (Nothing, Nothing)
+  _ <- O.runInsert conn table5 (Nothing, Nothing)
   _ <- O.runInsert conn table5 (Nothing, Just 40)
 
   resultI <- O.runQuery conn (O.queryTable table5)
@@ -517,8 +517,8 @@ testInsertSerial conn = do
   where expected :: [(Int, Int)]
         expected = [ (10, 20)
                    , (30, 1)
---                   , (1, 2)
-                   , (1, 40) ]
+                   , (1, 2)
+                   , (2, 40) ]
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
