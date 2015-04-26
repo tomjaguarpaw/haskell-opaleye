@@ -29,10 +29,7 @@ import           Data.String (fromString)
 import qualified Data.List.NonEmpty as NEL
 
 arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
-arrangeInsert (T.Table tableName (TI.TableProperties writer _)) columns = insert
-  where outColumns' = (map (\(x, y) -> (y, x))
-                       . TI.runWriter writer) columns
-        insert = SG.sqlInsert SD.defaultSqlGenerator tableName outColumns'
+arrangeInsert t c = arrangeInsertMany t (return c)
 
 arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
