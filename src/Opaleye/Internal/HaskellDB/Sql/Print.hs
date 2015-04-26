@@ -69,7 +69,6 @@ ppDelete (SqlDelete name criteria) =
 
 
 ppInsert :: SqlInsert -> Doc
-
 ppInsert (SqlInsert table names values)
     = text "INSERT INTO" <+> text table 
       <+> parens (commaV ppColumn names)
