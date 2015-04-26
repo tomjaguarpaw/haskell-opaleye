@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.Table where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column, unColumn)
 import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -55,15 +55,8 @@ data View columns = View columns
 -- There's no reason the second parameter should exist except that we
 -- use ProductProfunctors more than ProductContravariants so it makes
 -- things easier if we make it one of the former.
---
--- TODO: This should probably be
---
---    PM.PackMap ([HPQ.PrimExpr], String) () [columns] ()
---
--- in order to support multiple row inserts more appropriately.  I
--- haven't worked it through though.
 data Writer columns dummy =
-  Writer (PM.PackMap (HPQ.PrimExpr, String) () columns ())
+  Writer (PM.PackMap ([HPQ.PrimExpr], String) () [columns] ())
 
 queryTable :: TM.ColumnMaker viewColumns columns
             -> Table writerColumns viewColumns
@@ -94,8 +87,8 @@ runWriterG :: Monoid m =>
            -> Writer columns ignored
            -> columns -> m
 runWriterG extract (Writer (PM.PackMap f)) columns = outColumns
-  where (outColumns, ()) = f extract' columns
-        extract' x = (extract x, ())
+  where (outColumns, ()) = f extract' [columns]
+        extract' (pq, s) = (extract (head pq, s), ())
         --- ^^ Using the `Monoid m => Applicative ((,) m) instance
 
 runWriter :: Writer columns columns' -> columns -> [(HPQ.PrimExpr, String)]
@@ -119,13 +112,13 @@ runWriterPrimExprs = runWriterG extractPrimExprs
 
 required :: String -> Writer (Column a) (Column a)
 required columnName =
-  Writer (PM.PackMap (\f (Column primExpr) -> f (primExpr, columnName)))
+  Writer (PM.PackMap (\f columns -> f (map unColumn columns, columnName)))
 
 optional :: String -> Writer (Maybe (Column a)) (Column a)
 optional columnName =
-  Writer (PM.PackMap (\f c -> case c of
-                         Nothing -> f (HPQ.DefaultInsertExpr, columnName)
-                         Just (Column primExpr) -> f (primExpr, columnName)))
+  Writer (PM.PackMap (\f columns -> f (map maybeUnColumn columns, columnName)))
+  where maybeUnColumn Nothing = HPQ.DefaultInsertExpr
+        maybeUnColumn (Just column) = unColumn column
 
 -- {
 
@@ -139,7 +132,7 @@ instance Applicative (Writer a) where
   Writer f <*> Writer x = Writer (liftA2 (\_ _ -> ()) f x)
 
 instance Profunctor Writer where
-  dimap f _ (Writer h) = Writer (lmap f h)
+  dimap f _ (Writer h) = Writer (lmap (map f) h)
 
 instance ProductProfunctor Writer where
   empty = PP.defaultEmpty
