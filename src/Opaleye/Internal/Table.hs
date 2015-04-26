@@ -52,12 +52,12 @@ data TableProperties writerColumns viewColumns =
 
 data View columns = View columns
 
--- If we switch to a more lens-like approach to PackMap this should be
--- the equivalent of a Fold
-
 -- There's no reason the second parameter should exist except that we
 -- use ProductProfunctors more than ProductContravariants so it makes
 -- things easier if we make it one of the former.
+--
+-- Writer has become very mysterious.  I really couldn't tell you what
+-- it means.
 data Writer columns dummy =
   Writer (forall f. Functor f =>
           PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
