@@ -15,6 +15,7 @@ import qualified Data.Functor.Identity as I
 import           Data.Profunctor (Profunctor, dimap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
+import qualified Data.List.NonEmpty as NEL
 import           Data.Monoid (Monoid, mempty, mappend)
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Arrow as Arr
@@ -94,17 +95,17 @@ runWriter (Writer (PM.PackMap f)) columns = outColumns
   where (outColumns, ()) = f extract (I.Identity columns)
         extract (pes, s) = ([(I.runIdentity pes, s)], ())
 
-runWriter' :: Writer columns columns' -> [columns] -> ([[HPQ.PrimExpr]], [String])
+runWriter' :: Writer columns columns' -> NEL.NonEmpty columns -> (NEL.NonEmpty [HPQ.PrimExpr], [String])
 runWriter' (Writer (PM.PackMap f)) columns = Arr.first unZip outColumns
   where (outColumns, ()) = f extract columns
-        extract (pes, s) = ((Zip (map return pes), [s]), ())
+        extract (pes, s) = ((Zip (fmap return pes), [s]), ())
 
-data Zip a = Zip { unZip :: [[a]] }
+data Zip a = Zip { unZip :: NEL.NonEmpty [a] }
 
 instance Monoid (Zip a) where
   mempty = Zip mempty'
-    where mempty' = [] : mempty'
-  Zip xs `mappend` Zip ys = Zip (zipWith (++) xs ys)
+    where mempty' = [] `NEL.cons` mempty'
+  Zip xs `mappend` Zip ys = Zip (NEL.zipWith (++) xs ys)
 
 required :: String -> Writer (Column a) (Column a)
 required columnName =

@@ -39,9 +39,9 @@ runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
 arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
 arrangeInsertMany (T.Table tableName (TI.TableProperties writer _)) columns = insert
-  where (columnExprs, columnNames) = TI.runWriter' writer (NEL.toList columns)
+  where (columnExprs, columnNames) = TI.runWriter' writer columns
         insert = SG.sqlInsert SD.defaultSqlGenerator
-                      tableName columnNames (NEL.fromList columnExprs) -- fromList danger!
+                      tableName columnNames columnExprs
 
 arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
 arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
