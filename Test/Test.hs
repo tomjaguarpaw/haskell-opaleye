@@ -14,7 +14,6 @@ import qualified Data.Ord as Ord
 import qualified Data.List as L
 import           Data.Monoid ((<>))
 import qualified Data.String as String
-import qualified Data.List.NonEmpty as NEL
 
 import qualified System.Exit as Exit
 
@@ -487,8 +486,8 @@ testUpdate conn = do
         insertT :: (Column O.PGInt4, Column O.PGInt4)
         insertT = (1, 2)
 
-        insertTMany :: NEL.NonEmpty (Column O.PGInt4, Column O.PGInt4)
-        insertTMany = (20, 30) NEL.:| [(40, 50)]
+        insertTMany :: [(Column O.PGInt4, Column O.PGInt4)]
+        insertTMany = [(20, 30), (40, 50)]
 
         expectedI :: [(Int, Int)]
         expectedI = [(1, 10), (1, 2), (20, 30), (40, 50)]

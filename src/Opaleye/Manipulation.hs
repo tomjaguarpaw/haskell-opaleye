@@ -48,9 +48,12 @@ arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
 
 runInsertMany :: PGS.Connection
               -> T.Table columns columns'
-              -> NEL.NonEmpty columns
+              -> [columns]
               -> IO Int64
-runInsertMany conn = PGS.execute_ conn . fromString .: arrangeInsertManySql
+runInsertMany conn table columns = case NEL.nonEmpty columns of
+  -- Inserting the empty list is just the same as returning 0
+  Nothing       -> return 0
+  Just columns' -> (PGS.execute_ conn . fromString .: arrangeInsertManySql) table columns'
 
 arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
