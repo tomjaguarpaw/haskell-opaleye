@@ -95,6 +95,12 @@ runWriter (Writer (PM.PackMap f)) columns = outColumns
   where (outColumns, ()) = f extract (I.Identity columns)
         extract (pes, s) = ([(I.runIdentity pes, s)], ())
 
+-- This works more generally for any "zippable", that is an
+-- Applicative that satisfies
+--
+--    x == (,) <$> fmap fst x <*> fmap snd x
+--
+-- However, I'm unaware of a typeclass for this.
 runWriter' :: Writer columns columns' -> NEL.NonEmpty columns -> (NEL.NonEmpty [HPQ.PrimExpr], [String])
 runWriter' (Writer (PM.PackMap f)) columns = Arr.first unZip outColumns
   where (outColumns, ()) = f extract columns
