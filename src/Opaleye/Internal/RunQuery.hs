@@ -140,6 +140,12 @@ instance QueryRunnerColumnDefault T.PGCitext (CI.CI ST.Text) where
 instance QueryRunnerColumnDefault T.PGCitext (CI.CI LT.Text) where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
+instance QueryRunnerColumnDefault T.PGJson String where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+instance QueryRunnerColumnDefault T.PGJsonb String where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
 arrayColumn :: Column (T.PGArray a) -> Column a

@@ -34,6 +34,8 @@ data PGUuid
 data PGCitext
 data PGArray a
 data PGBytea
+data PGJson
+data PGJsonb
 
 instance C.PGNum PGFloat8 where
   pgFromInteger = pgDouble . fromInteger
@@ -112,3 +114,23 @@ pgCiLazyText :: CI.CI LText.Text -> Column PGCitext
 pgCiLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack . CI.original
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
+
+-- The json data type was introduced in PostgreSQL version 9.2
+pgJSON :: String -> Column PGJson
+pgJSON = IPT.castToType "json"
+
+pgStrictJSON :: SByteString.ByteString -> Column PGJson
+pgStrictJSON = pgJSON . IPT.strictDecodeUtf8
+
+pgLazyJSON :: LByteString.ByteString -> Column PGJson
+pgLazyJSON = pgJSON . IPT.lazyDecodeUtf8
+
+-- The jsonb data type was introduced in PostgreSQL version 9.4
+pgJSONB :: String -> Column PGJsonb
+pgJSONB = IPT.castToType "jsonb"
+
+pgStrictJSONB :: SByteString.ByteString -> Column PGJsonb
+pgStrictJSONB = pgJSONB . IPT.strictDecodeUtf8
+
+pgLazyJSONB :: LByteString.ByteString -> Column PGJsonb
+pgLazyJSONB = pgJSONB . IPT.lazyDecodeUtf8

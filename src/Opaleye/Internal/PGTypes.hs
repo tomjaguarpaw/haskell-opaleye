@@ -22,3 +22,9 @@ literalColumn = Column . HPQ.ConstExpr
 castToType :: HPQ.Name -> String -> Column c
 castToType typeName =
     Column . HPQ.CastExpr typeName . HPQ.ConstExpr . HPQ.OtherLit
+
+strictDecodeUtf8 :: SByteString.ByteString -> String
+strictDecodeUtf8 = SText.unpack . STextEncoding.decodeUtf8
+
+lazyDecodeUtf8 :: LByteString.ByteString -> String
+lazyDecodeUtf8 = LText.unpack . LTextEncoding.decodeUtf8
