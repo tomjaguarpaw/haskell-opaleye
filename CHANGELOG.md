@@ -1,3 +1,4 @@
+* Added JSON types
 * Added `runInsertMany`
 
 ## 0.3.1.2
