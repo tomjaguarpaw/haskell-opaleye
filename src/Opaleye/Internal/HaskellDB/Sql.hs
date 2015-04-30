@@ -2,18 +2,7 @@
 --                HWT Group (c) 2003, haskelldb-users@lists.sourceforge.net
 -- License     :  BSD-style
 
-module Opaleye.Internal.HaskellDB.Sql ( 
-                               SqlTable,
-                               SqlColumn(..),
-                               SqlName,
-                               SqlOrder(..),
-
-	                       SqlUpdate(..), 
-	                       SqlDelete(..), 
-	                       SqlInsert(..), 
-
-                               SqlExpr(..),
-	                      ) where
+module Opaleye.Internal.HaskellDB.Sql where
 
 
 import qualified Data.List.NonEmpty as NEL
@@ -29,7 +18,14 @@ newtype SqlColumn = SqlColumn String deriving Show
 -- | A valid SQL name for a parameter.
 type SqlName = String
 
-data SqlOrder = SqlAsc | SqlDesc
+data SqlOrderNulls = SqlNullsFirst | SqlNullsLast
+                   deriving Show
+
+data SqlOrderDirection = SqlAsc | SqlDesc
+                       deriving Show
+
+data SqlOrder = SqlOrder { sqlOrderDirection :: SqlOrderDirection
+                         , sqlOrderNulls     :: SqlOrderNulls }
   deriving Show
 
 -- | Expressions in SQL statements.

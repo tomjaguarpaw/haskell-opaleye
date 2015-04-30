@@ -74,5 +74,12 @@ data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
 data OrderExpr = OrderExpr OrderOp PrimExpr 
                deriving (Show)
 
-data OrderOp = OpAsc | OpDesc
+data OrderNulls = NullsFirst | NullsLast
+                deriving Show
+
+data OrderDirection = OpAsc | OpDesc
+                    deriving Show
+
+data OrderOp = OrderOp { orderDirection :: OrderDirection
+                       , orderNulls     :: OrderNulls }
                deriving (Show)

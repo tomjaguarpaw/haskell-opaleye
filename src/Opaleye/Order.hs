@@ -13,12 +13,29 @@ orderBy os q =
   Q.simpleQueryArr (O.orderByU os . Q.runSimpleQueryArr q)
 
 -- | Specify an ascending ordering by the given expression.
+--   (Any NULLs appear last)
 asc :: (a -> C.Column b) -> O.Order a
-asc = O.order HPQ.OpAsc
+asc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
+                          , HPQ.orderNulls     = HPQ.NullsLast }
 
 -- | Specify an descending ordering by the given expression.
+--   (Any NULLs appear first)
 desc :: (a -> C.Column b) -> O.Order a
-desc = O.order HPQ.OpDesc
+desc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
+                           , HPQ.orderNulls     = HPQ.NullsFirst }
+
+-- | Specify an ascending ordering by the given expression.
+--   (Any NULLs appear first)
+ascNullsFirst :: (a -> C.Column b) -> O.Order a
+ascNullsFirst = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
+                                    , HPQ.orderNulls     = HPQ.NullsFirst }
+
+
+-- | Specify an descending ordering by the given expression.
+--   (Any NULLs appear last)
+descNullsLast :: (a -> C.Column b) -> O.Order a
+descNullsLast = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
+                                    , HPQ.orderNulls     = HPQ.NullsLast }
 
 {- |
 Limit the results of the given query to the given maximum number of

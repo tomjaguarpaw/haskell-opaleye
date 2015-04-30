@@ -18,6 +18,7 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
                                SqlUpdate(..))
+import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 
 import Data.List (intersperse)
 import qualified Data.List.NonEmpty as NEL
@@ -45,10 +46,17 @@ ppOrderBy :: [(SqlExpr,SqlOrder)] -> Doc
 ppOrderBy [] = empty
 ppOrderBy ord = text "ORDER BY" <+> commaV ppOrd ord
     where
-      ppOrd (e,o) = ppSqlExpr e <+> ppSqlOrder o
-      ppSqlOrder :: SqlOrder -> Doc
-      ppSqlOrder SqlAsc = text "ASC"
-      ppSqlOrder SqlDesc = text "DESC"
+      ppOrd (e,o) = ppSqlExpr e <+> ppSqlDirection o <+> ppSqlNulls o
+
+ppSqlDirection :: Sql.SqlOrder -> Doc
+ppSqlDirection x = text $ case Sql.sqlOrderDirection x of
+  Sql.SqlAsc  -> "ASC"
+  Sql.SqlDesc -> "DESC"
+
+ppSqlNulls :: Sql.SqlOrder -> Doc
+ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
+        Sql.SqlNullsFirst -> "NULLS FIRST"
+        Sql.SqlNullsLast  -> "NULLS LAST"
 
 ppAs :: String -> Doc -> Doc
 ppAs alias expr    | null alias    = expr                               

@@ -5,9 +5,11 @@
 module Opaleye.Internal.HaskellDB.Sql.Default  where
 
 import Opaleye.Internal.HaskellDB.PrimQuery
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as PQ
 import Opaleye.Internal.HaskellDB.PrimQuery (Assoc, PrimExpr)
 import Opaleye.Internal.HaskellDB.Sql
 import Opaleye.Internal.HaskellDB.Sql.Generate
+import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 import Opaleye.Internal.Tag (tagWith)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
@@ -30,10 +32,16 @@ defaultSqlGenerator = mkSqlGenerator defaultSqlGenerator
 
 
 toSqlOrder :: SqlGenerator -> OrderExpr -> (SqlExpr,SqlOrder)
-toSqlOrder gen (OrderExpr o e) = (sqlExpr gen e, o')
-    where o' = case o of
-                 OpAsc  -> SqlAsc
-                 OpDesc -> SqlDesc
+toSqlOrder gen (OrderExpr o e) =
+  (sqlExpr gen e, Sql.SqlOrder { sqlOrderDirection = o'
+                               , sqlOrderNulls     = orderNulls' })
+    where o' = case PQ.orderDirection o of
+            PQ.OpAsc  -> Sql.SqlAsc
+            PQ.OpDesc -> Sql.SqlDesc
+          orderNulls' = case PQ.orderNulls o of
+            PQ.NullsFirst -> Sql.SqlNullsFirst
+            PQ.NullsLast  -> Sql.SqlNullsLast
+
 
 toSqlColumn :: Attribute -> SqlColumn
 toSqlColumn attr = SqlColumn attr
