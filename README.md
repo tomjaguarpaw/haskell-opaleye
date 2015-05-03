@@ -60,6 +60,16 @@ break between minor releases, so be careful.
 Commercial support for Opaleye is provided by [Purely
 Agile](http://www.purelyagile.com/).
 
+# Backup maintainers
+
+In the event of the main developer becoming unreachable, please
+contact the following who are authorised to make bugfixes and
+dependency version bumps:
+
+* Adam Bergmark
+* Erik Hesselink
+* Oliver Charles
+
 # Contributors
 
 The Opaleye Project was founded by Tom Ellis, inspired by theoretical
