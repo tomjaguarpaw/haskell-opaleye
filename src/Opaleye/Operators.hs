@@ -24,23 +24,23 @@ infix 4 .==
 (.==) = unsafeEq
 
 infix 4 ./=
-(./=) :: Column a -> Column a -> Column T.PGBool
+(./=) :: (T.ComparableColumn a) => Column a -> Column a -> Column T.PGBool
 (./=) = C.binOp HPQ.OpNotEq
 
 infix 4 .>
-(.>) :: Column a -> Column a -> Column T.PGBool
+(.>) :: (T.ComparableColumn a) => Column a -> Column a -> Column T.PGBool
 (.>) = unsafeGt
 
 infix 4 .<
-(.<) :: Column a -> Column a -> Column T.PGBool
+(.<) :: (T.ComparableColumn a) => Column a -> Column a -> Column T.PGBool
 (.<) = C.binOp HPQ.OpLt
 
 infix 4 .<=
-(.<=) :: Column a -> Column a -> Column T.PGBool
+(.<=) :: (T.ComparableColumn a) => Column a -> Column a -> Column T.PGBool
 (.<=) = C.binOp HPQ.OpLtEq
 
 infix 4 .>=
-(.>=) :: Column a -> Column a -> Column T.PGBool
+(.>=) :: (T.ComparableColumn a) => Column a -> Column a -> Column T.PGBool
 (.>=) = C.binOp HPQ.OpGtEq
 
 case_ :: [(Column T.PGBool, Column a)] -> Column a -> Column a
