@@ -6,6 +6,7 @@ import           Opaleye.Internal.Aggregate (Aggregator)
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
+import qualified Opaleye.Order as Ord
 import qualified Opaleye.PGTypes as T
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
@@ -39,11 +40,11 @@ avg :: Aggregator (C.Column T.PGFloat8) (C.Column T.PGFloat8)
 avg = A.makeAggr HPQ.AggrAvg
 
 -- | Maximum of a group
-max :: Aggregator (C.Column a) (C.Column a)
+max :: Ord.PGOrd a => Aggregator (C.Column a) (C.Column a)
 max = A.makeAggr HPQ.AggrMax
 
 -- | Maximum of a group
-min :: Aggregator (C.Column a) (C.Column a)
+min :: Ord.PGOrd a => Aggregator (C.Column a) (C.Column a)
 min = A.makeAggr HPQ.AggrMin
 
 boolOr :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)

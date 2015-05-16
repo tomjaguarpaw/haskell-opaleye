@@ -4,7 +4,8 @@ import qualified Opaleye.Column as C
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Order as O
-
+import qualified Opaleye.PGTypes as T
+  
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 {-| Order the rows of a `Query` according to the `Order`. -}
@@ -14,26 +15,26 @@ orderBy os q =
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear last)
-asc :: (a -> C.Column b) -> O.Order a
+asc :: PGOrd b => (a -> C.Column b) -> O.Order a
 asc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                           , HPQ.orderNulls     = HPQ.NullsLast }
 
 -- | Specify an descending ordering by the given expression.
 --   (Any NULLs appear first)
-desc :: (a -> C.Column b) -> O.Order a
+desc :: PGOrd b => (a -> C.Column b) -> O.Order a
 desc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                            , HPQ.orderNulls     = HPQ.NullsFirst }
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear first)
-ascNullsFirst :: (a -> C.Column b) -> O.Order a
+ascNullsFirst :: PGOrd b => (a -> C.Column b) -> O.Order a
 ascNullsFirst = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                                     , HPQ.orderNulls     = HPQ.NullsFirst }
 
 
 -- | Specify an descending ordering by the given expression.
 --   (Any NULLs appear last)
-descNullsLast :: (a -> C.Column b) -> O.Order a
+descNullsLast :: PGOrd b => (a -> C.Column b) -> O.Order a
 descNullsLast = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                                     , HPQ.orderNulls     = HPQ.NullsLast }
 
@@ -50,3 +51,19 @@ that many result rows.
 -}
 offset :: Int -> Query a -> Query a
 offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
+
+-- | Typeclass for Postgres types which support ordering operations.
+class PGOrd a where
+
+instance PGOrd T.PGDate
+instance PGOrd T.PGFloat8
+instance PGOrd T.PGFloat4
+instance PGOrd T.PGInt8
+instance PGOrd T.PGInt4
+instance PGOrd T.PGInt2
+instance PGOrd T.PGNumeric
+instance PGOrd T.PGText
+instance PGOrd T.PGTime
+instance PGOrd T.PGTimestamptz
+instance PGOrd T.PGTimestamp
+instance PGOrd T.PGCitext

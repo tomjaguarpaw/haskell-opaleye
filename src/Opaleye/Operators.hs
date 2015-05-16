@@ -5,6 +5,7 @@ import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
 import qualified Opaleye.Internal.Column as C
 import           Opaleye.Internal.QueryArr (QueryArr(QueryArr))
 import qualified Opaleye.Internal.PrimQuery as PQ
+import qualified Opaleye.Order as Ord
 import qualified Opaleye.PGTypes as T
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
@@ -28,19 +29,19 @@ infix 4 ./=
 (./=) = C.binOp HPQ.OpNotEq
 
 infix 4 .>
-(.>) :: Column a -> Column a -> Column T.PGBool
+(.>) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
 (.>) = unsafeGt
 
 infix 4 .<
-(.<) :: Column a -> Column a -> Column T.PGBool
+(.<) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
 (.<) = C.binOp HPQ.OpLt
 
 infix 4 .<=
-(.<=) :: Column a -> Column a -> Column T.PGBool
+(.<=) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
 (.<=) = C.binOp HPQ.OpLtEq
 
 infix 4 .>=
-(.>=) :: Column a -> Column a -> Column T.PGBool
+(.>=) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
 (.>=) = C.binOp HPQ.OpGtEq
 
 case_ :: [(Column T.PGBool, Column a)] -> Column a -> Column a
