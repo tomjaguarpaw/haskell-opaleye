@@ -39,11 +39,11 @@ avg :: Aggregator (C.Column T.PGFloat8) (C.Column T.PGFloat8)
 avg = A.makeAggr HPQ.AggrAvg
 
 -- | Maximum of a group
-max :: Aggregator (C.Column a) (C.Column a)
+max :: (T.ComparableColumn a) => Aggregator (C.Column a) (C.Column a)
 max = A.makeAggr HPQ.AggrMax
 
 -- | Maximum of a group
-min :: Aggregator (C.Column a) (C.Column a)
+min :: (T.ComparableColumn a) => Aggregator (C.Column a) (C.Column a)
 min = A.makeAggr HPQ.AggrMin
 
 boolOr :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)

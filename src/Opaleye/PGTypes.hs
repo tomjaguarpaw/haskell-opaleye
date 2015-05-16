@@ -49,6 +49,22 @@ instance C.PGNum PGInt8 where
 instance C.PGFractional PGFloat8 where
   pgFromRational = pgDouble . fromRational
 
+-- | Such a column supports the min, max aggregations
+class ComparableColumn a
+
+instance ComparableColumn PGDate
+instance ComparableColumn PGFloat8
+instance ComparableColumn PGFloat4
+instance ComparableColumn PGInt8
+instance ComparableColumn PGInt4
+instance ComparableColumn PGInt2
+instance ComparableColumn PGNumeric
+instance ComparableColumn PGText
+instance ComparableColumn PGTime
+instance ComparableColumn PGTimestamptz
+instance ComparableColumn PGTimestamp
+instance ComparableColumn PGCitext
+
 literalColumn :: HPQ.Literal -> Column a
 literalColumn = IPT.literalColumn
 {-# WARNING literalColumn
