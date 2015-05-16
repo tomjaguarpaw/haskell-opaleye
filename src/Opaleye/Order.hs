@@ -8,7 +8,19 @@ import qualified Opaleye.PGTypes as T
   
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-{-| Order the rows of a `Query` according to the `Order`. -}
+{-| Order the rows of a `Query` according to the `Order`.
+
+@
+import Data.Monoid (\<\>)
+
+\-- Order by the first column ascending.  When first columns are equal
+\-- order by second column descending.
+example :: 'Query' ('C.Column' 'T.PGInt4', 'C.Column' 'T.PGText')
+        -> 'Query' ('C.Column' 'T.PGInt4', 'C.Column' 'T.PGText')
+example = 'orderBy' ('asc' fst \<\> 'desc' snd)
+@
+
+-}
 orderBy :: O.Order a -> Query a -> Query a
 orderBy os q =
   Q.simpleQueryArr (O.orderByU os . Q.runSimpleQueryArr q)
