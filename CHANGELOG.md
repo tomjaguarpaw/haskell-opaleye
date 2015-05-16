@@ -1,6 +1,6 @@
 * Added `PGOrd` typeclass for typesafe ordering operations.  Thanks to Jakub Ryška.
 * Support sorting NULLs first or last
-* Added JSON types
+* Added JSON types.  Thanks to Christopher Lewis.
 * Added `runInsertMany`
 
 ## 0.3.1.2
