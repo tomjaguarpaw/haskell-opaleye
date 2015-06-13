@@ -9,7 +9,7 @@
 >
 > import Data.Profunctor.Product ((***!), p4)
 > import Data.Profunctor.Product.Default (Default, def)
-> import qualified Database.PostgreSQL.Simple as SQL
+> import qualified Database.SQLite.Simple as SQL
 
 Introduction
 ============

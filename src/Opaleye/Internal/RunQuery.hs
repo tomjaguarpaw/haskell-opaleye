@@ -4,11 +4,12 @@ module Opaleye.Internal.RunQuery where
 
 import           Control.Applicative (Applicative, pure, (<*>))
 
-import           Database.PostgreSQL.Simple.Internal (RowParser)
-import           Database.PostgreSQL.Simple.FromField (FieldParser, FromField,
+import           Database.SQLite.Simple.Internal (RowParser)
+import           Database.SQLite.Simple.FromField (FieldParser, FromField,
                                                        fromField)
-import           Database.PostgreSQL.Simple.FromRow (fieldWith)
-import           Database.PostgreSQL.Simple.Types (fromPGArray)
+import qualified Database.SQLite.Simple.Internal as SSI
+import           Database.SQLite.Simple.FromRow (fieldWith)
+import qualified Database.SQLite3 as SQLiteBase
 
 import           Opaleye.Column (Column)
 import           Opaleye.Internal.Column (Nullable)
@@ -22,31 +23,12 @@ import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product (empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
 
-import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
 import qualified Data.ByteString as SBS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Time as Time
-import           Data.UUID (UUID)
 import           GHC.Int (Int64)
-
--- { Only needed for annoying postgresql-simple patch below
-
-import           Control.Applicative ((<$>))
-import           Database.PostgreSQL.Simple.FromField
-  (Field, typoid, typeOid, typelem, TypeInfo,
-   ResultError(UnexpectedNull, ConversionFailed, Incompatible),
-   typdelim, typeInfo, returnError, Conversion)
-import           Database.PostgreSQL.Simple.Types (PGArray(PGArray))
-import           Data.Attoparsec.ByteString.Char8 (Parser, parseOnly)
-import qualified Database.PostgreSQL.Simple.TypeInfo as TI
-import qualified Database.PostgreSQL.Simple.Arrays as Arrays
-import           Database.PostgreSQL.Simple.Arrays (array, fmt)
-import           Data.String (fromString)
-import           Data.Typeable (Typeable)
-
--- }
 
 -- We introduce 'QueryRunnerColumn' which is *not* a Product
 -- Profunctor because it is the only way I know of to get the instance
@@ -71,8 +53,8 @@ queryRunnerColumnNullable qr =
   QueryRunnerColumn (P.lmap C.unsafeCoerce u) (fromField' fp)
   where QueryRunnerColumn u fp = qr
         fromField' :: FieldParser a -> FieldParser (Maybe a)
-        fromField' _ _ Nothing = pure Nothing
-        fromField' fp' f bs = fmap Just (fp' f bs)
+        fromField' _ (SSI.Field SQLiteBase.SQLNull _) = pure Nothing
+        fromField' fp' f = fmap Just (fp' f)
 
 -- { Instances for automatic derivation
 
@@ -107,9 +89,6 @@ instance QueryRunnerColumnDefault T.PGFloat8 Double where
 instance QueryRunnerColumnDefault T.PGBool Bool where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGUuid UUID where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
-
 instance QueryRunnerColumnDefault T.PGBytea SBS.ByteString where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
@@ -128,36 +107,6 @@ instance QueryRunnerColumnDefault T.PGDate Time.Day where
 instance QueryRunnerColumnDefault T.PGTimestamptz Time.UTCTime where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGTimestamp Time.LocalTime where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
-
-instance QueryRunnerColumnDefault T.PGTime Time.TimeOfDay where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
-
-instance QueryRunnerColumnDefault T.PGCitext (CI.CI ST.Text) where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
-
-instance QueryRunnerColumnDefault T.PGCitext (CI.CI LT.Text) where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
-
-instance QueryRunnerColumnDefault T.PGJson String where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
-
-instance QueryRunnerColumnDefault T.PGJsonb String where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
-
--- No CI String instance since postgresql-simple doesn't define FromField (CI String)
-
-arrayColumn :: Column (T.PGArray a) -> Column a
-arrayColumn = C.unsafeCoerce
-
-instance (Typeable b, QueryRunnerColumnDefault a b) =>
-         QueryRunnerColumnDefault (T.PGArray a) [b] where
-  queryRunnerColumnDefault = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (arrayFieldParser f))
-    where QueryRunnerColumn c f = queryRunnerColumnDefault
-
--- }
-
 -- Boilerplate instances
 
 instance Functor (QueryRunner c) where
@@ -175,36 +124,5 @@ instance P.Profunctor QueryRunner where
 instance PP.ProductProfunctor QueryRunner where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
-
--- }
-
--- { Annoying postgresql-simple patch.  Delete this when it is merged upstream.
-
-arrayFieldParser :: Typeable a => FieldParser a -> FieldParser (PGArray a)
-arrayFieldParser
-    fieldParser f mdat = do
-        info <- typeInfo f
-        case info of
-          TI.Array{} ->
-              case mdat of
-                Nothing  -> returnError UnexpectedNull f ""
-                Just dat -> do
-                   case parseOnly (fromArray fieldParser info f) dat of
-                     Left  err  -> returnError ConversionFailed f err
-                     Right conv -> PGArray <$> conv
-          _ -> returnError Incompatible f ""
-
-fromArray :: FieldParser a -> TypeInfo -> Field -> Parser (Conversion [a])
-fromArray fieldParser typeInfo f = sequence . (parseIt <$>) <$> array delim
-  where
-    delim = typdelim (typelem typeInfo)
-    fElem = f{ typeOid = typoid (typelem typeInfo) }
-
-    parseIt item =
-        fieldParser f' $ if item' == fromString "NULL" then Nothing else Just item'
-      where
-        item' = fmt delim item
-        f' | Arrays.Array _ <- item = f
-           | otherwise              = fElem
 
 -- }

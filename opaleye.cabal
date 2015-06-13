@@ -22,19 +22,17 @@ source-repository head
 library
   hs-source-dirs: src
   build-depends:
-      -- attoparsec can be removed once postgresql-simple patch in
-      -- Internal.RunQuery is merged upstream
-      attoparsec          >= 0.10.3  && < 0.14
-    , base                >= 4       && < 5
+      base                >= 4       && < 5
     , base16-bytestring   >= 0.1.1.6 && < 0.2
     , case-insensitive    >= 1.2     && < 1.3
     , bytestring          >= 0.10    && < 0.11
     , contravariant       >= 0.4.4   && < 1.4
-    , postgresql-simple   >= 0.4.8.0 && < 0.5
+    , direct-sqlite       >= 2.3.13  && < 2.4
     , pretty              >= 1.1.1.0 && < 1.2
     , product-profunctors >= 0.5     && < 0.7
     , profunctors         >= 4.0     && < 5.2
     , semigroups          >= 0.13    && < 0.17
+    , sqlite-simple
     , text                >= 0.11    && < 1.3
     , transformers        >= 0.3     && < 0.5
     , time                >= 1.4     && < 1.6
@@ -88,10 +86,10 @@ test-suite test
   hs-source-dirs: Test
   build-depends:
     base >= 4 && < 5,
-    postgresql-simple,
     profunctors,
     product-profunctors,
     semigroups,
+    sqlite-simple,
     opaleye
   ghc-options: -Wall
 
@@ -105,9 +103,9 @@ test-suite tutorial
   hs-source-dirs: Doc/Tutorial
   build-depends:
     base >= 4 && < 5,
-    postgresql-simple,
     profunctors,
     product-profunctors >= 0.6,
+    sqlite-simple,
     time,
     opaleye
   ghc-options: -Wall

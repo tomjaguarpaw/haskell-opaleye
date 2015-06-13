@@ -20,13 +20,15 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 import qualified Opaleye.Internal.HaskellDB.Sql.Default as SD
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
 
-import qualified Database.PostgreSQL.Simple as PGS
+import qualified Database.SQLite.Simple as PGS
 
 import qualified Data.Profunctor.Product.Default as D
 
-import           Data.Int (Int64)
+--import           Data.Int (Int64)
 import           Data.String (fromString)
 import qualified Data.List.NonEmpty as NEL
+
+type Int64 = ()
 
 arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert t c = arrangeInsertMany t (return c)
@@ -52,7 +54,7 @@ runInsertMany :: PGS.Connection
               -> IO Int64
 runInsertMany conn table columns = case NEL.nonEmpty columns of
   -- Inserting the empty list is just the same as returning 0
-  Nothing       -> return 0
+  Nothing       -> return () --return 0
   Just columns' -> (PGS.execute_ conn . fromString .: arrangeInsertManySql) table columns'
 
 arrangeUpdate :: T.Table columnsW columnsR

@@ -5,7 +5,7 @@ module Opaleye.RunQuery (module Opaleye.RunQuery,
                          IRQ.QueryRunnerColumn,
                          IRQ.fieldQueryRunnerColumn) where
 
-import qualified Database.PostgreSQL.Simple as PGS
+import qualified Database.SQLite.Simple as PGS
 import qualified Data.String as String
 
 import           Opaleye.Column (Column)
@@ -65,4 +65,4 @@ queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
 queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
                                                             (fmapFP haskellF fp)
   where IRQ.QueryRunnerColumn u fp = qrc
-        fmapFP = fmap . fmap . fmap
+        fmapFP = fmap . fmap

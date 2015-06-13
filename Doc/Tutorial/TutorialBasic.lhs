@@ -23,7 +23,7 @@
 >
 > import           Control.Arrow (returnA, (<<<))
 >
-> import qualified Database.PostgreSQL.Simple as PGS
+> import qualified Database.SQLite.Simple as PGS
 
 Introduction
 ============

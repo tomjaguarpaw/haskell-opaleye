@@ -53,10 +53,12 @@ ppSqlDirection x = text $ case Sql.sqlOrderDirection x of
   Sql.SqlAsc  -> "ASC"
   Sql.SqlDesc -> "DESC"
 
+-- FIXME: We haven't implemented NULL ordering properly
 ppSqlNulls :: Sql.SqlOrder -> Doc
-ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
-        Sql.SqlNullsFirst -> "NULLS FIRST"
-        Sql.SqlNullsLast  -> "NULLS LAST"
+ppSqlNulls x = empty
+--ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
+--        Sql.SqlNullsFirst -> "NULLS FIRST"
+--        Sql.SqlNullsLast  -> "NULLS LAST"
 
 ppAs :: String -> Doc -> Doc
 ppAs alias expr    | null alias    = expr                               

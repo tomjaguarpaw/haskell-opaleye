@@ -6,7 +6,6 @@ module Opaleye.Internal.HaskellDB.Sql.Default  where
 
 import Opaleye.Internal.HaskellDB.PrimQuery
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as PQ
-import Opaleye.Internal.HaskellDB.PrimQuery (Assoc, PrimExpr)
 import Opaleye.Internal.HaskellDB.Sql
 import Opaleye.Internal.HaskellDB.Sql.Generate
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
@@ -157,7 +156,7 @@ sqlUnOp  OpNot         = ("NOT", UnOpPrefix)
 sqlUnOp  OpIsNull      = ("IS NULL", UnOpPostfix)
 sqlUnOp  OpIsNotNull   = ("IS NOT NULL", UnOpPostfix)
 sqlUnOp  OpLength      = ("LENGTH", UnOpFun)
-sqlUnOp  OpAbs         = ("@", UnOpFun)
+sqlUnOp  OpAbs         = ("ABS", UnOpFun)
 sqlUnOp  OpNegate      = ("-", UnOpFun)
 sqlUnOp  OpLower       = ("LOWER", UnOpFun)
 sqlUnOp  OpUpper       = ("UPPER", UnOpFun)
