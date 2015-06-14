@@ -196,13 +196,12 @@ defaultSqlLiteral _ l =
 defaultSqlQuote :: SqlGenerator -> String -> String
 defaultSqlQuote _ s = quote s
 
--- | Quote a string and escape characters that need escaping
---   We use Postgres "escape strings", i.e. strings prefixed
---   with E, to ensure that escaping with backslash is valid.
 quote :: String -> String 
-quote s = "E'" ++ concatMap escape s ++ "'"
+quote s = "'" ++ concatMap escape s ++ "'"
 
 -- | Escape characters that need escaping
+-- FIXME: Escaping control characters probably doesn't work in SQLite
+-- Need more tests
 escape :: Char -> String
 escape '\NUL' = "\\0"
 escape '\'' = "''"

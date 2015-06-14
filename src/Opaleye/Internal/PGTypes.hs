@@ -12,8 +12,10 @@ import qualified Data.ByteString.Lazy as LByteString
 import qualified Data.Time as Time
 import qualified Data.Time.Locale.Compat as Locale
 
+-- FIXME: SQLite requires temporal types to have the type "TEXT" which
+-- may cause problems elsewhere.
 unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
-unsafePgFormatTime typeName formatString = castToType typeName . format
+unsafePgFormatTime typeName formatString = castToType "TEXT" . format
   where format = Time.formatTime Locale.defaultTimeLocale formatString
 
 literalColumn :: HPQ.Literal -> Column a
