@@ -76,8 +76,10 @@ pgInt4 = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
 pgInt8 :: Int64 -> Column PGInt8
 pgInt8 = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
 
+-- SQLite needs to be told that numeric literals without decimal
+-- points are actual REAL
 pgDouble :: Double -> Column PGFloat8
-pgDouble = IPT.literalColumn . HPQ.DoubleLit
+pgDouble = C.unsafeCast "REAL" . IPT.literalColumn . HPQ.DoubleLit
 
 pgBool :: Bool -> Column PGBool
 pgBool = IPT.literalColumn . HPQ.BoolLit

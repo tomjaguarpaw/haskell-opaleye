@@ -43,8 +43,5 @@ maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
 maybeToNullable = maybe null toNullable
 
 -- | Cast a column to any other type. This is safe for some conversions such as uuid to text.
-unsafeCast :: String -> C.Column a -> Column b
-unsafeCast = mapColumn . HPQ.CastExpr
-  where
-    mapColumn :: (HPQ.PrimExpr -> HPQ.PrimExpr) -> Column c -> Column a
-    mapColumn primExpr c = C.Column (primExpr (C.unColumn c))
+unsafeCast :: String -> Column a -> Column b
+unsafeCast = C.unsafeCast

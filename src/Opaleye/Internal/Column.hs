@@ -57,3 +57,9 @@ class PGFractional a where
 instance (PGNum a, PGFractional a) => Fractional (Column a) where
   fromRational = pgFromRational
   (/) = binOp HPQ.OpDiv
+
+unsafeCast :: String -> Column a -> Column b
+unsafeCast = mapColumn . HPQ.CastExpr
+  where
+    mapColumn :: (HPQ.PrimExpr -> HPQ.PrimExpr) -> Column c -> Column a
+    mapColumn primExpr = Column . primExpr . unColumn
