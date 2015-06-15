@@ -183,8 +183,8 @@ defaultSqlLiteral _ l =
     case l of
       NullLit       -> "NULL"
       DefaultLit    -> "DEFAULT"
-      BoolLit True  -> "TRUE"
-      BoolLit False -> "FALSE"
+      BoolLit True  -> "1"
+      BoolLit False -> "0"
       ByteStringLit s
                     -> binQuote s
       StringLit s   -> quote s
