@@ -36,7 +36,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | FunSqlExpr     String [SqlExpr]
              | AggrFunSqlExpr String [SqlExpr] -- ^ Aggregate functions separate from normal functions.
              | ConstSqlExpr   String
-	     | CaseSqlExpr    [(SqlExpr,SqlExpr)] SqlExpr
+             | CaseSqlExpr    [(SqlExpr,SqlExpr)] SqlExpr
              | ListSqlExpr    [SqlExpr]
              | ParamSqlExpr (Maybe SqlName) SqlExpr
              | PlaceHolderSqlExpr

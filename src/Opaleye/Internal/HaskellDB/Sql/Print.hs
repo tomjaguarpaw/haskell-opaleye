@@ -2,9 +2,9 @@
 --                HWT Group (c) 2003, haskelldb-users@lists.sourceforge.net
 -- License     :  BSD-style
 
-module Opaleye.Internal.HaskellDB.Sql.Print ( 
+module Opaleye.Internal.HaskellDB.Sql.Print (
                                      ppUpdate,
-                                     ppDelete, 
+                                     ppDelete,
                                      ppInsert,
                                      ppSqlExpr,
                                      ppWhere,
@@ -13,7 +13,7 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
                                      ppAs,
                                      commaV,
                                      commaH
-	                            ) where
+                                    ) where
 
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
@@ -29,7 +29,7 @@ import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
 
 ppWhere :: [SqlExpr] -> Doc
 ppWhere [] = empty
-ppWhere es = text "WHERE" 
+ppWhere es = text "WHERE"
              <+> hsep (intersperse (text "AND")
                        (map (parens . ppSqlExpr) es))
 
@@ -41,7 +41,7 @@ ppGroupBy es = text "GROUP BY" <+> ppGroupAttrs es
     nameOrExpr :: SqlExpr -> Doc
     nameOrExpr (ColumnSqlExpr (SqlColumn col)) = text col
     nameOrExpr expr = parens (ppSqlExpr expr)
-    
+
 ppOrderBy :: [(SqlExpr,SqlOrder)] -> Doc
 ppOrderBy [] = empty
 ppOrderBy ord = text "ORDER BY" <+> commaV ppOrd ord
@@ -59,7 +59,7 @@ ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
         Sql.SqlNullsLast  -> "NULLS LAST"
 
 ppAs :: String -> Doc -> Doc
-ppAs alias expr    | null alias    = expr                               
+ppAs alias expr    | null alias    = expr
                    | otherwise     = expr <+> (hsep . map text) ["as",alias]
 
 
@@ -79,7 +79,7 @@ ppDelete (SqlDelete name criteria) =
 
 ppInsert :: SqlInsert -> Doc
 ppInsert (SqlInsert table names values)
-    = text "INSERT INTO" <+> text table 
+    = text "INSERT INTO" <+> text table
       <+> parens (commaV ppColumn names)
       $$ text "VALUES" <+> commaV (\v -> parens (commaV ppSqlExpr v))
                                   (NEL.toList values)
@@ -98,7 +98,7 @@ ppSqlExpr expr =
     case expr of
       ColumnSqlExpr c     -> ppColumn c
       ParensSqlExpr e -> parens (ppSqlExpr e)
-      BinSqlExpr op e1 e2 -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2 
+      BinSqlExpr op e1 e2 -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2
       PrefixSqlExpr op e  -> text op <+> ppSqlExpr e
       PostfixSqlExpr op e -> ppSqlExpr e <+> text op
       FunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
@@ -106,7 +106,7 @@ ppSqlExpr expr =
       ConstSqlExpr c      -> text c
       CaseSqlExpr cs el   -> text "CASE" <+> vcat (map ppWhen cs)
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
-          where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w 
+          where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w
                                <+> text "THEN" <+> ppSqlExpr t
       ListSqlExpr es      -> parens (commaH ppSqlExpr es)
       ParamSqlExpr _ v -> ppSqlExpr v
