@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 
 module Opaleye.Internal.RunQuery where
 
@@ -29,6 +29,7 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.ByteString as SBS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Time as Time
+import qualified Data.String as String
 import           Data.UUID (UUID)
 import           GHC.Int (Int64)
 
@@ -215,8 +216,8 @@ fromArray fieldParser typeInfo f = sequence . (parseIt <$>) <$> array delim
 -- { Allow @postgresql-simple@ conversions from JSON types to 'String'
 
 jsonFieldParser, jsonbFieldParser :: FieldParser String
-jsonFieldParser  = jsonFieldTypeParser "json"
-jsonbFieldParser = jsonFieldTypeParser "jsonb"
+jsonFieldParser  = jsonFieldTypeParser (String.fromString "json")
+jsonbFieldParser = jsonFieldTypeParser (String.fromString "jsonb")
 
 -- typenames, not type Oids are used in order to avoid creating
 -- a dependency on 'Database.PostgreSQL.LibPQ'
