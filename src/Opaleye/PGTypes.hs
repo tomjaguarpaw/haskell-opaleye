@@ -7,6 +7,7 @@ import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.PGTypes as IPT
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.HaskellDB.Sql.Default as HSD (quote)
 
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as SText
@@ -116,8 +117,9 @@ pgCiLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack . CI.original
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
 -- The json data type was introduced in PostgreSQL version 9.2
+-- JSON values must be SQL string quoted
 pgJSON :: String -> Column PGJson
-pgJSON = IPT.castToType "json"
+pgJSON = IPT.castToType "json" . HSD.quote
 
 pgStrictJSON :: SByteString.ByteString -> Column PGJson
 pgStrictJSON = pgJSON . IPT.strictDecodeUtf8
@@ -126,8 +128,9 @@ pgLazyJSON :: LByteString.ByteString -> Column PGJson
 pgLazyJSON = pgJSON . IPT.lazyDecodeUtf8
 
 -- The jsonb data type was introduced in PostgreSQL version 9.4
+-- JSONB values must be SQL string quoted
 pgJSONB :: String -> Column PGJsonb
-pgJSONB = IPT.castToType "jsonb"
+pgJSONB = IPT.castToType "jsonb" . HSD.quote
 
 pgStrictJSONB :: SByteString.ByteString -> Column PGJsonb
 pgStrictJSONB = pgJSONB . IPT.strictDecodeUtf8

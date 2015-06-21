@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, OverloadedStrings #-}
 
 module Opaleye.Internal.RunQuery where
 
@@ -15,6 +15,7 @@ import           Opaleye.Internal.Column (Nullable)
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.PGTypes as T
+import qualified Opaleye.Internal.PGTypes as IPT (strictDecodeUtf8)
 
 import qualified Data.Profunctor as P
 import           Data.Profunctor (dimap)
@@ -141,10 +142,12 @@ instance QueryRunnerColumnDefault T.PGCitext (CI.CI LT.Text) where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGJson String where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  queryRunnerColumnDefault =
+    QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) jsonFieldParser
 
 instance QueryRunnerColumnDefault T.PGJsonb String where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  queryRunnerColumnDefault =
+    QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) jsonbFieldParser
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
@@ -206,5 +209,26 @@ fromArray fieldParser typeInfo f = sequence . (parseIt <$>) <$> array delim
         item' = fmt delim item
         f' | Arrays.Array _ <- item = f
            | otherwise              = fElem
+
+-- }
+
+-- { Allow @postgresql-simple@ conversions from JSON types to 'String'
+
+jsonFieldParser, jsonbFieldParser :: FieldParser String
+jsonFieldParser  = jsonFieldTypeParser "json"
+jsonbFieldParser = jsonFieldTypeParser "jsonb"
+
+-- typenames, not type Oids are used in order to avoid creating
+-- a dependency on 'Database.PostgreSQL.LibPQ'
+jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
+jsonFieldTypeParser jsonTypeName field mData = do
+    ti <- typeInfo field
+    if TI.typname ti == jsonTypeName
+       then convert
+       else returnError Incompatible field "types incompatible"
+  where
+    convert = case mData of
+        Just bs -> pure $ IPT.strictDecodeUtf8 bs
+        _       -> returnError UnexpectedNull field ""
 
 -- }
