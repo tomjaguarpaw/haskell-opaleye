@@ -129,6 +129,8 @@ pgLazyJSON = pgJSON . IPT.lazyDecodeUtf8
 
 -- The jsonb data type was introduced in PostgreSQL version 9.4
 -- JSONB values must be SQL string quoted
+--
+-- TODO: We need to add literal JSON and JSONB types. 
 pgJSONB :: String -> Column PGJsonb
 pgJSONB = IPT.castToType "jsonb" . HSD.quote
 
