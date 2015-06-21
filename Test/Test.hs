@@ -128,6 +128,9 @@ table5 :: O.Table (Maybe (Column O.PGInt4), Maybe (Column  O.PGInt4))
                   (Column O.PGInt4, Column O.PGInt4)
 table5 = O.Table "table5" (PP.p2 (O.optional "column1", O.optional "column2"))
 
+table6 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
+table6 = O.Table "table6" (PP.p2 (O.required "column1", O.required "column2"))
+
 tableKeywordColNames :: O.Table (Column O.PGInt4, Column O.PGInt4)
                                 (Column O.PGInt4, Column O.PGInt4)
 tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
@@ -140,6 +143,9 @@ table2Q = O.queryTable table2
 
 table3Q :: Query (Column O.PGInt4, Column O.PGInt4)
 table3Q = O.queryTable table3
+
+table6Q :: Query (Column O.PGText, Column O.PGText)
+table6Q = O.queryTable table6
 
 table1dataG :: Num a => [(a, a)]
 table1dataG = [ (1, 100)
@@ -182,13 +188,25 @@ table4data = table4dataG
 table4columndata :: [(Column O.PGInt4, Column O.PGInt4)]
 table4columndata = table4dataG
 
-dropAndCreateTable :: (String, [String]) -> PGS.Query
-dropAndCreateTable (t, cols) = String.fromString drop_
+table6data :: [(String, String)]
+table6data = [("xy", "a"), ("z", "a"), ("more text", "a")]
+
+table6columndata :: [(Column O.PGText, Column O.PGText)]
+table6columndata = map (\(column1, column2) -> (O.pgString column1, O.pgString column2)) table6data
+
+dropAndCreateTable :: String -> (String, [String]) -> PGS.Query
+dropAndCreateTable columnType (t, cols) = String.fromString drop_
   where drop_ = "DROP TABLE IF EXISTS " ++ t ++ ";"
                 ++ "CREATE TABLE " ++ t
                 ++ " (" ++ commas cols ++ ");"
-        integer c = ("\"" ++ c ++ "\"" ++ " integer")
+        integer c = ("\"" ++ c ++ "\"" ++ " " ++ columnType)
         commas = L.intercalate "," . map integer
+
+dropAndCreateTableInt :: (String, [String]) -> PGS.Query
+dropAndCreateTableInt = dropAndCreateTable "integer"
+
+dropAndCreateTableText :: (String, [String]) -> PGS.Query
+dropAndCreateTableText = dropAndCreateTable "text"
 
 dropAndCreateTableSerial :: (String, [String]) -> PGS.Query
 dropAndCreateTableSerial (t, cols) = String.fromString drop_
@@ -215,8 +233,10 @@ serialTables = map columns2 ["table5"]
 dropAndCreateDB :: PGS.Connection -> IO ()
 dropAndCreateDB conn = do
   mapM_ execute tables
+  executeTextTable
   mapM_ executeSerial serialTables
-  where execute = PGS.execute_ conn . dropAndCreateTable
+  where execute = PGS.execute_ conn . dropAndCreateTableInt
+        executeTextTable = (PGS.execute_ conn . dropAndCreateTableText . columns2) "table6"
         executeSerial = PGS.execute_ conn . dropAndCreateTableSerial
 
 type Test = PGS.Connection -> IO Bool
@@ -306,6 +326,11 @@ testAggregateProfunctor = testG q expected
         countsum = P.dimap (\x -> (x,x))
                            (\(x, y) -> aggregateCoerceFIXME' x * y)
                            (PP.p2 (O.sum, O.count))
+
+testStringAggregate :: Test
+testStringAggregate = testG q expected
+  where q = O.aggregate (PP.p2 (O.array, O.min)) table6Q
+        expected r = [(map fst table6data, minimum (map snd table6data))] == r
 
 testOrderByG :: O.Order (Column O.PGInt4, Column O.PGInt4)
                 -> ((Int, Int) -> (Int, Int) -> Ordering)
@@ -521,7 +546,7 @@ testInsertSerial conn = do
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
-            testDistinct, testAggregate, testAggregateProfunctor,
+            testDistinct, testAggregate, testAggregateProfunctor, testStringAggregate,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
@@ -544,6 +569,7 @@ main = do
                , (table2, table2columndata)
                , (table3, table3columndata)
                , (table4, table4columndata) ]
+  insert (table6, table6columndata)
 
   results <- mapM ($ conn) allTests
 

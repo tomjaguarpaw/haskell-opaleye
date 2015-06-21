@@ -176,6 +176,7 @@ showAggrOp AggrVar      = "Var"
 showAggrOp AggrVarP     = "VarP"
 showAggrOp AggrBoolAnd  = "BOOL_AND"
 showAggrOp AggrBoolOr   = "BOOL_OR"
+showAggrOp AggrArr      = "ARRAY_AGG"
 showAggrOp (AggrOther s)        = s
 
 
