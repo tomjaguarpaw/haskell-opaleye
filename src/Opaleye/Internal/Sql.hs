@@ -77,7 +77,7 @@ unit = SelectFrom newSelect { attrs  = [(HSql.ConstSqlExpr "0", Nothing)] }
 baseTable :: String -> [(Symbol, HPQ.PrimExpr)] -> Select
 baseTable name columns = SelectFrom $
     newSelect { attrs = map sqlBinding columns
-              , tables = [Table name] }
+              , tables = [Table (HSql.SqlTable name)] }
 
 product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
 product ss pes = SelectFrom $
