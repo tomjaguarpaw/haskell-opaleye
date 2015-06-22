@@ -11,7 +11,7 @@ import qualified Data.List.NonEmpty as NEL
 -- * SQL data type
 -----------------------------------------------------------
 
-type SqlTable = String
+newtype SqlTable = SqlTable String deriving Show
 
 newtype SqlColumn = SqlColumn String deriving Show
 

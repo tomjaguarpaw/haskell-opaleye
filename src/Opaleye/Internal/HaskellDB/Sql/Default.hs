@@ -57,7 +57,7 @@ defaultSqlUpdate :: SqlGenerator
                  -> Assoc -- ^ Update the data with this.
                  -> SqlUpdate
 defaultSqlUpdate gen name criteria assigns
-        = SqlUpdate name (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria)
+        = SqlUpdate (SqlTable name) (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria) 
 
 
 defaultSqlInsert :: SqlGenerator
@@ -65,15 +65,15 @@ defaultSqlInsert :: SqlGenerator
                  -> [Attribute]
                  -> NEL.NonEmpty [PrimExpr]
                  -> SqlInsert
-defaultSqlInsert gen table attrs exprs =
-  SqlInsert table (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
+defaultSqlInsert gen name attrs exprs =
+  SqlInsert (SqlTable name) (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
 
 defaultSqlDelete :: SqlGenerator
                  -> TableName -- ^ Name of the table
                  -> [PrimExpr] -- ^ Criteria which must all be true for a row
                                --   to be deleted.
                  -> SqlDelete
-defaultSqlDelete gen name criteria = SqlDelete name (map (sqlExpr gen) criteria)
+defaultSqlDelete gen name criteria = SqlDelete (SqlTable name) (map (sqlExpr gen) criteria)
 
 
 defaultSqlExpr :: SqlGenerator -> PrimExpr -> SqlExpr

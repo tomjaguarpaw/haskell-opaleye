@@ -10,6 +10,7 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
                                      ppWhere,
                                      ppGroupBy,
                                      ppOrderBy,
+                                     ppTable,
                                      ppAs,
                                      commaV,
                                      commaH
@@ -17,7 +18,7 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
 
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
-                               SqlUpdate(..))
+                               SqlUpdate(..), SqlTable(..))
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 
 import Data.List (intersperse)
@@ -64,8 +65,8 @@ ppAs alias expr    | null alias    = expr
 
 
 ppUpdate :: SqlUpdate -> Doc
-ppUpdate (SqlUpdate name assigns criteria)
-        = text "UPDATE" <+> text name
+ppUpdate (SqlUpdate table assigns criteria)
+        = text "UPDATE" <+> ppTable table
         $$ text "SET" <+> commaV ppAssign assigns
         $$ ppWhere criteria
     where
@@ -73,13 +74,13 @@ ppUpdate (SqlUpdate name assigns criteria)
 
 
 ppDelete :: SqlDelete -> Doc
-ppDelete (SqlDelete name criteria) =
-    text "DELETE FROM" <+> text name $$ ppWhere criteria
+ppDelete (SqlDelete table criteria) =
+    text "DELETE FROM" <+> ppTable table $$ ppWhere criteria
 
 
 ppInsert :: SqlInsert -> Doc
 ppInsert (SqlInsert table names values)
-    = text "INSERT INTO" <+> text table
+    = text "INSERT INTO" <+> ppTable table
       <+> parens (commaV ppColumn names)
       $$ text "VALUES" <+> commaV (\v -> parens (commaV ppSqlExpr v))
                                   (NEL.toList values)
@@ -92,6 +93,8 @@ ppInsert (SqlInsert table names values)
 ppColumn :: SqlColumn -> Doc
 ppColumn (SqlColumn s) = doubleQuotes (text s)
 
+ppTable :: SqlTable -> Doc
+ppTable (SqlTable s) = doubleQuotes (text s)
 
 ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =
