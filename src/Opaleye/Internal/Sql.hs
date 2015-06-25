@@ -23,8 +23,11 @@ data Select = SelectFrom From
             | SelectBinary Binary
             deriving Show
 
+data SelectAttrs = Star | SelectAttrs [(HSql.SqlExpr, Maybe HSql.SqlColumn)]
+                 deriving Show
+
 data From = From {
-  attrs     :: [(HSql.SqlExpr, Maybe HSql.SqlColumn)],
+  attrs     :: SelectAttrs,
   tables    :: [Select],
   criteria  :: [HSql.SqlExpr],
   groupBy   :: [HSql.SqlExpr],
@@ -65,18 +68,18 @@ sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
                      values, binary)
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> Select
-sql (pes, pq, t) = SelectFrom $ newSelect { attrs = makeAttrs pes
+sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (makeAttrs pes)
                                           , tables = [pqSelect] }
   where pqSelect = PQ.foldPrimQuery sqlQueryGenerator pq
         makeAttrs = flip (zipWith makeAttr) [1..]
         makeAttr pe i = sqlBinding (Symbol ("result" ++ show (i :: Int)) t, pe)
 
 unit :: Select
-unit = SelectFrom newSelect { attrs  = [(HSql.ConstSqlExpr "0", Nothing)] }
+unit = SelectFrom newSelect { attrs  = SelectAttrs [] }
 
 baseTable :: String -> [(Symbol, HPQ.PrimExpr)] -> Select
 baseTable name columns = SelectFrom $
-    newSelect { attrs = map sqlBinding columns
+    newSelect { attrs = SelectAttrs (map sqlBinding columns)
               , tables = [Table (HSql.SqlTable name)] }
 
 product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
@@ -85,7 +88,7 @@ product ss pes = SelectFrom $
               , criteria = map sqlExpr pes }
 
 aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
-aggregate aggrs s = SelectFrom $ newSelect { attrs = map attr aggrs
+aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs (map attr aggrs)
                                            , tables = [s]
                                            , groupBy = groupBy' }
   where groupBy' = (map sqlExpr
@@ -134,9 +137,9 @@ binary :: PQ.BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
        -> (Select, Select) -> Select
 binary op pes (select1, select2) = SelectBinary Binary {
   bOp = binOp op,
-  bSelect1 = SelectFrom newSelect { attrs = map (mkColumn fst) pes,
+  bSelect1 = SelectFrom newSelect { attrs = SelectAttrs (map (mkColumn fst) pes),
                                     tables = [select1] },
-  bSelect2 = SelectFrom newSelect { attrs = map (mkColumn snd) pes,
+  bSelect2 = SelectFrom newSelect { attrs = SelectAttrs (map (mkColumn snd) pes),
                                     tables = [select2] }
   }
   where mkColumn e = sqlBinding . Arr.second e
@@ -152,7 +155,7 @@ binOp o = case o of
 
 newSelect :: From
 newSelect = From {
-  attrs     = [],
+  attrs     = Star,
   tables    = [],
   criteria  = [],
   groupBy   = [],

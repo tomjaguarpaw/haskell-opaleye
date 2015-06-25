@@ -3,6 +3,8 @@
 
 module Main where
 
+import qualified QuickCheck
+
 import           Opaleye (Column, Nullable, Query, QueryArr, (.==), (.>))
 import qualified Opaleye as O
 
@@ -570,6 +572,9 @@ main = do
                , (table3, table3columndata)
                , (table4, table4columndata) ]
   insert (table6, table6columndata)
+
+  -- Need to run quickcheck after table data has been inserted
+  QuickCheck.run conn
 
   results <- mapM ($ conn) allTests
 

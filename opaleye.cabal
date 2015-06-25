@@ -85,12 +85,15 @@ library
 test-suite test
   type: exitcode-stdio-1.0
   main-is: Test.hs
+  other-modules: QuickCheck
   hs-source-dirs: Test
   build-depends:
     base >= 4 && < 5,
+    containers,
     postgresql-simple,
     profunctors,
     product-profunctors,
+    QuickCheck,
     semigroups,
     opaleye
   ghc-options: -Wall

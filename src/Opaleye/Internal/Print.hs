@@ -37,7 +37,7 @@ ppSelectFrom s = text "SELECT"
 
 ppSelectJoin :: Join -> Doc
 ppSelectJoin j = text "SELECT"
-                 <+> ppAttrs (Sql.jAttrs j)
+                 <+> ppAttrs (Sql.SelectAttrs (Sql.jAttrs j))
                  $$  text "FROM"
                  $$  ppTable (tableAlias 1 s1)
                  $$  ppJoinType (Sql.jJoinType j)
@@ -48,7 +48,7 @@ ppSelectJoin j = text "SELECT"
 
 ppSelectValues :: Values -> Doc
 ppSelectValues v = text "SELECT"
-                   <+> ppAttrs (Sql.vAttrs v)
+                   <+> ppAttrs (Sql.SelectAttrs (Sql.vAttrs v))
                    $$  text "FROM"
                    $$  ppValues (Sql.vValues v)
 
@@ -60,9 +60,9 @@ ppSelectBinary b = ppSql (Sql.bSelect1 b)
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 
-ppAttrs :: [(HSql.SqlExpr, Maybe HSql.SqlColumn)] -> Doc
-ppAttrs [] = text "*"
-ppAttrs xs = HPrint.commaV nameAs xs
+ppAttrs :: Sql.SelectAttrs -> Doc
+ppAttrs Sql.Star             = text "*"
+ppAttrs (Sql.SelectAttrs xs) = HPrint.commaV nameAs xs
 
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc

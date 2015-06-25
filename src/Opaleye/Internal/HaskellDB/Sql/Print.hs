@@ -41,13 +41,22 @@ ppGroupBy es = text "GROUP BY" <+> ppGroupAttrs es
     ppGroupAttrs cs = commaV nameOrExpr cs
     nameOrExpr :: SqlExpr -> Doc
     nameOrExpr (ColumnSqlExpr (SqlColumn col)) = text col
-    nameOrExpr expr = parens (ppSqlExpr expr)
+    -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first column
+    -- Any identity function will do
+    --  nameOrExpr expr = parens (ppSqlExpr expr)
+    nameOrExpr expr = text "COALESCE" <+> parens (ppSqlExpr expr)
 
 ppOrderBy :: [(SqlExpr,SqlOrder)] -> Doc
 ppOrderBy [] = empty
 ppOrderBy ord = text "ORDER BY" <+> commaV ppOrd ord
     where
-      ppOrd (e,o) = ppSqlExpr e <+> ppSqlDirection o <+> ppSqlNulls o
+    -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first column
+    -- Any identity function will do
+    --   ppOrd (e,o) = ppSqlExpr e <+> ppSqlDirection o <+> ppSqlNulls o
+      ppOrd (e,o) = text "COALESCE"
+                      <+> parens (ppSqlExpr e)
+                      <+> ppSqlDirection o
+                      <+> ppSqlNulls o
 
 ppSqlDirection :: Sql.SqlOrder -> Doc
 ppSqlDirection x = text $ case Sql.sqlOrderDirection x of
