@@ -10,35 +10,34 @@ import qualified Data.Functor.Contravariant as C
 import qualified Data.Profunctor as P
 import qualified Data.Monoid as M
 
-data SingleOrder a = SingleOrder HPQ.OrderOp (a -> HPQ.PrimExpr)
-
-instance C.Contravariant SingleOrder where
-  contramap f (SingleOrder op g) = SingleOrder op (P.lmap f g)
-
 {-|
 An `Order` represents an expression to order on and a sort
 direction. Multiple `Order`s can be composed with
 `Data.Monoid.mappend`.  If two rows are equal according to the first
 `Order`, the second is used, and so on.
 -}
-newtype Order a = Order [SingleOrder a]
+
+-- Like the (columns -> RowParser haskells) field of QueryRunner this
+-- type is "too big".  We never actually look at the 'a' (in the
+-- QueryRunner case the 'colums') except to check the "structure".
+-- This is so we can support a SumProfunctor instance.
+newtype Order a = Order (a -> [(HPQ.OrderOp, HPQ.PrimExpr)])
 
 instance C.Contravariant Order where
-  contramap f (Order xs) = Order (fmap (C.contramap f) xs)
+  contramap f (Order g) = Order (P.lmap f g)
 
 instance M.Monoid (Order a) where
   mempty = Order M.mempty
   Order o `mappend` Order o' = Order (o `M.mappend` o')
 
 order :: HPQ.OrderOp -> (a -> C.Column b) -> Order a
-order op f = C.contramap f (Order [SingleOrder op IC.unColumn])
+order op f = Order (fmap (\column -> [(op, IC.unColumn column)]) f)
 
 orderByU :: Order a -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 orderByU os (columns, primQ, t) = (columns, primQ', t)
   where primQ' = PQ.Order orderExprs primQ
         Order sos = os
-        orderExprs = map (\(SingleOrder op f)
-                          -> HPQ.OrderExpr op (f columns)) sos
+        orderExprs = map (uncurry HPQ.OrderExpr) (sos columns)
 
 limit' :: Int -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 limit' n (x, q, t) = (x, PQ.Limit (PQ.LimitOp n) q, t)
