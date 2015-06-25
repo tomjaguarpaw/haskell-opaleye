@@ -79,6 +79,12 @@ extractAttrPE mkName t pe = do
 
 -- }
 
+eitherFunction :: Functor f
+               => (a -> f b)
+               -> (a' -> f b')
+               -> Either a a'
+               -> f (Either b b')
+eitherFunction f g = fmap (either (fmap Left) (fmap Right)) (f PP.+++! g)
 
 -- {
 
@@ -98,5 +104,10 @@ instance Profunctor (PackMap a b) where
 instance ProductProfunctor (PackMap a b) where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
+
+instance PP.SumProfunctor (PackMap a b) where
+  f +++! g = (PackMap (\x -> eitherFunction (f' x) (g' x)))
+    where PackMap f' = f
+          PackMap g' = g
 
 -- }

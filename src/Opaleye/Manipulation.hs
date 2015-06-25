@@ -89,7 +89,7 @@ runDelete :: PGS.Connection -> T.Table a columnsR -> (columnsR -> Column PGBool)
           -> IO Int64
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 
-arrangeInsertReturning :: U.Unpackspec returned returned
+arrangeInsertReturning :: U.Unpackspec returned ignored
                        -> T.Table columnsW columnsR
                        -> columnsW
                        -> (columnsR -> returned)
@@ -105,7 +105,7 @@ arrangeInsertReturning unpackspec table columns returningf =
         (returningPEs, _) = U.runUnpackspec unpackspec f returning
         returningSEs = map Sql.sqlExpr returningPEs
 
-arrangeInsertReturningSql :: U.Unpackspec returned returned
+arrangeInsertReturningSql :: U.Unpackspec returned ignored
                           -> T.Table columnsW columnsR
                           -> columnsW
                           -> (columnsR -> returned)
@@ -115,26 +115,27 @@ arrangeInsertReturningSql = show
                             .:: arrangeInsertReturning
 
 runInsertReturningExplicit :: RQ.QueryRunner returned haskells
-                           -> U.Unpackspec returned returned
-                           -> PGS.Connection
-                           -> T.Table columnsW columnsR
-                           -> columnsW
-                           -> (columnsR -> returned)
-                           -> IO [haskells]
-runInsertReturningExplicit qr u conn = PGS.queryWith_ rowParser conn
-                                       . fromString
-                                       .:. arrangeInsertReturningSql u
-  where IRQ.QueryRunner _ rowParser = qr
+                            -> PGS.Connection
+                            -> T.Table columnsW columnsR
+                            -> columnsW
+                            -> (columnsR -> returned)
+                            -> IO [haskells]
+runInsertReturningExplicit qr conn t w r = PGS.queryWith_ (rowParser (r v)) conn
+                                             (fromString
+                                             (arrangeInsertReturningSql u t w r))
+  where IRQ.QueryRunner u rowParser = qr
+        TI.Table _ (TI.TableProperties _ (TI.View v)) = t
+        -- This method of getting hold of the return type feels a bit
+        -- suspect.  I haven't checked it for validity.
 
 -- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertReturning@.
-runInsertReturning :: (D.Default RQ.QueryRunner returned haskells,
-                       D.Default U.Unpackspec returned returned)
+runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
                       => PGS.Connection
                       -> T.Table columnsW columnsR
                       -> columnsW
                       -> (columnsR -> returned)
                       -> IO [haskells]
-runInsertReturning = runInsertReturningExplicit D.def D.def
+runInsertReturning = runInsertReturningExplicit D.def

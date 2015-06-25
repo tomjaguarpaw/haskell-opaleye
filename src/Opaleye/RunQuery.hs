@@ -13,6 +13,7 @@ import qualified Opaleye.Sql as S
 import           Opaleye.QueryArr (Query)
 import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
 import qualified Opaleye.Internal.RunQuery as IRQ
+import qualified Opaleye.Internal.QueryArr as Q
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
@@ -48,9 +49,11 @@ runQueryExplicit :: QueryRunner columns haskells
                  -> Query columns
                  -> IO [haskells]
 runQueryExplicit (QueryRunner u rowParser) conn q =
-  PGS.queryWith_ rowParser conn sql
+  PGS.queryWith_ (rowParser b) conn sql
   where sql :: PGS.Query
         sql = String.fromString (S.showSqlForPostgresExplicit u q)
+        -- FIXME: We're doing work twice here
+        (b, _, _) = Q.runSimpleQueryArrStart q ()
 
 -- | Use 'queryRunnerColumn' to make an instance to allow you to run queries on
 --   your own datatypes.  For example:

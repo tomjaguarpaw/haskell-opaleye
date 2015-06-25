@@ -48,4 +48,7 @@ instance ProductProfunctor Unpackspec where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 
+instance PP.SumProfunctor Unpackspec where
+  Unpackspec x1 +++! Unpackspec x2 = Unpackspec (x1 PP.+++! x2)
+
 --}

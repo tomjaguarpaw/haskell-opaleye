@@ -65,4 +65,7 @@ instance PP.ProductProfunctor Aggregator where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 
+instance PP.SumProfunctor Aggregator where
+  Aggregator x1 +++! Aggregator x2 = Aggregator (x1 PP.+++! x2)
+
 -- }

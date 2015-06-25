@@ -12,6 +12,7 @@ import           Database.PostgreSQL.Simple.Types (fromPGArray)
 
 import           Opaleye.Column (Column)
 import           Opaleye.Internal.Column (Nullable)
+import qualified Opaleye.Internal.PackMap as PackMap
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.PGTypes as T
@@ -57,14 +58,19 @@ data QueryRunnerColumn coltype haskell =
   QueryRunnerColumn (U.Unpackspec (Column coltype) ()) (FieldParser haskell)
 
 data QueryRunner columns haskells = QueryRunner (U.Unpackspec columns ())
-                                                (RowParser haskells)
+                                                (columns -> RowParser haskells)
+                                                -- We never actually
+                                                -- look at the columns
+                                                -- except to see its
+                                                -- "type" in the case
+                                                -- of a sum profunctor
 
 fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn coltype haskell
 fieldQueryRunnerColumn =
   QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) fromField
 
 queryRunner :: QueryRunnerColumn a b -> QueryRunner (Column a) b
-queryRunner qrc = QueryRunner u (fieldWith fp)
+queryRunner qrc = QueryRunner u (const (fieldWith fp))
     where QueryRunnerColumn u fp = qrc
 
 queryRunnerColumnNullable :: QueryRunnerColumn a b
@@ -165,20 +171,26 @@ instance (Typeable b, QueryRunnerColumnDefault a b) =>
 -- Boilerplate instances
 
 instance Functor (QueryRunner c) where
-  fmap f (QueryRunner u r) = QueryRunner u (fmap f r)
+  fmap f (QueryRunner u r) = QueryRunner u ((fmap . fmap) f r)
 
 -- TODO: Seems like this one should be simpler!
 instance Applicative (QueryRunner c) where
-  pure = QueryRunner (P.lmap (const ()) PP.empty) . pure
+  pure = QueryRunner (P.lmap (const ()) PP.empty) . pure . pure
   QueryRunner uf rf <*> QueryRunner ux rx =
-    QueryRunner (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) (rf <*> rx)
+    QueryRunner (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) ((<*>) <$> rf <*> rx)
 
 instance P.Profunctor QueryRunner where
-  dimap f g (QueryRunner u r) = QueryRunner (P.lmap f u) (fmap g r)
+  dimap f g (QueryRunner u r) = QueryRunner (P.lmap f u) (P.dimap f (fmap g) r)
 
 instance PP.ProductProfunctor QueryRunner where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
+
+instance PP.SumProfunctor QueryRunner where
+  f +++! g = QueryRunner (P.rmap (const ()) (fu PP.+++! gu))
+                         (PackMap.eitherFunction fr gr)
+    where QueryRunner fu fr = f
+          QueryRunner gu gr = g
 
 -- }
 
