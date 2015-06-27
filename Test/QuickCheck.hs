@@ -243,7 +243,7 @@ run conn = do
       propOrder     = (fmap . fmap) TQ.ioProperty (order conn)
       propDistinct  = fmap          TQ.ioProperty (distinct conn)
 
-  let t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 10000 }) p
+  let t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
   t propFmap
   t propApply
