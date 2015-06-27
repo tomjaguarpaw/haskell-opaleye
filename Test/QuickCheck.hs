@@ -14,6 +14,8 @@ import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Monoid as Monoid
 import qualified Data.Ord as Ord
 import qualified Data.Set as Set
+import qualified Data.Maybe as Maybe
+import qualified Control.Arrow as Arrow
 
 twoIntTable :: String
             -> O.Table (O.Column O.PGInt4, O.Column O.PGInt4)
@@ -79,6 +81,14 @@ instance TQ.Arbitrary ArbitraryQuery where
         ArbitraryQuery q <- TQ.arbitrary
         f                <- TQ.arbitrary
         aq (fmap (unArbitraryGarble f) q)
+
+    , do
+        ArbitraryQuery q <- TQ.arbitrary
+
+        aq (Arrow.arr snd
+            Arrow.<<< Arrow.first O.restrict
+            Arrow.<<< Arrow.arr firstBoolOrTrue
+            Arrow.<<< q)
     ]
     where aq = return . ArbitraryQuery
 
@@ -268,5 +278,17 @@ errorIfNotSuccess :: TQ.Result -> IO ()
 errorIfNotSuccess r = case r of
   TQ.Success _ _ _ -> return ()
   _                -> error "Failed"
+
+firstBoolOrTrue :: Columns -> (O.Column O.PGBool, Columns)
+firstBoolOrTrue c = (b, c)
+  where b = case Maybe.mapMaybe isBool c of
+          []    -> O.pgBool True
+          (x:_) -> x
+
+
+isBool :: Either (O.Column O.PGInt4) (O.Column O.PGBool)
+       -> Maybe (O.Column O.PGBool)
+isBool (Left _)  = Nothing
+isBool (Right l) = Just l
 
 -- }
