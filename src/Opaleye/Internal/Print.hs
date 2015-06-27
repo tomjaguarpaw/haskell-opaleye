@@ -14,6 +14,7 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)
+import qualified Data.List.NonEmpty as NEL
 
 type TableAlias = String
 
@@ -85,13 +86,9 @@ ppTable (alias, select) = case select of
   SelectValues slv -> HPrint.ppAs alias (parens (ppSelectValues slv))
   SelectBinary slb -> HPrint.ppAs alias (parens (ppSelectBinary slb))
 
-ppGroupBy :: Maybe [HSql.SqlExpr] -> Doc
+ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
--- Grouping by an empty list is not the identity function!  It is in
--- fact the DISTINCT operation.  This probably doesn't belong here,
--- rather in the translation of PrimQuery to SQL.
-ppGroupBy (Just []) = text "GROUP BY COALESCE (0)"
-ppGroupBy (Just xs) = HPrint.ppGroupBy xs
+ppGroupBy (Just xs) = HPrint.ppGroupBy (NEL.toList xs)
 
 ppLimit :: Maybe Int -> Doc
 ppLimit Nothing = empty

@@ -30,7 +30,7 @@ data From = From {
   attrs     :: SelectAttrs,
   tables    :: [Select],
   criteria  :: [HSql.SqlExpr],
-  groupBy   :: Maybe [HSql.SqlExpr],
+  groupBy   :: Maybe (NEL.NonEmpty HSql.SqlExpr),
   orderBy   :: [(HSql.SqlExpr, HSql.SqlOrder)],
   limit     :: Maybe Int,
   offset    :: Maybe Int
@@ -90,8 +90,18 @@ product ss pes = SelectFrom $
 aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs (map attr aggrs)
                                            , tables = [s]
-                                           , groupBy = Just groupBy' }
-  where groupBy' = (map sqlExpr
+                                           , groupBy = Just groupBy'' }
+  where --- Grouping by an empty list is not the identity function!
+        --- In fact it forms one single group.  Syntactically one
+        --- cannot group by nothing in SQL, so we just group by a
+        --- constant instead.  Because "GROUP BY 0" means group by the
+        --- zeroth column, we instead use an expression rather than a
+        --- constant.
+        groupBy'' = case NEL.nonEmpty groupBy' of
+          Nothing -> return (HSql.FunSqlExpr "COALESCE" [HSql.ConstSqlExpr "0"])
+          Just xs -> xs
+
+        groupBy' = (map sqlExpr
                     . map expr
                     . filter (M.isNothing . aggrOp)) aggrs
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
