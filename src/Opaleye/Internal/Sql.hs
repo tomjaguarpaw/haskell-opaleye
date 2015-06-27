@@ -90,20 +90,24 @@ product ss pes = SelectFrom $
 aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs (map attr aggrs)
                                            , tables = [s]
-                                           , groupBy = Just groupBy'' }
+                                           , groupBy = (Just . groupBy') aggrs }
   where --- Grouping by an empty list is not the identity function!
         --- In fact it forms one single group.  Syntactically one
         --- cannot group by nothing in SQL, so we just group by a
         --- constant instead.  Because "GROUP BY 0" means group by the
         --- zeroth column, we instead use an expression rather than a
         --- constant.
-        groupBy'' = case NEL.nonEmpty groupBy' of
-          Nothing -> return (HSql.FunSqlExpr "COALESCE" [HSql.ConstSqlExpr "0"])
-          Just xs -> xs
+        handleEmpty :: [HSql.SqlExpr] -> NEL.NonEmpty HSql.SqlExpr
+        handleEmpty =
+          M.fromMaybe (return (HSql.FunSqlExpr "COALESCE" [HSql.ConstSqlExpr "0"]))
+          . NEL.nonEmpty
 
-        groupBy' = (map sqlExpr
+        groupBy' :: [(symbol, (Maybe aggrOp, HPQ.PrimExpr))]
+                 -> NEL.NonEmpty HSql.SqlExpr
+        groupBy' = (handleEmpty
+                    . map sqlExpr
                     . map expr
-                    . filter (M.isNothing . aggrOp)) aggrs
+                    . filter (M.isNothing . aggrOp))
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
         expr (_, (_, e)) = e
         aggrOp (_, (x, _)) = x
