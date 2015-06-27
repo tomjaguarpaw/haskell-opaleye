@@ -84,11 +84,7 @@ instance TQ.Arbitrary ArbitraryQuery where
 
     , do
         ArbitraryQuery q <- TQ.arbitrary
-
-        aq (Arrow.arr snd
-            Arrow.<<< Arrow.first O.restrict
-            Arrow.<<< Arrow.arr firstBoolOrTrue
-            Arrow.<<< q)
+        aq (restrictFirstBool Arrow.<<< q)
     ]
     where aq = return . ArbitraryQuery
 
@@ -240,6 +236,11 @@ distinct conn (ArbitraryQuery q) = do
   compare' conn (denotation' (O.distinctExplicit eitherPP q))
                 (onList nub (denotation' q))
 
+restrict :: PGS.Connection -> ArbitraryQuery -> IO Bool
+restrict conn (ArbitraryQuery q) = do
+  compareNoSort conn (denotation' (restrictFirstBool Arrow.<<< q))
+                     (onList restrictFirstBoolList (denotation' q))
+
 -- }
 
 -- { Running the QuickCheck
@@ -252,6 +253,7 @@ run conn = do
       propOffset    = (fmap . fmap) TQ.ioProperty (offset conn)
       propOrder     = (fmap . fmap) TQ.ioProperty (order conn)
       propDistinct  = fmap          TQ.ioProperty (distinct conn)
+      propRestrict  = fmap          TQ.ioProperty (restrict conn)
 
   let t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
@@ -261,6 +263,7 @@ run conn = do
   t propOffset
   t propOrder
   t propDistinct
+  t propRestrict
 
 -- }
 
@@ -279,16 +282,25 @@ errorIfNotSuccess r = case r of
   TQ.Success _ _ _ -> return ()
   _                -> error "Failed"
 
-firstBoolOrTrue :: Columns -> (O.Column O.PGBool, Columns)
-firstBoolOrTrue c = (b, c)
+firstBoolOrTrue :: b -> [Either a b] -> (b, [Either a b])
+firstBoolOrTrue true c = (b, c)
   where b = case Maybe.mapMaybe isBool c of
-          []    -> O.pgBool True
+          []    -> true
           (x:_) -> x
 
-
-isBool :: Either (O.Column O.PGInt4) (O.Column O.PGBool)
-       -> Maybe (O.Column O.PGBool)
+isBool :: Either a b
+       -> Maybe b
 isBool (Left _)  = Nothing
 isBool (Right l) = Just l
+
+restrictFirstBool :: O.QueryArr Columns Columns
+restrictFirstBool = Arrow.arr snd
+      Arrow.<<< Arrow.first O.restrict
+      Arrow.<<< Arrow.arr (firstBoolOrTrue (O.pgBool True))
+
+restrictFirstBoolList :: [Haskells] -> [Haskells]
+restrictFirstBoolList = map snd
+                        . filter fst
+                        . map (firstBoolOrTrue True)
 
 -- }
