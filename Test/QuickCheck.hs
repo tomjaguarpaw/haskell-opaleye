@@ -233,6 +233,11 @@ distinct conn (ArbitraryQuery q) = do
   compare' conn (denotation' (O.distinctExplicit eitherPP q))
                 (onList nub (denotation' q))
 
+fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitraryQuery -> IO Bool
+fmap' conn f (ArbitraryQuery q) = do
+  compareNoSort conn (denotation' (fmap (unArbitraryGarble f) q))
+                     (onList (fmap (unArbitraryGarble f)) (denotation' q))
+
 run :: PGS.Connection -> IO ()
 run conn = do
   let propApply     = (fmap . fmap) TQ.ioProperty (apply conn)
@@ -240,14 +245,16 @@ run conn = do
       propOffset    = (fmap . fmap) TQ.ioProperty (offset conn)
       propOrder     = (fmap . fmap) TQ.ioProperty (order conn)
       propDistinct  = fmap          TQ.ioProperty (distinct conn)
+      propFmap      = (fmap . fmap) TQ.ioProperty (fmap' conn)
 
-  let t p = errorIfNotSuccess =<< TQ.quickCheckResult p
+  let t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
   t propApply
   t propLimit
   t propOffset
   t propOrder
   t propDistinct
+  t propFmap
 
 errorIfNotSuccess :: TQ.Result -> IO ()
 errorIfNotSuccess r = case r of
