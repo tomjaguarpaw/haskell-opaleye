@@ -61,25 +61,27 @@ instance TQ.Arbitrary ArbitraryQuery where
     , return (ArbitraryQuery (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
     , do
         ArbitraryQuery q <- TQ.arbitrary
-        return (ArbitraryQuery (O.distinctExplicit eitherPP q))
+        aq (O.distinctExplicit eitherPP q)
     , do
         ArbitraryQuery q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
-        return (ArbitraryQuery (O.limit l q))
+        aq (O.limit l q)
     , do
         ArbitraryQuery q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
-        return (ArbitraryQuery (O.offset l q))
+        aq (O.offset l q)
     , do
         ArbitraryQuery q <- TQ.arbitrary
         o                <- TQ.arbitrary
-        return (ArbitraryQuery (O.orderBy (arbitraryOrder o) q))
+        aq (O.orderBy (arbitraryOrder o) q)
 
     , do
         ArbitraryQuery q <- TQ.arbitrary
         f                <- TQ.arbitrary
-        return (ArbitraryQuery (fmap (unArbitraryGarble f) q))
+        aq (fmap (unArbitraryGarble f) q)
     ]
+    where aq = return . ArbitraryQuery
+
 
 instance TQ.Arbitrary ArbitraryColumns where
     arbitrary = do
