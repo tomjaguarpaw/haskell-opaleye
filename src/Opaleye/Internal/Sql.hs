@@ -30,7 +30,7 @@ data From = From {
   attrs     :: SelectAttrs,
   tables    :: [Select],
   criteria  :: [HSql.SqlExpr],
-  groupBy   :: [HSql.SqlExpr],
+  groupBy   :: Maybe [HSql.SqlExpr],
   orderBy   :: [(HSql.SqlExpr, HSql.SqlOrder)],
   limit     :: Maybe Int,
   offset    :: Maybe Int
@@ -90,7 +90,7 @@ product ss pes = SelectFrom $
 aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs (map attr aggrs)
                                            , tables = [s]
-                                           , groupBy = groupBy' }
+                                           , groupBy = Just groupBy' }
   where groupBy' = (map sqlExpr
                     . map expr
                     . filter (M.isNothing . aggrOp)) aggrs
@@ -158,7 +158,7 @@ newSelect = From {
   attrs     = Star,
   tables    = [],
   criteria  = [],
-  groupBy   = [],
+  groupBy   = Nothing,
   orderBy   = [],
   limit     = Nothing,
   offset    = Nothing
