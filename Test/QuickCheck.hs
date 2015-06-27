@@ -98,12 +98,6 @@ instance TQ.Arbitrary ArbitraryOrder where
                                <$> TQ.oneof [return Asc, return Desc]
                                <*> TQ.choose (0, 100)))
 
-extract :: Int -> [a] -> (a, [a])
-extract _ []     = error "extract of empty list"
-extract 0 (x:xs) = (x, xs)
-extract n (x:xs) = let (y, ys) = extract (n-1) xs
-                   in (y, x:ys)
-
 odds :: [a] -> [a]
 odds []     = []
 odds (x:xs) = x : evens xs
