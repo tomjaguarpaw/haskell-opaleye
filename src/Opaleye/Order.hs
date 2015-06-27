@@ -67,6 +67,7 @@ offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 -- | Typeclass for Postgres types which support ordering operations.
 class PGOrd a where
 
+instance PGOrd T.PGBool
 instance PGOrd T.PGDate
 instance PGOrd T.PGFloat8
 instance PGOrd T.PGFloat4

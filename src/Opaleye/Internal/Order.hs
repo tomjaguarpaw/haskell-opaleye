@@ -7,8 +7,10 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Data.Functor.Contravariant as C
+import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Profunctor as P
 import qualified Data.Monoid as M
+import qualified Data.Void as Void
 
 {-|
 An `Order` represents an expression to order on and a sort
@@ -29,6 +31,15 @@ instance C.Contravariant Order where
 instance M.Monoid (Order a) where
   mempty = Order M.mempty
   Order o `mappend` Order o' = Order (o `M.mappend` o')
+
+instance Divisible.Divisible Order where
+  divide f o o' = M.mappend (C.contramap (fst . f) o)
+                            (C.contramap (snd . f) o')
+  conquer = M.mempty
+
+instance Divisible.Decidable Order where
+  lose f = C.contramap f (Order Void.absurd)
+  choose f (Order o) (Order o') = C.contramap f (Order (either o o'))
 
 order :: HPQ.OrderOp -> (a -> C.Column b) -> Order a
 order op f = Order (fmap (\column -> [(op, IC.unColumn column)]) f)

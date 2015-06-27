@@ -29,7 +29,7 @@ library
     , base16-bytestring   >= 0.1.1.6 && < 0.2
     , case-insensitive    >= 1.2     && < 1.3
     , bytestring          >= 0.10    && < 0.11
-    , contravariant       >= 0.4.4   && < 1.4
+    , contravariant       >= 1.2     && < 1.4
     , postgresql-simple   >= 0.4.8.0 && < 0.5
     , pretty              >= 1.1.1.0 && < 1.2
     , product-profunctors >= 0.6.2   && < 0.7
@@ -40,6 +40,7 @@ library
     , time                >= 1.4     && < 1.6
     , time-locale-compat  >= 0.1     && < 0.2
     , uuid                >= 1.3     && < 1.4
+    , void                >= 0.4     && < 0.8
   exposed-modules: Opaleye,
                    Opaleye.Aggregate,
                    Opaleye.Binary,
@@ -90,6 +91,7 @@ test-suite test
   build-depends:
     base >= 4 && < 5,
     containers,
+    contravariant,
     postgresql-simple,
     profunctors,
     product-profunctors,

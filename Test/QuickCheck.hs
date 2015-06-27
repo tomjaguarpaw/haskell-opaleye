@@ -9,6 +9,7 @@ import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
 import qualified Data.Profunctor.Product.Default as D
 import           Data.List (sort, sortBy)
 import qualified Data.Profunctor.Product as PP
+import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Monoid as Monoid
 import qualified Data.Ord as Ord
 import qualified Data.Set as Set
@@ -28,8 +29,8 @@ data QueryDenotation a =
 onList :: ([a] -> [b]) -> QueryDenotation a -> QueryDenotation b
 onList f = QueryDenotation . (fmap . fmap) f . unQueryDenotation
 
-type Columns = [O.Column O.PGInt4]
-type Haskells = [Int]
+type Columns = [Either (O.Column O.PGInt4) (O.Column O.PGBool)]
+type Haskells = [Either Int Bool]
 
 data ArbitraryQuery   = ArbitraryQuery (O.Query Columns)
 data ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Columns }
@@ -42,7 +43,7 @@ data ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
 data Order = Asc | Desc deriving Show
 
 unpackColumns :: O.Unpackspec Columns Columns
-unpackColumns = PP.list D.def
+unpackColumns = eitherPP
 
 instance Show ArbitraryQuery where
   show (ArbitraryQuery q) = O.showSqlForPostgresExplicit unpackColumns q
@@ -51,10 +52,10 @@ instance TQ.Arbitrary ArbitraryQuery where
   arbitrary = TQ.oneof [
       (ArbitraryQuery . pure . unArbitraryColumns)
         <$> TQ.arbitrary
-    , return (ArbitraryQuery (fmap (\(x,y) -> [x,y]) (O.queryTable table1)))
+    , return (ArbitraryQuery (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
     , do
         ArbitraryQuery q <- TQ.arbitrary
-        return (ArbitraryQuery (O.distinctExplicit (PP.list D.def) q))
+        return (ArbitraryQuery (O.distinctExplicit eitherPP q))
     , do
         ArbitraryQuery q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
@@ -71,8 +72,9 @@ instance TQ.Arbitrary ArbitraryQuery where
 
 instance TQ.Arbitrary ArbitraryColumns where
     arbitrary = do
-    l <- TQ.listOf (TQ.oneof (map return [-1, 0, 1]))
-    return (ArbitraryColumns l)
+    l <- TQ.listOf (TQ.oneof (map (return . Left) [-1, 0, 1]
+                             ++ map (return . Right) [O.pgBool False, O.pgBool True]))
+    return (ArbitraryColumns (l `Debug.traceShow` l))
 
 instance TQ.Arbitrary ArbitraryPositiveInt where
   arbitrary = fmap ArbitraryPositiveInt (TQ.choose (0, 100))
@@ -87,15 +89,15 @@ arbitraryOrder :: ArbitraryOrder -> O.Order Columns
 arbitraryOrder = Monoid.mconcat
                  . map (\(direction, index) ->
                          (case direction of
-                             Asc  -> O.asc
-                             Desc -> O.desc)
+                             Asc  -> (\f -> Divisible.choose  f (O.asc id) (O.asc id))
+                             Desc -> (\f -> Divisible.choose  f (O.desc id) (O.desc id)))
                          -- If the list is empty we have to conjure up
                          -- an arbitrary value of type Column
                          (\l -> let len = length l
                                 in if len > 0 then
                                      l !! (index `mod` length l)
                                    else
-                                     0))
+                                     Left 0))
                  . unArbitraryOrder
 
 arbitraryOrdering :: ArbitraryOrder -> Haskells -> Haskells -> Ord.Ordering
@@ -106,11 +108,15 @@ arbitraryOrdering = Monoid.mconcat
                                 Desc -> flip)
                          -- If the list is empty we have to conjure up
                          -- an arbitrary value of type Column
+                         --
+                         -- Note that this one will compare Left Int
+                         -- to Right Bool, but it never gets asked to
+                         -- do so, so we don't care.
                             (Ord.comparing (\l -> let len = length l
                                                   in if len > 0 then
                                                         l !! (index `mod` length l)
                                                      else
-                                                        0)))
+                                                        Left 0)))
                     . unArbitraryOrder
 
 instance Functor QueryDenotation where
@@ -125,11 +131,11 @@ denotation :: O.QueryRunner columns a -> O.Query columns -> QueryDenotation a
 denotation qr q = QueryDenotation (\conn -> O.runQueryExplicit qr conn q)
 
 denotation' :: O.Query Columns -> QueryDenotation Haskells
-denotation' = denotation (PP.list D.def)
+denotation' = denotation eitherPP
 
 denotation2 :: O.Query (Columns, Columns)
             -> QueryDenotation (Haskells, Haskells)
-denotation2 = denotation (PP.list D.def PP.***! PP.list D.def)
+denotation2 = denotation (eitherPP PP.***! eitherPP)
 
 compareNoSort :: Eq a
               => PGS.Connection
@@ -174,9 +180,14 @@ order conn o (ArbitraryQuery q) = do
 nub :: Ord a => [a] -> [a]
 nub = Set.toList . Set.fromList
 
+eitherPP :: (D.Default p a a', D.Default p b b',
+             PP.SumProfunctor p, PP.ProductProfunctor p)
+         => p [Either a b] [Either a' b']
+eitherPP = PP.list (D.def PP.+++! D.def)
+
 distinct :: PGS.Connection -> ArbitraryQuery -> IO Bool
 distinct conn (ArbitraryQuery q) = do
-  compare' conn (denotation' (O.distinctExplicit (PP.list D.def) q))
+  compare' conn (denotation' (O.distinctExplicit eitherPP q))
                 (onList nub (denotation' q))
 
 run :: PGS.Connection -> IO ()
