@@ -74,7 +74,7 @@ instance TQ.Arbitrary ArbitraryColumns where
     arbitrary = do
     l <- TQ.listOf (TQ.oneof (map (return . Left) [-1, 0, 1]
                              ++ map (return . Right) [O.pgBool False, O.pgBool True]))
-    return (ArbitraryColumns (l `Debug.traceShow` l))
+    return (ArbitraryColumns l)
 
 instance TQ.Arbitrary ArbitraryPositiveInt where
   arbitrary = fmap ArbitraryPositiveInt (TQ.choose (0, 100))
