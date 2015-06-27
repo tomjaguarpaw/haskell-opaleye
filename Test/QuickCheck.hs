@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE Rank2Types #-}
 
 module QuickCheck where
 
@@ -39,6 +40,8 @@ data ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
 data ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
                       deriving Show
+data ArbitraryGarble =
+  ArbitraryGarble { unArbitraryGarble :: forall a. [a] -> [a] }
 
 data Order = Asc | Desc deriving Show
 
@@ -47,6 +50,9 @@ unpackColumns = eitherPP
 
 instance Show ArbitraryQuery where
   show (ArbitraryQuery q) = O.showSqlForPostgresExplicit unpackColumns q
+
+instance Show ArbitraryGarble where
+  show = const "A permutation"
 
 instance TQ.Arbitrary ArbitraryQuery where
   arbitrary = TQ.oneof [
@@ -68,6 +74,11 @@ instance TQ.Arbitrary ArbitraryQuery where
         ArbitraryQuery q <- TQ.arbitrary
         o                <- TQ.arbitrary
         return (ArbitraryQuery (O.orderBy (arbitraryOrder o) q))
+
+    , do
+        ArbitraryQuery q <- TQ.arbitrary
+        f                <- TQ.arbitrary
+        return (ArbitraryQuery (fmap (unArbitraryGarble f) q))
     ]
 
 instance TQ.Arbitrary ArbitraryColumns where
@@ -84,6 +95,36 @@ instance TQ.Arbitrary ArbitraryOrder where
                    (TQ.listOf ((,)
                                <$> TQ.oneof [return Asc, return Desc]
                                <*> TQ.choose (0, 100)))
+
+extract :: Int -> [a] -> (a, [a])
+extract _ []     = error "extract of empty list"
+extract 0 (x:xs) = (x, xs)
+extract n (x:xs) = let (y, ys) = extract (n-1) xs
+                   in (y, x:ys)
+
+odds :: [a] -> [a]
+odds []     = []
+odds (x:xs) = x : evens xs
+
+evens :: [a] -> [a]
+evens []     = []
+evens (_:xs) = odds xs
+
+instance TQ.Arbitrary ArbitraryGarble where
+  arbitrary = do
+    i <- TQ.choose (0 :: Int, 4)
+
+    return (ArbitraryGarble (\xs ->
+        if i == 0 then
+          evens xs ++ odds xs
+        else if i == 1 then
+          evens xs ++ evens xs
+        else if i == 2 then
+          odds xs ++ odds xs
+        else if i == 3 then
+          evens xs
+        else
+          odds xs))
 
 arbitraryOrder :: ArbitraryOrder -> O.Order Columns
 arbitraryOrder = Monoid.mconcat
