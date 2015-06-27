@@ -180,6 +180,8 @@ denotation2 :: O.Query (Columns, Columns)
             -> QueryDenotation (Haskells, Haskells)
 denotation2 = denotation (eitherPP PP.***! eitherPP)
 
+-- { Comparing the results
+
 compareNoSort :: Eq a
               => PGS.Connection
               -> QueryDenotation a
@@ -199,6 +201,15 @@ compare' conn one two = do
   one' <- unQueryDenotation one conn
   two' <- unQueryDenotation two conn
   return (sort one' == sort two')
+
+-- }
+
+-- { The tests
+
+fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitraryQuery -> IO Bool
+fmap' conn f (ArbitraryQuery q) = do
+  compareNoSort conn (denotation' (fmap (unArbitraryGarble f) q))
+                     (onList (fmap (unArbitraryGarble f)) (denotation' q))
 
 apply :: PGS.Connection -> ArbitraryQuery -> ArbitraryQuery -> IO Bool
 apply conn (ArbitraryQuery q1) (ArbitraryQuery q2) = do
@@ -220,6 +231,37 @@ order conn o (ArbitraryQuery q) = do
   compareNoSort conn (denotation' (O.orderBy (arbitraryOrder o) q))
                      (onList (sortBy (arbitraryOrdering o)) (denotation' q))
 
+distinct :: PGS.Connection -> ArbitraryQuery -> IO Bool
+distinct conn (ArbitraryQuery q) = do
+  compare' conn (denotation' (O.distinctExplicit eitherPP q))
+                (onList nub (denotation' q))
+
+-- }
+
+-- { Running the QuickCheck
+
+run :: PGS.Connection -> IO ()
+run conn = do
+  let propFmap      = (fmap . fmap) TQ.ioProperty (fmap' conn)
+      propApply     = (fmap . fmap) TQ.ioProperty (apply conn)
+      propLimit     = (fmap . fmap) TQ.ioProperty (limit conn)
+      propOffset    = (fmap . fmap) TQ.ioProperty (offset conn)
+      propOrder     = (fmap . fmap) TQ.ioProperty (order conn)
+      propDistinct  = fmap          TQ.ioProperty (distinct conn)
+
+  let t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 10000 }) p
+
+  t propFmap
+  t propApply
+  t propLimit
+  t propOffset
+  t propOrder
+  t propDistinct
+
+-- }
+
+-- { Utilities
+
 nub :: Ord a => [a] -> [a]
 nub = Set.toList . Set.fromList
 
@@ -228,35 +270,9 @@ eitherPP :: (D.Default p a a', D.Default p b b',
          => p [Either a b] [Either a' b']
 eitherPP = PP.list (D.def PP.+++! D.def)
 
-distinct :: PGS.Connection -> ArbitraryQuery -> IO Bool
-distinct conn (ArbitraryQuery q) = do
-  compare' conn (denotation' (O.distinctExplicit eitherPP q))
-                (onList nub (denotation' q))
-
-fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitraryQuery -> IO Bool
-fmap' conn f (ArbitraryQuery q) = do
-  compareNoSort conn (denotation' (fmap (unArbitraryGarble f) q))
-                     (onList (fmap (unArbitraryGarble f)) (denotation' q))
-
-run :: PGS.Connection -> IO ()
-run conn = do
-  let propApply     = (fmap . fmap) TQ.ioProperty (apply conn)
-      propLimit     = (fmap . fmap) TQ.ioProperty (limit conn)
-      propOffset    = (fmap . fmap) TQ.ioProperty (offset conn)
-      propOrder     = (fmap . fmap) TQ.ioProperty (order conn)
-      propDistinct  = fmap          TQ.ioProperty (distinct conn)
-      propFmap      = (fmap . fmap) TQ.ioProperty (fmap' conn)
-
-  let t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
-
-  t propApply
-  t propLimit
-  t propOffset
-  t propOrder
-  t propDistinct
-  t propFmap
-
 errorIfNotSuccess :: TQ.Result -> IO ()
 errorIfNotSuccess r = case r of
   TQ.Success _ _ _ -> return ()
   _                -> error "Failed"
+
+-- }
