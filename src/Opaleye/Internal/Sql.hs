@@ -87,7 +87,7 @@ product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
 
-aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
+aggregate :: [(Symbol, (Maybe HPQ.AggrOp, [HPQ.PrimExpr]))] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs (map attr aggrs)
                                            , tables = [s]
                                            , groupBy = (Just . groupBy') aggrs }
@@ -102,19 +102,19 @@ aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs (map attr aggrs
           M.fromMaybe (return (HSql.FunSqlExpr "COALESCE" [HSql.ConstSqlExpr "0"]))
           . NEL.nonEmpty
 
-        groupBy' :: [(symbol, (Maybe aggrOp, HPQ.PrimExpr))]
+        groupBy' :: [(symbol, (Maybe aggrOp, [HPQ.PrimExpr]))]
                  -> NEL.NonEmpty HSql.SqlExpr
         groupBy' = (handleEmpty
                     . map sqlExpr
                     . map expr
                     . filter (M.isNothing . aggrOp))
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
-        expr (_, (_, e)) = e
+        expr (_, (_, e:_)) = e
         aggrOp (_, (x, _)) = x
 
 
-aggrExpr :: Maybe HPQ.AggrOp -> HPQ.PrimExpr -> HPQ.PrimExpr
-aggrExpr = maybe id HPQ.AggrExpr
+aggrExpr :: Maybe HPQ.AggrOp -> [HPQ.PrimExpr] -> HPQ.PrimExpr
+aggrExpr = maybe head HPQ.AggrExpr
 
 order :: [HPQ.OrderExpr] -> Select -> Select
 order oes s = SelectFrom $

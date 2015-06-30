@@ -19,7 +19,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | BaseTableAttrExpr Attribute
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
-                | AggrExpr  AggrOp PrimExpr
+                | AggrExpr  AggrOp [PrimExpr]
                 | ConstExpr Literal
                 | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
                 | ListExpr [PrimExpr]
@@ -67,7 +67,7 @@ data UnOp = OpNot
 
 data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrStdDev | AggrStdDevP | AggrVar | AggrVarP
-                | AggrBoolOr | AggrBoolAnd | AggrArr
+                | AggrBoolOr | AggrBoolAnd | AggrArr | AggrStringAggr
                 | AggrOther String
                 deriving (Show,Read)
 

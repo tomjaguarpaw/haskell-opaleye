@@ -329,10 +329,17 @@ testAggregateProfunctor = testG q expected
                            (\(x, y) -> aggregateCoerceFIXME' x * y)
                            (PP.p2 (O.sum, O.count))
 
-testStringAggregate :: Test
-testStringAggregate = testG q expected
+testStringArrayAggregate :: Test
+testStringArrayAggregate = testG q expected
   where q = O.aggregate (PP.p2 (O.array, O.min)) table6Q
         expected r = [(map fst table6data, minimum (map snd table6data))] == r
+
+testStringAggregate :: Test
+testStringAggregate = testG q expected
+  where q = O.aggregate (PP.p2 ((O.string . O.pgString) "_", O.groupBy)) table6Q
+        expected r = [(
+          (foldl1 (\x y -> x ++ "_" ++ y) . map fst) table6data ,
+          head (map snd table6data))] == r
 
 testOrderByG :: O.Order (Column O.PGInt4, Column O.PGInt4)
                 -> ((Int, Int) -> (Int, Int) -> Ordering)

@@ -25,7 +25,7 @@ aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
 groupBy :: Aggregator (C.Column a) (C.Column a)
-groupBy = A.makeAggr' Nothing
+groupBy = A.makeAggr' Nothing Nothing
 
 -- | Sum all rows in a group.
 sum :: Aggregator (C.Column a) (C.Column a)
@@ -55,3 +55,6 @@ boolAnd = A.makeAggr HPQ.AggrBoolAnd
 
 array :: Aggregator (C.Column a) (C.Column (T.PGArray a))
 array = A.makeAggr HPQ.AggrArr
+
+string :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
+string c = A.makeAggr' (Just HPQ.AggrStringAggr) (Just c)
