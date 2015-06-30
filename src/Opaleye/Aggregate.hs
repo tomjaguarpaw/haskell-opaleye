@@ -3,6 +3,7 @@ module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator)
+import qualified Opaleye.Internal.Column as IC
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
@@ -25,7 +26,7 @@ aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
 groupBy :: Aggregator (C.Column a) (C.Column a)
-groupBy = A.makeAggr' Nothing Nothing
+groupBy = A.makeAggr' Nothing
 
 -- | Sum all rows in a group.
 sum :: Aggregator (C.Column a) (C.Column a)
@@ -57,4 +58,4 @@ array :: Aggregator (C.Column a) (C.Column (T.PGArray a))
 array = A.makeAggr HPQ.AggrArr
 
 string :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
-string c = A.makeAggr' (Just HPQ.AggrStringAggr) (Just c)
+string c = A.makeAggr' ((Just . HPQ.AggrStringAggr . IC.unColumn) c)
