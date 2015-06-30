@@ -31,7 +31,7 @@ makeAggr' m = Aggregator (PM.PackMap
                           (\f (C.Column e) -> fmap C.Column (f (m, e))))
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
-makeAggr op = makeAggr' (Just op)
+makeAggr = makeAggr' . Just
 
 runAggregator :: Applicative f => Aggregator a b
               -> ((Maybe HPQ.AggrOp, HPQ.PrimExpr) -> f HPQ.PrimExpr) -> a -> f b
