@@ -14,3 +14,8 @@ infixr 8 .::
 
 (.::) :: (r -> z) -> (a -> b -> c -> d -> r) -> a -> b -> c -> d -> z
 (.::) f g a b c d = f (g a b c d)
+
+infixr 8 .::.
+
+(.::.) :: (r -> z) -> (a -> b -> c -> d -> e -> r) -> a -> b -> c -> d -> e -> z
+(.::.) f g a b c d e = f (g a b c d e)

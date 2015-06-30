@@ -38,9 +38,7 @@ runQueryArrUnpack :: U.Unpackspec a b
                   -> Query a -> ([HPQ.PrimExpr], PQ.PrimQuery, Tag)
 runQueryArrUnpack unpackspec q = (primExprs, primQ, endTag)
   where (columns, primQ, endTag) = runSimpleQueryArrStart q ()
-        f pe = ([pe], pe)
-        primExprs :: [HPQ.PrimExpr]
-        (primExprs, _) = U.runUnpackspec unpackspec f columns
+        primExprs = U.collectPEs unpackspec columns
 
 first3 :: (a1 -> b) -> (a1, a2, a3) -> (b, a2, a3)
 first3 f (a1, a2, a3) = (f a1, a2, a3)
