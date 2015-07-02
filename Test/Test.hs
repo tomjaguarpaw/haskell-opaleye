@@ -18,6 +18,7 @@ import           Data.Monoid ((<>))
 import qualified Data.String as String
 
 import qualified System.Exit as Exit
+import qualified System.Environment as Environment
 
 import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
@@ -36,6 +37,13 @@ connectInfo =  PGS.ConnectInfo { PGS.connectHost = "localhost"
                                , PGS.connectUser = "tom"
                                , PGS.connectPassword = "tom"
                                , PGS.connectDatabase = "opaleye_test" }
+
+connectInfoTravis :: PGS.ConnectInfo
+connectInfoTravis =  PGS.ConnectInfo { PGS.connectHost = "localhost"
+                                     , PGS.connectPort = 5432
+                                     , PGS.connectUser = "postgres"
+                                     , PGS.connectPassword = ""
+                                     , PGS.connectDatabase = "opaleye_test" }
 
 -- }
 
@@ -558,9 +566,29 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testKeywordColNames, testInsertSerial
            ]
 
+-- Environment.getEnv throws an exception on missing environment variable!
+getEnv :: String -> IO (Maybe String)
+getEnv var = do
+  environment <- Environment.getEnvironment
+  return (lookup var environment)
+
+-- Using an envvar is unpleasant, but it will do for now.
+travis :: IO Bool
+travis = do
+    travis' <- getEnv "TRAVIS"
+
+    return (case travis' of
+               Nothing    -> False
+               Just "yes" -> True
+               Just _     -> False)
+
 main :: IO ()
 main = do
-  conn <- PGS.connect connectInfo
+  travis' <- travis
+
+  let connectInfo' = if travis' then connectInfoTravis else connectInfo
+
+  conn <- PGS.connect connectInfo'
 
   dropAndCreateDB conn
 
