@@ -60,8 +60,9 @@ over :: PackMap a b s t -> (a -> b) -> s -> t
 over p f = I.runIdentity . traverse p (I.Identity . f)
 
 
--- { A helpful monad for writing columns in the AST
+-- {
 
+-- | A helpful monad for writing columns in the AST
 type PM a = State.State (a, Int)
 
 new :: PM a String

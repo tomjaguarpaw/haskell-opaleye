@@ -15,18 +15,39 @@ import qualified Data.Profunctor.Product.Default as D
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 newtype Unpackspec columns columns' =
+  -- | An 'Unpackspec' @columns@ @columns'@ allows you to extract and
+  -- modify a sequence of 'HPQ.PrimExpr's inside a value of type
+  -- @columns@.
+  --
+  -- For example, the 'Default' instance of type 'Unpackspec' @(Column
+  -- a, Column b)@ @(Column a, Column b)@ allows you to manipulate or
+  -- extract the two 'HPQ.PrimExpr's inside a @(Column a, Column b)@.  The
+  -- 'Default' instance of type @Foo (Column a) (Column b) (Column c)@
+  -- will allow you to manipulate or extract the three 'HPQ.PrimExpr's
+  -- contained therein (for a user-defined product type @Foo@, assuming
+  -- the @makeAdaptorAndInstance@ splice from
+  -- @Data.Profunctor.Product.TH@ has been run).
+  --
+  -- You can create 'Unpackspec's by hand using 'unpackspecColumn' and
+  -- the 'Profunctor', 'ProductProfunctor' and 'SumProfunctor'
+  -- operations.  However, in practice users should almost never need
+  -- to create or manipulate them.  Typically they will be created
+  -- automatically by the 'D.Default' instance.
   Unpackspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
 
+-- | Target the single 'HPQ.PrimExpr' inside a 'C.Column'
 unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
 unpackspecColumn = Unpackspec
                    (PM.PackMap (\f (IC.Column pe) -> fmap IC.Column (f pe)))
 
+-- | Modify all the targeted 'HPQ.PrimExpr's
 runUnpackspec :: Applicative f
                  => Unpackspec columns b
                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                  -> columns -> f b
 runUnpackspec (Unpackspec f) = PM.traverse f
 
+-- | Extract all the targeted 'HPQ.PrimExpr's
 collectPEs :: Unpackspec s t -> s -> [HPQ.PrimExpr]
 collectPEs unpackspec = fst . runUnpackspec unpackspec f
   where f pe = ([pe], pe)
