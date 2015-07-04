@@ -51,11 +51,17 @@ import           Data.Typeable (Typeable)
 
 -- }
 
--- We introduce 'QueryRunnerColumn' which is *not* a Product
--- Profunctor because it is the only way I know of to get the instance
--- generation to work for non-Nullable and Nullable types at once.
-data QueryRunnerColumn coltype haskell =
-  QueryRunnerColumn (U.Unpackspec (Column coltype) ()) (FieldParser haskell)
+-- | A 'QueryRunnerColumn' @pgType@ @haskellType@ encodes how to turn
+-- a value of Postgres type @pgType@ into a value of Haskell type
+-- @haskellType@.  For example a value of type 'QueryRunnerColumn'
+-- 'T.PGText' 'String' encodes how to turn a 'PGText' result from the
+-- database into a Haskell 'String'.
+
+-- This is *not* a Product Profunctor because it is the only way I
+-- know of to get the instance generation to work for non-Nullable and
+-- Nullable types at once.
+data QueryRunnerColumn pgType haskellType =
+  QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
 
 data QueryRunner columns haskells = QueryRunner (U.Unpackspec columns ())
                                                 (columns -> RowParser haskells)
@@ -97,8 +103,11 @@ instance QueryRunnerColumnDefault a b =>
 -- { Instances that must be provided once for each type.  Instances
 --   for Nullable are derived automatically from these.
 
-class QueryRunnerColumnDefault a b where
-  queryRunnerColumnDefault :: QueryRunnerColumn a b
+-- | A 'QueryRunnerColumnDefault' @pgType@ @haskellType@ represents
+-- the default way to turn a @pgType@ result from the database into a
+-- Haskell value of type @haskelType@.
+class QueryRunnerColumnDefault pgType haskellType where
+  queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
 
 instance QueryRunnerColumnDefault T.PGInt4 Int where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
