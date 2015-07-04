@@ -59,3 +59,15 @@ arrayAgg = A.makeAggr HPQ.AggrArr
 
 stringAgg :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
 stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
+
+stddevPop :: Aggregator (C.Column a) (C.Column a)
+stddevPop = A.makeAggr HPQ.AggrStddevPop
+
+stddevSamp :: Aggregator (C.Column a) (C.Column a)
+stddevSamp = A.makeAggr HPQ.AggrStddevSamp
+
+varPop :: Aggregator (C.Column a) (C.Column a)
+varPop = A.makeAggr HPQ.AggrVarPop
+
+varSamp :: Aggregator (C.Column a) (C.Column a)
+varSamp = A.makeAggr HPQ.AggrVarSamp
