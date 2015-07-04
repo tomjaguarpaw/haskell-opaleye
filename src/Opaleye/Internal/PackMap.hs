@@ -37,7 +37,9 @@ import qualified Data.Functor.Identity as I
 -- 'PackMap' is just like a @Traversal@ from the lens package.
 -- 'PackMap' has a different order of arguments to @Traversal@ because
 -- it typically needs to be made a 'Profunctor' (and indeed
--- 'ProductProfunctor') in @s@ and @t@.
+-- 'ProductProfunctor') in @s@ and @t@.  It is unclear at this point
+-- whether we want the same @Traversal@ laws to hold or not.  Our use
+-- cases may be much more general.
 data PackMap a b s t = PackMap (Applicative f =>
                                 (a -> f b) -> s -> f t)
 
