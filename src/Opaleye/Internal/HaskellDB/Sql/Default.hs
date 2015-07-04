@@ -57,7 +57,7 @@ defaultSqlUpdate :: SqlGenerator
                  -> Assoc -- ^ Update the data with this.
                  -> SqlUpdate
 defaultSqlUpdate gen name criteria assigns
-        = SqlUpdate (SqlTable name) (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria) 
+        = SqlUpdate (SqlTable name) (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria)
 
 
 defaultSqlInsert :: SqlGenerator

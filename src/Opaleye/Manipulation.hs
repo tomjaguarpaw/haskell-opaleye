@@ -10,7 +10,7 @@ import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column(Column))
-import           Opaleye.Internal.Helpers ((.:), (.:.), (.::))
+import           Opaleye.Internal.Helpers ((.:), (.:.), (.::), (.::.))
 import qualified Opaleye.Internal.Unpackspec as U
 import           Opaleye.PGTypes (PGBool)
 
@@ -98,11 +98,7 @@ arrangeInsertReturning unpackspec table columns returningf =
   Sql.Returning insert returningSEs
   where insert = arrangeInsert table columns
         TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
-        returning = returningf columnsR
-        -- TODO: duplication with runQueryArrUnpack
-        f pe = ([pe], pe)
-        returningPEs :: [HPQ.PrimExpr]
-        (returningPEs, _) = U.runUnpackspec unpackspec f returning
+        returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = map Sql.sqlExpr returningPEs
 
 arrangeInsertReturningSql :: U.Unpackspec returned ignored
@@ -139,3 +135,48 @@ runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
                       -> (columnsR -> returned)
                       -> IO [haskells]
 runInsertReturning = runInsertReturningExplicit D.def
+
+arrangeUpdateReturning :: U.Unpackspec returned ignored
+                       -> T.Table columnsW columnsR
+                       -> (columnsR -> columnsW)
+                       -> (columnsR -> Column PGBool)
+                       -> (columnsR -> returned)
+                       -> Sql.Returning HSql.SqlUpdate
+arrangeUpdateReturning unpackspec table updatef cond returningf =
+  Sql.Returning update returningSEs
+  where update = arrangeUpdate table updatef cond
+        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
+        returningPEs = U.collectPEs unpackspec (returningf columnsR)
+        returningSEs = map Sql.sqlExpr returningPEs
+
+arrangeUpdateReturningSql :: U.Unpackspec returned ignored
+                       -> T.Table columnsW columnsR
+                       -> (columnsR -> columnsW)
+                       -> (columnsR -> Column PGBool)
+                       -> (columnsR -> returned)
+                       -> String
+arrangeUpdateReturningSql = show
+                            . Print.ppUpdateReturning
+                            .::. arrangeUpdateReturning
+
+runUpdateReturningExplicit :: RQ.QueryRunner returned haskells
+                           -> PGS.Connection
+                           -> T.Table columnsW columnsR
+                           -> (columnsR -> columnsW)
+                           -> (columnsR -> Column PGBool)
+                           -> (columnsR -> returned)
+                           -> IO [haskells]
+runUpdateReturningExplicit qr conn t update cond r =
+  PGS.queryWith_ (rowParser (r v)) conn
+                 (fromString (arrangeUpdateReturningSql u t update cond r))
+  where IRQ.QueryRunner u rowParser = qr
+        TI.Table _ (TI.TableProperties _ (TI.View v)) = t
+
+runUpdateReturning :: (D.Default RQ.QueryRunner returned haskells)
+                      => PGS.Connection
+                      -> T.Table columnsW columnsR
+                      -> (columnsR -> columnsW)
+                      -> (columnsR -> Column PGBool)
+                      -> (columnsR -> returned)
+                      -> IO [haskells]
+runUpdateReturning = runUpdateReturningExplicit D.def
