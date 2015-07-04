@@ -314,14 +314,14 @@ testDistinct :: Test
 testDistinct = testG (O.distinct table1Q)
                (\r -> L.sort (L.nub table1data) == L.sort r)
 
--- FIXME: the unsafeCoerce is currently needed because the type
+-- FIXME: the unsafeCoerceColumn is currently needed because the type
 -- changes required for aggregation are not currently dealt with by
 -- Opaleye.
 aggregateCoerceFIXME :: QueryArr (Column O.PGInt4) (Column O.PGInt8)
 aggregateCoerceFIXME = Arr.arr aggregateCoerceFIXME'
 
 aggregateCoerceFIXME' :: Column a -> Column O.PGInt8
-aggregateCoerceFIXME' = O.unsafeCoerce
+aggregateCoerceFIXME' = O.unsafeCoerceColumn
 
 testAggregate :: Test
 testAggregate = testG (Arr.second aggregateCoerceFIXME

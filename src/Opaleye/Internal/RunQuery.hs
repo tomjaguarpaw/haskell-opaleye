@@ -76,7 +76,7 @@ queryRunner qrc = QueryRunner u (const (fieldWith fp))
 queryRunnerColumnNullable :: QueryRunnerColumn a b
                        -> QueryRunnerColumn (Nullable a) (Maybe b)
 queryRunnerColumnNullable qr =
-  QueryRunnerColumn (P.lmap C.unsafeCoerce u) (fromField' fp)
+  QueryRunnerColumn (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
   where QueryRunnerColumn u fp = qr
         fromField' :: FieldParser a -> FieldParser (Maybe a)
         fromField' _ _ Nothing = pure Nothing
@@ -159,7 +159,7 @@ instance QueryRunnerColumnDefault T.PGJsonb String where
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
 arrayColumn :: Column (T.PGArray a) -> Column a
-arrayColumn = C.unsafeCoerce
+arrayColumn = C.unsafeCoerceColumn
 
 instance (Typeable b, QueryRunnerColumnDefault a b) =>
          QueryRunnerColumnDefault (T.PGArray a) [b] where

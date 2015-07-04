@@ -12,8 +12,12 @@ data Nullable a = Nullable
 unColumn :: Column a -> HPQ.PrimExpr
 unColumn (Column e) = e
 
+{-# DEPRECATED unsafeCoerce "Use unsafeCoerceColumn instead" #-}
 unsafeCoerce :: Column a -> Column b
-unsafeCoerce (Column e) = Column e
+unsafeCoerce = unsafeCoerceColumn
+
+unsafeCoerceColumn :: Column a -> Column b
+unsafeCoerceColumn (Column e) = Column e
 
 binOp :: HPQ.BinOp -> Column a -> Column b -> Column c
 binOp op (Column e) (Column e') = Column (HPQ.BinExpr op e e')
