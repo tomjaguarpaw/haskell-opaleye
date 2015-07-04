@@ -84,7 +84,7 @@ pgBool :: Bool -> Column PGBool
 pgBool = IPT.literalColumn . HPQ.BoolLit
 
 pgUUID :: UUID.UUID -> Column PGUuid
-pgUUID = C.unsafeCoerce . pgString . UUID.toString
+pgUUID = C.unsafeCoerceColumn . pgString . UUID.toString
 
 unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
 unsafePgFormatTime = IPT.unsafePgFormatTime

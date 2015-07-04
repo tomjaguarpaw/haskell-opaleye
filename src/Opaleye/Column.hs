@@ -25,7 +25,7 @@ isNull = C.unOp HPQ.OpIsNull
 matchNullable :: Column b -> (Column a -> Column b) -> Column (Nullable a)
               -> Column b
 matchNullable replacement f x = C.unsafeIfThenElse (isNull x) replacement
-                                                   (f (unsafeCoerce x))
+                                                   (f (unsafeCoerceColumn x))
 
 -- | If the @Column (Nullable a)@ is NULL then return the provided
 -- @Column a@ otherwise return the underlying @Column a@.
@@ -36,7 +36,7 @@ fromNullable = flip matchNullable id
 
 -- | The Opaleye equivalent of 'Data.Maybe.Just'
 toNullable :: Column a -> Column (Nullable a)
-toNullable = unsafeCoerce
+toNullable = unsafeCoerceColumn
 
 -- | If the argument is 'Data.Maybe.Nothing' return NULL otherwise return the
 -- provided value coerced to a nullable type.
