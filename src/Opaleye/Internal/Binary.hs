@@ -21,7 +21,7 @@ extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
                              HPQ.PrimExpr
 extractBinaryFields = PM.extractAttr "binary"
 
-data Binaryspec columns columns' =
+newtype Binaryspec columns columns' =
   Binaryspec (PM.PackMap (HPQ.PrimExpr, HPQ.PrimExpr) HPQ.PrimExpr
                          (columns, columns) columns')
 

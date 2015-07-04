@@ -35,14 +35,14 @@ onList f = QueryDenotation . (fmap . fmap) f . unQueryDenotation
 type Columns = [Either (O.Column O.PGInt4) (O.Column O.PGBool)]
 type Haskells = [Either Int Bool]
 
-data ArbitraryQuery   = ArbitraryQuery (O.Query Columns)
-data ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Columns }
+newtype ArbitraryQuery   = ArbitraryQuery (O.Query Columns)
+newtype ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Columns }
                         deriving Show
-data ArbitraryPositiveInt = ArbitraryPositiveInt Int
+newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
-data ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
+newtype ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
                       deriving Show
-data ArbitraryGarble =
+newtype ArbitraryGarble =
   ArbitraryGarble { unArbitraryGarble :: forall a. [a] -> [a] }
 
 data Order = Asc | Desc deriving Show

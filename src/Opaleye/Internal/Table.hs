@@ -62,7 +62,7 @@ data View columns = View columns
 -- `f columns` contains a list of `(f HPQ.PrimExpr, String)`, i.e. how
 -- it contains each column: a column header and the entries in this
 -- column for all the rows.
-data Writer columns dummy =
+newtype Writer columns dummy =
   Writer (forall f. Functor f =>
           PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
 

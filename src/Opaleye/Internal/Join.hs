@@ -13,7 +13,7 @@ import qualified Data.Profunctor.Product.Default as D
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-data NullMaker a b = NullMaker (a -> b)
+newtype NullMaker a b = NullMaker (a -> b)
 
 toNullable :: NullMaker a b -> a -> b
 toNullable (NullMaker f) = f

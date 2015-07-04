@@ -68,7 +68,7 @@ extractValuesField :: T.Tag -> HPQ.PrimExpr
                    -> PM.PM [(HPQ.Symbol, HPQ.PrimExpr)] HPQ.PrimExpr
 extractValuesField = PM.extractAttr "values"
 
-data Valuesspec columns columns' =
+newtype Valuesspec columns columns' =
   Valuesspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
 
 runValuesspec :: Applicative f => Valuesspec columns columns'

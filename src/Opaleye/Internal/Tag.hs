@@ -1,6 +1,6 @@
 module Opaleye.Internal.Tag where
 
-data Tag = UnsafeTag Int deriving (Read, Show)
+newtype Tag = UnsafeTag Int deriving (Read, Show)
 
 start :: Tag
 start = UnsafeTag 1
