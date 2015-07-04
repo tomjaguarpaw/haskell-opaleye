@@ -1,3 +1,6 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
+
 -- | Perform aggregations on query results.
 module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
 
@@ -29,7 +32,7 @@ groupBy :: Aggregator (C.Column a) (C.Column a)
 groupBy = A.makeAggr' Nothing
 
 -- | Sum all rows in a group.
-sum :: Aggregator (C.Column a) (C.Column a)
+sum :: Sum a b => Aggregator (C.Column a) (C.Column b)
 sum = A.makeAggr HPQ.AggrSum
 
 -- | Count the number of non-null rows in a group.
@@ -37,7 +40,7 @@ count :: Aggregator (C.Column a) (C.Column T.PGInt8)
 count = A.makeAggr HPQ.AggrCount
 
 -- | Average of a group
-avg :: Aggregator (C.Column T.PGFloat8) (C.Column T.PGFloat8)
+avg :: Avg a b => Aggregator (C.Column a) (C.Column b)
 avg = A.makeAggr HPQ.AggrAvg
 
 -- | Maximum of a group
@@ -57,17 +60,45 @@ boolAnd = A.makeAggr HPQ.AggrBoolAnd
 arrayAgg :: Aggregator (C.Column a) (C.Column (T.PGArray a))
 arrayAgg = A.makeAggr HPQ.AggrArr
 
-stringAgg :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
+stringAgg :: StringAgg a => C.Column a -> Aggregator (C.Column a) (C.Column a)
 stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 
-stddevPop :: Aggregator (C.Column a) (C.Column a)
+stddevPop :: StddevVar a b => Aggregator (C.Column a) (C.Column b)
 stddevPop = A.makeAggr HPQ.AggrStddevPop
 
-stddevSamp :: Aggregator (C.Column a) (C.Column a)
+stddevSamp :: StddevVar a b => Aggregator (C.Column a) (C.Column b)
 stddevSamp = A.makeAggr HPQ.AggrStddevSamp
 
-varPop :: Aggregator (C.Column a) (C.Column a)
+varPop :: StddevVar a b => Aggregator (C.Column a) (C.Column b)
 varPop = A.makeAggr HPQ.AggrVarPop
 
-varSamp :: Aggregator (C.Column a) (C.Column a)
+varSamp :: StddevVar a b => Aggregator (C.Column a) (C.Column b)
 varSamp = A.makeAggr HPQ.AggrVarSamp
+
+class StringAgg a where
+instance StringAgg T.PGText
+instance StringAgg T.PGCitext
+instance StringAgg T.PGBytea
+
+class Avg a b | a -> b where
+instance Avg T.PGInt2 T.PGNumeric
+instance Avg T.PGInt4 T.PGNumeric
+instance Avg T.PGInt8 T.PGNumeric
+instance Avg T.PGFloat4 T.PGFloat4
+instance Avg T.PGFloat8 T.PGFloat8
+
+class Sum a b | a -> b where
+instance Sum T.PGInt2 T.PGInt8
+instance Sum T.PGInt4 T.PGInt8
+instance Sum T.PGInt8 T.PGNumeric
+instance Sum T.PGFloat4 T.PGFloat4
+instance Sum T.PGFloat8 T.PGFloat8
+instance Sum T.PGNumeric T.PGNumeric
+
+class StddevVar a b | a -> b where
+instance StddevVar T.PGFloat4 T.PGFloat8
+instance StddevVar T.PGFloat8 T.PGFloat8
+instance StddevVar T.PGNumeric T.PGNumeric
+instance StddevVar T.PGInt2 T.PGNumeric
+instance StddevVar T.PGInt4 T.PGNumeric
+instance StddevVar T.PGInt8 T.PGNumeric
