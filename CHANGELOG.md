@@ -1,7 +1,12 @@
-* Added `PGOrd` typeclass for typesafe ordering operations.  Thanks to Jakub Ryška.
+* Added `runUpdateReturning`.
+* Added string and array aggregations.
+* Added `PGOrd` typeclass for typesafe ordering operations.
 * Support sorting NULLs first or last
-* Added JSON types.  Thanks to Christopher Lewis.
+* Added JSON types.
 * Added `runInsertMany`
+
+Thanks to Travis Staton, Jakub Ryška and Christopher Lewis for helping
+with these changes.
 
 ## 0.3.1.2
 

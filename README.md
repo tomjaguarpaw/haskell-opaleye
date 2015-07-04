@@ -79,9 +79,15 @@ Conny Andersson, Martin Andersson, Mary Bergman, Victor Blomqvist,
 Bjorn Bringert, Anders Hockersten, Torbjorn Martin, Jeremy Shaw and
 Justin Bailey.
 
-Silk (Erik Hesselink, Adam Bergmark), Karamaan (Christopher Lewis),
-Fynder (Renzo Carbonara, Oliver Charles) and Daniel Patterson
-contributed code to the project.
+The following individuals and organisations have made helpful
+contributions:
+
+* Silk (Erik Hesselink, Adam Bergmark)
+* Karamaan (Christopher Lewis)
+* Fynder (Renzo Carbonara, Oliver Charles)
+* Daniel Patterson
+* Jakub Ryška
+* Travis Staton
 
 Joseph Abrahamson, Alfredo Di Napoli and Mietek Bak performed useful
 reviews of early versions which helped improve the codebase.
