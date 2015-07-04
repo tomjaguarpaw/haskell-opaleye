@@ -28,12 +28,32 @@ import qualified Data.Functor.Identity as I
 -- and share them between many different restrictions of f.  For
 -- example, TableColumnMaker is like a Setter so we would restrict f
 -- to the Distributive case.
+
+-- | A 'PackMap' @a@ @b@ @s@ @t@ encodes how an @s@ contains an
+-- updatable sequence of @a@ inside it.  Each @a@ in the sequence can
+-- be updated to a @b@ (and the @s@ changes to a @t@ to reflect this
+-- change of type).
+--
+-- 'PackMap' is just like a @Traversal@ from the lens package.
+-- 'PackMap' has a different order of arguments to @Traversal@ because
+-- it typically needs to be made a 'Profunctor' (and indeed
+-- 'ProductProfunctor') in @s@ and @t@.
 data PackMap a b s t = PackMap (Applicative f =>
                                 (a -> f b) -> s -> f t)
 
+-- | Replaces the targeted occurences of @a@ in @s@ with @b@ (changing
+-- the @s@ to a @t@ in the process).  This can be done via an
+-- 'Applicative' action.
+--
+-- 'traverse' is just like @traverse@ from the @lens@ package.
+-- 'traverse' used to be called @packmap@.
 traverse :: Applicative f => PackMap a b s t -> (a -> f b) -> s -> f t
 traverse (PackMap f) = f
 
+-- | Modify the targeted occurrences of @a@ in @s@ with @b@ (changing
+-- the @s@ to a @t@ in the process).
+--
+-- 'over' is just like @over@ from the @lens@ pacakge.
 over :: PackMap a b s t -> (a -> b) -> s -> t
 over p f = I.runIdentity . traverse p (I.Identity . f)
 
