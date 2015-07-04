@@ -125,8 +125,9 @@ table1 = twoIntTable "table1"
 table1F :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 table1F = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1
 
+-- This is implicitly testing our ability to handle upper case letters in table names.
 table2 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
-table2 = twoIntTable "table2"
+table2 = twoIntTable "TABLE2"
 
 table3 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
 table3 = twoIntTable "table3"
@@ -204,10 +205,12 @@ table6data = [("xy", "a"), ("z", "a"), ("more text", "a")]
 table6columndata :: [(Column O.PGText, Column O.PGText)]
 table6columndata = map (\(column1, column2) -> (O.pgString column1, O.pgString column2)) table6data
 
+-- We have to quote the table names here because upper case letters in
+-- table names are treated as lower case unless the name is quoted!
 dropAndCreateTable :: String -> (String, [String]) -> PGS.Query
 dropAndCreateTable columnType (t, cols) = String.fromString drop_
-  where drop_ = "DROP TABLE IF EXISTS " ++ t ++ ";"
-                ++ "CREATE TABLE " ++ t
+  where drop_ = "DROP TABLE IF EXISTS \"" ++ t ++ "\";"
+                ++ "CREATE TABLE \"" ++ t ++ "\""
                 ++ " (" ++ commas cols ++ ");"
         integer c = ("\"" ++ c ++ "\"" ++ " " ++ columnType)
         commas = L.intercalate "," . map integer
@@ -218,10 +221,12 @@ dropAndCreateTableInt = dropAndCreateTable "integer"
 dropAndCreateTableText :: (String, [String]) -> PGS.Query
 dropAndCreateTableText = dropAndCreateTable "text"
 
+-- We have to quote the table names here because upper case letters in
+-- table names are treated as lower case unless the name is quoted!
 dropAndCreateTableSerial :: (String, [String]) -> PGS.Query
 dropAndCreateTableSerial (t, cols) = String.fromString drop_
-  where drop_ = "DROP TABLE IF EXISTS " ++ t ++ ";"
-                ++ "CREATE TABLE " ++ t
+  where drop_ = "DROP TABLE IF EXISTS \"" ++ t ++ "\";"
+                ++ "CREATE TABLE \"" ++ t ++ "\""
                 ++ " (" ++ commas cols ++ ");"
         integer c = ("\"" ++ c ++ "\"" ++ " SERIAL")
         commas = L.intercalate "," . map integer
@@ -234,7 +239,7 @@ columns2 t = (t, ["column1", "column2"])
 
 -- This should ideally be derived from the table definition above
 tables :: [Table_]
-tables = map columns2 ["table1", "table2", "table3", "table4"]
+tables = map columns2 ["table1", "TABLE2", "table3", "table4"]
          ++ [("keywordtable", ["column", "where"])]
 
 serialTables :: [Table_]
