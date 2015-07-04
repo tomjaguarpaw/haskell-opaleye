@@ -47,17 +47,17 @@ data PackMap a b s t = PackMap (Applicative f =>
 -- the @s@ to a @t@ in the process).  This can be done via an
 -- 'Applicative' action.
 --
--- 'traverse' is just like @traverse@ from the @lens@ package.
--- 'traverse' used to be called @packmap@.
-traverse :: Applicative f => PackMap a b s t -> (a -> f b) -> s -> f t
-traverse (PackMap f) = f
+-- 'traversePM' is just like @traverse@ from the @lens@ package.
+-- 'traversePM' used to be called @packmap@.
+traversePM :: Applicative f => PackMap a b s t -> (a -> f b) -> s -> f t
+traversePM (PackMap f) = f
 
 -- | Modify the targeted occurrences of @a@ in @s@ with @b@ (changing
 -- the @s@ to a @t@ in the process).
 --
--- 'over' is just like @over@ from the @lens@ pacakge.
-over :: PackMap a b s t -> (a -> b) -> s -> t
-over p f = I.runIdentity . traverse p (I.Identity . f)
+-- 'overPM' is just like @over@ from the @lens@ pacakge.
+overPM :: PackMap a b s t -> (a -> b) -> s -> t
+overPM p f = I.runIdentity . traversePM p (I.Identity . f)
 
 
 -- {

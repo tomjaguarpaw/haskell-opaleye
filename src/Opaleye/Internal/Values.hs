@@ -73,7 +73,7 @@ newtype Valuesspec columns columns' =
 
 runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (HPQ.PrimExpr -> f HPQ.PrimExpr) -> f columns'
-runValuesspec (Valuesspec v) f = PM.traverse v f ()
+runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
 instance Default Valuesspec (Column T.PGInt4) (Column T.PGInt4) where
   def = Valuesspec (PM.PackMap (\f () -> fmap Column (f (HPQ.ConstExpr HPQ.NullLit))))

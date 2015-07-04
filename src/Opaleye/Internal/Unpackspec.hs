@@ -45,7 +45,7 @@ runUnpackspec :: Applicative f
                  => Unpackspec columns b
                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                  -> columns -> f b
-runUnpackspec (Unpackspec f) = PM.traverse f
+runUnpackspec (Unpackspec f) = PM.traversePM f
 
 -- | Extract all the targeted 'HPQ.PrimExpr's
 collectPEs :: Unpackspec s t -> s -> [HPQ.PrimExpr]
