@@ -14,7 +14,6 @@ import           Opaleye.Internal.Helpers ((.:), (.:.), (.::), (.::.))
 import qualified Opaleye.Internal.Unpackspec as U
 import           Opaleye.PGTypes (PGBool)
 
-import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 import qualified Opaleye.Internal.HaskellDB.Sql.Default as SD
