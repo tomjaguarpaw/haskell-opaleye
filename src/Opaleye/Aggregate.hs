@@ -58,4 +58,4 @@ array :: Aggregator (C.Column a) (C.Column (T.PGArray a))
 array = A.makeAggr HPQ.AggrArr
 
 string :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
-string c = A.makeAggr' ((Just . HPQ.AggrStringAggr . IC.unColumn) c)
+string = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
