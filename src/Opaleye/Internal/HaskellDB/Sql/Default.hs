@@ -112,8 +112,11 @@ defaultSqlExpr gen expr =
                                 UnOpPrefix  -> PrefixSqlExpr op' (ParensSqlExpr e')
                                 UnOpPostfix -> PostfixSqlExpr op' e'
       AggrExpr op e    -> let op' = showAggrOp op
-                              e' = sqlExpr gen e
-                           in AggrFunSqlExpr op' [e']
+                              e' = (sqlExpr gen) e
+                              moreAggrFunParams = case op of
+                                AggrStringAggr primE -> [(sqlExpr gen) primE]
+                                _ -> []
+                           in AggrFunSqlExpr op' (e' : moreAggrFunParams)
       ConstExpr l      -> ConstSqlExpr (sqlLiteral gen l)
       CaseExpr cs e    -> let cs' = [(sqlExpr gen c, sqlExpr gen x)| (c,x) <- cs]
                               e'  = sqlExpr gen e
@@ -164,19 +167,20 @@ sqlUnOp  (UnOpOther s) = (s, UnOpFun)
 
 
 showAggrOp :: AggrOp -> String
-showAggrOp AggrCount    = "COUNT"
-showAggrOp AggrSum      = "SUM"
-showAggrOp AggrAvg      = "AVG"
-showAggrOp AggrMin      = "MIN"
-showAggrOp AggrMax      = "MAX"
-showAggrOp AggrStdDev   = "StdDev"
-showAggrOp AggrStdDevP  = "StdDevP"
-showAggrOp AggrVar      = "Var"
-showAggrOp AggrVarP     = "VarP"
-showAggrOp AggrBoolAnd  = "BOOL_AND"
-showAggrOp AggrBoolOr   = "BOOL_OR"
-showAggrOp AggrArr      = "ARRAY_AGG"
-showAggrOp (AggrOther s)        = s
+showAggrOp AggrCount          = "COUNT"
+showAggrOp AggrSum            = "SUM"
+showAggrOp AggrAvg            = "AVG"
+showAggrOp AggrMin            = "MIN"
+showAggrOp AggrMax            = "MAX"
+showAggrOp AggrStdDev         = "StdDev"
+showAggrOp AggrStdDevP        = "StdDevP"
+showAggrOp AggrVar            = "Var"
+showAggrOp AggrVarP           = "VarP"
+showAggrOp AggrBoolAnd        = "BOOL_AND"
+showAggrOp AggrBoolOr         = "BOOL_OR"
+showAggrOp AggrArr            = "ARRAY_AGG"
+showAggrOp (AggrStringAggr _) = "STRING_AGG"
+showAggrOp (AggrOther s)      = s
 
 
 defaultSqlLiteral :: SqlGenerator -> Literal -> String

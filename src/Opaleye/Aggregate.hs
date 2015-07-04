@@ -3,6 +3,7 @@ module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator)
+import qualified Opaleye.Internal.Column as IC
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
@@ -55,3 +56,6 @@ boolAnd = A.makeAggr HPQ.AggrBoolAnd
 
 array :: Aggregator (C.Column a) (C.Column (T.PGArray a))
 array = A.makeAggr HPQ.AggrArr
+
+string :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
+string c = A.makeAggr' ((Just . HPQ.AggrStringAggr . IC.unColumn) c)

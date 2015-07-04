@@ -67,7 +67,7 @@ data UnOp = OpNot
 
 data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrStdDev | AggrStdDevP | AggrVar | AggrVarP
-                | AggrBoolOr | AggrBoolAnd | AggrArr
+                | AggrBoolOr | AggrBoolAnd | AggrArr | AggrStringAggr PrimExpr
                 | AggrOther String
                 deriving (Show,Read)
 
