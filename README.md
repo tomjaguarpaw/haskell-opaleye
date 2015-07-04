@@ -1,4 +1,4 @@
-# Brief introduction to Opaleye
+# Brief introduction to Opaleye[![Hackage version](https://img.shields.io/hackage/v/opaleye.svg?style=flat)](https://hackage.haskell.org/package/opaleye) [![Build Status](https://img.shields.io/travis/ndmitchell/haskell-opaleye.svg?style=flat)](https://travis-ci.org/tomjaguarpaw/haskell-opaleye)
 
 Opaleye is a Haskell library which provides an SQL-generating embedded
 domain specific language for targeting Postgres.  You need Opaleye if
