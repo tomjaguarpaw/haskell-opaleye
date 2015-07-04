@@ -211,10 +211,10 @@ arrayFieldParser
           _ -> returnError Incompatible f ""
 
 fromArray :: FieldParser a -> TypeInfo -> Field -> Parser (Conversion [a])
-fromArray fieldParser typeInfo f = sequence . (parseIt <$>) <$> array delim
+fromArray fieldParser tInfo f = sequence . (parseIt <$>) <$> array delim
   where
-    delim = typdelim (typelem typeInfo)
-    fElem = f{ typeOid = typoid (typelem typeInfo) }
+    delim = typdelim (typelem tInfo)
+    fElem = f{ typeOid = typoid (typelem tInfo) }
 
     parseIt item =
         fieldParser f' $ if item' == fromString "NULL" then Nothing else Just item'

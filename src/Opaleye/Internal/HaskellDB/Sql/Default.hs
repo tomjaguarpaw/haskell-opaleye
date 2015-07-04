@@ -6,7 +6,6 @@ module Opaleye.Internal.HaskellDB.Sql.Default  where
 
 import Opaleye.Internal.HaskellDB.PrimQuery
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as PQ
-import Opaleye.Internal.HaskellDB.PrimQuery (Assoc, PrimExpr)
 import Opaleye.Internal.HaskellDB.Sql
 import Opaleye.Internal.HaskellDB.Sql.Generate
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
