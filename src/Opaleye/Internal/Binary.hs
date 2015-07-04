@@ -28,7 +28,7 @@ data Binaryspec columns columns' =
 runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> ((HPQ.PrimExpr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
                  -> (columns, columns) -> f columns'
-runBinaryspec (Binaryspec b) = PM.packmap b
+runBinaryspec (Binaryspec b) = PM.traverse b
 
 binaryspecColumn :: Binaryspec (Column a) (Column a)
 binaryspecColumn = Binaryspec (PM.PackMap (\f (Column e, Column e')

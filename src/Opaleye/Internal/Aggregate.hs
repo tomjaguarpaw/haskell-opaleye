@@ -35,7 +35,7 @@ makeAggr = makeAggr' . Just
 
 runAggregator :: Applicative f => Aggregator a b
               -> ((Maybe HPQ.AggrOp, HPQ.PrimExpr) -> f HPQ.PrimExpr) -> a -> f b
-runAggregator (Aggregator a) = PM.packmap a
+runAggregator (Aggregator a) = PM.traverse a
 
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)

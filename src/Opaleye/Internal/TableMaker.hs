@@ -32,7 +32,7 @@ runColumnMaker :: Applicative f
                   => ColumnMaker tablecolumns columns
                   -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                   -> tablecolumns -> f columns
-runColumnMaker (ColumnMaker f) = PM.packmap f
+runColumnMaker (ColumnMaker f) = PM.traverse f
 
 -- There's surely a way of simplifying this implementation
 tableColumn :: ViewColumnMaker String (C.Column a)

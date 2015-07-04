@@ -31,11 +31,11 @@ import qualified Data.Functor.Identity as I
 data PackMap a b s t = PackMap (Applicative f =>
                                 (a -> f b) -> s -> f t)
 
-packmap :: Applicative f => PackMap a b s t -> (a -> f b) -> s -> f t
-packmap (PackMap f) = f
+traverse :: Applicative f => PackMap a b s t -> (a -> f b) -> s -> f t
+traverse (PackMap f) = f
 
 over :: PackMap a b s t -> (a -> b) -> s -> t
-over p f = I.runIdentity . packmap p (I.Identity . f)
+over p f = I.runIdentity . traverse p (I.Identity . f)
 
 
 -- { A helpful monad for writing columns in the AST

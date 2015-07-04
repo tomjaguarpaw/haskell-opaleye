@@ -25,7 +25,7 @@ runUnpackspec :: Applicative f
                  => Unpackspec columns b
                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                  -> columns -> f b
-runUnpackspec (Unpackspec f) = PM.packmap f
+runUnpackspec (Unpackspec f) = PM.traverse f
 
 collectPEs :: Unpackspec s t -> s -> [HPQ.PrimExpr]
 collectPEs unpackspec = fst . runUnpackspec unpackspec f
