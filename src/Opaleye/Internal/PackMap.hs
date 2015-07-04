@@ -85,20 +85,26 @@ run m = (r, as)
 
 -- { General functions for writing columns in the AST
 
--- This one ignores the 'a' when making the internal column name.
-extractAttr :: String -> T.Tag -> a
-               -> PM [(HPQ.Symbol, a)] HPQ.PrimExpr
-extractAttr s = extractAttrPE (const (s ++))
-
--- This one can make the internal column name depend on the 'a' in
--- question (probably a PrimExpr)
-extractAttrPE :: (a -> String -> String) -> T.Tag -> a
-               -> PM [(HPQ.Symbol, a)] HPQ.PrimExpr
+-- | Make a fresh name for an input value (the variable @primExpr@
+-- type is typically actually a 'HPQ.PrimExpr') based on the supplied
+-- function and the unique 'T.Tag' that is used as part of our
+-- @QueryArr@.
+--
+-- Add the fresh name and the input value it refers to to the list in
+-- the state parameter.
+extractAttrPE :: (primExpr -> String -> String) -> T.Tag -> primExpr
+               -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractAttrPE mkName t pe = do
   i <- new
   let s = HPQ.Symbol (mkName pe i) t
   write (s, pe)
   return (HPQ.AttrExpr s)
+
+-- | As 'extractAttrPE' but ignores the 'primExpr' when making the
+-- fresh column name and just uses the supplied 'String' and 'T.Tag'.
+extractAttr :: String -> T.Tag -> primExpr
+               -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
+extractAttr s = extractAttrPE (const (s ++))
 
 -- }
 
