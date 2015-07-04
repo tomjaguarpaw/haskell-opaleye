@@ -339,12 +339,12 @@ testAggregateProfunctor = testG q expected
 
 testStringArrayAggregate :: Test
 testStringArrayAggregate = testG q expected
-  where q = O.aggregate (PP.p2 (O.array, O.min)) table6Q
+  where q = O.aggregate (PP.p2 (O.arrayAgg, O.min)) table6Q
         expected r = [(map fst table6data, minimum (map snd table6data))] == r
 
 testStringAggregate :: Test
 testStringAggregate = testG q expected
-  where q = O.aggregate (PP.p2 ((O.string . O.pgString) "_", O.groupBy)) table6Q
+  where q = O.aggregate (PP.p2 ((O.stringAgg . O.pgString) "_", O.groupBy)) table6Q
         expected r = [(
           (foldl1 (\x y -> x ++ "_" ++ y) . map fst) table6data ,
           head (map snd table6data))] == r

@@ -54,8 +54,8 @@ boolOr = A.makeAggr HPQ.AggrBoolOr
 boolAnd :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)
 boolAnd = A.makeAggr HPQ.AggrBoolAnd
 
-array :: Aggregator (C.Column a) (C.Column (T.PGArray a))
-array = A.makeAggr HPQ.AggrArr
+arrayAgg :: Aggregator (C.Column a) (C.Column (T.PGArray a))
+arrayAgg = A.makeAggr HPQ.AggrArr
 
-string :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
-string = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
+stringAgg :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
+stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
