@@ -81,8 +81,8 @@ ors = F.foldr (.||) (T.pgBool False)
 ands :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
 ands = F.foldr (.&&) (T.pgBool True)
 
-in_ :: [Column a] -> Column a -> Column T.PGBool
-in_ hs w = ors . map (w .==) $ hs
+in_ :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> Column T.PGBool
+in_ hs w = ors . fmap (w .==) $ hs
 
-notIn :: [Column a] -> Column a -> Column T.PGBool
-notIn hs w = ands . map (w ./=) $ hs
+notIn :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> Column T.PGBool
+notIn hs w = ands . fmap (w ./=) $ hs
