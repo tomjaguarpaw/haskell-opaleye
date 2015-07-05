@@ -76,10 +76,10 @@ like :: Column T.PGText -> Column T.PGText -> Column T.PGBool
 like = C.binOp HPQ.OpLike
 
 ors :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
-ors = F.foldr (.||) (T.pgBool False)
+ors = F.foldl' (.||) (T.pgBool False)
 
 ands :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
-ands = F.foldr (.&&) (T.pgBool True)
+ands = F.foldl' (.&&) (T.pgBool True)
 
 in_ :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> Column T.PGBool
 in_ hs w = ors . fmap (w .==) $ hs
