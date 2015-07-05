@@ -319,18 +319,8 @@ testDistinct :: Test
 testDistinct = testG (O.distinct table1Q)
                (\r -> L.sort (L.nub table1data) == L.sort r)
 
--- FIXME: the unsafeCoerceColumn is currently needed because the type
--- changes required for aggregation are not currently dealt with by
--- Opaleye.
-aggregateCoerceFIXME :: QueryArr (Column O.PGInt4) (Column O.PGInt8)
-aggregateCoerceFIXME = Arr.arr aggregateCoerceFIXME'
-
-aggregateCoerceFIXME' :: Column a -> Column O.PGInt8
-aggregateCoerceFIXME' = O.unsafeCoerceColumn
-
 testAggregate :: Test
-testAggregate = testG (Arr.second aggregateCoerceFIXME
-                        <<< O.aggregate (PP.p2 (O.groupBy, O.sum))
+testAggregate = testG (O.aggregate (PP.p2 (O.groupBy, O.sum))
                                            table1Q)
                       (\r -> [(1, 400) :: (Int, Int64), (2, 300)] == L.sort r)
 
@@ -339,7 +329,7 @@ testAggregateProfunctor = testG q expected
   where q = O.aggregate (PP.p2 (O.groupBy, countsum)) table1Q
         expected r = [(1, 1200) :: (Int, Int64), (2, 300)] == L.sort r
         countsum = P.dimap (\x -> (x,x))
-                           (\(x, y) -> aggregateCoerceFIXME' x * y)
+                           (\(x, y) -> x * y)
                            (PP.p2 (O.sum, O.count))
 
 testStringArrayAggregate :: Test
@@ -394,8 +384,7 @@ testOffsetLimit = testLOG (O.offset 2 . O.limit 2) (drop 2 . take 2)
 testDistinctAndAggregate :: Test
 testDistinctAndAggregate = testG q expected
   where q = O.distinct table1Q
-            &&& (Arr.second aggregateCoerceFIXME
-                 <<< O.aggregate (PP.p2 (O.groupBy, O.sum)) table1Q)
+            &&& (O.aggregate (PP.p2 (O.groupBy, O.sum)) table1Q)
         expected r = L.sort r == L.sort expectedResult
         expectedResult = A.liftA2 (,) (L.nub table1data)
                                       [(1 :: Int, 400 :: Int64), (2, 300)]
