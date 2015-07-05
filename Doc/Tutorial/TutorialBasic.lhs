@@ -584,7 +584,7 @@ of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
 > aggregateWidgets :: Query (Widget (Column PGText) (Column PGText) (Column PGInt8)
->                                   (Column PGInt4) (Column PGFloat8))
+>                                   (Column PGInt8) (Column PGFloat8))
 > aggregateWidgets = aggregate (pWidget (Widget { style    = groupBy
 >                                               , color    = groupBy
 >                                               , location = count
