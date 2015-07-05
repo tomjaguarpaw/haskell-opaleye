@@ -1,5 +1,7 @@
 module Opaleye.Operators (module Opaleye.Operators) where
 
+import qualified Data.Foldable as F
+
 import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
                                           unsafeIfThenElse, unsafeGt, unsafeEq)
 import qualified Opaleye.Internal.Column as C
@@ -72,3 +74,15 @@ upper = C.unOp HPQ.OpUpper
 
 like :: Column T.PGText -> Column T.PGText -> Column T.PGBool
 like = C.binOp HPQ.OpLike
+
+ors :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
+ors = F.foldr (.||) (T.pgBool False)
+
+ands :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
+ands = F.foldr (.&&) (T.pgBool True)
+
+in_ :: [Column a] -> Column a -> Column T.PGBool
+in_ hs w = ors . map (w .==) $ hs
+
+notIn :: [Column a] -> Column a -> Column T.PGBool
+notIn hs w = ands . map (w ./=) $ hs
