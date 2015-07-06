@@ -26,6 +26,7 @@ data PrimQuery = Unit
                | Join JoinType HPQ.PrimExpr PrimQuery PrimQuery
                | Values [Symbol] [[HPQ.PrimExpr]]
                | Binary BinOp [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] (PrimQuery, PrimQuery)
+               | WithRecursive [HPQ.PrimExpr] [(Symbol, HPQ.PrimExpr)] Symbol PrimQuery PrimQuery
                  deriving Show
 
 type PrimQueryFold p = ( p
@@ -37,11 +38,12 @@ type PrimQueryFold p = ( p
                        , JoinType -> HPQ.PrimExpr -> p -> p -> p
                        , [Symbol] -> [[HPQ.PrimExpr]] -> p
                        , BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
+                       , [HPQ.PrimExpr] -> [(Symbol, HPQ.PrimExpr)] -> Symbol -> p -> p -> p
                        )
 
 foldPrimQuery :: PrimQueryFold p -> PrimQuery -> p
 foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
-               binary) = fix fold
+               binary, withRecursive) = fix fold
   where fold self primQ = case primQ of
           Unit                       -> unit
           BaseTable n s              -> baseTable n s
@@ -52,6 +54,7 @@ foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
           Join j cond q1 q2          -> join j cond (self q1) (self q2)
           Values ss pes              -> values ss pes
           Binary binop pes (pq, pq') -> binary binop pes (self pq, self pq')
+          WithRecursive s rs t qb qr -> withRecursive s rs t (self qb) (self qr)
         fix f = let x = f x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery

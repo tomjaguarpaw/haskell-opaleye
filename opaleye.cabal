@@ -59,6 +59,7 @@ library
                    Opaleye.Sql,
                    Opaleye.Table,
                    Opaleye.Values,
+                   Opaleye.WithRecursive
                    Opaleye.Internal.Aggregate,
                    Opaleye.Internal.Binary,
                    Opaleye.Internal.Column,

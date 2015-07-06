@@ -12,6 +12,7 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.Sql
                , module Opaleye.Table
                , module Opaleye.Values
+               , module Opaleye.WithRecursive
                ) where
 
 import Opaleye.Aggregate
@@ -28,3 +29,4 @@ import Opaleye.RunQuery
 import Opaleye.Sql
 import Opaleye.Table
 import Opaleye.Values
+import Opaleye.WithRecursive

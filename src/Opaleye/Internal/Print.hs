@@ -6,8 +6,9 @@ import qualified Opaleye.Internal.Sql as Sql
 import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
                                               SelectJoin,
                                               SelectValues,
-                                              SelectBinary),
-                                       From, Join, Values, Binary)
+                                              SelectBinary,
+                                              WithRecursive),
+                                       From, Join, Values, Binary, Recursive)
 
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
@@ -24,6 +25,7 @@ ppSql (Table table) = HPrint.ppTable table
 ppSql (SelectJoin j) = ppSelectJoin j
 ppSql (SelectValues v) = ppSelectValues v
 ppSql (SelectBinary v) = ppSelectBinary v
+ppSql (WithRecursive r) = ppWithRecursive r
 
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
@@ -57,6 +59,22 @@ ppSelectBinary b = ppSql (Sql.bSelect1 b)
                    $$ ppBinOp (Sql.bOp b)
                    $$ ppSql (Sql.bSelect2 b)
 
+ppWithRecursive :: Recursive -> Doc
+ppWithRecursive r
+  =  text "WITH RECURSIVE"
+  <+> HPrint.ppTable (Sql.rTable r)
+  <+> parens (ppAttrs (Sql.rAttrs r))
+  <+> text "AS"
+  $$ parens
+     (  ppSql (Sql.rBase r)
+     $$ text "UNION ALL"
+     $$ ppSql (Sql.rRecursive r)
+     )
+  $$ text "SELECT"
+  <+> ppAttrs Sql.Star
+  <+> text "FROM"
+  <+> HPrint.ppTable (Sql.rTable r)
+
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 
@@ -84,6 +102,7 @@ ppTable (alias, select) = case select of
   SelectJoin slj -> HPrint.ppAs alias (parens (ppSelectJoin slj))
   SelectValues slv -> HPrint.ppAs alias (parens (ppSelectValues slv))
   SelectBinary slb -> HPrint.ppAs alias (parens (ppSelectBinary slb))
+  WithRecursive r -> HPrint.ppAs alias (parens (ppWithRecursive r))
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
