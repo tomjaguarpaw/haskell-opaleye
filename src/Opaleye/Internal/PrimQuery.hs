@@ -45,6 +45,9 @@ instance Monoid Lateral where
   mappend = (<>)
   mempty = NonLateral
 
+data Recursive = NotRecursive | Recursive
+  deriving Show
+
 aLeftJoin :: HPQ.PrimExpr -> PrimQuery -> PrimQueryArr
 aLeftJoin cond primQuery' = PrimQueryArr $ \lat primQueryL ->
   Join LeftJoin cond (NonLateral, primQueryL) (lat, primQuery')
@@ -157,6 +160,7 @@ data PrimQuery' a = Unit
                   -- ForUpdate in the future
                   --
                   -- https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE
+                  | With Recursive Symbol (PrimQuery' a) (PrimQuery' a)
                  deriving Show
 
 type PrimQuery = PrimQuery' ()
@@ -193,6 +197,7 @@ data PrimQueryFold' a p = PrimQueryFold
     -- ^ A relation-valued expression
   , rebind            :: Bool -> Bindings HPQ.PrimExpr -> p -> p
   , forUpdate         :: p -> p
+  , with              :: Recursive -> Symbol -> p -> p -> p
   }
 
 
@@ -214,6 +219,7 @@ primQueryFoldDefault = PrimQueryFold
   , exists            = Exists
   , rebind            = Rebind
   , forUpdate         = ForUpdate
+  , with              = With
   }
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
@@ -235,6 +241,7 @@ foldPrimQuery f = fix fold
           Exists s q                  -> exists            f s (self q)
           Rebind star pes q           -> rebind            f star pes (self q)
           ForUpdate q                 -> forUpdate         f (self q)
+          With recursive name a b     -> with              f recursive name (self a) (self b)
         fix g = let x = g x in x
 
 times :: Lateral -> PrimQuery -> PrimQuery -> PrimQuery
