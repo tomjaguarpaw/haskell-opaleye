@@ -38,7 +38,7 @@ ppSelectFrom s = text "SELECT"
 
 ppSelectJoin :: Join -> Doc
 ppSelectJoin j = text "SELECT"
-                 <+> ppAttrs (Sql.SelectAttrs (Sql.jAttrs j))
+                 <+> ppAttrs (Sql.jAttrs j)
                  $$  text "FROM"
                  $$  ppTable (tableAlias 1 s1)
                  $$  ppJoinType (Sql.jJoinType j)
@@ -49,7 +49,7 @@ ppSelectJoin j = text "SELECT"
 
 ppSelectValues :: Values -> Doc
 ppSelectValues v = text "SELECT"
-                   <+> ppAttrs (Sql.SelectAttrs (Sql.vAttrs v))
+                   <+> ppAttrs (Sql.vAttrs v)
                    $$  text "FROM"
                    $$  ppValues (Sql.vValues v)
 

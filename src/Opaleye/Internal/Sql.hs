@@ -41,7 +41,7 @@ data From = From {
 
 data Join = Join {
   jJoinType   :: JoinType,
-  jAttrs      :: NEL.NonEmpty (HSql.SqlExpr, Maybe HSql.SqlColumn),
+  jAttrs      :: SelectAttrs,
   --- ^^ Can we get rid of jAttrs and just use *?
   jTables     :: (Select, Select),
   jCond       :: HSql.SqlExpr
@@ -49,7 +49,7 @@ data Join = Join {
                 deriving Show
 
 data Values = Values {
-  vAttrs  :: NEL.NonEmpty (HSql.SqlExpr, Maybe HSql.SqlColumn),
+  vAttrs  :: SelectAttrs,
   vValues :: [[HSql.SqlExpr]]
 } deriving Show
 
@@ -139,7 +139,7 @@ limit_ lo s = SelectFrom $ newSelect { tables = [s]
 join :: PQ.JoinType -> [(Symbol, HPQ.PrimExpr)] -> HPQ.PrimExpr -> Select -> Select
      -> Select
 join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
-                                            , jAttrs = mkAttrs columns
+                                            , jAttrs = SelectAttrs (mkAttrs columns)
                                             , jTables = (s1, s2)
                                             , jCond = sqlExpr cond }
   where mkAttrs = ensureColumns . map sqlBinding
@@ -148,7 +148,7 @@ join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
 -- "column2", ... . I'm not sure to what extent it is customisable or
 -- how robust it is to rely on this
 values :: [Symbol] -> [[HPQ.PrimExpr]] -> Select
-values columns pes = SelectValues Values { vAttrs  = mkColumns columns
+values columns pes = SelectValues Values { vAttrs  = SelectAttrs (mkColumns columns)
                                          , vValues = (map . map) sqlExpr pes }
   where mkColumns = ensureColumns . zipWith (flip (curry (sqlBinding . Arr.second mkColumn))) [1..]
         mkColumn i = (HPQ.BaseTableAttrExpr . ("column" ++) . show) (i::Int)
