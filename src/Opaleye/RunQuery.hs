@@ -6,6 +6,7 @@ module Opaleye.RunQuery (module Opaleye.RunQuery,
                          IRQ.fieldQueryRunnerColumn) where
 
 import qualified Database.PostgreSQL.Simple as PGS
+import qualified Database.PostgreSQL.Simple.FromRow as FR
 import qualified Data.String as String
 
 import           Opaleye.Column (Column)
@@ -17,6 +18,8 @@ import qualified Opaleye.Internal.QueryArr as Q
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
+
+import           Control.Applicative ((*>))
 
 -- | @runQuery@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
@@ -49,7 +52,9 @@ runQueryExplicit :: QueryRunner columns haskells
                  -> Query columns
                  -> IO [haskells]
 runQueryExplicit (QueryRunner u rowParser) conn q =
-  PGS.queryWith_ (rowParser b) conn sql
+  PGS.queryWith_ ((FR.fromRow :: FR.RowParser (PGS.Only Int)) *> rowParser b)
+                 conn
+                 sql
   where sql :: PGS.Query
         sql = String.fromString (S.showSqlForPostgresExplicit u q)
         -- FIXME: We're doing work twice here
