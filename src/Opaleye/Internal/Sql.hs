@@ -23,8 +23,10 @@ data Select = SelectFrom From
             | SelectBinary Binary
             deriving Show
 
-data SelectAttrs = Star | SelectAttrs [(HSql.SqlExpr, Maybe HSql.SqlColumn)]
-                 deriving Show
+data SelectAttrs =
+    Star
+  | SelectAttrs (NEL.NonEmpty (HSql.SqlExpr, Maybe HSql.SqlColumn))
+  deriving Show
 
 data From = From {
   attrs     :: SelectAttrs,
@@ -39,14 +41,15 @@ data From = From {
 
 data Join = Join {
   jJoinType   :: JoinType,
-  jAttrs      :: [(HSql.SqlExpr, Maybe HSql.SqlColumn)],
+  jAttrs      :: NEL.NonEmpty (HSql.SqlExpr, Maybe HSql.SqlColumn),
+  --- ^^ Can we get rid of jAttrs and just use *?
   jTables     :: (Select, Select),
   jCond       :: HSql.SqlExpr
   }
                 deriving Show
 
 data Values = Values {
-  vAttrs  :: [(HSql.SqlExpr, Maybe HSql.SqlColumn)],
+  vAttrs  :: NEL.NonEmpty (HSql.SqlExpr, Maybe HSql.SqlColumn),
   vValues :: [[HSql.SqlExpr]]
 } deriving Show
 
@@ -68,18 +71,23 @@ sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
                      values, binary)
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> Select
-sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (makeAttrs pes)
+sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs
+                                               ((HSql.ConstSqlExpr "0", Nothing)
+                                                  NEL.:| (makeAttrs pes))
                                           , tables = [pqSelect] }
   where pqSelect = PQ.foldPrimQuery sqlQueryGenerator pq
         makeAttrs = flip (zipWith makeAttr) [1..]
         makeAttr pe i = sqlBinding (Symbol ("result" ++ show (i :: Int)) t, pe)
 
 unit :: Select
-unit = SelectFrom newSelect { attrs  = SelectAttrs [] }
+unit = SelectFrom newSelect { attrs  = SelectAttrs
+                                         ((HSql.ConstSqlExpr "0", Nothing)
+                                          NEL.:| []) }
 
 baseTable :: String -> [(Symbol, HPQ.PrimExpr)] -> Select
 baseTable name columns = SelectFrom $
-    newSelect { attrs = SelectAttrs (map sqlBinding columns)
+    newSelect { attrs = SelectAttrs ((HSql.ConstSqlExpr "0", Nothing)
+                                     NEL.:| map sqlBinding columns)
               , tables = [Table (HSql.SqlTable name)] }
 
 product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
@@ -88,7 +96,9 @@ product ss pes = SelectFrom $
               , criteria = map sqlExpr pes }
 
 aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
-aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs (map attr aggrs)
+aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
+                                               ((HSql.ConstSqlExpr "0", Nothing)
+                                                 NEL.:| (map attr aggrs))
                                            , tables = [s]
                                            , groupBy = (Just . groupBy') aggrs }
   where --- Grouping by an empty list is not the identity function!
@@ -136,7 +146,8 @@ join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
                                             , jAttrs = mkAttrs columns
                                             , jTables = (s1, s2)
                                             , jCond = sqlExpr cond }
-  where mkAttrs = map sqlBinding
+  where mkAttrs c = (HSql.ConstSqlExpr "0", Nothing)
+                    NEL.:| map sqlBinding c
 
 -- Postgres seems to name columns of VALUES clauses "column1",
 -- "column2", ... . I'm not sure to what extent it is customisable or
@@ -144,16 +155,21 @@ join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
 values :: [Symbol] -> [[HPQ.PrimExpr]] -> Select
 values columns pes = SelectValues Values { vAttrs  = mkColumns columns
                                          , vValues = (map . map) sqlExpr pes }
-  where mkColumns = zipWith (flip (curry (sqlBinding . Arr.second mkColumn))) [1..]
+  where mkColumns is = (HSql.ConstSqlExpr "0", Nothing)
+                       NEL.:| zipWith (flip (curry (sqlBinding . Arr.second mkColumn))) [1..] is
         mkColumn i = (HPQ.BaseTableAttrExpr . ("column" ++) . show) (i::Int)
 
 binary :: PQ.BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
        -> (Select, Select) -> Select
 binary op pes (select1, select2) = SelectBinary Binary {
   bOp = binOp op,
-  bSelect1 = SelectFrom newSelect { attrs = SelectAttrs (map (mkColumn fst) pes),
+  bSelect1 = SelectFrom newSelect { attrs = SelectAttrs
+                                      ((HSql.ConstSqlExpr "0", Nothing)
+                                       NEL.:| map (mkColumn fst) pes),
                                     tables = [select1] },
-  bSelect2 = SelectFrom newSelect { attrs = SelectAttrs (map (mkColumn snd) pes),
+  bSelect2 = SelectFrom newSelect { attrs = SelectAttrs
+                                      ((HSql.ConstSqlExpr "0", Nothing)
+                                       NEL.:| map (mkColumn snd) pes),
                                     tables = [select2] }
   }
   where mkColumn e = sqlBinding . Arr.second e
