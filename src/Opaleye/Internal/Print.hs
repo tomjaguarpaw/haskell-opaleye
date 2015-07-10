@@ -37,8 +37,7 @@ ppSelectFrom s = text "SELECT"
 
 
 ppSelectJoin :: Join -> Doc
-ppSelectJoin j = text "SELECT"
-                 <+> ppAttrs (Sql.jAttrs j)
+ppSelectJoin j = text "SELECT *"
                  $$  text "FROM"
                  $$  ppTable (tableAlias 1 s1)
                  $$  ppJoinType (Sql.jJoinType j)

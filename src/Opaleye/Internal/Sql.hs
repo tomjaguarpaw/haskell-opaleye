@@ -41,8 +41,6 @@ data From = From {
 
 data Join = Join {
   jJoinType   :: JoinType,
-  jAttrs      :: SelectAttrs,
-  --- ^^ Can we get rid of jAttrs and just use *?
   jTables     :: (Select, Select),
   jCond       :: HSql.SqlExpr
   }
@@ -136,13 +134,10 @@ limit_ lo s = SelectFrom $ newSelect { tables = [s]
           PQ.OffsetOp n        -> (Nothing, Just n)
           PQ.LimitOffsetOp l o -> (Just l, Just o)
 
-join :: PQ.JoinType -> [(Symbol, HPQ.PrimExpr)] -> HPQ.PrimExpr -> Select -> Select
-     -> Select
-join j columns cond s1 s2 = SelectJoin Join { jJoinType = joinType j
-                                            , jAttrs = SelectAttrs (mkAttrs columns)
-                                            , jTables = (s1, s2)
-                                            , jCond = sqlExpr cond }
-  where mkAttrs = ensureColumns . map sqlBinding
+join :: PQ.JoinType -> HPQ.PrimExpr -> Select -> Select -> Select
+join j cond s1 s2 = SelectJoin Join { jJoinType = joinType j
+                                    , jTables = (s1, s2)
+                                    , jCond = sqlExpr cond }
 
 -- Postgres seems to name columns of VALUES clauses "column1",
 -- "column2", ... . I'm not sure to what extent it is customisable or
