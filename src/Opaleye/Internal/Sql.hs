@@ -68,10 +68,6 @@ sqlQueryGenerator :: PQ.PrimQueryFold Select
 sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
                      values, binary)
 
-ensureColumns :: [(HSql.SqlExpr, Maybe a)]
-              -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
-ensureColumns = ((HSql.ConstSqlExpr "0", Nothing) NEL.:|)
-
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
                                           , tables = [pqSelect] }
@@ -189,3 +185,7 @@ sqlExpr = SG.sqlExpr SD.defaultSqlGenerator
 sqlBinding :: (Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe HSql.SqlColumn)
 sqlBinding (Symbol sym t, pe) =
   (sqlExpr pe, Just (HSql.SqlColumn (T.tagWith t sym)))
+
+ensureColumns :: [(HSql.SqlExpr, Maybe a)]
+              -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
+ensureColumns = ((HSql.ConstSqlExpr "0", Nothing) NEL.:|)
