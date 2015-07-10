@@ -68,6 +68,8 @@ sqlQueryGenerator :: PQ.PrimQueryFold Select
 sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
                      values, binary)
 
+ensureColumns :: [(HSql.SqlExpr, Maybe a)]
+              -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
 ensureColumns = ((HSql.ConstSqlExpr "0", Nothing) NEL.:|)
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> Select
