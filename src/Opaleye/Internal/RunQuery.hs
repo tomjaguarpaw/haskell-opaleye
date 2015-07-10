@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.RunQuery where
 
-import           Control.Applicative (Applicative, pure, (<*>))
+import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
 import           Database.PostgreSQL.Simple.Internal (RowParser)
 import           Database.PostgreSQL.Simple.FromField (FieldParser, FromField,
@@ -63,20 +63,27 @@ import           Data.Typeable (Typeable)
 data QueryRunnerColumn pgType haskellType =
   QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
 
-data QueryRunner columns haskells = QueryRunner (U.Unpackspec columns ())
-                                                (columns -> RowParser haskells)
-                                                -- We never actually
-                                                -- look at the columns
-                                                -- except to see its
-                                                -- "type" in the case
-                                                -- of a sum profunctor
+data QueryRunner columns haskells =
+  QueryRunner (U.Unpackspec columns ())
+              (columns -> RowParser haskells)
+              -- We never actually
+              -- look at the columns
+              -- except to see its
+              -- "type" in the case
+              -- of a sum profunctor
+              (columns -> Bool)
+              -- ^ Have we actually requested any columns?  If we
+              -- asked for zero columns then the SQL generator will
+              -- have to put a dummy 0 into the SELECT statement,
+              -- since we can't select zero columns.  In that case we
+              -- have to make sure we read a single Int.
 
 fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn coltype haskell
 fieldQueryRunnerColumn =
   QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) fromField
 
 queryRunner :: QueryRunnerColumn a b -> QueryRunner (Column a) b
-queryRunner qrc = QueryRunner u (const (fieldWith fp))
+queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
     where QueryRunnerColumn u fp = qrc
 
 queryRunnerColumnNullable :: QueryRunnerColumn a b
@@ -180,16 +187,19 @@ instance (Typeable b, QueryRunnerColumnDefault a b) =>
 -- Boilerplate instances
 
 instance Functor (QueryRunner c) where
-  fmap f (QueryRunner u r) = QueryRunner u ((fmap . fmap) f r)
+  fmap f (QueryRunner u r b) = QueryRunner u ((fmap . fmap) f r) b
 
 -- TODO: Seems like this one should be simpler!
 instance Applicative (QueryRunner c) where
-  pure = QueryRunner (P.lmap (const ()) PP.empty) . pure . pure
-  QueryRunner uf rf <*> QueryRunner ux rx =
-    QueryRunner (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) ((<*>) <$> rf <*> rx)
+  pure = flip (QueryRunner (P.lmap (const ()) PP.empty)) (const False)
+         . pure
+         . pure
+  QueryRunner uf rf bf <*> QueryRunner ux rx bx =
+    QueryRunner (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) ((<*>) <$> rf <*> rx) (liftA2 (||) bf bx)
 
 instance P.Profunctor QueryRunner where
-  dimap f g (QueryRunner u r) = QueryRunner (P.lmap f u) (P.dimap f (fmap g) r)
+  dimap f g (QueryRunner u r b) =
+    QueryRunner (P.lmap f u) (P.dimap f (fmap g) r) (P.lmap f b)
 
 instance PP.ProductProfunctor QueryRunner where
   empty = PP.defaultEmpty
@@ -198,8 +208,9 @@ instance PP.ProductProfunctor QueryRunner where
 instance PP.SumProfunctor QueryRunner where
   f +++! g = QueryRunner (P.rmap (const ()) (fu PP.+++! gu))
                          (PackMap.eitherFunction fr gr)
-    where QueryRunner fu fr = f
-          QueryRunner gu gr = g
+                         (either fb gb)
+    where QueryRunner fu fr fb = f
+          QueryRunner gu gr gb = g
 
 -- }
 

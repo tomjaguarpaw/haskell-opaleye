@@ -188,4 +188,5 @@ sqlBinding (Symbol sym t, pe) =
 
 ensureColumns :: [(HSql.SqlExpr, Maybe a)]
               -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
-ensureColumns = ((HSql.ConstSqlExpr "0", Nothing) NEL.:|)
+ensureColumns = M.fromMaybe (return (HSql.ConstSqlExpr "0", Nothing))
+                . NEL.nonEmpty

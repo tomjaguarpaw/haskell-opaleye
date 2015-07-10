@@ -118,7 +118,8 @@ runInsertReturningExplicit :: RQ.QueryRunner returned haskells
 runInsertReturningExplicit qr conn t w r = PGS.queryWith_ (rowParser (r v)) conn
                                              (fromString
                                              (arrangeInsertReturningSql u t w r))
-  where IRQ.QueryRunner u rowParser = qr
+  where IRQ.QueryRunner u rowParser _ = qr
+        --- ^^ TODO: need to make sure we're not trying to read zero rows
         TI.Table _ (TI.TableProperties _ (TI.View v)) = t
         -- This method of getting hold of the return type feels a bit
         -- suspect.  I haven't checked it for validity.
@@ -168,7 +169,8 @@ runUpdateReturningExplicit :: RQ.QueryRunner returned haskells
 runUpdateReturningExplicit qr conn t update cond r =
   PGS.queryWith_ (rowParser (r v)) conn
                  (fromString (arrangeUpdateReturningSql u t update cond r))
-  where IRQ.QueryRunner u rowParser = qr
+  where IRQ.QueryRunner u rowParser _ = qr
+        --- ^^ TODO: need to make sure we're not trying to read zero rows
         TI.Table _ (TI.TableProperties _ (TI.View v)) = t
 
 runUpdateReturning :: (D.Default RQ.QueryRunner returned haskells)
