@@ -14,10 +14,13 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)
+import qualified Data.List.NonEmpty as NEL
+
+type TableAlias = String
 
 ppSql :: Select -> Doc
 ppSql (SelectFrom s) = ppSelectFrom s
-ppSql (Table name) = text name
+ppSql (Table table) = HPrint.ppTable table
 ppSql (SelectJoin j) = ppSelectJoin j
 ppSql (SelectValues v) = ppSelectValues v
 ppSql (SelectBinary v) = ppSelectBinary v
@@ -34,8 +37,7 @@ ppSelectFrom s = text "SELECT"
 
 
 ppSelectJoin :: Join -> Doc
-ppSelectJoin j = text "SELECT"
-                 <+> ppAttrs (Sql.jAttrs j)
+ppSelectJoin j = text "SELECT *"
                  $$  text "FROM"
                  $$  ppTable (tableAlias 1 s1)
                  $$  ppJoinType (Sql.jJoinType j)
@@ -58,9 +60,9 @@ ppSelectBinary b = ppSql (Sql.bSelect1 b)
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 
-ppAttrs :: [(HSql.SqlExpr, Maybe HSql.SqlColumn)] -> Doc
-ppAttrs [] = text "*"
-ppAttrs xs = HPrint.commaV nameAs xs
+ppAttrs :: Sql.SelectAttrs -> Doc
+ppAttrs Sql.Star             = text "*"
+ppAttrs (Sql.SelectAttrs xs) = (HPrint.commaV nameAs . NEL.toList) xs
 
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
@@ -71,21 +73,21 @@ ppTables :: [Select] -> Doc
 ppTables [] = empty
 ppTables ts = text "FROM" <+> HPrint.commaV ppTable (zipWith tableAlias [1..] ts)
 
-tableAlias :: Int -> Select -> (HSql.SqlTable, Select)
+tableAlias :: Int -> Select -> (TableAlias, Select)
 tableAlias i select = ("T" ++ show i, select)
 
 -- TODO: duplication with ppSql
-ppTable :: (HSql.SqlTable, Select) -> Doc
+ppTable :: (TableAlias, Select) -> Doc
 ppTable (alias, select) = case select of
-  Table name -> HPrint.ppAs alias (text name)
+  Table table -> HPrint.ppAs alias (HPrint.ppTable table)
   SelectFrom selectFrom -> HPrint.ppAs alias (parens (ppSelectFrom selectFrom))
   SelectJoin slj -> HPrint.ppAs alias (parens (ppSelectJoin slj))
   SelectValues slv -> HPrint.ppAs alias (parens (ppSelectValues slv))
   SelectBinary slb -> HPrint.ppAs alias (parens (ppSelectBinary slb))
 
-ppGroupBy :: [HSql.SqlExpr] -> Doc
-ppGroupBy [] = empty
-ppGroupBy xs = HPrint.ppGroupBy xs
+ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
+ppGroupBy Nothing   = empty
+ppGroupBy (Just xs) = HPrint.ppGroupBy (NEL.toList xs)
 
 ppLimit :: Maybe Int -> Doc
 ppLimit Nothing = empty
@@ -110,5 +112,11 @@ ppBinOp o = text $ case o of
 ppInsertReturning :: Sql.Returning HSql.SqlInsert -> Doc
 ppInsertReturning (Sql.Returning insert returnExprs) =
   HPrint.ppInsert insert
+  $$ text "RETURNING"
+  <+> HPrint.commaV HPrint.ppSqlExpr returnExprs
+
+ppUpdateReturning :: Sql.Returning HSql.SqlUpdate -> Doc
+ppUpdateReturning (Sql.Returning update returnExprs) =
+  HPrint.ppUpdate update
   $$ text "RETURNING"
   <+> HPrint.commaV HPrint.ppSqlExpr returnExprs

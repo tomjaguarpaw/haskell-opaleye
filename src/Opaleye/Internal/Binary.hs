@@ -21,14 +21,14 @@ extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
                              HPQ.PrimExpr
 extractBinaryFields = PM.extractAttr "binary"
 
-data Binaryspec columns columns' =
+newtype Binaryspec columns columns' =
   Binaryspec (PM.PackMap (HPQ.PrimExpr, HPQ.PrimExpr) HPQ.PrimExpr
                          (columns, columns) columns')
 
 runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> ((HPQ.PrimExpr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
                  -> (columns, columns) -> f columns'
-runBinaryspec (Binaryspec b) = PM.packmap b
+runBinaryspec (Binaryspec b) = PM.traversePM b
 
 binaryspecColumn :: Binaryspec (Column a) (Column a)
 binaryspecColumn = Binaryspec (PM.PackMap (\f (Column e, Column e')

@@ -2,22 +2,23 @@
 --                HWT Group (c) 2003, haskelldb-users@lists.sourceforge.net
 -- License     :  BSD-style
 
-module Opaleye.Internal.HaskellDB.Sql.Print ( 
+module Opaleye.Internal.HaskellDB.Sql.Print (
                                      ppUpdate,
-                                     ppDelete, 
+                                     ppDelete,
                                      ppInsert,
                                      ppSqlExpr,
                                      ppWhere,
                                      ppGroupBy,
                                      ppOrderBy,
+                                     ppTable,
                                      ppAs,
                                      commaV,
                                      commaH
-	                            ) where
+                                    ) where
 
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
-                               SqlUpdate(..))
+                               SqlUpdate(..), SqlTable(..))
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 
 import Data.List (intersperse)
@@ -29,7 +30,7 @@ import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
 
 ppWhere :: [SqlExpr] -> Doc
 ppWhere [] = empty
-ppWhere es = text "WHERE" 
+ppWhere es = text "WHERE"
              <+> hsep (intersperse (text "AND")
                        (map (parens . ppSqlExpr) es))
 
@@ -40,13 +41,23 @@ ppGroupBy es = text "GROUP BY" <+> ppGroupAttrs es
     ppGroupAttrs cs = commaV nameOrExpr cs
     nameOrExpr :: SqlExpr -> Doc
     nameOrExpr (ColumnSqlExpr (SqlColumn col)) = text col
-    nameOrExpr expr = parens (ppSqlExpr expr)
-    
+    -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first column
+    -- Any identity function will do
+    --  nameOrExpr expr = parens (ppSqlExpr expr)
+    -- SQLite requires COALESCE to have at least two arguments.
+    nameOrExpr expr = text "COALESCE" <+> parens (commaH ppSqlExpr [expr, expr])
+
 ppOrderBy :: [(SqlExpr,SqlOrder)] -> Doc
 ppOrderBy [] = empty
 ppOrderBy ord = text "ORDER BY" <+> commaV ppOrd ord
     where
-      ppOrd (e,o) = ppSqlExpr e <+> ppSqlDirection o <+> ppSqlNulls o
+    -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first column
+    -- Any identity function will do
+    --   ppOrd (e,o) = ppSqlExpr e <+> ppSqlDirection o <+> ppSqlNulls o
+      ppOrd (e,o) = text "COALESCE"
+                      <+> parens (commaH ppSqlExpr [e, e])
+                      <+> ppSqlDirection o
+                      <+> ppSqlNulls o
 
 ppSqlDirection :: Sql.SqlOrder -> Doc
 ppSqlDirection x = text $ case Sql.sqlOrderDirection x of
@@ -61,13 +72,13 @@ ppSqlNulls x = empty
 --        Sql.SqlNullsLast  -> "NULLS LAST"
 
 ppAs :: String -> Doc -> Doc
-ppAs alias expr    | null alias    = expr                               
+ppAs alias expr    | null alias    = expr
                    | otherwise     = expr <+> (hsep . map text) ["as",alias]
 
 
 ppUpdate :: SqlUpdate -> Doc
-ppUpdate (SqlUpdate name assigns criteria)
-        = text "UPDATE" <+> text name
+ppUpdate (SqlUpdate table assigns criteria)
+        = text "UPDATE" <+> ppTable table
         $$ text "SET" <+> commaV ppAssign assigns
         $$ ppWhere criteria
     where
@@ -75,13 +86,13 @@ ppUpdate (SqlUpdate name assigns criteria)
 
 
 ppDelete :: SqlDelete -> Doc
-ppDelete (SqlDelete name criteria) =
-    text "DELETE FROM" <+> text name $$ ppWhere criteria
+ppDelete (SqlDelete table criteria) =
+    text "DELETE FROM" <+> ppTable table $$ ppWhere criteria
 
 
 ppInsert :: SqlInsert -> Doc
 ppInsert (SqlInsert table names values)
-    = text "INSERT INTO" <+> text table 
+    = text "INSERT INTO" <+> ppTable table
       <+> parens (commaV ppColumn names)
       $$ text "VALUES" <+> commaV (\v -> parens (commaV ppSqlExpr v))
                                   (NEL.toList values)
@@ -94,13 +105,17 @@ ppInsert (SqlInsert table names values)
 ppColumn :: SqlColumn -> Doc
 ppColumn (SqlColumn s) = doubleQuotes (text s)
 
+-- Postgres treats upper case letters in table names as lower case,
+-- unless the name is quoted!
+ppTable :: SqlTable -> Doc
+ppTable (SqlTable s) = doubleQuotes (text s)
 
 ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =
     case expr of
       ColumnSqlExpr c     -> ppColumn c
       ParensSqlExpr e -> parens (ppSqlExpr e)
-      BinSqlExpr op e1 e2 -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2 
+      BinSqlExpr op e1 e2 -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2
       PrefixSqlExpr op e  -> text op <+> ppSqlExpr e
       PostfixSqlExpr op e -> ppSqlExpr e <+> text op
       FunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
@@ -108,7 +123,7 @@ ppSqlExpr expr =
       ConstSqlExpr c      -> text c
       CaseSqlExpr cs el   -> text "CASE" <+> vcat (map ppWhen cs)
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
-          where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w 
+          where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w
                                <+> text "THEN" <+> ppSqlExpr t
       ListSqlExpr es      -> parens (commaH ppSqlExpr es)
       ParamSqlExpr _ v -> ppSqlExpr v

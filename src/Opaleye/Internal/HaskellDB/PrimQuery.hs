@@ -21,7 +21,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | UnExpr    UnOp PrimExpr
                 | AggrExpr  AggrOp PrimExpr
                 | ConstExpr Literal
-		| CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
+                | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
                 | ListExpr [PrimExpr]
                 | ParamExpr (Maybe Name) PrimExpr
                 | FunExpr Name [PrimExpr]
@@ -34,18 +34,18 @@ data PrimExpr   = AttrExpr  Symbol
                 deriving (Read,Show)
 
 data Literal = NullLit
-	     | DefaultLit            -- ^ represents a default value
-	     | BoolLit Bool
-	     | StringLit String
+             | DefaultLit            -- ^ represents a default value
+             | BoolLit Bool
+             | StringLit String
              | ByteStringLit ByteString
-	     | IntegerLit Integer
-	     | DoubleLit Double
-	     | OtherLit String       -- ^ used for hacking in custom SQL
-	       deriving (Read,Show)
+             | IntegerLit Integer
+             | DoubleLit Double
+             | OtherLit String       -- ^ used for hacking in custom SQL
+               deriving (Read,Show)
 
-data BinOp      = OpEq | OpLt | OpLtEq | OpGt | OpGtEq | OpNotEq 
+data BinOp      = OpEq | OpLt | OpLtEq | OpGt | OpGtEq | OpNotEq
                 | OpAnd | OpOr
-                | OpLike | OpIn 
+                | OpLike | OpIn
                 | OpOther String
 
                 | OpCat
@@ -67,11 +67,11 @@ data UnOp = OpNot
 
 data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrStdDev | AggrStdDevP | AggrVar | AggrVarP
-                | AggrBoolOr | AggrBoolAnd
+                | AggrBoolOr | AggrBoolAnd | AggrArr | AggrStringAggr PrimExpr
                 | AggrOther String
                 deriving (Show,Read)
 
-data OrderExpr = OrderExpr OrderOp PrimExpr 
+data OrderExpr = OrderExpr OrderOp PrimExpr
                deriving (Show)
 
 data OrderNulls = NullsFirst | NullsLast

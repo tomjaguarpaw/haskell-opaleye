@@ -47,7 +47,7 @@ people's names along with the age of their children.
 > rangeOfChildrensAges = aggregate (p2 (A.groupBy, range)) (queryTable personTable)
 
 
-TutorialAdvanced> printSql rangeOfChildrensAges 
+TutorialAdvanced> printSql rangeOfChildrensAges
 SELECT result0_2 as result1,
        (result1_2) - (result2_2) as result2
 FROM (SELECT *

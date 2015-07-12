@@ -1,0 +1,15 @@
+env:
+ - GHCVER=7.6.3  TRAVIS=yes
+ - GHCVER=7.8.4  TRAVIS=yes
+ - GHCVER=7.10.1 TRAVIS=yes
+ - GHCVER=head   TRAVIS=yes
+script:
+ - wget https://raw.github.com/tomjaguarpaw/neil/master/travis.sh -O - --no-check-certificate --quiet | sh
+
+sudo: required
+
+before_script:
+  - psql -c 'create database opaleye_test;' -U postgres
+
+addons:
+  postgresql: "9.3"

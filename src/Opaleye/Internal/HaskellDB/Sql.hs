@@ -11,7 +11,7 @@ import qualified Data.List.NonEmpty as NEL
 -- * SQL data type
 -----------------------------------------------------------
 
-type SqlTable = String
+newtype SqlTable = SqlTable String deriving Show
 
 newtype SqlColumn = SqlColumn String deriving Show
 
@@ -36,7 +36,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | FunSqlExpr     String [SqlExpr]
              | AggrFunSqlExpr String [SqlExpr] -- ^ Aggregate functions separate from normal functions.
              | ConstSqlExpr   String
-	     | CaseSqlExpr    [(SqlExpr,SqlExpr)] SqlExpr
+             | CaseSqlExpr    [(SqlExpr,SqlExpr)] SqlExpr
              | ListSqlExpr    [SqlExpr]
              | ParamSqlExpr (Maybe SqlName) SqlExpr
              | PlaceHolderSqlExpr

@@ -10,6 +10,7 @@
 >
 > import           Data.Profunctor.Product (p3)
 > import           Data.Profunctor.Product.Default (Default, def)
+> import qualified Opaleye.Internal.Unpackspec as U
 
 
 Manipulation
@@ -93,8 +94,11 @@ it in future queries.  SQL supports that via INSERT RETURNING and
 Opaleye supports it also.
 
 > insertReturning :: String
-> insertReturning = arrangeInsertReturningSql def table (Nothing, 4, 5)
+> insertReturning = arrangeInsertReturningSql def' table (Nothing, 4, 5)
 >                                             (\(id_, _, _) -> id_)
+>                   -- TODO: vv This is too messy
+>                   where def' :: U.Unpackspec (Column a) (Column a)
+>                         def' = def
 
 ghci> putStrLn insertReturning
 INSERT INTO tablename (x,

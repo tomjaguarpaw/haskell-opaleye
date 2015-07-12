@@ -13,7 +13,7 @@ import qualified Data.Profunctor.Product.Default as D
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-data NullMaker a b = NullMaker (a -> b)
+newtype NullMaker a b = NullMaker (a -> b)
 
 toNullable :: NullMaker a b -> a -> b
 toNullable (NullMaker f) = f
@@ -23,10 +23,10 @@ extractLeftJoinFields :: Int -> T.Tag -> HPQ.PrimExpr
 extractLeftJoinFields n = PM.extractAttr ("result" ++ show n ++ "_")
 
 instance D.Default NullMaker (Column a) (Column (Nullable a)) where
-  def = NullMaker C.unsafeCoerce
+  def = NullMaker C.unsafeCoerceColumn
 
 instance D.Default NullMaker (Column (Nullable a)) (Column (Nullable a)) where
-  def = NullMaker C.unsafeCoerce
+  def = NullMaker C.unsafeCoerceColumn
 
 -- { Boilerplate instances
 

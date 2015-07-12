@@ -5,7 +5,7 @@ import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Order as O
 import qualified Opaleye.PGTypes as T
-  
+
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 {-| Order the rows of a `Query` according to the `Order`.
@@ -67,6 +67,7 @@ offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 -- | Typeclass for Postgres types which support ordering operations.
 class PGOrd a where
 
+instance PGOrd T.PGBool
 instance PGOrd T.PGDate
 instance PGOrd T.PGFloat8
 instance PGOrd T.PGFloat4

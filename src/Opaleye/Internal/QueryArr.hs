@@ -31,13 +31,14 @@ runQueryArr (QueryArr f) = f
 runSimpleQueryArr :: QueryArr a b -> (a, Tag) -> (b, PQ.PrimQuery, Tag)
 runSimpleQueryArr f (a, t) = runQueryArr f (a, PQ.Unit, t)
 
+runSimpleQueryArrStart :: QueryArr a b -> a -> (b, PQ.PrimQuery, Tag)
+runSimpleQueryArrStart q a = runSimpleQueryArr q (a, Tag.start)
+
 runQueryArrUnpack :: U.Unpackspec a b
                   -> Query a -> ([HPQ.PrimExpr], PQ.PrimQuery, Tag)
 runQueryArrUnpack unpackspec q = (primExprs, primQ, endTag)
-  where (columns, primQ, endTag) = runSimpleQueryArr q ((), Tag.start)
-        f pe = ([pe], pe)
-        primExprs :: [HPQ.PrimExpr]
-        (primExprs, _) = U.runUnpackspec unpackspec f columns
+  where (columns, primQ, endTag) = runSimpleQueryArrStart q ()
+        primExprs = U.collectPEs unpackspec columns
 
 first3 :: (a1 -> b) -> (a1, a2, a3) -> (b, a2, a3)
 first3 f (a1, a2, a3) = (f a1, a2, a3)

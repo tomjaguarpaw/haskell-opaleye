@@ -1,12 +1,14 @@
 name:            opaleye
+copyright:       Copyright (c) 2014-2015 Purely Agile Limited
 version:         0.3.1.2
 synopsis:        An SQL-generating DSL targeting PostgreSQL
 description:     An SQL-generating DSL targeting PostgreSQL.  Allows
                  Postgres queries to be written within Haskell in a
                  typesafe and composable fashion.
 homepage:        https://github.com/tomjaguarpaw/haskell-opaleye
+bug-reports:     https://github.com/tomjaguarpaw/haskell-opaleye/issues
 license:         BSD3
-license-File:    LICENSE
+license-file:    LICENSE
 author:          Purely Agile
 maintainer:      Purely Agile
 category:        Database
@@ -14,10 +16,11 @@ build-type:      Simple
 cabal-version:   >= 1.8
 extra-doc-files: *.md,
                  Doc/*.md
+tested-with:     GHC==7.10.1, GHC==7.8.4, GHC==7.6.3
 
 source-repository head
-  Type:     git
-  Location: https://github.com/tomjaguarpaw/haskell-opaleye
+  type:     git
+  location: https://github.com/tomjaguarpaw/haskell-opaleye.git
 
 library
   hs-source-dirs: src
@@ -26,10 +29,10 @@ library
     , base16-bytestring   >= 0.1.1.6 && < 0.2
     , case-insensitive    >= 1.2     && < 1.3
     , bytestring          >= 0.10    && < 0.11
-    , contravariant       >= 0.4.4   && < 1.4
+    , contravariant       >= 1.2     && < 1.4
     , direct-sqlite       >= 2.3.13  && < 2.4
     , pretty              >= 1.1.1.0 && < 1.2
-    , product-profunctors >= 0.5     && < 0.7
+    , product-profunctors >= 0.6.2   && < 0.7
     , profunctors         >= 4.0     && < 5.2
     , semigroups          >= 0.13    && < 0.17
     , sqlite-simple
@@ -38,6 +41,7 @@ library
     , time                >= 1.4     && < 1.6
     , time-locale-compat  >= 0.1     && < 0.2
     , uuid                >= 1.3     && < 1.4
+    , void                >= 0.4     && < 0.8
   exposed-modules: Opaleye,
                    Opaleye.Aggregate,
                    Opaleye.Binary,
@@ -83,11 +87,15 @@ library
 test-suite test
   type: exitcode-stdio-1.0
   main-is: Test.hs
+  other-modules: QuickCheck
   hs-source-dirs: Test
   build-depends:
     base >= 4 && < 5,
+    containers,
+    contravariant,
     profunctors,
     product-profunctors,
+    QuickCheck,
     semigroups,
     sqlite-simple,
     opaleye

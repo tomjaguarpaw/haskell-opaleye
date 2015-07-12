@@ -20,7 +20,7 @@ distinctExplicit :: Distinctspec columns columns'
                  -> Query columns -> Query columns'
 distinctExplicit (Distinctspec agg) = aggregate agg
 
-data Distinctspec a b = Distinctspec (Aggregator a b)
+newtype Distinctspec a b = Distinctspec (Aggregator a b)
 
 instance Default Distinctspec (Column a) (Column a) where
   def = Distinctspec groupBy
@@ -40,5 +40,8 @@ instance P.Profunctor Distinctspec where
 instance PP.ProductProfunctor Distinctspec where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
+
+instance PP.SumProfunctor Distinctspec where
+  Distinctspec x1 +++! Distinctspec x2 = Distinctspec (x1 PP.+++! x2)
 
 -- }

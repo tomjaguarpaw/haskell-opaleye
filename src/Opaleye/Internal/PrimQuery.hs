@@ -23,7 +23,7 @@ data PrimQuery = Unit
                | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] PrimQuery
                | Order [HPQ.OrderExpr] PrimQuery
                | Limit LimitOp PrimQuery
-               | Join JoinType [(Symbol, HPQ.PrimExpr)] HPQ.PrimExpr PrimQuery PrimQuery
+               | Join JoinType HPQ.PrimExpr PrimQuery PrimQuery
                | Values [Symbol] [[HPQ.PrimExpr]]
                | Binary BinOp [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] (PrimQuery, PrimQuery)
                  deriving Show
@@ -34,7 +34,7 @@ type PrimQueryFold p = ( p
                        , [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
                        , [HPQ.OrderExpr] -> p -> p
                        , LimitOp -> p -> p
-                       , JoinType -> [(Symbol, HPQ.PrimExpr)] -> HPQ.PrimExpr -> p -> p -> p
+                       , JoinType -> HPQ.PrimExpr -> p -> p -> p
                        , [Symbol] -> [[HPQ.PrimExpr]] -> p
                        , BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
                        )
@@ -49,7 +49,7 @@ foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
           Aggregate aggrs pq         -> aggregate aggrs (self pq)
           Order pes pq               -> order pes (self pq)
           Limit op pq                -> limit op (self pq)
-          Join j pes cond q1 q2      -> join j pes cond (self q1) (self q2)
+          Join j cond q1 q2          -> join j cond (self q1) (self q2)
           Values ss pes              -> values ss pes
           Binary binop pes (pq, pq') -> binary binop pes (self pq, self pq')
         fix f = let x = f x in x

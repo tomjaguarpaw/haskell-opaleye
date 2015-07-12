@@ -28,18 +28,41 @@ import qualified Data.Functor.Identity as I
 -- and share them between many different restrictions of f.  For
 -- example, TableColumnMaker is like a Setter so we would restrict f
 -- to the Distributive case.
+
+-- | A 'PackMap' @a@ @b@ @s@ @t@ encodes how an @s@ contains an
+-- updatable sequence of @a@ inside it.  Each @a@ in the sequence can
+-- be updated to a @b@ (and the @s@ changes to a @t@ to reflect this
+-- change of type).
+--
+-- 'PackMap' is just like a @Traversal@ from the lens package.
+-- 'PackMap' has a different order of arguments to @Traversal@ because
+-- it typically needs to be made a 'Profunctor' (and indeed
+-- 'ProductProfunctor') in @s@ and @t@.  It is unclear at this point
+-- whether we want the same @Traversal@ laws to hold or not.  Our use
+-- cases may be much more general.
 data PackMap a b s t = PackMap (Applicative f =>
                                 (a -> f b) -> s -> f t)
 
-packmap :: Applicative f => PackMap a b s t -> (a -> f b) -> s -> f t
-packmap (PackMap f) = f
+-- | Replaces the targeted occurences of @a@ in @s@ with @b@ (changing
+-- the @s@ to a @t@ in the process).  This can be done via an
+-- 'Applicative' action.
+--
+-- 'traversePM' is just like @traverse@ from the @lens@ package.
+-- 'traversePM' used to be called @packmap@.
+traversePM :: Applicative f => PackMap a b s t -> (a -> f b) -> s -> f t
+traversePM (PackMap f) = f
 
-over :: PackMap a b s t -> (a -> b) -> s -> t
-over p f = I.runIdentity . packmap p (I.Identity . f)
+-- | Modify the targeted occurrences of @a@ in @s@ with @b@ (changing
+-- the @s@ to a @t@ in the process).
+--
+-- 'overPM' is just like @over@ from the @lens@ pacakge.
+overPM :: PackMap a b s t -> (a -> b) -> s -> t
+overPM p f = I.runIdentity . traversePM p (I.Identity . f)
 
 
--- { A helpful monad for writing columns in the AST
+-- {
 
+-- | A helpful monad for writing columns in the AST
 type PM a = State.State (a, Int)
 
 new :: PM a String
@@ -62,23 +85,35 @@ run m = (r, as)
 
 -- { General functions for writing columns in the AST
 
--- This one ignores the 'a' when making the internal column name.
-extractAttr :: String -> T.Tag -> a
-               -> PM [(HPQ.Symbol, a)] HPQ.PrimExpr
-extractAttr s = extractAttrPE (const (s ++))
-
--- This one can make the internal column name depend on the 'a' in
--- question (probably a PrimExpr)
-extractAttrPE :: (a -> String -> String) -> T.Tag -> a
-               -> PM [(HPQ.Symbol, a)] HPQ.PrimExpr
+-- | Make a fresh name for an input value (the variable @primExpr@
+-- type is typically actually a 'HPQ.PrimExpr') based on the supplied
+-- function and the unique 'T.Tag' that is used as part of our
+-- @QueryArr@.
+--
+-- Add the fresh name and the input value it refers to to the list in
+-- the state parameter.
+extractAttrPE :: (primExpr -> String -> String) -> T.Tag -> primExpr
+               -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractAttrPE mkName t pe = do
   i <- new
   let s = HPQ.Symbol (mkName pe i) t
   write (s, pe)
   return (HPQ.AttrExpr s)
 
+-- | As 'extractAttrPE' but ignores the 'primExpr' when making the
+-- fresh column name and just uses the supplied 'String' and 'T.Tag'.
+extractAttr :: String -> T.Tag -> primExpr
+               -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
+extractAttr s = extractAttrPE (const (s ++))
+
 -- }
 
+eitherFunction :: Functor f
+               => (a -> f b)
+               -> (a' -> f b')
+               -> Either a a'
+               -> f (Either b b')
+eitherFunction f g = fmap (either (fmap Left) (fmap Right)) (f PP.+++! g)
 
 -- {
 
@@ -98,5 +133,10 @@ instance Profunctor (PackMap a b) where
 instance ProductProfunctor (PackMap a b) where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
+
+instance PP.SumProfunctor (PackMap a b) where
+  f +++! g = (PackMap (\x -> eitherFunction (f' x) (g' x)))
+    where PackMap f' = f
+          PackMap g' = g
 
 -- }
