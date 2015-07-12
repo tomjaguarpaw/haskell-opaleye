@@ -69,12 +69,18 @@ arbitraryQuery size | size == 0 = (pure . ArbitraryQuery . pure) []
         ArbitraryQuery q <- arbitraryQuery size'
         aq (O.distinctExplicit eitherPP q)
 {- Limit introduces non-determinism
+   To get around non-determinism we should ORDER BY first and then LIMIT.
+   We should probably just ORDER BY the first column, or if there is none,
+   order doesn't matter!
     , do
         ArbitraryQuery q <- arbitraryQuery size'
         l                <- TQ.choose (0, 100)
         aq (O.limit l q)
 -}
 {- Offset has a syntactic problem, and also presumably introduces nondeterminism
+   To get around non-determinism we should ORDER BY first and then LIMIT.
+   We should probably just ORDER BY the first column, or if there is none,
+   order doesn't matter!
     , do
         ArbitraryQuery q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
