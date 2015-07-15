@@ -70,7 +70,7 @@ ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
 
 ppAs :: String -> Doc -> Doc
 ppAs alias expr    | null alias    = expr
-                   | otherwise     = expr <+> (hsep . map text) ["as",alias]
+                   | otherwise     = expr <+> hsep [text "as", doubleQuotes (text alias)]
 
 
 ppUpdate :: SqlUpdate -> Doc
