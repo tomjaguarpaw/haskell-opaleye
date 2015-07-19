@@ -575,8 +575,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
 
 main :: IO ()
 main = do
---  conn <- PGS.open ":memory:"
-  conn <- PGS.open "/home/tom/tmp-sqlitedatabase/foo"
+  conn <- PGS.open ":memory:"
 
   dropAndCreateDB conn
 
