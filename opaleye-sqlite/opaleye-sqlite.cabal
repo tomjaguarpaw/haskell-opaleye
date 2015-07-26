@@ -1,9 +1,9 @@
 name:            opaleye-sqlite
 copyright:       Copyright (c) 2014-2015 Purely Agile Limited
 version:         0.0.0.0
-synopsis:        An SQL-generating DSL targeting PostgreSQL
-description:     An SQL-generating DSL targeting PostgreSQL.  Allows
-                 Postgres queries to be written within Haskell in a
+synopsis:        An SQL-generating DSL targeting SQLite
+description:     An SQL-generating DSL targeting SQLite.  Allows
+                 SQLite queries to be written within Haskell in a
                  typesafe and composable fashion.
 homepage:        https://github.com/tomjaguarpaw/haskell-opaleye
 bug-reports:     https://github.com/tomjaguarpaw/haskell-opaleye/issues
