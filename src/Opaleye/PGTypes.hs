@@ -99,10 +99,10 @@ pgUTCTime :: Time.UTCTime -> Column PGTimestamptz
 pgUTCTime = IPT.unsafePgFormatTime "timestamptz" "'%FT%T%QZ'"
 
 pgLocalTime :: Time.LocalTime -> Column PGTimestamp
-pgLocalTime = IPT.unsafePgFormatTime "timestamp" "'%FT%T'"
+pgLocalTime = IPT.unsafePgFormatTime "timestamp" "'%FT%T%Q'"
 
 pgTimeOfDay :: Time.TimeOfDay -> Column PGTime
-pgTimeOfDay = IPT.unsafePgFormatTime "time" "'%T'"
+pgTimeOfDay = IPT.unsafePgFormatTime "time" "'%T%Q'"
 
 -- "We recommend not using the type time with time zone"
 -- http://www.postgresql.org/docs/8.3/static/datatype-datetime.html
