@@ -55,6 +55,7 @@ library
                    Opaleye.SQLite.QueryArr,
                    Opaleye.SQLite.RunQuery,
                    Opaleye.SQLite.Sql,
+                   Opaleye.SQLite.SqlTypes,
                    Opaleye.SQLite.Table,
                    Opaleye.SQLite.Values,
                    Opaleye.SQLite.Internal.Aggregate,
