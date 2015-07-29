@@ -8,7 +8,7 @@ description:     An SQL-generating DSL targeting SQLite.  Allows
 homepage:        https://github.com/tomjaguarpaw/haskell-opaleye
 bug-reports:     https://github.com/tomjaguarpaw/haskell-opaleye/issues
 license:         BSD3
-license-file:    ../LICENSE
+license-file:    LICENSE
 author:          Purely Agile
 maintainer:      Purely Agile
 category:        Database
