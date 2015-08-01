@@ -64,7 +64,7 @@ ppSqlDirection x = text $ case Sql.sqlOrderDirection x of
 
 -- FIXME: We haven't implemented NULL ordering properly
 ppSqlNulls :: Sql.SqlOrder -> Doc
-ppSqlNulls x = empty
+ppSqlNulls _ = empty
 --ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
 --        Sql.SqlNullsFirst -> "NULLS FIRST"
 --        Sql.SqlNullsLast  -> "NULLS LAST"
