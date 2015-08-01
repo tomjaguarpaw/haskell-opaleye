@@ -4,13 +4,9 @@ module Opaleye.SQLite.SqlTypes (module Opaleye.SQLite.SqlTypes) where
 
 import           Opaleye.SQLite.Internal.Column (Column)
 import qualified Opaleye.SQLite.PGTypes as PT
-import qualified Opaleye.SQLite.Internal.PGTypes as IPT
-
-import qualified Opaleye.SQLite.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Text as SText
 import qualified Data.Text.Lazy as LText
-import qualified Data.Time as Time
 
 -- These probably don't correspond very well to SQLite types yet.
 -- Work in progress.

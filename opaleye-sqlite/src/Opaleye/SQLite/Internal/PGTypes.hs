@@ -15,7 +15,7 @@ import qualified Data.Time.Locale.Compat as Locale
 -- FIXME: SQLite requires temporal types to have the type "TEXT" which
 -- may cause problems elsewhere.
 unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
-unsafePgFormatTime typeName formatString = castToType "TEXT" . format
+unsafePgFormatTime _typeName formatString = castToType "TEXT" . format
   where format = Time.formatTime Locale.defaultTimeLocale formatString
 
 literalColumn :: HPQ.Literal -> Column a
