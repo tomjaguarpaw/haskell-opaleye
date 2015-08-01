@@ -8,6 +8,7 @@ import qualified Opaleye.SQLite.Internal.HaskellDB.PrimQuery as HPQ
 import           Opaleye.SQLite.Internal.HaskellDB.PrimQuery (Symbol(Symbol))
 import qualified Opaleye.SQLite.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.SQLite.Internal.HaskellDB.Sql.Default as SD
+import qualified Opaleye.SQLite.Internal.HaskellDB.Sql.Print as SP
 import qualified Opaleye.SQLite.Internal.HaskellDB.Sql.Generate as SG
 import qualified Opaleye.SQLite.Internal.Tag as T
 
@@ -101,8 +102,7 @@ aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
         --- constant.
         handleEmpty :: [HSql.SqlExpr] -> NEL.NonEmpty HSql.SqlExpr
         handleEmpty =
-          M.fromMaybe (return (HSql.FunSqlExpr "COALESCE" [HSql.ConstSqlExpr "0"
-                                                          ,HSql.ConstSqlExpr "0"]))
+          M.fromMaybe (return (SP.deliteral (HSql.ConstSqlExpr "0")))
           . NEL.nonEmpty
 
         groupBy' :: [(symbol, (Maybe aggrOp, HPQ.PrimExpr))]
