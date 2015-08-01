@@ -256,25 +256,28 @@ restrict conn (ArbitraryQuery q) = do
 
 run :: PGS.Connection -> IO ()
 run conn = do
-  let propColumns   = fmap          TQ.ioProperty (columns conn)
-      propFmap      = (fmap . fmap) TQ.ioProperty (fmap' conn)
-      propApply     = (fmap . fmap) TQ.ioProperty (apply conn)
-      propLimit     = (fmap . fmap) TQ.ioProperty (limit conn)
-      propOffset    = (fmap . fmap) TQ.ioProperty (offset conn)
-      propOrder     = (fmap . fmap) TQ.ioProperty (order conn)
-      propDistinct  = fmap          TQ.ioProperty (distinct conn)
-      propRestrict  = fmap          TQ.ioProperty (restrict conn)
+  let prop1 p = fmap          TQ.ioProperty (p conn)
+      prop2 p = (fmap . fmap) TQ.ioProperty (p conn)
 
-  let t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
+      test1 :: (Show a, TQ.Arbitrary a, TQ.Testable prop)
+               => (PGS.Connection -> a -> IO prop) -> IO ()
+      test1 = t . prop1
 
-  t propColumns
-  t propFmap
-  t propApply
-  t propLimit
-  t propOffset
-  t propOrder
-  t propDistinct
-  t propRestrict
+      test2 :: (Show a1, Show a2, TQ.Arbitrary a1, TQ.Arbitrary a2,
+                TQ.Testable prop)
+               => (PGS.Connection -> a1 -> a2 -> IO prop) -> IO ()
+      test2 = t . prop2
+
+      t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
+
+  test1 columns
+  test2 fmap'
+  test2 apply
+  test2 limit
+  test2 offset
+  test2 order
+  test1 distinct
+  test1 restrict
 
 -- }
 
