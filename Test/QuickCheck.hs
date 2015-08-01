@@ -36,7 +36,7 @@ type Columns = [Either (O.Column O.PGInt4) (O.Column O.PGBool)]
 type Haskells = [Either Int Bool]
 
 columnsOfHaskells :: Haskells -> Columns
-columnsOfHaskells = O.constant eitherPP
+columnsOfHaskells = O.constantExplicit eitherPP
 
 newtype ArbitraryQuery   = ArbitraryQuery (O.Query Columns)
 newtype ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Haskells }

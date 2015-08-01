@@ -23,7 +23,12 @@ import qualified Data.Profunctor                 as P
 import           Control.Applicative (Applicative, pure, (<*>))
 
 
-newtype Constant haskells columns = Constant { constant :: haskells -> columns }
+newtype Constant haskells columns =
+  Constant { constantExplicit :: haskells -> columns }
+
+constant :: D.Default Constant haskells columns
+         => haskells -> columns
+constant = constantExplicit D.def
 
 instance D.Default Constant haskell (Column sql)
          => D.Default Constant (Maybe haskell) (Column (C.Nullable sql)) where
