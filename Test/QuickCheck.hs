@@ -8,7 +8,7 @@ import qualified Database.PostgreSQL.Simple as PGS
 import qualified Test.QuickCheck as TQ
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
 import qualified Data.Profunctor.Product.Default as D
-import           Data.List (sort, sortBy)
+import           Data.List (sort)
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Monoid as Monoid
@@ -63,6 +63,10 @@ instance TQ.Arbitrary ArbitraryQuery where
   arbitrary = TQ.oneof [
       (ArbitraryQuery . pure . columnsOfHaskells . unArbitraryColumns)
         <$> TQ.arbitrary
+    , do
+        ArbitraryQuery q1 <- TQ.arbitrary
+        ArbitraryQuery q2 <- TQ.arbitrary
+        aq ((++) <$> q1 <*> q2)
     , return (ArbitraryQuery (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
     , do
         ArbitraryQuery q <- TQ.arbitrary
@@ -206,6 +210,18 @@ compare' conn one two = do
   two' <- unQueryDenotation two conn
   return (sort one' == sort two')
 
+compareSortedBy :: Ord a
+                => (a -> a -> Ord.Ordering)
+                -> PGS.Connection
+                -> QueryDenotation a
+                -> QueryDenotation a
+                -> IO Bool
+compareSortedBy o conn one two = do
+  one' <- unQueryDenotation one conn
+  two' <- unQueryDenotation two conn
+  return ((sort one' == sort two')
+          && (isSortedBy o one'))
+
 -- }
 
 -- { The tests
@@ -237,8 +253,10 @@ offset conn (ArbitraryPositiveInt l) (ArbitraryQuery q) = do
 
 order :: PGS.Connection -> ArbitraryOrder -> ArbitraryQuery -> IO Bool
 order conn o (ArbitraryQuery q) = do
-  compareNoSort conn (denotation' (O.orderBy (arbitraryOrder o) q))
-                     (onList (sortBy (arbitraryOrdering o)) (denotation' q))
+  compareSortedBy (arbitraryOrdering o)
+                  conn
+                  (denotation' (O.orderBy (arbitraryOrder o) q))
+                  (denotation' q)
 
 distinct :: PGS.Connection -> ArbitraryQuery -> IO Bool
 distinct conn (ArbitraryQuery q) = do
@@ -316,5 +334,11 @@ restrictFirstBoolList :: [Haskells] -> [Haskells]
 restrictFirstBoolList = map snd
                         . filter fst
                         . map (firstBoolOrTrue True)
+
+isSortedBy ::(a -> a -> Ord.Ordering) -> [a] -> Bool
+isSortedBy comp xs = all (uncurry (.<=)) (zip xs (tail' xs))
+  where tail' []     = []
+        tail' (_:ys) = ys
+        x .<= y       = comp x y /= Ord.GT
 
 -- }
