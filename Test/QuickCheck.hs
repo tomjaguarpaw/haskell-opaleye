@@ -35,8 +35,11 @@ onList f = QueryDenotation . (fmap . fmap) f . unQueryDenotation
 type Columns = [Either (O.Column O.PGInt4) (O.Column O.PGBool)]
 type Haskells = [Either Int Bool]
 
+columnsOfHaskells :: Haskells -> Columns
+columnsOfHaskells = O.constant eitherPP
+
 newtype ArbitraryQuery   = ArbitraryQuery (O.Query Columns)
-newtype ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Columns }
+newtype ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Haskells }
                         deriving Show
 newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
@@ -58,7 +61,7 @@ instance Show ArbitraryGarble where
 
 instance TQ.Arbitrary ArbitraryQuery where
   arbitrary = TQ.oneof [
-      (ArbitraryQuery . pure . unArbitraryColumns)
+      (ArbitraryQuery . pure . columnsOfHaskells . unArbitraryColumns)
         <$> TQ.arbitrary
     , return (ArbitraryQuery (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
     , do
@@ -92,7 +95,7 @@ instance TQ.Arbitrary ArbitraryQuery where
 instance TQ.Arbitrary ArbitraryColumns where
     arbitrary = do
     l <- TQ.listOf (TQ.oneof (map (return . Left) [-1, 0, 1]
-                             ++ map (return . Right) [O.pgBool False, O.pgBool True]))
+                             ++ map (return . Right) [False, True]))
     return (ArbitraryColumns l)
 
 instance TQ.Arbitrary ArbitraryPositiveInt where
@@ -182,6 +185,7 @@ denotation2 = denotation (eitherPP PP.***! eitherPP)
 
 -- { Comparing the results
 
+-- compareNoSort is stronger than compare' so prefer to use it where possible
 compareNoSort :: Eq a
               => PGS.Connection
               -> QueryDenotation a
@@ -205,6 +209,11 @@ compare' conn one two = do
 -- }
 
 -- { The tests
+
+columns :: PGS.Connection -> ArbitraryColumns -> IO Bool
+columns conn (ArbitraryColumns c) =
+  compareNoSort conn (denotation' (pure (columnsOfHaskells c)))
+                     (pure c)
 
 fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitraryQuery -> IO Bool
 fmap' conn f (ArbitraryQuery q) = do
@@ -247,7 +256,8 @@ restrict conn (ArbitraryQuery q) = do
 
 run :: PGS.Connection -> IO ()
 run conn = do
-  let propFmap      = (fmap . fmap) TQ.ioProperty (fmap' conn)
+  let propColumns   = fmap          TQ.ioProperty (columns conn)
+      propFmap      = (fmap . fmap) TQ.ioProperty (fmap' conn)
       propApply     = (fmap . fmap) TQ.ioProperty (apply conn)
       propLimit     = (fmap . fmap) TQ.ioProperty (limit conn)
       propOffset    = (fmap . fmap) TQ.ioProperty (offset conn)
@@ -257,6 +267,7 @@ run conn = do
 
   let t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
+  t propColumns
   t propFmap
   t propApply
   t propLimit

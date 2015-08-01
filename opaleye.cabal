@@ -48,6 +48,7 @@ library
                    Opaleye.Aggregate,
                    Opaleye.Binary,
                    Opaleye.Column,
+                   Opaleye.Constant,
                    Opaleye.Distinct,
                    Opaleye.Join,
                    Opaleye.Manipulation,
