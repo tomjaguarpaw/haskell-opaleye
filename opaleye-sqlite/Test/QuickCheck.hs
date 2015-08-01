@@ -35,8 +35,11 @@ onList f = QueryDenotation . (fmap . fmap) f . unQueryDenotation
 type Columns = [Either (O.Column O.PGInt4) (O.Column O.PGBool)]
 type Haskells = [Either Int Bool]
 
+columnsOfHaskells :: Haskells -> Columns
+columnsOfHaskells = O.constantExplicit eitherPP
+
 newtype ArbitraryQuery   = ArbitraryQuery (O.Query Columns)
-newtype ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Columns }
+newtype ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Haskells }
                         deriving Show
 newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
@@ -62,7 +65,7 @@ instance TQ.Arbitrary ArbitraryQuery where
 arbitraryQuery :: Int -> TQ.Gen ArbitraryQuery
 arbitraryQuery size | size == 0 = (pure . ArbitraryQuery . pure) []
                     | otherwise = TQ.oneof [
-      (ArbitraryQuery . pure . unArbitraryColumns)
+      (ArbitraryQuery . pure . columnsOfHaskells . unArbitraryColumns)
         <$> TQ.arbitrary
     , return (ArbitraryQuery (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
     , do
@@ -107,7 +110,7 @@ arbitraryQuery size | size == 0 = (pure . ArbitraryQuery . pure) []
 instance TQ.Arbitrary ArbitraryColumns where
     arbitrary = do
     l <- TQ.listOf (TQ.oneof (map (return . Left) [-1, 0, 1]
-                             ++ map (return . Right) [O.pgBool False, O.pgBool True]))
+                             ++ map (return . Right) [False, True]))
     return (ArbitraryColumns l)
 
 instance TQ.Arbitrary ArbitraryPositiveInt where
@@ -221,6 +224,11 @@ compare' conn one two = do
 
 -- { The tests
 
+columns :: PGS.Connection -> ArbitraryColumns -> IO Bool
+columns conn (ArbitraryColumns c) =
+  compareNoSort conn (denotation' (pure (columnsOfHaskells c)))
+                     (pure c)
+
 fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitraryQuery -> IO Bool
 fmap' conn f (ArbitraryQuery q) = do
   compareNoSort conn (denotation' (fmap (unArbitraryGarble f) q))
@@ -262,29 +270,34 @@ restrict conn (ArbitraryQuery q) = do
 
 run :: PGS.Connection -> IO ()
 run conn = do
-  let propFmap      = (fmap . fmap) TQ.ioProperty (fmap' conn)
-      propApply     = (fmap . fmap) TQ.ioProperty (apply conn)
-      propLimit     = (fmap . fmap) TQ.ioProperty (limit conn)
---      propOffset    = (fmap . fmap) TQ.ioProperty (offset conn)
-      propOrder     = (fmap . fmap) TQ.ioProperty (order conn)
-      propDistinct  = fmap          TQ.ioProperty (distinct conn)
-      propRestrict  = fmap          TQ.ioProperty (restrict conn)
+  let prop1 p = fmap          TQ.ioProperty (p conn)
+      prop2 p = (fmap . fmap) TQ.ioProperty (p conn)
+
+      test1 :: (Show a, TQ.Arbitrary a, TQ.Testable prop)
+               => (PGS.Connection -> a -> IO prop) -> IO ()
+      test1 = t . prop1
+
+      test2 :: (Show a1, Show a2, TQ.Arbitrary a1, TQ.Arbitrary a2,
+                TQ.Testable prop)
+               => (PGS.Connection -> a1 -> a2 -> IO prop) -> IO ()
+      test2 = t . prop2
 
   -- 5 seems to be the max size of test cases before SQLite's stack overflows.
   -- I'd rather increase the stack size
   --   http://www.sqlite.org/limits.html#max_expr_depth
   -- but I don't know how to do that from Haskell.
   -- Increasing the number of trials to compensate.
-  let t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 10000
+      t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 10000
                                                                       , TQ.maxSize    = 5 }) p
 
-  t propFmap
-  t propApply
-  t propLimit
---  t propOffset
-  t propOrder
-  t propDistinct
-  t propRestrict
+  test1 columns
+  test2 fmap'
+  test2 apply
+  test2 limit
+--  test2 offset
+  test2 order
+  test1 distinct
+  test1 restrict
 
 -- }
 

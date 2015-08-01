@@ -1,6 +1,7 @@
 module Opaleye.SQLite ( module Opaleye.SQLite.Aggregate
                , module Opaleye.SQLite.Binary
                , module Opaleye.SQLite.Column
+               , module Opaleye.SQLite.Constant
                , module Opaleye.SQLite.Distinct
                , module Opaleye.SQLite.Join
                , module Opaleye.SQLite.Manipulation
@@ -17,6 +18,7 @@ module Opaleye.SQLite ( module Opaleye.SQLite.Aggregate
 import Opaleye.SQLite.Aggregate
 import Opaleye.SQLite.Binary
 import Opaleye.SQLite.Column
+import Opaleye.SQLite.Constant
 import Opaleye.SQLite.Distinct
 import Opaleye.SQLite.Join
 import Opaleye.SQLite.Manipulation

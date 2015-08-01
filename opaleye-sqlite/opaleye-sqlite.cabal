@@ -46,6 +46,7 @@ library
                    Opaleye.SQLite.Aggregate,
                    Opaleye.SQLite.Binary,
                    Opaleye.SQLite.Column,
+                   Opaleye.SQLite.Constant,
                    Opaleye.SQLite.Distinct,
                    Opaleye.SQLite.Join,
                    Opaleye.SQLite.Manipulation,
