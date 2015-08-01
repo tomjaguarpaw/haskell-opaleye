@@ -60,6 +60,11 @@ import           Data.Typeable (Typeable)
 -- This is *not* a Product Profunctor because it is the only way I
 -- know of to get the instance generation to work for non-Nullable and
 -- Nullable types at once.
+
+-- I can no longer remember what the above comment means, but it might
+-- be that we can't add nullability to a RowParser, only to a
+-- FieldParser, so we have to have some type that we know contains
+-- just a FieldParser.
 data QueryRunnerColumn pgType haskellType =
   QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
 
