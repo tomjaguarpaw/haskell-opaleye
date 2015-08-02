@@ -9,6 +9,8 @@ import qualified Test.QuickCheck as TQ
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
 import qualified Data.Profunctor.Product.Default as D
 import           Data.List (sort)
+import qualified Data.List as List
+import qualified Data.MultiSet as MultiSet
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Monoid as Monoid
@@ -241,10 +243,39 @@ apply conn (ArbitraryQuery q1) (ArbitraryQuery q2) = do
   compare' conn (denotation2 ((,) <$> q1 <*> q2))
                 ((,) <$> denotation' q1 <*> denotation' q2)
 
-limit :: PGS.Connection -> ArbitraryPositiveInt -> ArbitraryQuery -> IO Bool
-limit conn (ArbitraryPositiveInt l) (ArbitraryQuery q) = do
-  compareNoSort conn (denotation' (O.limit l q))
-                     (onList (take l) (denotation' q))
+-- When combining arbitrary queries with the applicative product <*>
+-- the limit of the denotation is not always the denotation of the
+-- limit.  Without some ordering applied before the limit the returned
+-- rows can vary.  If an ordering is applied beforehand we can check
+-- the invariant that the returned rows always compare smaller than
+-- the remainder under the applied ordering.
+--
+-- Strangely the same caveat doesn't apply to offset.
+limit :: PGS.Connection
+      -> ArbitraryPositiveInt
+      -> ArbitraryQuery
+      -> ArbitraryOrder
+      -> IO Bool
+limit conn (ArbitraryPositiveInt l) (ArbitraryQuery q) o = do
+  let q' = O.limit l (O.orderBy (arbitraryOrder o) q)
+
+  one' <- unQueryDenotation (denotation' q') conn
+  two' <- unQueryDenotation (denotation' q) conn
+
+  let remainder = MultiSet.fromList two'
+                  `MultiSet.difference`
+                  MultiSet.fromList one'
+      maxChosen :: Maybe Haskells
+      maxChosen = maximumBy (arbitraryOrdering o) one'
+      minRemain :: Maybe Haskells
+      minRemain = minimumBy (arbitraryOrdering o) (MultiSet.toList remainder)
+      cond :: Maybe Bool
+      cond = lteBy (arbitraryOrdering o) <$> maxChosen <*> minRemain
+      condBool :: Bool
+      condBool = Maybe.fromMaybe True cond
+
+  return ((length one' == min l (length two'))
+          && condBool)
 
 offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitraryQuery -> IO Bool
 offset conn (ArbitraryPositiveInt l) (ArbitraryQuery q) = do
@@ -263,10 +294,13 @@ distinct conn (ArbitraryQuery q) = do
   compare' conn (denotation' (O.distinctExplicit eitherPP q))
                 (onList nub (denotation' q))
 
+-- When we added <*> to the arbitrary queries we started getting some
+-- consequences to do with the order of the returned rows and so
+-- restrict had to start being compared sorted.
 restrict :: PGS.Connection -> ArbitraryQuery -> IO Bool
 restrict conn (ArbitraryQuery q) = do
-  compareNoSort conn (denotation' (restrictFirstBool Arrow.<<< q))
-                     (onList restrictFirstBoolList (denotation' q))
+  compare' conn (denotation' (restrictFirstBool Arrow.<<< q))
+                (onList restrictFirstBoolList (denotation' q))
 
 -- }
 
@@ -276,6 +310,7 @@ run :: PGS.Connection -> IO ()
 run conn = do
   let prop1 p = fmap          TQ.ioProperty (p conn)
       prop2 p = (fmap . fmap) TQ.ioProperty (p conn)
+      prop3 p = (fmap . fmap . fmap) TQ.ioProperty (p conn)
 
       test1 :: (Show a, TQ.Arbitrary a, TQ.Testable prop)
                => (PGS.Connection -> a -> IO prop) -> IO ()
@@ -286,12 +321,18 @@ run conn = do
                => (PGS.Connection -> a1 -> a2 -> IO prop) -> IO ()
       test2 = t . prop2
 
+      test3 :: (Show a1, Show a2, Show a3,
+                TQ.Arbitrary a1, TQ.Arbitrary a2, TQ.Arbitrary a3,
+                TQ.Testable prop)
+               => (PGS.Connection -> a1 -> a2 -> a3 -> IO prop) -> IO ()
+      test3 = t . prop3
+
       t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
   test1 columns
   test2 fmap'
   test2 apply
-  test2 limit
+  test3 limit
   test2 offset
   test2 order
   test1 distinct
@@ -339,6 +380,16 @@ isSortedBy ::(a -> a -> Ord.Ordering) -> [a] -> Bool
 isSortedBy comp xs = all (uncurry (.<=)) (zip xs (tail' xs))
   where tail' []     = []
         tail' (_:ys) = ys
-        x .<= y       = comp x y /= Ord.GT
+        x .<= y       = lteBy comp x y
+
+lteBy :: (a -> a -> Ord.Ordering) -> a -> a -> Bool
+lteBy comp x y = comp x y /= Ord.GT
+
+maximumBy :: (a -> a -> Ord.Ordering) -> [a] -> Maybe a
+maximumBy _ []       = Nothing
+maximumBy c xs@(_:_) = Just (List.maximumBy c xs)
+
+minimumBy :: (a -> a -> Ord.Ordering) -> [a] -> Maybe a
+minimumBy = maximumBy . flip
 
 -- }
