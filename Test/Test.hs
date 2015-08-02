@@ -248,7 +248,7 @@ serialTables = map columns2 ["table5"]
 dropAndCreateDB :: PGS.Connection -> IO ()
 dropAndCreateDB conn = do
   mapM_ execute tables
-  executeTextTable
+  _ <- executeTextTable
   mapM_ executeSerial serialTables
   where execute = PGS.execute_ conn . dropAndCreateTableInt
         executeTextTable = (PGS.execute_ conn . dropAndCreateTableText . columns2) "table6"
