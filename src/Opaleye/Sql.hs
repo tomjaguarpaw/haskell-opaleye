@@ -44,4 +44,4 @@ showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> 
 showSqlForPostgresUnoptExplicit = formatAndShowSQL .: Q.runQueryArrUnpack
 
 formatAndShowSQL :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> String
-formatAndShowSQL = show . Pr.ppSql . Sql.sql
+formatAndShowSQL = Pr.renderDoc . Pr.ppSql . Sql.sql

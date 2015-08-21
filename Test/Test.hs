@@ -200,7 +200,7 @@ table4columndata :: [(Column O.PGInt4, Column O.PGInt4)]
 table4columndata = table4dataG
 
 table6data :: [(String, String)]
-table6data = [("xy", "a"), ("z", "a"), ("more text", "a")]
+table6data = [("xy", "a"), ("z", "a"), ("more \n text", "a")]
 
 table6columndata :: [(Column O.PGText, Column O.PGText)]
 table6columndata = map (\(column1, column2) -> (O.pgString column1, O.pgString column2)) table6data
