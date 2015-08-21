@@ -28,11 +28,14 @@ import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
                                   empty, equals, hcat, hsep, parens, punctuate,
                                   text, vcat)
 
--- Silliness to avoid "ORDER BY 1" etc. meaning order by the first column
--- Any identity function will do
+-- Silliness to avoid "ORDER BY 1" etc. meaning order by the first
+-- column We need an identity function, but due to
+-- https://github.com/tomjaguarpaw/haskell-opaleye/issues/100 we need
+-- to be careful not to be over enthusiastic.  Just apply COALESCE to
+-- literals.
 deliteral :: SqlExpr -> SqlExpr
-deliteral c@(ColumnSqlExpr (SqlColumn _)) = c
-deliteral expr = FunSqlExpr "COALESCE" [expr]
+deliteral expr@(ConstSqlExpr _) = FunSqlExpr "COALESCE" [expr]
+deliteral expr                  = expr
 
 ppWhere :: [SqlExpr] -> Doc
 ppWhere [] = empty

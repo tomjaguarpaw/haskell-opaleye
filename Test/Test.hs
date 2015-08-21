@@ -334,6 +334,12 @@ testAggregate = testG (Arr.second aggregateCoerceFIXME
                                            table1Q)
                       (\r -> [(1, 400) :: (Int, Int64), (2, 300)] == L.sort r)
 
+testAggregateFunction :: Test
+testAggregateFunction = testG (Arr.second aggregateCoerceFIXME
+                        <<< O.aggregate (PP.p2 (O.groupBy, O.sum))
+                                        (fmap (\(x, y) -> (x + 1, y)) table1Q))
+                      (\r -> [(2, 400) :: (Int, Int64), (3, 300)] == L.sort r)
+
 testAggregateProfunctor :: Test
 testAggregateProfunctor = testG q expected
   where q = O.aggregate (PP.p2 (O.groupBy, countsum)) table1Q
@@ -568,7 +574,8 @@ testInsertSerial conn = do
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
-            testDistinct, testAggregate, testAggregateProfunctor, testStringAggregate,
+            testDistinct, testAggregate, testAggregateFunction,
+            testAggregateProfunctor, testStringAggregate,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
