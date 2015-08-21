@@ -29,7 +29,7 @@ import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
                                   text, vcat)
 
 -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first
--- column We need an identity function, but due to
+-- column.  We need an identity function, but due to
 -- https://github.com/tomjaguarpaw/haskell-opaleye/issues/100 we need
 -- to be careful not to be over enthusiastic.  Just apply COALESCE to
 -- literals.
