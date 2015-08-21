@@ -187,6 +187,7 @@ sqlBinding :: (Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe HSql.SqlColumn)
 sqlBinding (Symbol sym t, pe) =
   (sqlExpr pe, Just (HSql.SqlColumn (T.tagWith t sym)))
 
+-- | For ensuring that we have at least one column in a SELECT
 ensureColumns :: [(HSql.SqlExpr, Maybe a)]
               -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
 ensureColumns = M.fromMaybe (return (HSql.ConstSqlExpr "0", Nothing))
