@@ -80,6 +80,7 @@ defaultSqlExpr gen expr =
     case expr of
       AttrExpr (Symbol a t) -> ColumnSqlExpr (SqlColumn (tagWith t a))
       BaseTableAttrExpr a -> ColumnSqlExpr (SqlColumn a)
+      CompositeExpr e x -> CompositeSqlExpr (defaultSqlExpr gen e) x
       BinExpr op e1 e2 ->
         let leftE = sqlExpr gen e1
             rightE = sqlExpr gen e2

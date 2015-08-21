@@ -19,6 +19,10 @@ unsafeCoerce = unsafeCoerceColumn
 unsafeCoerceColumn :: Column a -> Column b
 unsafeCoerceColumn (Column e) = Column e
 
+unsafeCompositeField :: Column a -> String -> Column b
+unsafeCompositeField (Column e) fieldName = 
+  Column (HPQ.CompositeExpr e fieldName)
+
 binOp :: HPQ.BinOp -> Column a -> Column b -> Column c
 binOp op (Column e) (Column e') = Column (HPQ.BinExpr op e e')
 

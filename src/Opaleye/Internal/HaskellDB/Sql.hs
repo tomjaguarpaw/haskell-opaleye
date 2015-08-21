@@ -30,6 +30,7 @@ data SqlOrder = SqlOrder { sqlOrderDirection :: SqlOrderDirection
 
 -- | Expressions in SQL statements.
 data SqlExpr = ColumnSqlExpr  SqlColumn
+             | CompositeSqlExpr SqlExpr String
              | BinSqlExpr     String SqlExpr SqlExpr
              | PrefixSqlExpr  String SqlExpr
              | PostfixSqlExpr String SqlExpr
