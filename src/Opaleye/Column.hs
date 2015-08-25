@@ -2,9 +2,11 @@ module Opaleye.Column (module Opaleye.Column,
                        Column,
                        Nullable,
                        unsafeCoerce,
-                       unsafeCoerceColumn)  where
+                       unsafeCoerceColumn,
+                       unsafeCompositeField)  where
 
-import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerce, unsafeCoerceColumn)
+import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerce, unsafeCoerceColumn, 
+                                          unsafeCompositeField)
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.PGTypes as T

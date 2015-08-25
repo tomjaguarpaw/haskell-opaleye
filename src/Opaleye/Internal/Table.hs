@@ -88,6 +88,7 @@ runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) wher
   -- tablecols contained in the View (which would be naughty)
   mkName pe i = (++ i) $ case pe of
     HPQ.BaseTableAttrExpr columnName -> columnName
+    HPQ.CompositeExpr columnExpr fieldName -> mkName columnExpr i ++ fieldName
     _ -> "tablecolumn"
 
 runWriter :: Writer columns columns' -> columns -> [(HPQ.PrimExpr, String)]

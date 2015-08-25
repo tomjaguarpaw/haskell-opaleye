@@ -113,6 +113,7 @@ ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =
     case expr of
       ColumnSqlExpr c     -> ppColumn c
+      CompositeSqlExpr s x -> parens (ppSqlExpr s) <> text "." <> text x
       ParensSqlExpr e -> parens (ppSqlExpr e)
       BinSqlExpr op e1 e2 -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2
       PrefixSqlExpr op e  -> text op <+> ppSqlExpr e

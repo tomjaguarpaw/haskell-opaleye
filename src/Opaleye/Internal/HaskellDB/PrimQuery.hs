@@ -17,6 +17,7 @@ data Symbol = Symbol String T.Tag deriving (Read, Show)
 
 data PrimExpr   = AttrExpr  Symbol
                 | BaseTableAttrExpr Attribute
+                | CompositeExpr     PrimExpr Attribute -- ^ Composite Type Query
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
                 | AggrExpr  AggrOp PrimExpr
