@@ -24,6 +24,7 @@ import qualified Database.PostgreSQL.Simple as PGS
 import qualified Data.Profunctor.Product.Default as D
 
 import           Data.Int (Int64)
+import           Data.Maybe (fromMaybe)
 import           Data.String (fromString)
 import qualified Data.List.NonEmpty as NEL
 
@@ -98,7 +99,7 @@ arrangeInsertReturning unpackspec table columns returningf =
   where insert = arrangeInsert table columns
         TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
-        returningSEs = map Sql.sqlExpr returningPEs
+        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
 arrangeInsertReturningSql :: U.Unpackspec returned ignored
                           -> T.Table columnsW columnsR
@@ -115,11 +116,11 @@ runInsertReturningExplicit :: RQ.QueryRunner returned haskells
                             -> columnsW
                             -> (columnsR -> returned)
                             -> IO [haskells]
-runInsertReturningExplicit qr conn t w r = PGS.queryWith_ (rowParser (r v)) conn
+runInsertReturningExplicit qr conn t w r = PGS.queryWith_ parser conn
                                              (fromString
                                              (arrangeInsertReturningSql u t w r))
-  where IRQ.QueryRunner u rowParser _ = qr
-        --- ^^ TODO: need to make sure we're not trying to read zero rows
+  where IRQ.QueryRunner u _ _ = qr
+        parser = IRQ.prepareRowParser qr (r v)
         TI.Table _ (TI.TableProperties _ (TI.View v)) = t
         -- This method of getting hold of the return type feels a bit
         -- suspect.  I haven't checked it for validity.
@@ -147,7 +148,7 @@ arrangeUpdateReturning unpackspec table updatef cond returningf =
   where update = arrangeUpdate table updatef cond
         TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
-        returningSEs = map Sql.sqlExpr returningPEs
+        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
 arrangeUpdateReturningSql :: U.Unpackspec returned ignored
                        -> T.Table columnsW columnsR
@@ -167,10 +168,10 @@ runUpdateReturningExplicit :: RQ.QueryRunner returned haskells
                            -> (columnsR -> returned)
                            -> IO [haskells]
 runUpdateReturningExplicit qr conn t update cond r =
-  PGS.queryWith_ (rowParser (r v)) conn
+  PGS.queryWith_ parser conn
                  (fromString (arrangeUpdateReturningSql u t update cond r))
-  where IRQ.QueryRunner u rowParser _ = qr
-        --- ^^ TODO: need to make sure we're not trying to read zero rows
+  where IRQ.QueryRunner u _ _ = qr
+        parser = IRQ.prepareRowParser qr (r v)
         TI.Table _ (TI.TableProperties _ (TI.View v)) = t
 
 runUpdateReturning :: (D.Default RQ.QueryRunner returned haskells)

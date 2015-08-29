@@ -113,10 +113,10 @@ ppInsertReturning :: Sql.Returning HSql.SqlInsert -> Doc
 ppInsertReturning (Sql.Returning insert returnExprs) =
   HPrint.ppInsert insert
   $$ text "RETURNING"
-  <+> HPrint.commaV HPrint.ppSqlExpr returnExprs
+  <+> HPrint.commaV HPrint.ppSqlExpr (NEL.toList returnExprs)
 
 ppUpdateReturning :: Sql.Returning HSql.SqlUpdate -> Doc
 ppUpdateReturning (Sql.Returning update returnExprs) =
   HPrint.ppUpdate update
   $$ text "RETURNING"
-  <+> HPrint.commaV HPrint.ppSqlExpr returnExprs
+  <+> HPrint.commaV HPrint.ppSqlExpr (NEL.toList returnExprs)

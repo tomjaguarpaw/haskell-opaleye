@@ -2,13 +2,13 @@
 
 module Opaleye.Internal.RunQuery where
 
-import           Control.Applicative (Applicative, pure, (<*>), liftA2)
+import           Control.Applicative (Applicative, pure, (*>), (<*>), liftA2)
 
 import           Database.PostgreSQL.Simple.Internal (RowParser)
 import           Database.PostgreSQL.Simple.FromField (FieldParser, FromField,
                                                        fromField)
-import           Database.PostgreSQL.Simple.FromRow (fieldWith)
-import           Database.PostgreSQL.Simple.Types (fromPGArray)
+import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
+import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
 import           Opaleye.Column (Column)
 import           Opaleye.Internal.Column (Nullable)
@@ -270,3 +270,14 @@ jsonFieldTypeParser jsonTypeName field mData = do
         _       -> returnError UnexpectedNull field ""
 
 -- }
+
+prepareRowParser :: QueryRunner columns haskells -> columns -> RowParser haskells
+prepareRowParser (QueryRunner _ rowParser nonZeroColumns) cols =
+  if nonZeroColumns cols
+  then rowParser cols
+  else (fromRow :: RowParser (Only Int)) *> rowParser cols
+     -- If we are selecting zero columns then the SQL
+     -- generator will have to put a dummy 0 into the
+     -- SELECT statement, since we can't select zero
+     -- columns.  In that case we have to make sure we
+     -- read a single Int.
