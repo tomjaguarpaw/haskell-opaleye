@@ -79,11 +79,11 @@ tableAlias i select = ("T" ++ show i, select)
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
 ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
-  Table table           ->  (HPrint.ppTable table)
-  SelectFrom selectFrom ->  (parens (ppSelectFrom selectFrom))
-  SelectJoin slj        ->  (parens (ppSelectJoin slj))
-  SelectValues slv      ->  (parens (ppSelectValues slv))
-  SelectBinary slb      ->  (parens (ppSelectBinary slb))
+  Table table           -> HPrint.ppTable table
+  SelectFrom selectFrom -> parens (ppSelectFrom selectFrom)
+  SelectJoin slj        -> parens (ppSelectJoin slj)
+  SelectValues slv      -> parens (ppSelectValues slv)
+  SelectBinary slb      -> parens (ppSelectBinary slb)
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
