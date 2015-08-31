@@ -63,7 +63,7 @@ data BinOp = Except | Union | UnionAll deriving Show
 
 data TableName = String
 
-data Returning a = Returning a [HSql.SqlExpr]
+data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
 sqlQueryGenerator :: PQ.PrimQueryFold Select
 sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
@@ -187,8 +187,13 @@ sqlBinding :: (Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe HSql.SqlColumn)
 sqlBinding (Symbol sym t, pe) =
   (sqlExpr pe, Just (HSql.SqlColumn (T.tagWith t sym)))
 
--- | For ensuring that we have at least one column in a SELECT
 ensureColumns :: [(HSql.SqlExpr, Maybe a)]
-              -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
-ensureColumns = M.fromMaybe (return (HSql.ConstSqlExpr "0", Nothing))
-                . NEL.nonEmpty
+             -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
+ensureColumns = ensureColumnsGen (\x -> (x,Nothing))
+
+-- | For ensuring that we have at least one column in a SELECT or RETURNING
+ensureColumnsGen :: (HSql.SqlExpr -> a)
+              -> [a]
+              -> NEL.NonEmpty a
+ensureColumnsGen f = M.fromMaybe (return . f $ HSql.ConstSqlExpr "0")
+                   . NEL.nonEmpty

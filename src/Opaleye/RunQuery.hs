@@ -52,20 +52,16 @@ runQueryExplicit :: QueryRunner columns haskells
                  -> PGS.Connection
                  -> Query columns
                  -> IO [haskells]
-runQueryExplicit (QueryRunner u rowParser nonZeroColumns) conn q =
-  PGS.queryWith_ parser conn sql
+runQueryExplicit qr conn q = PGS.queryWith_ parser conn sql
+  where (sql, parser) = prepareQuery qr q
+
+prepareQuery :: QueryRunner columns haskells -> Query columns -> (PGS.Query, FR.RowParser haskells)
+prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
   where sql :: PGS.Query
         sql = String.fromString (S.showSqlForPostgresExplicit u q)
         -- FIXME: We're doing work twice here
         (b, _, _) = Q.runSimpleQueryArrStart q ()
-        parser = if nonZeroColumns b
-                 then rowParser b
-                 else (FR.fromRow :: FR.RowParser (PGS.Only Int)) *> rowParser b
-                 -- If we are selecting zero columns then the SQL
-                 -- generator will have to put a dummy 0 into the
-                 -- SELECT statement, since we can't select zero
-                 -- columns.  In that case we have to make sure we
-                 -- read a single Int.
+        parser = IRQ.prepareRowParser qr b
 
 -- | Use 'queryRunnerColumn' to make an instance to allow you to run queries on
 --   your own datatypes.  For example:
