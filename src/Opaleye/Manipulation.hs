@@ -24,7 +24,6 @@ import qualified Database.PostgreSQL.Simple as PGS
 import qualified Data.Profunctor.Product.Default as D
 
 import           Data.Int (Int64)
-import           Data.Maybe (fromMaybe)
 import           Data.String (fromString)
 import qualified Data.List.NonEmpty as NEL
 

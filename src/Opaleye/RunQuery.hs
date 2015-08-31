@@ -20,8 +20,6 @@ import qualified Opaleye.Internal.QueryArr as Q
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
 
-import           Control.Applicative ((*>))
-
 -- | @runQuery@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
