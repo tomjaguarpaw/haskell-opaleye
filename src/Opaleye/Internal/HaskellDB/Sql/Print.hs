@@ -70,9 +70,9 @@ ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
         Sql.SqlNullsFirst -> "NULLS FIRST"
         Sql.SqlNullsLast  -> "NULLS LAST"
 
-ppAs :: String -> Doc -> Doc
-ppAs alias expr    | null alias    = expr
-                   | otherwise     = expr <+> hsep [text "as", doubleQuotes (text alias)]
+ppAs :: Maybe String -> Doc -> Doc
+ppAs Nothing      expr = expr
+ppAs (Just alias) expr = expr <+> hsep [text "as", doubleQuotes (text alias)]
 
 
 ppUpdate :: SqlUpdate -> Doc
