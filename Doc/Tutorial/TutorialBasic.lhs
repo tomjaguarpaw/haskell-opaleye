@@ -64,6 +64,10 @@ manipulation tutorial you can see an example of when they might differ.
 >                                       , required "age"
 >                                       , required "address" ))
 
+By default, the table `"personTable"` is looked up in PostgreSQL's
+default `"public"` schema. If we wanted to specify a different schema we
+could have used the `TableWithSchema` constructor instead of `Table`.
+
 To query a table we use `queryTable`.
 
 (Here and in a few other places in Opaleye there is some typeclass

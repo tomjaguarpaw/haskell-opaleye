@@ -137,7 +137,7 @@ table4 = twoIntTable "table4"
 
 table5 :: O.Table (Maybe (Column O.PGInt4), Maybe (Column  O.PGInt4))
                   (Column O.PGInt4, Column O.PGInt4)
-table5 = O.Table "table5" (PP.p2 (O.optional "column1", O.optional "column2"))
+table5 = O.TableWithSchema "public" "table5" (PP.p2 (O.optional "column1", O.optional "column2"))
 
 table6 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
 table6 = O.Table "table6" (PP.p2 (O.required "column1", O.required "column2"))
@@ -209,8 +209,8 @@ table6columndata = map (\(column1, column2) -> (O.pgString column1, O.pgString c
 -- table names are treated as lower case unless the name is quoted!
 dropAndCreateTable :: String -> (String, [String]) -> PGS.Query
 dropAndCreateTable columnType (t, cols) = String.fromString drop_
-  where drop_ = "DROP TABLE IF EXISTS \"" ++ t ++ "\";"
-                ++ "CREATE TABLE \"" ++ t ++ "\""
+  where drop_ = "DROP TABLE IF EXISTS \"public\".\"" ++ t ++ "\";"
+                ++ "CREATE TABLE \"public\".\"" ++ t ++ "\""
                 ++ " (" ++ commas cols ++ ");"
         integer c = ("\"" ++ c ++ "\"" ++ " " ++ columnType)
         commas = L.intercalate "," . map integer
@@ -225,8 +225,8 @@ dropAndCreateTableText = dropAndCreateTable "text"
 -- table names are treated as lower case unless the name is quoted!
 dropAndCreateTableSerial :: (String, [String]) -> PGS.Query
 dropAndCreateTableSerial (t, cols) = String.fromString drop_
-  where drop_ = "DROP TABLE IF EXISTS \"" ++ t ++ "\";"
-                ++ "CREATE TABLE \"" ++ t ++ "\""
+  where drop_ = "DROP TABLE IF EXISTS \"public\".\"" ++ t ++ "\";"
+                ++ "CREATE TABLE \"public\".\"" ++ t ++ "\""
                 ++ " (" ++ commas cols ++ ");"
         integer c = ("\"" ++ c ++ "\"" ++ " SERIAL")
         commas = L.intercalate "," . map integer

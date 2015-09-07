@@ -48,12 +48,17 @@ import qualified Control.Arrow as Arr
 data Table writerColumns viewColumns 
   = Table String (TableProperties writerColumns viewColumns)
     -- ^ Uses the default schema name (@"public"@).
+  | TableWithSchema String String (TableProperties writerColumns viewColumns)
+    -- ^ Schema name (@"public"@ by default in PostgreSQL), table name,
+    --   table properties.
 
-tableName :: Table writerColumns viewColumns -> String
-tableName (Table n _) = n
+tableIdentifier :: Table writerColumns viewColumns -> PQ.TableIdentifier
+tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
+tableIdentifier (TableWithSchema s t _) = PQ.TableIdentifier (Just s) t
 
 tableProperties :: Table writerColumns viewColumns -> TableProperties writerColumns viewColumns
 tableProperties (Table _ p) = p
+tableProperties (TableWithSchema _ _ p) = p
 
 data TableProperties writerColumns viewColumns = TableProperties
    { tablePropertiesWriter :: Writer writerColumns viewColumns
@@ -82,7 +87,7 @@ queryTable cm table tag = (primExprs, primQ) where
   View tableCols = tablePropertiesView (tableProperties table)
   (primExprs, projcols) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
-  primQ = PQ.BaseTable (tableName table) projcols
+  primQ = PQ.BaseTable (tableIdentifier table) projcols
 
 runColumnMaker :: TM.ColumnMaker tablecolumns columns
                   -> Tag.Tag
@@ -167,5 +172,6 @@ instance ProductProfunctor TableProperties where
 
 instance Functor (Table a) where
   fmap f (Table t tp) = Table t (fmap f tp)
+  fmap f (TableWithSchema s t tp) = TableWithSchema s t (fmap f tp)
 
 -- }

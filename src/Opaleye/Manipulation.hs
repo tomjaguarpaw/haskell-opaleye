@@ -42,7 +42,7 @@ arrangeInsertMany table columns = insert
   where writer = TI.tablePropertiesWriter (TI.tableProperties table)
         (columnExprs, columnNames) = TI.runWriter' writer columns
         insert = SG.sqlInsert SD.defaultSqlGenerator
-                      (TI.tableName table)
+                      (PQ.tiToSqlTable (TI.tableIdentifier table))
                       columnNames columnExprs
 
 arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
@@ -62,7 +62,7 @@ arrangeUpdate :: T.Table columnsW columnsR
               -> HSql.SqlUpdate
 arrangeUpdate table update cond =
   SG.sqlUpdate SD.defaultSqlGenerator
-               (TI.tableName table)
+               (PQ.tiToSqlTable (TI.tableIdentifier table))
                [condExpr] (update' tableCols)
   where TI.TableProperties writer (TI.View tableCols) = TI.tableProperties table
         update' = map (\(x, y) -> (y, x)) . TI.runWriter writer . update
@@ -80,7 +80,7 @@ runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
 
 arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
 arrangeDelete table cond =
-  SG.sqlDelete SD.defaultSqlGenerator (TI.tableName table) [condExpr]
+  SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier table)) [condExpr]
   where Column condExpr = cond tableCols
         TI.View tableCols = TI.tablePropertiesView (TI.tableProperties table)
 

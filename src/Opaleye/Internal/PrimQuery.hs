@@ -3,6 +3,7 @@ module Opaleye.Internal.PrimQuery where
 import           Prelude hiding (product)
 
 import qualified Data.List.NonEmpty as NEL
+import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Opaleye.Internal.HaskellDB.PrimQuery (Symbol)
 
@@ -12,13 +13,23 @@ data LimitOp = LimitOp Int | OffsetOp Int | LimitOffsetOp Int Int
 data BinOp = Except | Union | UnionAll deriving Show
 data JoinType = LeftJoin deriving Show
 
+data TableIdentifier = TableIdentifier
+  { tiSchemaName :: Maybe String
+  , tiTableName  :: String
+  } deriving Show
+
+tiToSqlTable :: TableIdentifier -> HSql.SqlTable
+tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
+                                , HSql.sqlTableName = tiTableName ti }
+
+
 -- In the future it may make sense to introduce this datatype
 -- type Bindings a = [(Symbol, a)]
 
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
 data PrimQuery = Unit
-               | BaseTable String [(Symbol, HPQ.PrimExpr)]
+               | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
                | Product (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]
                | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] PrimQuery
                | Order [HPQ.OrderExpr] PrimQuery
@@ -29,7 +40,7 @@ data PrimQuery = Unit
                  deriving Show
 
 type PrimQueryFold p = ( p
-                       , String -> [(Symbol, HPQ.PrimExpr)] -> p
+                       , TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> p
                        , NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
                        , [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
                        , [HPQ.OrderExpr] -> p -> p
@@ -44,7 +55,7 @@ foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
                binary) = fix fold
   where fold self primQ = case primQ of
           Unit                       -> unit
-          BaseTable n s              -> baseTable n s
+          BaseTable ti syms          -> baseTable ti syms
           Product pqs pes            -> product (fmap self pqs) pes
           Aggregate aggrs pq         -> aggregate aggrs (self pq)
           Order pes pq               -> order pes (self pq)
