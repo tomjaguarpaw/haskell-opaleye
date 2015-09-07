@@ -45,11 +45,19 @@ import qualified Control.Arrow as Arr
 --                                      , quantity = required \"quantity\"
 --                                      , radius   = required \"radius\" })
 -- @
-data Table writerColumns viewColumns =
-  Table String (TableProperties writerColumns viewColumns)
+data Table writerColumns viewColumns 
+  = Table String (TableProperties writerColumns viewColumns)
+    -- ^ Uses the default schema name (@"public"@).
 
-data TableProperties writerColumns viewColumns =
-  TableProperties (Writer writerColumns viewColumns) (View viewColumns)
+tableName :: Table writerColumns viewColumns -> String
+tableName (Table n _) = n
+
+tableProperties :: Table writerColumns viewColumns -> TableProperties writerColumns viewColumns
+tableProperties (Table _ p) = p
+
+data TableProperties writerColumns viewColumns = TableProperties
+   { tablePropertiesWriter :: Writer writerColumns viewColumns
+   , tablePropertiesView   :: View viewColumns }
 
 data View columns = View columns
 
@@ -71,10 +79,10 @@ queryTable :: TM.ColumnMaker viewColumns columns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
 queryTable cm table tag = (primExprs, primQ) where
-  (Table tableName (TableProperties _ (View tableCols))) = table
+  View tableCols = tablePropertiesView (tableProperties table)
   (primExprs, projcols) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
-  primQ = PQ.BaseTable tableName projcols
+  primQ = PQ.BaseTable (tableName table) projcols
 
 runColumnMaker :: TM.ColumnMaker tablecolumns columns
                   -> Tag.Tag
@@ -158,6 +166,6 @@ instance ProductProfunctor TableProperties where
   (***!) = PP.defaultProfunctorProduct
 
 instance Functor (Table a) where
-  fmap f (Table s tp) = Table s (fmap f tp)
+  fmap f (Table t tp) = Table t (fmap f tp)
 
 -- }
