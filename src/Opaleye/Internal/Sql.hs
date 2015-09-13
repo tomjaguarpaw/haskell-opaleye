@@ -61,8 +61,6 @@ data Binary = Binary {
 data JoinType = LeftJoin deriving Show
 data BinOp = Except | Union | UnionAll deriving Show
 
-data TableName = String
-
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
 sqlQueryGenerator :: PQ.PrimQueryFold Select
@@ -79,10 +77,10 @@ sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (
 unit :: Select
 unit = SelectFrom newSelect { attrs  = SelectAttrs (ensureColumns []) }
 
-baseTable :: String -> [(Symbol, HPQ.PrimExpr)] -> Select
-baseTable name columns = SelectFrom $
+baseTable :: PQ.TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> Select
+baseTable ti columns = SelectFrom $
     newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
-              , tables = [Table (HSql.SqlTable name)] }
+              , tables = [Table (HSql.SqlTable (PQ.tiSchemaName ti) (PQ.tiTableName ti))] }
 
 product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
 product ss pes = SelectFrom $

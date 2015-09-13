@@ -3,7 +3,7 @@
 module Opaleye.Table (module Opaleye.Table,
                       View,
                       Writer,
-                      Table(Table),
+                      Table(Table, TableWithSchema),
                       TableProperties) where
 
 import           Opaleye.Internal.Column (Column(Column))

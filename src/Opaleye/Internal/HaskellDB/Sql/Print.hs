@@ -104,10 +104,14 @@ ppInsert (SqlInsert table names values)
 ppColumn :: SqlColumn -> Doc
 ppColumn (SqlColumn s) = doubleQuotes (text s)
 
--- Postgres treats upper case letters in table names as lower case,
--- unless the name is quoted!
+-- Postgres treats schema and table names as lower case unless quoted.
 ppTable :: SqlTable -> Doc
-ppTable (SqlTable s) = doubleQuotes (text s)
+ppTable st = case sqlTableSchemaName st of
+    Just sn -> doubleQuotes (text sn) <> text "." <> tname
+    Nothing -> tname
+  where
+    tname = doubleQuotes (text (sqlTableName st))
+
 
 ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =

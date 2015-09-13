@@ -45,11 +45,24 @@ import qualified Control.Arrow as Arr
 --                                      , quantity = required \"quantity\"
 --                                      , radius   = required \"radius\" })
 -- @
-data Table writerColumns viewColumns =
-  Table String (TableProperties writerColumns viewColumns)
+data Table writerColumns viewColumns 
+  = Table String (TableProperties writerColumns viewColumns)
+    -- ^ Uses the default schema name (@"public"@).
+  | TableWithSchema String String (TableProperties writerColumns viewColumns)
+    -- ^ Schema name (@"public"@ by default in PostgreSQL), table name,
+    --   table properties.
 
-data TableProperties writerColumns viewColumns =
-  TableProperties (Writer writerColumns viewColumns) (View viewColumns)
+tableIdentifier :: Table writerColumns viewColumns -> PQ.TableIdentifier
+tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
+tableIdentifier (TableWithSchema s t _) = PQ.TableIdentifier (Just s) t
+
+tableProperties :: Table writerColumns viewColumns -> TableProperties writerColumns viewColumns
+tableProperties (Table _ p) = p
+tableProperties (TableWithSchema _ _ p) = p
+
+data TableProperties writerColumns viewColumns = TableProperties
+   { tablePropertiesWriter :: Writer writerColumns viewColumns
+   , tablePropertiesView   :: View viewColumns }
 
 data View columns = View columns
 
@@ -71,10 +84,10 @@ queryTable :: TM.ColumnMaker viewColumns columns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
 queryTable cm table tag = (primExprs, primQ) where
-  (Table tableName (TableProperties _ (View tableCols))) = table
+  View tableCols = tablePropertiesView (tableProperties table)
   (primExprs, projcols) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
-  primQ = PQ.BaseTable tableName projcols
+  primQ = PQ.BaseTable (tableIdentifier table) projcols
 
 runColumnMaker :: TM.ColumnMaker tablecolumns columns
                   -> Tag.Tag
@@ -158,6 +171,7 @@ instance ProductProfunctor TableProperties where
   (***!) = PP.defaultProfunctorProduct
 
 instance Functor (Table a) where
-  fmap f (Table s tp) = Table s (fmap f tp)
+  fmap f (Table t tp) = Table t (fmap f tp)
+  fmap f (TableWithSchema s t tp) = TableWithSchema s t (fmap f tp)
 
 -- }
