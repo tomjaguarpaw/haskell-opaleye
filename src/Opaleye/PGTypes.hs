@@ -17,7 +17,7 @@ import qualified Data.ByteString.Lazy as LByteString
 import qualified Data.Time as Time
 import qualified Data.UUID as UUID
 
-import           Data.Int (Int64)
+import           Data.Int (Int32, Int64)
 
 data PGBool
 data PGDate
@@ -71,7 +71,7 @@ pgStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack
 pgLazyText :: LText.Text -> Column PGText
 pgLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack
 
-pgInt4 :: Int -> Column PGInt4
+pgInt4 :: Int32 -> Column PGInt4
 pgInt4 = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
 
 pgInt8 :: Int64 -> Column PGInt8

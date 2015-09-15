@@ -50,7 +50,7 @@ instance D.Default Constant ST.Text (Column T.PGText) where
 instance D.Default Constant LT.Text (Column T.PGText) where
   def = Constant T.pgLazyText
 
-instance D.Default Constant Int (Column T.PGInt4) where
+instance D.Default Constant Int.Int32 (Column T.PGInt4) where
   def = Constant T.pgInt4
 
 instance D.Default Constant Int.Int64 (Column T.PGInt8) where

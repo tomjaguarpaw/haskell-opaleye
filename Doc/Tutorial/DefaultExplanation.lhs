@@ -7,6 +7,7 @@
 > import qualified Opaleye.Internal.Binary as Internal.Binary
 > import Opaleye.Internal.Binary (Binaryspec)
 >
+> import Data.Int (Int32)
 > import Data.Profunctor.Product ((***!), p4)
 > import Data.Profunctor.Product.Default (Default, def)
 > import qualified Database.PostgreSQL.Simple as SQL
@@ -150,7 +151,7 @@ this is `runQuery`
 
 Basic values of `QueryRunner` will have the following types
 
-> intRunner :: QueryRunner (Column PGInt4) Int
+> intRunner :: QueryRunner (Column PGInt4) Int32
 > intRunner = undefined -- The implementation is not important here
 >
 > doubleRunner :: QueryRunner (Column PGFloat4) Double
@@ -165,7 +166,7 @@ Basic values of `QueryRunner` will have the following types
 Furthermore we will have basic ways of running queries which return
 `Nullable` values, for example
 
-> nullableIntRunner :: QueryRunner (Column (Nullable PGInt4)) (Maybe Int)
+> nullableIntRunner :: QueryRunner (Column (Nullable PGInt4)) (Maybe Int32)
 > nullableIntRunner = undefined
 
 If I have a very simple query with a single column of `PGInt4` then I can
@@ -174,7 +175,7 @@ run it using the `intRunner`.
 > myQuery3 :: Query (Column PGInt4)
 > myQuery3 = undefined -- The implementation is not important
 >
-> runTheQuery :: SQL.Connection -> IO [Int]
+> runTheQuery :: SQL.Connection -> IO [Int32]
 > runTheQuery c = runQueryExplicit intRunner c myQuery3
 
 If my query has several columns of different types I need to build up
@@ -185,10 +186,10 @@ a larger `QueryRunner`.
 >
 > largerQueryRunner :: QueryRunner
 >       (Column PGInt4, Column PGText, Column PGBool, Column (Nullable PGInt4))
->       (Int, String, Bool, Maybe Int)
+>       (Int32, String, Bool, Maybe Int32)
 > largerQueryRunner = p4 (intRunner, stringRunner, boolRunner, nullableIntRunner)
 >
-> runTheBiggerQuery :: SQL.Connection -> IO [(Int, String, Bool, Maybe Int)]
+> runTheBiggerQuery :: SQL.Connection -> IO [(Int32, String, Bool, Maybe Int32)]
 > runTheBiggerQuery c = runQueryExplicit largerQueryRunner c myQuery4
 
 But having to build up `largerQueryRunner` was a pain and completely
@@ -196,17 +197,17 @@ redundant!  Like the `Binaryspec` it can be automatically deduced.
 `Karamaan.Opaleye.RunQuery` already gives us `Default` instances for
 the following types (plus many others, of course!).
 
-* `QueryRunner (Column PGInt4) Int`
+* `QueryRunner (Column PGInt4) Int32`
 * `QueryRunner (Column PGText) String`
 * `QueryRunner (Column Bool) Bool`
-* `QueryRunner (Column (Nullable Int)) (Maybe Int)`
+* `QueryRunner (Column (Nullable PGInt4)) (Maybe Int32)`
 
 Then the `Default` typeclass machinery automatically deduces the
 correct value of the type we want.
 
 > largerQueryRunner' :: QueryRunner
 >       (Column PGInt4, Column PGText, Column PGBool, Column (Nullable PGInt4))
->       (Int, String, Bool, Maybe Int)
+>       (Int32, String, Bool, Maybe Int32)
 > largerQueryRunner' = def
 
 And we can produce a version of `runQuery` which allows us to write
@@ -215,7 +216,7 @@ our query without explicitly passing the product-profunctor value.
 > runQuery :: Default QueryRunner a b => SQL.Connection -> Query a -> IO [b]
 > runQuery = O.runQueryExplicit def
 >
-> runTheBiggerQuery' :: SQL.Connection -> IO [(Int, String, Bool, Maybe Int)]
+> runTheBiggerQuery' :: SQL.Connection -> IO [(Int32, String, Bool, Maybe Int32)]
 > runTheBiggerQuery' c = runQuery c myQuery4
 
 Conclusion

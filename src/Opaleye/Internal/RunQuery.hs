@@ -1,4 +1,8 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, CPP #-}
+
+#if defined(__GLASGOW_HASKELL__) && !defined(__HADDOCK__)
+#include "MachDeps.h"
+#endif
 
 module Opaleye.Internal.RunQuery where
 
@@ -32,7 +36,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Time as Time
 import qualified Data.String as String
 import           Data.UUID (UUID)
-import           GHC.Int (Int64)
+import           GHC.Int (Int32, Int64)
 
 -- { Only needed for annoying postgresql-simple patch below
 
@@ -121,11 +125,22 @@ instance QueryRunnerColumnDefault a b =>
 class QueryRunnerColumnDefault pgType haskellType where
   queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
 
+instance QueryRunnerColumnDefault T.PGInt2 Int where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+instance QueryRunnerColumnDefault T.PGInt4 Int32 where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
 instance QueryRunnerColumnDefault T.PGInt4 Int where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGInt8 Int64 where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+#if WORD_SIZE_IN_BITS >= 64
+instance QueryRunnerColumnDefault T.PGInt8 Int where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+#endif
 
 instance QueryRunnerColumnDefault T.PGText String where
   queryRunnerColumnDefault = fieldQueryRunnerColumn

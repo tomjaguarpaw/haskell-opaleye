@@ -24,7 +24,7 @@ import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), (<<<), (>>>))
 
-import           GHC.Int (Int64)
+import           GHC.Int (Int32, Int64)
 
 -- { Set your test database info here.  Then invoke the 'main'
 --   function to run the tests, or just use 'cabal test'.  The test
@@ -164,7 +164,7 @@ table1dataG = [ (1, 100)
               , (1, 200)
               , (2, 300) ]
 
-table1data :: [(Int, Int)]
+table1data :: [(Int32, Int32)]
 table1data = table1dataG
 
 table1columndata :: [(Column O.PGInt4, Column O.PGInt4)]
@@ -174,7 +174,7 @@ table2dataG :: Num a => [(a, a)]
 table2dataG = [ (1, 100)
               , (3, 400) ]
 
-table2data :: [(Int, Int)]
+table2data :: [(Int32, Int32)]
 table2data = table2dataG
 
 table2columndata :: [(Column O.PGInt4, Column O.PGInt4)]
@@ -183,7 +183,7 @@ table2columndata = table2dataG
 table3dataG :: Num a => [(a, a)]
 table3dataG = [ (1, 50) ]
 
-table3data :: [(Int, Int)]
+table3data :: [(Int32, Int32)]
 table3data = table3dataG
 
 table3columndata :: [(Column O.PGInt4, Column O.PGInt4)]
@@ -303,7 +303,7 @@ testDiv = testG query expected
         -- Choosing 0.5 here as it should be exactly representable in
         -- floating point
         op (x, y) = y / x * 0.5
-        toDoubles :: (Int, Int) -> (Double, Double)
+        toDoubles :: (Int32, Int32) -> (Double, Double)
         toDoubles = fromIntegral *** fromIntegral
 
 -- TODO: need to implement and test case_ returning tuples
@@ -312,7 +312,7 @@ testCase = testG q (== expected)
   where q :: Query (Column O.PGInt4)
         q = table1Q >>> proc (i, j) -> do
           Arr.returnA -< O.case_ [(j .== 100, 12), (i .== 1, 21)] 33
-        expected :: [Int]
+        expected :: [Int32]
         expected = [12, 12, 21, 33]
 
 testDistinct :: Test
@@ -332,18 +332,18 @@ testAggregate :: Test
 testAggregate = testG (Arr.second aggregateCoerceFIXME
                         <<< O.aggregate (PP.p2 (O.groupBy, O.sum))
                                            table1Q)
-                      (\r -> [(1, 400) :: (Int, Int64), (2, 300)] == L.sort r)
+                      (\r -> [(1, 400) :: (Int32, Int64), (2, 300)] == L.sort r)
 
 testAggregateFunction :: Test
 testAggregateFunction = testG (Arr.second aggregateCoerceFIXME
                         <<< O.aggregate (PP.p2 (O.groupBy, O.sum))
                                         (fmap (\(x, y) -> (x + 1, y)) table1Q))
-                      (\r -> [(2, 400) :: (Int, Int64), (3, 300)] == L.sort r)
+                      (\r -> [(2, 400) :: (Int32, Int64), (3, 300)] == L.sort r)
 
 testAggregateProfunctor :: Test
 testAggregateProfunctor = testG q expected
   where q = O.aggregate (PP.p2 (O.groupBy, countsum)) table1Q
-        expected r = [(1, 1200) :: (Int, Int64), (2, 300)] == L.sort r
+        expected r = [(1, 1200) :: (Int32, Int64), (2, 300)] == L.sort r
         countsum = P.dimap (\x -> (x,x))
                            (\(x, y) -> aggregateCoerceFIXME' x * y)
                            (PP.p2 (O.sum, O.count))
@@ -361,7 +361,7 @@ testStringAggregate = testG q expected
           head (map snd table6data))] == r
 
 testOrderByG :: O.Order (Column O.PGInt4, Column O.PGInt4)
-                -> ((Int, Int) -> (Int, Int) -> Ordering)
+                -> ((Int32, Int32) -> (Int32, Int32) -> Ordering)
                 -> Test
 testOrderByG orderQ order = testG (O.orderBy orderQ table1Q)
                                   (L.sortBy order table1data ==)
@@ -379,7 +379,7 @@ testOrderBySame = testOrderByG (O.desc fst <> O.asc fst)
                                (flip (Ord.comparing fst) <> Ord.comparing fst)
 
 testLOG :: (Query (Column O.PGInt4, Column O.PGInt4) -> Query (Column O.PGInt4, Column O.PGInt4))
-           -> ([(Int, Int)] -> [(Int, Int)]) -> Test
+           -> ([(Int32, Int32)] -> [(Int32, Int32)]) -> Test
 testLOG olQ ol = testG (olQ (orderQ table1Q))
                        (ol (order table1data) ==)
   where orderQ = O.orderBy (O.desc snd)
@@ -404,7 +404,7 @@ testDistinctAndAggregate = testG q expected
                  <<< O.aggregate (PP.p2 (O.groupBy, O.sum)) table1Q)
         expected r = L.sort r == L.sort expectedResult
         expectedResult = A.liftA2 (,) (L.nub table1data)
-                                      [(1 :: Int, 400 :: Int64), (2, 300)]
+                                      [(1 :: Int32, 400 :: Int64), (2, 300)]
 
 one :: Query (Column O.PGInt4)
 one = Arr.arr (const (1 :: Column O.PGInt4))
@@ -418,24 +418,24 @@ testDoubleG q expected1 = testG (q one &&& q one) (== expected2)
   where expected2 = A.liftA2 (,) expected1 expected1
 
 testDoubleDistinct :: Test
-testDoubleDistinct = testDoubleG O.distinct [1 :: Int]
+testDoubleDistinct = testDoubleG O.distinct [1 :: Int32]
 
 testDoubleAggregate :: Test
 testDoubleAggregate = testDoubleG (O.aggregate O.count) [1 :: Int64]
 
 testDoubleLeftJoin :: Test
-testDoubleLeftJoin = testDoubleG lj [(1 :: Int, Just (1 :: Int))]
+testDoubleLeftJoin = testDoubleG lj [(1 :: Int32, Just (1 :: Int32))]
   where lj :: Query (Column O.PGInt4)
           -> Query (Column O.PGInt4, Column (Nullable O.PGInt4))
         lj q = O.leftJoin q q (uncurry (.==))
 
 testDoubleValues :: Test
-testDoubleValues = testDoubleG v [1 :: Int]
+testDoubleValues = testDoubleG v [1 :: Int32]
   where v :: Query (Column O.PGInt4) -> Query (Column O.PGInt4)
         v _ = O.values [1]
 
 testDoubleUnionAll :: Test
-testDoubleUnionAll = testDoubleG u [1 :: Int, 1]
+testDoubleUnionAll = testDoubleG u [1 :: Int32, 1]
   where u q = q `O.unionAll` q
 
 aLeftJoin :: Query ((Column O.PGInt4, Column O.PGInt4),
@@ -444,7 +444,7 @@ aLeftJoin = O.leftJoin table1Q table3Q (\(l, r) -> fst l .== fst r)
 
 testLeftJoin :: Test
 testLeftJoin = testG aLeftJoin (== expected)
-  where expected :: [((Int, Int), (Maybe Int, Maybe Int))]
+  where expected :: [((Int32, Int32), (Maybe Int32, Maybe Int32))]
         expected = [ ((1, 100), (Just 1, Just 50))
                    , ((1, 100), (Just 1, Just 50))
                    , ((1, 200), (Just 1, Just 50))
@@ -460,7 +460,7 @@ testLeftJoinNullable = testG q (== expected)
 
         cond (x, y) = fst x .== fst (fst y)
 
-        expected :: [((Int, Int), ((Maybe Int, Maybe Int), (Maybe Int, Maybe Int)))]
+        expected :: [((Int32, Int32), ((Maybe Int32, Maybe Int32), (Maybe Int32, Maybe Int32)))]
         expected = [ ((1, 50), ((Just 1, Just 100), (Just 1, Just 50)))
                    , ((1, 50), ((Just 1, Just 100), (Just 1, Just 50)))
                    , ((1, 50), ((Just 1, Just 200), (Just 1, Just 50))) ]
@@ -475,7 +475,7 @@ testValues = testG (O.values values) (values' ==)
   where values :: [(Column O.PGInt4, Column O.PGInt4)]
         values = [ (1, 10)
                  , (2, 100) ]
-        values' :: [(Int, Int)]
+        values' :: [(Int32, Int32)]
         values' = [ (1, 10)
                   , (2, 100) ]
 
@@ -494,7 +494,7 @@ testValuesEmpty :: Test
 testValuesEmpty = testG (O.values values) (values' ==)
   where values :: [Column O.PGInt4]
         values = []
-        values' :: [Int]
+        values' :: [Int32]
         values' = []
 
 testUnionAll :: Test
@@ -529,10 +529,10 @@ testUpdate conn = do
   where update (x, y) = (x + y, x - y)
         cond (_, y) = y .> 15
         condD (x, _) = x .> 20
-        expected :: [(Int, Int)]
+        expected :: [(Int32, Int32)]
         expected = [ (1, 10)
                    , (22, -18)]
-        expectedD :: [(Int, Int)]
+        expectedD :: [(Int32, Int32)]
         expectedD = [(1, 10)]
         runQueryTable4 = O.runQuery conn (O.queryTable table4)
 
@@ -542,15 +542,15 @@ testUpdate conn = do
         insertTMany :: [(Column O.PGInt4, Column O.PGInt4)]
         insertTMany = [(20, 30), (40, 50)]
 
-        expectedI :: [(Int, Int)]
+        expectedI :: [(Int32, Int32)]
         expectedI = [(1, 10), (1, 2), (20, 30), (40, 50)]
         returning (x, y) = x - y
-        expectedR :: [Int]
+        expectedR :: [Int32]
         expectedR = [-1]
 
 testKeywordColNames :: Test
 testKeywordColNames conn = do
-  let q :: IO [(Int, Int)]
+  let q :: IO [(Int32, Int32)]
       q = O.runQuery conn (O.queryTable tableKeywordColNames)
   _ <- q
   return True
@@ -566,7 +566,7 @@ testInsertSerial conn = do
 
   return (resultI == expected)
 
-  where expected :: [(Int, Int)]
+  where expected :: [(Int32, Int32)]
         expected = [ (10, 20)
                    , (30, 1)
                    , (1, 2)
