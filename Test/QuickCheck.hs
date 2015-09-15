@@ -7,6 +7,7 @@ import qualified Opaleye as O
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Test.QuickCheck as TQ
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
+import           Data.Int (Int32)
 import qualified Data.Profunctor.Product.Default as D
 import           Data.List (sort)
 import qualified Data.List as List
@@ -35,7 +36,7 @@ onList :: ([a] -> [b]) -> QueryDenotation a -> QueryDenotation b
 onList f = QueryDenotation . (fmap . fmap) f . unQueryDenotation
 
 type Columns = [Either (O.Column O.PGInt4) (O.Column O.PGBool)]
-type Haskells = [Either Int Bool]
+type Haskells = [Either Int32 Bool]
 
 columnsOfHaskells :: Haskells -> Columns
 columnsOfHaskells = O.constantExplicit eitherPP

@@ -1,3 +1,10 @@
+## HEAD
+
+* Added conversion from machine-dependant `Int` to either `PGInt4` or `PGInt8` through `pgInt`.
+* Add conversion from `Int32` to `PGInt4`.
+* Add conversion from `PGInt4` to `Int32`.
+* Add conversion from `PGInt8` to `Int` (on 64-bit platforms).
+
 ## 0.4.1.0
 
 * Added `Opaleye.Constant` for lifting constant values
