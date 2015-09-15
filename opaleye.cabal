@@ -27,7 +27,8 @@ library
   build-depends:
       -- attoparsec can be removed once postgresql-simple patch in
       -- Internal.RunQuery is merged upstream
-      attoparsec          >= 0.10.3  && < 0.14
+      aeson               >= 0.6     && < 0.10
+    , attoparsec          >= 0.10.3  && < 0.14
     , base                >= 4       && < 5
     , base16-bytestring   >= 0.1.1.6 && < 0.2
     , case-insensitive    >= 1.2     && < 1.3
