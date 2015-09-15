@@ -1,4 +1,8 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, CPP #-}
+
+#if defined(__GLASGOW_HASKELL__) && !defined(__HADDOCK__)
+#include "MachDeps.h"
+#endif
 
 module Opaleye.Constant where
 
@@ -55,6 +59,14 @@ instance D.Default Constant Int.Int32 (Column T.PGInt4) where
 
 instance D.Default Constant Int.Int64 (Column T.PGInt8) where
   def = Constant T.pgInt8
+
+#if WORD_SIZE_IN_BITS == 32
+instance D.Default Constant Int (Column T.PGInt4) where
+  def = Constant T.pgInt
+#elif WORD_SIZE_IN_BITS == 64
+instance D.Default Constant Int (Column T.PGInt8) where
+  def = Constant T.pgInt
+#endif
 
 instance D.Default Constant Double (Column T.PGFloat8) where
   def = Constant T.pgDouble

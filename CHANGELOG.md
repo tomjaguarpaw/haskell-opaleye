@@ -1,6 +1,6 @@
 ## HEAD
 
-* Remove conversion from `Int` to `PGInt4`.
+* Added conversion from machine-dependant `Int` to either `PGInt4` or `PGInt8` through `pgInt`.
 * Add conversion from `Int32` to `PGInt4`.
 * Add conversion from `PGInt4` to `Int32`.
 * Add conversion from `PGInt8` to `Int` (on 64-bit platforms).

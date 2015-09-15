@@ -1,4 +1,8 @@
-{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE EmptyDataDecls, CPP #-}
+
+#if defined(__GLASGOW_HASKELL__) && !defined(__HADDOCK__)
+#include "MachDeps.h"
+#endif
 
 module Opaleye.PGTypes (module Opaleye.PGTypes) where
 
@@ -70,6 +74,14 @@ pgStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack
 
 pgLazyText :: LText.Text -> Column PGText
 pgLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack
+
+#if WORD_SIZE_IN_BITS == 32
+pgInt :: Int -> Column PGInt4
+pgInt = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
+#elif WORD_SIZE_IN_BITS == 64
+pgInt :: Int -> Column PGInt8
+pgInt = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
+#endif
 
 pgInt4 :: Int32 -> Column PGInt4
 pgInt4 = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
