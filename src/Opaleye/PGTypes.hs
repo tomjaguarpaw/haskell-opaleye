@@ -128,7 +128,7 @@ pgStrictJSON = pgJSON . IPT.strictDecodeUtf8
 pgLazyJSON :: LByteString.ByteString -> Column PGJson
 pgLazyJSON = pgJSON . IPT.lazyDecodeUtf8
 
-pgValueJSON :: Ae.Value -> Column PGJson
+pgValueJSON :: Ae.ToJSON a => a -> Column PGJson
 pgValueJSON = pgLazyJSON . Ae.encode
 
 -- The jsonb data type was introduced in PostgreSQL version 9.4
@@ -145,5 +145,5 @@ pgStrictJSONB = pgJSONB . IPT.strictDecodeUtf8
 pgLazyJSONB :: LByteString.ByteString -> Column PGJsonb
 pgLazyJSONB = pgJSONB . IPT.lazyDecodeUtf8
 
-pgValueJSONB :: Ae.Value -> Column PGJsonb
+pgValueJSONB :: Ae.ToJSON a => a -> Column PGJsonb
 pgValueJSONB = pgLazyJSONB . Ae.encode
