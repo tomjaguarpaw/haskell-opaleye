@@ -32,7 +32,7 @@ arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert t c = arrangeInsertMany t (return c)
 
 arrangeInsertSql :: T.Table columns a -> columns -> String
-arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
+arrangeInsertSql = Print.renderDoc . HPrint.ppInsert .: arrangeInsert
 
 runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
@@ -46,7 +46,7 @@ arrangeInsertMany table columns = insert
                       columnNames columnExprs
 
 arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
-arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
+arrangeInsertManySql = Print.renderDoc . HPrint.ppInsert .: arrangeInsertMany
 
 runInsertMany :: PGS.Connection
               -> T.Table columns columns'
@@ -71,7 +71,7 @@ arrangeUpdate table update cond =
 arrangeUpdateSql :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
               -> String
-arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
+arrangeUpdateSql = Print.renderDoc . HPrint.ppUpdate .:. arrangeUpdate
 
 runUpdate :: PGS.Connection -> T.Table columnsW columnsR
           -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
@@ -85,7 +85,7 @@ arrangeDelete table cond =
         TI.View tableCols = TI.tablePropertiesView (TI.tableProperties table)
 
 arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
-arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
+arrangeDeleteSql = Print.renderDoc . HPrint.ppDelete .: arrangeDelete
 
 runDelete :: PGS.Connection -> T.Table a columnsR -> (columnsR -> Column PGBool)
           -> IO Int64
@@ -108,7 +108,7 @@ arrangeInsertReturningSql :: U.Unpackspec returned ignored
                           -> columnsW
                           -> (columnsR -> returned)
                           -> String
-arrangeInsertReturningSql = show
+arrangeInsertReturningSql = Print.renderDoc
                             . Print.ppInsertReturning
                             .:: arrangeInsertReturning
 
@@ -158,7 +158,7 @@ arrangeUpdateReturningSql :: U.Unpackspec returned ignored
                        -> (columnsR -> Column PGBool)
                        -> (columnsR -> returned)
                        -> String
-arrangeUpdateReturningSql = show
+arrangeUpdateReturningSql = Print.renderDoc
                             . Print.ppUpdateReturning
                             .::. arrangeUpdateReturning
 

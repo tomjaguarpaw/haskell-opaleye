@@ -12,9 +12,15 @@ import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 
+import qualified Text.PrettyPrint.HughesPJ as PP 
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)
+
 import qualified Data.List.NonEmpty as NEL
+
+
+renderDoc :: Doc -> String
+renderDoc = PP.renderStyle (PP.style {PP.mode = PP.OneLineMode})
 
 type TableAlias = String
 
