@@ -1,3 +1,7 @@
+## HEAD
+
+* Bump upper bound for `semigroups`.
+
 ## 0.4.1.0
 
 * Added `Opaleye.Constant` for lifting constant values
