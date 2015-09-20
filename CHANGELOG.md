@@ -1,6 +1,7 @@
 ## HEAD
 
 * Bump upper bound for `semigroups`.
+* Bump upper bound for `postgresql-simple`.
 
 ## 0.4.1.0
 
