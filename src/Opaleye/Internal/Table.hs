@@ -45,7 +45,7 @@ import qualified Control.Arrow as Arr
 --                                      , quantity = required \"quantity\"
 --                                      , radius   = required \"radius\" })
 -- @
-data Table writerColumns viewColumns 
+data Table writerColumns viewColumns
   = Table String (TableProperties writerColumns viewColumns)
     -- ^ Uses the default schema name (@"public"@).
   | TableWithSchema String String (TableProperties writerColumns viewColumns)
