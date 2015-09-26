@@ -27,23 +27,8 @@ import           Data.Int (Int64)
 import           Data.String (fromString)
 import qualified Data.List.NonEmpty as NEL
 
-arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
-arrangeInsert t c = arrangeInsertMany t (return c)
-
-arrangeInsertSql :: T.Table columns a -> columns -> String
-arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
-
 runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
-
-arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
-arrangeInsertMany (T.Table tableName (TI.TableProperties writer _)) columns = insert
-  where (columnExprs, columnNames) = TI.runWriter' writer columns
-        insert = SG.sqlInsert SD.defaultSqlGenerator
-                      tableName columnNames columnExprs
-
-arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
-arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
 
 runInsertMany :: PGS.Connection
               -> T.Table columns columns'
@@ -54,61 +39,47 @@ runInsertMany conn table columns = case NEL.nonEmpty columns of
   Nothing       -> return 0
   Just columns' -> (PGS.execute_ conn . fromString .: arrangeInsertManySql) table columns'
 
-arrangeUpdate :: T.Table columnsW columnsR
-              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
-              -> HSql.SqlUpdate
-arrangeUpdate (TI.Table tableName (TI.TableProperties writer (TI.View tableCols)))
-              update cond =
-  SG.sqlUpdate SD.defaultSqlGenerator tableName [condExpr] (update' tableCols)
-  where update' = map (\(x, y) -> (y, x))
-                   . TI.runWriter writer
-                   . update
-        Column condExpr = cond tableCols
+-- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
+-- compiler will have trouble inferring types.  It is strongly
+-- recommended that you provide full type signatures when using
+-- @runInsertReturning@.
+runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
+                      => PGS.Connection
+                      -> T.Table columnsW columnsR
+                      -> columnsW
+                      -> (columnsR -> returned)
+                      -> IO [haskells]
+runInsertReturning = runInsertReturningExplicit D.def
 
-arrangeUpdateSql :: T.Table columnsW columnsR
-              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
-              -> String
-arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
-
+-- | Where the predicate is true, update rows using the supplied
+-- function.
 runUpdate :: PGS.Connection -> T.Table columnsW columnsR
           -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
           -> IO Int64
 runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
 
-arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
-arrangeDelete (TI.Table tableName (TI.TableProperties _ (TI.View tableCols)))
-              cond =
-  SG.sqlDelete SD.defaultSqlGenerator tableName [condExpr]
-  where Column condExpr = cond tableCols
+-- | @runUpdateReturning@'s use of the 'D.Default' typeclass means
+-- that the compiler will have trouble inferring types.  It is
+-- strongly recommended that you provide full type signatures when
+-- using @runInsertReturning@.
+runUpdateReturning :: (D.Default RQ.QueryRunner returned haskells)
+                      => PGS.Connection
+                      -> T.Table columnsW columnsR
+                      -> (columnsR -> columnsW)
+                      -> (columnsR -> Column PGBool)
+                      -> (columnsR -> returned)
+                      -> IO [haskells]
+runUpdateReturning = runUpdateReturningExplicit D.def
 
-arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
-arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
-
+-- | Delete rows where the predicate is true.
 runDelete :: PGS.Connection -> T.Table a columnsR -> (columnsR -> Column PGBool)
           -> IO Int64
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 
-arrangeInsertReturning :: U.Unpackspec returned ignored
-                       -> T.Table columnsW columnsR
-                       -> columnsW
-                       -> (columnsR -> returned)
-                       -> Sql.Returning HSql.SqlInsert
-arrangeInsertReturning unpackspec table columns returningf =
-  Sql.Returning insert returningSEs
-  where insert = arrangeInsert table columns
-        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
-        returningPEs = U.collectPEs unpackspec (returningf columnsR)
-        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
-
-arrangeInsertReturningSql :: U.Unpackspec returned ignored
-                          -> T.Table columnsW columnsR
-                          -> columnsW
-                          -> (columnsR -> returned)
-                          -> String
-arrangeInsertReturningSql = show
-                            . Print.ppInsertReturning
-                            .:: arrangeInsertReturning
-
+-- | You probably don't need this, but can just use
+-- 'runInsertReturning' instead.  You only need it if you want to run
+-- an UPDATE RETURNING statement but need to be explicit about the
+-- 'QueryRunner'.
 runInsertReturningExplicit :: RQ.QueryRunner returned haskells
                             -> PGS.Connection
                             -> T.Table columnsW columnsR
@@ -124,41 +95,10 @@ runInsertReturningExplicit qr conn t w r = PGS.queryWith_ parser conn
         -- This method of getting hold of the return type feels a bit
         -- suspect.  I haven't checked it for validity.
 
--- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
--- compiler will have trouble inferring types.  It is strongly
--- recommended that you provide full type signatures when using
--- @runInsertReturning@.
-runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
-                      => PGS.Connection
-                      -> T.Table columnsW columnsR
-                      -> columnsW
-                      -> (columnsR -> returned)
-                      -> IO [haskells]
-runInsertReturning = runInsertReturningExplicit D.def
-
-arrangeUpdateReturning :: U.Unpackspec returned ignored
-                       -> T.Table columnsW columnsR
-                       -> (columnsR -> columnsW)
-                       -> (columnsR -> Column PGBool)
-                       -> (columnsR -> returned)
-                       -> Sql.Returning HSql.SqlUpdate
-arrangeUpdateReturning unpackspec table updatef cond returningf =
-  Sql.Returning update returningSEs
-  where update = arrangeUpdate table updatef cond
-        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
-        returningPEs = U.collectPEs unpackspec (returningf columnsR)
-        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
-
-arrangeUpdateReturningSql :: U.Unpackspec returned ignored
-                       -> T.Table columnsW columnsR
-                       -> (columnsR -> columnsW)
-                       -> (columnsR -> Column PGBool)
-                       -> (columnsR -> returned)
-                       -> String
-arrangeUpdateReturningSql = show
-                            . Print.ppUpdateReturning
-                            .::. arrangeUpdateReturning
-
+-- | You probably don't need this, but can just use
+-- 'runUpdateReturning' instead.  You only need it if you want to run
+-- an UPDATE RETURNING statement but need to be explicit about the
+-- 'QueryRunner'.
 runUpdateReturningExplicit :: RQ.QueryRunner returned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
@@ -173,11 +113,112 @@ runUpdateReturningExplicit qr conn t update cond r =
         parser = IRQ.prepareRowParser qr (r v)
         TI.Table _ (TI.TableProperties _ (TI.View v)) = t
 
-runUpdateReturning :: (D.Default RQ.QueryRunner returned haskells)
-                      => PGS.Connection
-                      -> T.Table columnsW columnsR
-                      -> (columnsR -> columnsW)
-                      -> (columnsR -> Column PGBool)
-                      -> (columnsR -> returned)
-                      -> IO [haskells]
-runUpdateReturning = runUpdateReturningExplicit D.def
+
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
+arrangeInsert t c = arrangeInsertMany t (return c)
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeInsertSql :: T.Table columns a -> columns -> String
+arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
+arrangeInsertMany (T.Table tableName (TI.TableProperties writer _)) columns = insert
+  where (columnExprs, columnNames) = TI.runWriter' writer columns
+        insert = SG.sqlInsert SD.defaultSqlGenerator
+                      tableName columnNames columnExprs
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
+arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeUpdate :: T.Table columnsW columnsR
+              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
+              -> HSql.SqlUpdate
+arrangeUpdate (TI.Table tableName (TI.TableProperties writer (TI.View tableCols)))
+              update cond =
+  SG.sqlUpdate SD.defaultSqlGenerator tableName [condExpr] (update' tableCols)
+  where update' = map (\(x, y) -> (y, x))
+                   . TI.runWriter writer
+                   . update
+        Column condExpr = cond tableCols
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeUpdateSql :: T.Table columnsW columnsR
+              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
+              -> String
+arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
+arrangeDelete (TI.Table tableName (TI.TableProperties _ (TI.View tableCols)))
+              cond =
+  SG.sqlDelete SD.defaultSqlGenerator tableName [condExpr]
+  where Column condExpr = cond tableCols
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
+arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeInsertReturning :: U.Unpackspec returned ignored
+                       -> T.Table columnsW columnsR
+                       -> columnsW
+                       -> (columnsR -> returned)
+                       -> Sql.Returning HSql.SqlInsert
+arrangeInsertReturning unpackspec table columns returningf =
+  Sql.Returning insert returningSEs
+  where insert = arrangeInsert table columns
+        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
+        returningPEs = U.collectPEs unpackspec (returningf columnsR)
+        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeInsertReturningSql :: U.Unpackspec returned ignored
+                          -> T.Table columnsW columnsR
+                          -> columnsW
+                          -> (columnsR -> returned)
+                          -> String
+arrangeInsertReturningSql = show
+                            . Print.ppInsertReturning
+                            .:: arrangeInsertReturning
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeUpdateReturning :: U.Unpackspec returned ignored
+                       -> T.Table columnsW columnsR
+                       -> (columnsR -> columnsW)
+                       -> (columnsR -> Column PGBool)
+                       -> (columnsR -> returned)
+                       -> Sql.Returning HSql.SqlUpdate
+arrangeUpdateReturning unpackspec table updatef cond returningf =
+  Sql.Returning update returningSEs
+  where update = arrangeUpdate table updatef cond
+        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
+        returningPEs = U.collectPEs unpackspec (returningf columnsR)
+        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeUpdateReturningSql :: U.Unpackspec returned ignored
+                       -> T.Table columnsW columnsR
+                       -> (columnsR -> columnsW)
+                       -> (columnsR -> Column PGBool)
+                       -> (columnsR -> returned)
+                       -> String
+arrangeUpdateReturningSql = show
+                            . Print.ppUpdateReturning
+                            .::. arrangeUpdateReturning
