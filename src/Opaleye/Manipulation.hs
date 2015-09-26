@@ -11,6 +11,7 @@ import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column(Column))
 import           Opaleye.Internal.Helpers ((.:), (.:.), (.::), (.::.))
+import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Unpackspec as U
 import           Opaleye.PGTypes (PGBool)
 
@@ -113,8 +114,6 @@ runUpdateReturningExplicit qr conn t update cond r =
         parser = IRQ.prepareRowParser qr (r v)
         TI.Table _ (TI.TableProperties _ (TI.View v)) = t
 
-
-
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
 arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
@@ -128,10 +127,12 @@ arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
 arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
-arrangeInsertMany (T.Table tableName (TI.TableProperties writer _)) columns = insert
-  where (columnExprs, columnNames) = TI.runWriter' writer columns
+arrangeInsertMany table columns = insert
+  where writer = TI.tablePropertiesWriter (TI.tableProperties table)
+        (columnExprs, columnNames) = TI.runWriter' writer columns
         insert = SG.sqlInsert SD.defaultSqlGenerator
-                      tableName columnNames columnExprs
+                      (PQ.tiToSqlTable (TI.tableIdentifier table))
+                      columnNames columnExprs
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
@@ -143,12 +144,12 @@ arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
 arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
               -> HSql.SqlUpdate
-arrangeUpdate (TI.Table tableName (TI.TableProperties writer (TI.View tableCols)))
-              update cond =
-  SG.sqlUpdate SD.defaultSqlGenerator tableName [condExpr] (update' tableCols)
-  where update' = map (\(x, y) -> (y, x))
-                   . TI.runWriter writer
-                   . update
+arrangeUpdate table update cond =
+  SG.sqlUpdate SD.defaultSqlGenerator
+               (PQ.tiToSqlTable (TI.tableIdentifier table))
+               [condExpr] (update' tableCols)
+  where TI.TableProperties writer (TI.View tableCols) = TI.tableProperties table
+        update' = map (\(x, y) -> (y, x)) . TI.runWriter writer . update
         Column condExpr = cond tableCols
 
 -- | For internal use only.  Do not use.  Will be removed in a
@@ -161,10 +162,10 @@ arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
 arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
-arrangeDelete (TI.Table tableName (TI.TableProperties _ (TI.View tableCols)))
-              cond =
-  SG.sqlDelete SD.defaultSqlGenerator tableName [condExpr]
+arrangeDelete table cond =
+  SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier table)) [condExpr]
   where Column condExpr = cond tableCols
+        TI.View tableCols = TI.tablePropertiesView (TI.tableProperties table)
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
@@ -181,7 +182,7 @@ arrangeInsertReturning :: U.Unpackspec returned ignored
 arrangeInsertReturning unpackspec table columns returningf =
   Sql.Returning insert returningSEs
   where insert = arrangeInsert table columns
-        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
+        TI.View columnsR = TI.tablePropertiesView (TI.tableProperties table)
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
@@ -207,7 +208,7 @@ arrangeUpdateReturning :: U.Unpackspec returned ignored
 arrangeUpdateReturning unpackspec table updatef cond returningf =
   Sql.Returning update returningSEs
   where update = arrangeUpdate table updatef cond
-        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
+        TI.View columnsR = TI.tablePropertiesView (TI.tableProperties table)
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 

@@ -24,8 +24,8 @@ and high levels of abstraction.
 
 Please get started with Opaleye by referring to these two tutorials
 
-* [Basic tutorial](Doc/Tutorial/TutorialBasic.lhs)
-* [Manipulation tutorial](Doc/Tutorial/TutorialManipulation.lhs)
+* [Basic tutorial](https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialBasic.lhs)
+* [Manipulation tutorial](https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialManipulation.lhs)
 
 # Contact
 

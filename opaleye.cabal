@@ -33,11 +33,11 @@ library
     , case-insensitive    >= 1.2     && < 1.3
     , bytestring          >= 0.10    && < 0.11
     , contravariant       >= 1.2     && < 1.4
-    , postgresql-simple   >= 0.4.8.0 && < 0.5
+    , postgresql-simple   >= 0.4.8.0 && < 0.6
     , pretty              >= 1.1.1.0 && < 1.2
     , product-profunctors >= 0.6.2   && < 0.7
     , profunctors         >= 4.0     && < 5.2
-    , semigroups          >= 0.13    && < 0.17
+    , semigroups          >= 0.13    && < 0.18
     , text                >= 0.11    && < 1.3
     , transformers        >= 0.3     && < 0.5
     , time                >= 1.4     && < 1.6

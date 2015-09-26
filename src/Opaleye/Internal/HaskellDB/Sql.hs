@@ -11,7 +11,10 @@ import qualified Data.List.NonEmpty as NEL
 -- * SQL data type
 -----------------------------------------------------------
 
-newtype SqlTable = SqlTable String deriving Show
+data SqlTable = SqlTable
+  { sqlTableSchemaName :: Maybe String
+  , sqlTableName       :: String
+  } deriving Show
 
 newtype SqlColumn = SqlColumn String deriving Show
 
