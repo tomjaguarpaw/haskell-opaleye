@@ -10,6 +10,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Sql.Default as HSD (quote)
 
 import qualified Data.CaseInsensitive as CI
+import qualified Data.Aeson as Ae
 import qualified Data.Text as SText
 import qualified Data.Text.Lazy as LText
 import qualified Data.ByteString as SByteString
@@ -127,6 +128,9 @@ pgStrictJSON = pgJSON . IPT.strictDecodeUtf8
 pgLazyJSON :: LByteString.ByteString -> Column PGJson
 pgLazyJSON = pgJSON . IPT.lazyDecodeUtf8
 
+pgValueJSON :: Ae.ToJSON a => a -> Column PGJson
+pgValueJSON = pgLazyJSON . Ae.encode
+
 -- The jsonb data type was introduced in PostgreSQL version 9.4
 -- JSONB values must be SQL string quoted
 --
@@ -140,3 +144,6 @@ pgStrictJSONB = pgJSONB . IPT.strictDecodeUtf8
 
 pgLazyJSONB :: LByteString.ByteString -> Column PGJsonb
 pgLazyJSONB = pgJSONB . IPT.lazyDecodeUtf8
+
+pgValueJSONB :: Ae.ToJSON a => a -> Column PGJsonb
+pgValueJSONB = pgLazyJSONB . Ae.encode

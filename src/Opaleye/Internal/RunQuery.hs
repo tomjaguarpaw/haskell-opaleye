@@ -24,6 +24,7 @@ import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product (empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
 
+import qualified Data.Aeson as Ae
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
@@ -173,9 +174,15 @@ instance QueryRunnerColumnDefault T.PGJson String where
   queryRunnerColumnDefault =
     QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) jsonFieldParser
 
+instance QueryRunnerColumnDefault T.PGJson Ae.Value where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
 instance QueryRunnerColumnDefault T.PGJsonb String where
   queryRunnerColumnDefault =
     QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) jsonbFieldParser
+
+instance QueryRunnerColumnDefault T.PGJsonb Ae.Value where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 

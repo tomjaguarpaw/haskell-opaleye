@@ -6,6 +6,7 @@ import           Opaleye.Column                  (Column)
 import qualified Opaleye.Column                  as C
 import qualified Opaleye.PGTypes                 as T
 
+import qualified Data.Aeson                      as Ae
 import qualified Data.CaseInsensitive            as CI
 import qualified Data.Int                        as Int
 import qualified Data.Text                       as ST
@@ -89,11 +90,17 @@ instance D.Default Constant SBS.ByteString (Column T.PGJson) where
 instance D.Default Constant LBS.ByteString (Column T.PGJson) where
   def = Constant T.pgLazyJSON
 
+instance D.Default Constant Ae.Value (Column T.PGJson) where
+  def = Constant T.pgValueJSON
+
 instance D.Default Constant SBS.ByteString (Column T.PGJsonb) where
   def = Constant T.pgStrictJSONB
 
 instance D.Default Constant LBS.ByteString (Column T.PGJsonb) where
   def = Constant T.pgLazyJSONB
+
+instance D.Default Constant Ae.Value (Column T.PGJsonb) where
+  def = Constant T.pgValueJSONB
 
 -- { Boilerplate instances
 
