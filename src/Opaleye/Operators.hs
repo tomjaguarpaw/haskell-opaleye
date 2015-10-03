@@ -25,12 +25,16 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Data.Profunctor.Product.Default as D
 
 {-| Restrict query results to a particular condition.  Corresponds to
-    the guard method of the MonadPlus class.
--}
+the guard method of the MonadPlus class.  You would typically use
+'restrict' if you want to use 'A.Arrow notation.  -}
 restrict :: QueryArr (Column T.PGBool) ()
 restrict = QueryArr f where
   f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
 
+{-| Filter a 'QueryArr' to only those rows where the given condition
+holds.  This is the 'QueryArr' equivalent of 'Prelude.filter' from the
+'Prelude'.  You would typically use 'Opaleye.Operators.filter' if you
+want to use a "point free" style.-}
 filter :: QueryArr a (Column T.PGBool) -> QueryArr a a
 filter p = proc a -> do
   restrict A.<<< p -< a
