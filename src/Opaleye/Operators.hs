@@ -35,10 +35,10 @@ restrict = QueryArr f where
 holds.  This is the 'QueryArr' equivalent of 'Prelude.filter' from the
 'Prelude'.  You would typically use 'keepWhen' if you want to use a
 "point free" style.-}
-keepWhen :: QueryArr a (Column T.PGBool) -> QueryArr a a
+keepWhen :: (a -> Column T.PGBool) -> QueryArr a a
 keepWhen p = proc a -> do
-  restrict A.<<< p -< a
-  A.returnA        -< a
+  restrict  -< p a
+  A.returnA -< a
 
 doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
 doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
