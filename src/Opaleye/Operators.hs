@@ -33,10 +33,10 @@ restrict = QueryArr f where
 
 {-| Filter a 'QueryArr' to only those rows where the given condition
 holds.  This is the 'QueryArr' equivalent of 'Prelude.filter' from the
-'Prelude'.  You would typically use 'Opaleye.Operators.filter' if you
-want to use a "point free" style.-}
-filter :: QueryArr a (Column T.PGBool) -> QueryArr a a
-filter p = proc a -> do
+'Prelude'.  You would typically use 'keepWhen' if you want to use a
+"point free" style.-}
+keepWhen :: QueryArr a (Column T.PGBool) -> QueryArr a a
+keepWhen p = proc a -> do
   restrict A.<<< p -< a
   A.returnA        -< a
 
