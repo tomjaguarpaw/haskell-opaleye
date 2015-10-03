@@ -20,6 +20,11 @@ delete from tables are also provided.  Code written using Opaleye is
 composable at a very fine level of granularity, promoting code reuse
 and high levels of abstraction.
 
+## Getting Opaleye
+
+* Github: https://github.com/tomjaguarpaw/haskell-opaleye
+* Hackage: https://hackage.haskell.org/package/opaleye
+
 ## Tutorials
 
 Please get started with Opaleye by referring to these two tutorials
