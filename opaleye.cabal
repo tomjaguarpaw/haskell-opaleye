@@ -68,6 +68,7 @@ library
                    Opaleye.Internal.Helpers,
                    Opaleye.Internal.Join,
                    Opaleye.Internal.Order,
+                   Opaleye.Internal.Operators,
                    Opaleye.Internal.Optimize,
                    Opaleye.Internal.PackMap,
                    Opaleye.Internal.PGTypes,
