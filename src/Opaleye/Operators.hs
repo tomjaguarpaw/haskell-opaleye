@@ -1,3 +1,4 @@
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 
 -- | Operators on 'Column's.  Numeric 'Column' types are instances of
@@ -6,6 +7,7 @@
 module Opaleye.Operators (module Opaleye.Operators,
                           (O..&&)) where
 
+import qualified Control.Arrow as A
 import qualified Data.Foldable as F
 
 import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
@@ -28,6 +30,11 @@ import qualified Data.Profunctor.Product.Default as D
 restrict :: QueryArr (Column T.PGBool) ()
 restrict = QueryArr f where
   f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
+
+filter :: QueryArr a (Column T.PGBool) -> QueryArr a a
+filter p = proc a -> do
+  restrict A.<<< p -< a
+  A.returnA        -< a
 
 doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
 doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
