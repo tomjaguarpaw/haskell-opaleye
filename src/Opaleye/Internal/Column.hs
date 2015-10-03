@@ -2,9 +2,8 @@ module Opaleye.Internal.Column where
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
--- | The 'Num' and 'Fractional' instances for 'Column' 'a' are too
--- general.  For example, they allow you to add two 'Column'
--- 'String's.  This will be fixed in a subsequent release.
+-- | Numeric 'Column' types are instances of 'Num', so you can use
+-- '*', '/', '+', '-' on them.
 newtype Column a = Column HPQ.PrimExpr deriving Show
 
 data Nullable a = Nullable

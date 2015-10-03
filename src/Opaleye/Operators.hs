@@ -1,5 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 
+-- | Operators on 'Column's.  Numeric 'Column' types are instances of
+-- 'Num', so you can use '*', '/', '+', '-' on them.
+
 module Opaleye.Operators (module Opaleye.Operators,
                           (O..&&)) where
 
