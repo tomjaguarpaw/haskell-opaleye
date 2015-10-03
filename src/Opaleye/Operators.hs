@@ -26,7 +26,7 @@ import qualified Data.Profunctor.Product.Default as D
 
 {-| Restrict query results to a particular condition.  Corresponds to
 the guard method of the MonadPlus class.  You would typically use
-'restrict' if you want to use 'A.Arrow notation.  -}
+'restrict' if you want to use 'A.Arrow' notation.  -}
 restrict :: QueryArr (Column T.PGBool) ()
 restrict = QueryArr f where
   f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
