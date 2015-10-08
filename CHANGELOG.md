@@ -1,8 +1,9 @@
-## HEAD
+## 0.4.2.0
 
-* Bump upper bound for `semigroups`.
-* Bump upper bound for `postgresql-simple`.
-* Added `pgValueJSON` and `pgValueJSONB`.
+* Added `.===` and `./==` for comparison of product types
+* Added `keepWhen` as an alternative to `restrict`
+* Added `constant` conversion to and from Aeson
+* Added `pgValueJSON` and `pgValueJSONB`
 
 ## 0.4.1.0
 
