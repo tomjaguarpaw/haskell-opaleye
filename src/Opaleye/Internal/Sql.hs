@@ -59,7 +59,7 @@ data Binary = Binary {
 } deriving Show
 
 data JoinType = LeftJoin deriving Show
-data BinOp = Except | Union | UnionAll deriving Show
+data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
 
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
@@ -163,9 +163,12 @@ joinType PQ.LeftJoin = LeftJoin
 
 binOp :: PQ.BinOp -> BinOp
 binOp o = case o of
-  PQ.Except   -> Except
-  PQ.Union    -> Union
-  PQ.UnionAll -> UnionAll
+  PQ.Except       -> Except
+  PQ.ExceptAll    -> ExceptAll
+  PQ.Union        -> Union
+  PQ.UnionAll     -> UnionAll
+  PQ.Intersect    -> Intersect
+  PQ.IntersectAll -> IntersectAll
 
 newSelect :: From
 newSelect = From {
