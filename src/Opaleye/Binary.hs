@@ -32,13 +32,16 @@ unionAll = unionAllExplicit def
 
 unionAllExplicit :: B.Binaryspec columns columns'
                  -> Query columns -> Query columns -> Query columns'
-unionAllExplicit binaryspec q1 q2 = Q.simpleQueryArr q where
-  q ((), startTag) = (newColumns, newPrimQuery, T.next endTag)
-    where (columns1, primQuery1, midTag) = Q.runSimpleQueryArr q1 ((), startTag)
-          (columns2, primQuery2, endTag) = Q.runSimpleQueryArr q2 ((), midTag)
+unionAllExplicit = B.sameTypeBinOpHelper PQ.UnionAll
 
-          (newColumns, pes) =
-            PM.run (B.runBinaryspec binaryspec (B.extractBinaryFields endTag)
-                                    (columns1, columns2))
 
-          newPrimQuery = PQ.Binary PQ.UnionAll pes (primQuery1, primQuery2)
+-- | The same as unionAll, except that it additionally removes any 
+--   duplicate rows.
+union :: Default B.Binaryspec columns columns =>
+         Query columns -> Query columns -> Query columns
+union = unionExplicit def
+
+unionExplicit :: B.Binaryspec columns columns'
+              -> Query columns -> Query columns -> Query columns'
+unionExplicit = B.sameTypeBinOpHelper PQ.Union
+
