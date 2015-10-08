@@ -1,11 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
 
-module Opaleye.Binary 
-  ( union
-  , unionAll
-  , unionExplicit
-  , unionAllExplicit
-  ) where
+module Opaleye.Binary where
 
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
@@ -37,7 +32,7 @@ unionAll = unionAllExplicit def
 
 unionAllExplicit :: B.Binaryspec columns columns'
                  -> Query columns -> Query columns -> Query columns'
-unionAllExplicit = sameTypeBinOpHelper PQ.UnionAll
+unionAllExplicit = B.sameTypeBinOpHelper PQ.UnionAll
 
 
 -- | The same as unionAll, except that it additionally removes any 
@@ -48,22 +43,5 @@ union = unionExplicit def
 
 unionExplicit :: B.Binaryspec columns columns'
               -> Query columns -> Query columns -> Query columns'
-unionExplicit = sameTypeBinOpHelper PQ.Union
-
-
-sameTypeBinOpHelper :: PQ.BinOp -> B.Binaryspec columns columns'
-                    -> Query columns -> Query columns -> Query columns'
-sameTypeBinOpHelper binop binaryspec q1 q2 = Q.simpleQueryArr q where
-  q ((), startTag) = (newColumns, newPrimQuery, T.next endTag)
-    where (columns1, primQuery1, midTag) = Q.runSimpleQueryArr q1 ((), startTag)
-          (columns2, primQuery2, endTag) = Q.runSimpleQueryArr q2 ((), midTag)
-
-          (newColumns, pes) =
-            PM.run (B.runBinaryspec binaryspec (B.extractBinaryFields endTag)
-                                    (columns1, columns2))
-
-          newPrimQuery = PQ.Binary binop pes (primQuery1, primQuery2)
-  
-
-
+unionExplicit = B.sameTypeBinOpHelper PQ.Union
 
