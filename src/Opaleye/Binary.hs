@@ -3,6 +3,8 @@
 module Opaleye.Binary 
   ( union
   , unionAll
+  , unionExplicit
+  , unionAllExplicit
   ) where
 
 import           Opaleye.QueryArr (Query)
