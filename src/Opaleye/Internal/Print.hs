@@ -105,9 +105,12 @@ ppValuesRow = parens . HPrint.commaH HPrint.ppSqlExpr
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of
-  Sql.Union    -> "UNION"
-  Sql.UnionAll -> "UNION ALL"
-  Sql.Except   -> "EXCEPT"
+  Sql.Union        -> "UNION"
+  Sql.UnionAll     -> "UNION ALL"
+  Sql.Except       -> "EXCEPT"
+  Sql.ExceptAll    -> "EXCEPT ALL"
+  Sql.Intersect    -> "INTERSECT"
+  Sql.IntersectAll -> "INTERSECT ALL"
 
 ppInsertReturning :: Sql.Returning HSql.SqlInsert -> Doc
 ppInsertReturning (Sql.Returning insert returnExprs) =
