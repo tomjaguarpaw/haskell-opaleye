@@ -37,6 +37,7 @@ data PrimQuery = Unit
                | Join JoinType HPQ.PrimExpr PrimQuery PrimQuery
                | Values [Symbol] [[HPQ.PrimExpr]]
                | Binary BinOp [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] (PrimQuery, PrimQuery)
+               | Label String PrimQuery
                  deriving Show
 
 type PrimQueryFold p = ( p
@@ -48,11 +49,12 @@ type PrimQueryFold p = ( p
                        , JoinType -> HPQ.PrimExpr -> p -> p -> p
                        , [Symbol] -> [[HPQ.PrimExpr]] -> p
                        , BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
+                       , String -> p -> p
                        )
 
 foldPrimQuery :: PrimQueryFold p -> PrimQuery -> p
 foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
-               binary) = fix fold
+               binary, label) = fix fold
   where fold self primQ = case primQ of
           Unit                       -> unit
           BaseTable ti syms          -> baseTable ti syms
@@ -63,6 +65,7 @@ foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
           Join j cond q1 q2          -> join j cond (self q1) (self q2)
           Values ss pes              -> values ss pes
           Binary binop pes (pq, pq') -> binary binop pes (self pq, self pq')
+          Label l pq                 -> label l (self pq)
         fix f = let x = f x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
