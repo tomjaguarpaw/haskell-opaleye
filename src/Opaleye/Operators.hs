@@ -31,22 +31,6 @@ restrict :: QueryArr (Column T.PGBool) ()
 restrict = QueryArr f where
   f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
 
-{-| Restrict a column using the IN operator. -}
-columnIn :: QueryArr () (Column a) -> QueryArr (Column a) ()
-columnIn (QueryArr q) = QueryArr f
-  where 
-    f (Column colName, primQ', t0) = 
-        let (Column colResult, primQ, t1) = q ((), primQ', t0) in
-        ((), PQ.Product (return primQ) [HPQ.BinExpr HPQ.OpIn colName colResult], t1)
-
-{-| Restrict a column using the NOT IN operator. -}
-columnNotIn :: QueryArr () (Column a) -> QueryArr (Column a) ()
-columnNotIn (QueryArr q) = QueryArr f
-  where 
-    f (Column colName, primQ', t0) = 
-        let (Column colResult, primQ, t1) = q ((), primQ', t0) in
-        ((), PQ.Product (return primQ) [HPQ.BinExpr HPQ.OpNotIn colName colResult], t1)
-
 {-| Filter a 'QueryArr' to only those rows where the given condition
 holds.  This is the 'QueryArr' equivalent of 'Prelude.filter' from the
 'Prelude'.  You would typically use 'keepWhen' if you want to use a
@@ -121,6 +105,14 @@ upper = C.unOp HPQ.OpUpper
 
 like :: Column T.PGText -> Column T.PGText -> Column T.PGBool
 like = C.binOp HPQ.OpLike
+
+{-| Restrict a column using the IN operator. -}
+columnIn :: Column a -> Column a -> Column T.PGBool
+columnIn = C.binOp HPQ.OpIn
+
+{-| Restrict a column using the NOT IN operator. -}
+columnNotIn :: Column a -> Column a -> Column T.PGBool
+columnNotIn = C.binOp HPQ.OpNotIn
 
 -- | True when any element of the container is true
 ors :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
