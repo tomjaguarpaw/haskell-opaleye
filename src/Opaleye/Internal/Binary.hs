@@ -5,6 +5,8 @@ module Opaleye.Internal.Binary where
 import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.QueryArr as Q
+import qualified Opaleye.Internal.PrimQuery as PQ
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
@@ -34,6 +36,19 @@ binaryspecColumn :: Binaryspec (Column a) (Column a)
 binaryspecColumn = Binaryspec (PM.PackMap (\f (Column e, Column e')
                                            -> fmap Column (f (e, e'))))
 
+sameTypeBinOpHelper :: PQ.BinOp -> Binaryspec columns columns'
+                    -> Q.Query columns -> Q.Query columns -> Q.Query columns'
+sameTypeBinOpHelper binop binaryspec q1 q2 = Q.simpleQueryArr q where
+  q ((), startTag) = (newColumns, newPrimQuery, T.next endTag)
+    where (columns1, primQuery1, midTag) = Q.runSimpleQueryArr q1 ((), startTag)
+          (columns2, primQuery2, endTag) = Q.runSimpleQueryArr q2 ((), midTag)
+
+          (newColumns, pes) =
+            PM.run (runBinaryspec binaryspec (extractBinaryFields endTag)
+                                    (columns1, columns2))
+
+          newPrimQuery = PQ.Binary binop pes (primQuery1, primQuery2)
+  
 instance Default Binaryspec (Column a) (Column a) where
   def = binaryspecColumn
 

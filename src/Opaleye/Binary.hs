@@ -32,13 +32,57 @@ unionAll = unionAllExplicit def
 
 unionAllExplicit :: B.Binaryspec columns columns'
                  -> Query columns -> Query columns -> Query columns'
-unionAllExplicit binaryspec q1 q2 = Q.simpleQueryArr q where
-  q ((), startTag) = (newColumns, newPrimQuery, T.next endTag)
-    where (columns1, primQuery1, midTag) = Q.runSimpleQueryArr q1 ((), startTag)
-          (columns2, primQuery2, endTag) = Q.runSimpleQueryArr q2 ((), midTag)
+unionAllExplicit = B.sameTypeBinOpHelper PQ.UnionAll
 
-          (newColumns, pes) =
-            PM.run (B.runBinaryspec binaryspec (B.extractBinaryFields endTag)
-                                    (columns1, columns2))
 
-          newPrimQuery = PQ.Binary PQ.UnionAll pes (primQuery1, primQuery2)
+-- | The same as unionAll, except that it additionally removes any 
+--   duplicate rows.
+union :: Default B.Binaryspec columns columns =>
+         Query columns -> Query columns -> Query columns
+union = unionExplicit def
+
+unionExplicit :: B.Binaryspec columns columns'
+              -> Query columns -> Query columns -> Query columns'
+unionExplicit = B.sameTypeBinOpHelper PQ.Union
+
+
+
+intersectAll :: Default B.Binaryspec columns columns =>
+            Query columns -> Query columns -> Query columns
+intersectAll = intersectAllExplicit def
+
+intersectAllExplicit :: B.Binaryspec columns columns'
+                 -> Query columns -> Query columns -> Query columns'
+intersectAllExplicit = B.sameTypeBinOpHelper PQ.IntersectAll
+
+
+-- | The same as intersectAll, except that it additionally removes any 
+--   duplicate rows.
+intersect :: Default B.Binaryspec columns columns =>
+         Query columns -> Query columns -> Query columns
+intersect = intersectExplicit def
+
+intersectExplicit :: B.Binaryspec columns columns'
+              -> Query columns -> Query columns -> Query columns'
+intersectExplicit = B.sameTypeBinOpHelper PQ.Intersect
+
+
+exceptAll :: Default B.Binaryspec columns columns =>
+            Query columns -> Query columns -> Query columns
+exceptAll = exceptAllExplicit def
+
+exceptAllExplicit :: B.Binaryspec columns columns'
+                 -> Query columns -> Query columns -> Query columns'
+exceptAllExplicit = B.sameTypeBinOpHelper PQ.ExceptAll
+
+
+-- | The same as exceptAll, except that it additionally removes any 
+--   duplicate rows.
+except :: Default B.Binaryspec columns columns =>
+         Query columns -> Query columns -> Query columns
+except = exceptExplicit def
+
+exceptExplicit :: B.Binaryspec columns columns'
+              -> Query columns -> Query columns -> Query columns'
+exceptExplicit = B.sameTypeBinOpHelper PQ.Except
+
