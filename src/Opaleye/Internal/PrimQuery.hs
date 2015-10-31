@@ -39,30 +39,43 @@ data PrimQuery = Unit
                | Binary BinOp [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] (PrimQuery, PrimQuery)
                  deriving Show
 
-type PrimQueryFold p = ( p
-                       , TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> p
-                       , NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-                       , [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
-                       , [HPQ.OrderExpr] -> p -> p
-                       , LimitOp -> p -> p
-                       , JoinType -> HPQ.PrimExpr -> p -> p -> p
-                       , [Symbol] -> [[HPQ.PrimExpr]] -> p
-                       , BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
-                       )
+data PrimQueryFold p = PrimQueryFold
+  { unit      :: p
+  , baseTable :: TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> p
+  , product   :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
+  , aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
+  , order     :: [HPQ.OrderExpr] -> p -> p
+  , limit     :: LimitOp -> p -> p
+  , join      :: JoinType -> HPQ.PrimExpr -> p -> p -> p
+  , values    :: [Symbol] -> [[HPQ.PrimExpr]] -> p
+  , binary    :: BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
+  }
+
+
+primQueryFoldDefault :: PrimQueryFold PrimQuery
+primQueryFoldDefault = PrimQueryFold
+  { unit      = Unit
+  , baseTable = BaseTable
+  , product   = Product
+  , aggregate = Aggregate
+  , order     = Order
+  , limit     = Limit
+  , join      = Join
+  , values    = Values
+  , binary    = Binary }
 
 foldPrimQuery :: PrimQueryFold p -> PrimQuery -> p
-foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
-               binary) = fix fold
+foldPrimQuery f = fix fold
   where fold self primQ = case primQ of
-          Unit                       -> unit
-          BaseTable ti syms          -> baseTable ti syms
-          Product pqs pes            -> product (fmap self pqs) pes
-          Aggregate aggrs pq         -> aggregate aggrs (self pq)
-          Order pes pq               -> order pes (self pq)
-          Limit op pq                -> limit op (self pq)
-          Join j cond q1 q2          -> join j cond (self q1) (self q2)
-          Values ss pes              -> values ss pes
-          Binary binop pes (pq, pq') -> binary binop pes (self pq, self pq')
+          Unit                       -> unit      f
+          BaseTable ti syms          -> baseTable f ti syms
+          Product pqs pes            -> product   f (fmap self pqs) pes
+          Aggregate aggrs pq         -> aggregate f aggrs (self pq)
+          Order pes pq               -> order     f  pes (self pq)
+          Limit op pq                -> limit     f op (self pq)
+          Join j cond q1 q2          -> join      f j cond (self q1) (self q2)
+          Values ss pes              -> values    f ss pes
+          Binary binop pes (pq, pq') -> binary    f binop pes (self pq, self pq')
         fix f = let x = f x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
