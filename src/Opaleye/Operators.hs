@@ -13,12 +13,16 @@ import qualified Data.Foldable as F
 import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
                                           unsafeIfThenElse, unsafeGt)
 import qualified Opaleye.Internal.Column as C
-import           Opaleye.Internal.QueryArr (QueryArr(QueryArr))
+import           Opaleye.Internal.QueryArr (QueryArr(QueryArr), Query)
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Operators as O
 import           Opaleye.Internal.Helpers   ((.:))
 import qualified Opaleye.Order as Ord
 import qualified Opaleye.PGTypes as T
+
+import qualified Opaleye.Column   as Column
+import qualified Opaleye.Distinct as Distinct
+import qualified Opaleye.Join     as Join
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
@@ -112,3 +116,30 @@ ors = F.foldl' (.||) (T.pgBool False)
 
 in_ :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> Column T.PGBool
 in_ hs w = ors . fmap (w .==) $ hs
+
+-- | True if the first argument occurs amongst the rows of the second,
+-- false otherwise.
+--
+-- This operation is equivalent to Postgres's @IN@ operator but, for
+-- expediency, is currently implemented using a @LEFT JOIN@.  Please
+-- file a bug if this causes any issues in practice.
+inQuery :: D.Default O.EqPP columns columns
+        => columns -> QueryArr () columns -> Query (Column T.PGBool)
+inQuery c q = qj'
+  where q' = proc () -> do
+          x' <- q -< ()
+          restrict -< c .=== x'
+          A.returnA -< 1
+
+        qd :: Query (Column T.PGInt4)
+        qd = Distinct.distinct q'
+
+        qj :: Query ((Column T.PGInt4, Column T.PGBool),
+                     Column (C.Nullable T.PGInt4))
+        qj = Join.leftJoin (A.arr (const (1, T.pgBool True))) qd
+                           (\((y, _), x) -> x .== y)
+
+        qj' :: Query (Column T.PGBool)
+        qj' = proc () -> do
+          ((_, _), d) <- qj -< ()
+          A.returnA -< Opaleye.Operators.not (Column.isNull d)
