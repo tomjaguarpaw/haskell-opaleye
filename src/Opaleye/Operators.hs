@@ -126,20 +126,23 @@ in_ hs w = ors . fmap (w .==) $ hs
 inQuery :: D.Default O.EqPP columns columns
         => columns -> QueryArr () columns -> Query (Column T.PGBool)
 inQuery c q = qj'
-  where q' = proc () -> do
-          x' <- q -< ()
-          restrict -< c .=== x'
-          A.returnA -< 1
+  where -- Remove every row that isn't equal to c
+        -- Replace the ones that are with '1'
+        q' = A.arr (const 1)
+             A.<<< keepWhen (c .===)
+             A.<<< q
 
-        qd :: Query (Column T.PGInt4)
-        qd = Distinct.distinct q'
-
-        qj :: Query ((Column T.PGInt4, Column T.PGBool),
-                     Column (C.Nullable T.PGInt4))
-        qj = Join.leftJoin (A.arr (const (1, T.pgBool True))) qd
-                           (\((y, _), x) -> x .== y)
-
+        -- Left join with a query that has a single row
+        -- We either get a single row with '1'
+        -- or a single row with 'NULL'
+        qj :: Query (Column T.PGInt4, Column (C.Nullable T.PGInt4))
+        qj = Join.leftJoin (A.arr (const 1))
+                           (Distinct.distinct q')
+                           (uncurry (.==))
+                          
+        -- Check whether it is 'NULL'
         qj' :: Query (Column T.PGBool)
-        qj' = proc () -> do
-          ((_, _), d) <- qj -< ()
-          A.returnA -< Opaleye.Operators.not (Column.isNull d)
+        qj' = A.arr (Opaleye.Operators.not
+                     . Column.isNull
+                     . snd)
+              A.<<< qj
