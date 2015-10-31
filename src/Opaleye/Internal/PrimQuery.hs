@@ -10,7 +10,14 @@ import           Opaleye.Internal.HaskellDB.PrimQuery (Symbol)
 data LimitOp = LimitOp Int | OffsetOp Int | LimitOffsetOp Int Int
              deriving Show
 
-data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
+data BinOp = Except
+           | ExceptAll
+           | Union
+           | UnionAll
+           | Intersect
+           | IntersectAll
+             deriving Show
+
 data JoinType = LeftJoin deriving Show
 
 data TableIdentifier = TableIdentifier
@@ -30,13 +37,15 @@ tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
 -- for emptiness explicity in the SQL generation phase.
 data PrimQuery = Unit
                | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
-               | Product (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]
+               | Product   (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]
                | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] PrimQuery
-               | Order [HPQ.OrderExpr] PrimQuery
-               | Limit LimitOp PrimQuery
-               | Join JoinType HPQ.PrimExpr PrimQuery PrimQuery
-               | Values [Symbol] [[HPQ.PrimExpr]]
-               | Binary BinOp [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] (PrimQuery, PrimQuery)
+               | Order     [HPQ.OrderExpr] PrimQuery
+               | Limit     LimitOp PrimQuery
+               | Join      JoinType HPQ.PrimExpr PrimQuery PrimQuery
+               | Values    [Symbol] [[HPQ.PrimExpr]]
+               | Binary    BinOp
+                           [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
+                           (PrimQuery, PrimQuery)
                  deriving Show
 
 data PrimQueryFold p = PrimQueryFold
