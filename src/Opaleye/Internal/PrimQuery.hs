@@ -80,7 +80,7 @@ foldPrimQuery f = fix fold
           BaseTable ti syms          -> baseTable f ti syms
           Product pqs pes            -> product   f (fmap self pqs) pes
           Aggregate aggrs pq         -> aggregate f aggrs (self pq)
-          Order pes pq               -> order     f  pes (self pq)
+          Order pes pq               -> order     f pes (self pq)
           Limit op pq                -> limit     f op (self pq)
           Join j cond q1 q2          -> join      f j cond (self q1) (self q2)
           Values ss pes              -> values    f ss pes
