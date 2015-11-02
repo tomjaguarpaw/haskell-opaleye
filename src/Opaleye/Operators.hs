@@ -110,6 +110,14 @@ upper = C.unOp HPQ.OpUpper
 like :: Column T.PGText -> Column T.PGText -> Column T.PGBool
 like = C.binOp HPQ.OpLike
 
+{-| Restrict a column using the IN operator. -}
+columnIn :: Column a -> Column a -> Column T.PGBool
+columnIn = C.binOp HPQ.OpIn
+
+{-| Restrict a column using the NOT IN operator. -}
+columnNotIn :: Column a -> Column a -> Column T.PGBool
+columnNotIn = C.binOp HPQ.OpNotIn
+
 -- | True when any element of the container is true
 ors :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
 ors = F.foldl' (.||) (T.pgBool False)

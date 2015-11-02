@@ -145,6 +145,7 @@ showBinOp  OpAnd        = "AND"
 showBinOp  OpOr         = "OR"
 showBinOp  OpLike       = "LIKE"
 showBinOp  OpIn         = "IN"
+showBinOp  OpNotIn      = "NOT IN"
 showBinOp  (OpOther s)  = s
 showBinOp  OpCat        = "||"
 showBinOp  OpPlus       = "+"
@@ -157,7 +158,7 @@ showBinOp  OpBitAnd     = "&"
 showBinOp  OpBitOr      = "|"
 showBinOp  OpBitXor     = "^"
 showBinOp  OpAsg        = "="
-
+ 
 
 data UnOpType = UnOpFun | UnOpPrefix | UnOpPostfix
 

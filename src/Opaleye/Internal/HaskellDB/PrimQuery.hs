@@ -46,7 +46,7 @@ data Literal = NullLit
 
 data BinOp      = OpEq | OpLt | OpLtEq | OpGt | OpGtEq | OpNotEq
                 | OpAnd | OpOr
-                | OpLike | OpIn
+                | OpLike | OpIn | OpNotIn
                 | OpOther String
 
                 | OpCat
