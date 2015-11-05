@@ -10,7 +10,14 @@ import           Opaleye.Internal.HaskellDB.PrimQuery (Symbol)
 data LimitOp = LimitOp Int | OffsetOp Int | LimitOffsetOp Int Int
              deriving Show
 
-data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
+data BinOp = Except
+           | ExceptAll
+           | Union
+           | UnionAll
+           | Intersect
+           | IntersectAll
+             deriving Show
+
 data JoinType = LeftJoin deriving Show
 
 data TableIdentifier = TableIdentifier
@@ -30,42 +37,58 @@ tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
 -- for emptiness explicity in the SQL generation phase.
 data PrimQuery = Unit
                | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
-               | Product (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]
+               | Product   (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]
                | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] PrimQuery
-               | Order [HPQ.OrderExpr] PrimQuery
-               | Limit LimitOp PrimQuery
-               | Join JoinType HPQ.PrimExpr PrimQuery PrimQuery
-               | Values [Symbol] [[HPQ.PrimExpr]]
-               | Binary BinOp [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] (PrimQuery, PrimQuery)
-               | Label String PrimQuery
+               | Order     [HPQ.OrderExpr] PrimQuery
+               | Limit     LimitOp PrimQuery
+               | Join      JoinType HPQ.PrimExpr PrimQuery PrimQuery
+               | Values    [Symbol] [[HPQ.PrimExpr]]
+               | Binary    BinOp
+                           [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
+                           (PrimQuery, PrimQuery)
+               | Label     String PrimQuery
                  deriving Show
 
-type PrimQueryFold p = ( p
-                       , TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> p
-                       , NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-                       , [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
-                       , [HPQ.OrderExpr] -> p -> p
-                       , LimitOp -> p -> p
-                       , JoinType -> HPQ.PrimExpr -> p -> p -> p
-                       , [Symbol] -> [[HPQ.PrimExpr]] -> p
-                       , BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
-                       , String -> p -> p
-                       )
+data PrimQueryFold p = PrimQueryFold
+  { unit      :: p
+  , baseTable :: TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> p
+  , product   :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
+  , aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
+  , order     :: [HPQ.OrderExpr] -> p -> p
+  , limit     :: LimitOp -> p -> p
+  , join      :: JoinType -> HPQ.PrimExpr -> p -> p -> p
+  , values    :: [Symbol] -> [[HPQ.PrimExpr]] -> p
+  , binary    :: BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
+  , label     :: String -> p -> p
+  }
+
+
+primQueryFoldDefault :: PrimQueryFold PrimQuery
+primQueryFoldDefault = PrimQueryFold
+  { unit      = Unit
+  , baseTable = BaseTable
+  , product   = Product
+  , aggregate = Aggregate
+  , order     = Order
+  , limit     = Limit
+  , join      = Join
+  , values    = Values
+  , binary    = Binary
+  , label     = Label }
 
 foldPrimQuery :: PrimQueryFold p -> PrimQuery -> p
-foldPrimQuery (unit, baseTable, product, aggregate, order, limit, join, values,
-               binary, label) = fix fold
+foldPrimQuery f = fix fold
   where fold self primQ = case primQ of
-          Unit                       -> unit
-          BaseTable ti syms          -> baseTable ti syms
-          Product pqs pes            -> product (fmap self pqs) pes
-          Aggregate aggrs pq         -> aggregate aggrs (self pq)
-          Order pes pq               -> order pes (self pq)
-          Limit op pq                -> limit op (self pq)
-          Join j cond q1 q2          -> join j cond (self q1) (self q2)
-          Values ss pes              -> values ss pes
-          Binary binop pes (pq, pq') -> binary binop pes (self pq, self pq')
-          Label l pq                 -> label l (self pq)
+          Unit                       -> unit      f
+          BaseTable ti syms          -> baseTable f ti syms
+          Product pqs pes            -> product   f (fmap self pqs) pes
+          Aggregate aggrs pq         -> aggregate f aggrs (self pq)
+          Order pes pq               -> order     f pes (self pq)
+          Limit op pq                -> limit     f op (self pq)
+          Join j cond q1 q2          -> join      f j cond (self q1) (self q2)
+          Values ss pes              -> values    f ss pes
+          Binary binop pes (pq, pq') -> binary    f binop pes (self pq, self pq')
+          Label l pq                 -> label     f l (self pq)
         fix f = let x = f x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery

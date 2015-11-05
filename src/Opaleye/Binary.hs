@@ -3,11 +3,8 @@
 module Opaleye.Binary where
 
 import           Opaleye.QueryArr (Query)
-import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Binary as B
-import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
-import qualified Opaleye.Internal.PackMap as PM
 
 import           Data.Profunctor.Product.Default (Default, def)
 

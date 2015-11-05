@@ -572,6 +572,15 @@ testInsertSerial conn = do
                    , (1, 2)
                    , (2, 40) ]
 
+testInQuery :: Test
+testInQuery conn = do
+  let q (x, e) = testG (O.inQuery x (O.queryTable table1)) (== [e]) conn
+
+  r <- mapM (q . (\x ->      (x,        True)))  table1dataG
+  s <- mapM (q . (\(x, y) -> ((x, y+1), False))) table1dataG
+
+  return (and r && and s)
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateFunction,
@@ -582,7 +591,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
             testValuesEmpty, testUnionAll, testTableFunctor, testUpdate,
-            testKeywordColNames, testInsertSerial
+            testKeywordColNames, testInsertSerial, testInQuery
            ]
 
 -- Environment.getEnv throws an exception on missing environment variable!

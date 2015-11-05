@@ -70,8 +70,17 @@ data Label = Label {
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
 sqlQueryGenerator :: PQ.PrimQueryFold Select
-sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
-                     values, binary, label)
+sqlQueryGenerator = PQ.PrimQueryFold
+  { PQ.unit      = unit
+  , PQ.baseTable = baseTable
+  , PQ.product   = product
+  , PQ.aggregate = aggregate
+  , PQ.order     = order
+  , PQ.limit     = limit_
+  , PQ.join      = join
+  , PQ.values    = values
+  , PQ.binary    = binary
+  , PQ.label     = label }
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
