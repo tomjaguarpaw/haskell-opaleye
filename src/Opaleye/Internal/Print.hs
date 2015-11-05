@@ -65,9 +65,9 @@ ppSelectLabel l = text "/*" <+> text (defuseComments (Sql.lLabel l)) <+> text "*
                   $$ ppSql (Sql.lSelect l)
   where
     defuseComments = ST.unpack
-                   . ST.replace (ST.pack "--") (ST.pack "- -")
-                   . ST.replace (ST.pack "/*") (ST.pack "/ *")
-                   . ST.replace (ST.pack "*/") (ST.pack "* /")
+                   . ST.replace (ST.pack "--") (ST.pack " - - ")
+                   . ST.replace (ST.pack "/*") (ST.pack " / * ")
+                   . ST.replace (ST.pack "*/") (ST.pack " * / ")
                    . ST.pack
 
 ppJoinType :: Sql.JoinType -> Doc
