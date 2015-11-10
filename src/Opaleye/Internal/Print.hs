@@ -6,8 +6,9 @@ import qualified Opaleye.Internal.Sql as Sql
 import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
                                               SelectJoin,
                                               SelectValues,
-                                              SelectBinary),
-                                       From, Join, Values, Binary)
+                                              SelectBinary,
+                                              SelectLabel),
+                                       From, Join, Values, Binary, Label)
 
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
@@ -15,6 +16,7 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Text          as ST
 
 type TableAlias = String
 
@@ -24,6 +26,7 @@ ppSql (Table table) = HPrint.ppTable table
 ppSql (SelectJoin j) = ppSelectJoin j
 ppSql (SelectValues v) = ppSelectValues v
 ppSql (SelectBinary v) = ppSelectBinary v
+ppSql (SelectLabel v) = ppSelectLabel v
 
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
@@ -57,6 +60,16 @@ ppSelectBinary b = ppSql (Sql.bSelect1 b)
                    $$ ppBinOp (Sql.bOp b)
                    $$ ppSql (Sql.bSelect2 b)
 
+ppSelectLabel :: Label -> Doc
+ppSelectLabel l = text "/*" <+> text (defuseComments (Sql.lLabel l)) <+> text "*/"
+                  $$ ppSql (Sql.lSelect l)
+  where
+    defuseComments = ST.unpack
+                   . ST.replace (ST.pack "--") (ST.pack " - - ")
+                   . ST.replace (ST.pack "/*") (ST.pack " / * ")
+                   . ST.replace (ST.pack "*/") (ST.pack " * / ")
+                   . ST.pack
+
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 
@@ -84,6 +97,7 @@ ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
   SelectJoin slj        -> parens (ppSelectJoin slj)
   SelectValues slv      -> parens (ppSelectValues slv)
   SelectBinary slb      -> parens (ppSelectBinary slb)
+  SelectLabel sll       -> parens (ppSelectLabel sll)
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
