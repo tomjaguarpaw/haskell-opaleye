@@ -53,6 +53,30 @@ runQueryExplicit :: QueryRunner columns haskells
 runQueryExplicit qr conn q = PGS.queryWith_ parser conn sql
   where (sql, parser) = prepareQuery qr q
 
+-- | @runQueryFold@ streams the results of a query incrementally and consumes
+-- the results with a left fold.
+--
+-- This fold is /not/ strict. The stream consumer is responsible for
+-- forcing the evaluation of its result to avoid space leaks.
+runQueryFold
+  :: D.Default QueryRunner columns haskells
+  => PGS.Connection
+  -> Query columns
+  -> b
+  -> (b -> haskells -> IO b)
+  -> IO b
+runQueryFold = runQueryFoldExplicit D.def
+
+runQueryFoldExplicit
+  :: QueryRunner columns haskells
+  -> PGS.Connection
+  -> Query columns
+  -> b
+  -> (b -> haskells -> IO b)
+  -> IO b
+runQueryFoldExplicit qr conn q z f = PGS.foldWith_ parser conn sql z f
+  where (sql, parser) = prepareQuery qr q
+
 prepareQuery :: QueryRunner columns haskells -> Query columns -> (PGS.Query, FR.RowParser haskells)
 prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
   where sql :: PGS.Query
