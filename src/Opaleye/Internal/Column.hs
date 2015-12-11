@@ -1,5 +1,7 @@
 module Opaleye.Internal.Column where
 
+import Data.String
+
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 -- | Numeric 'Column' types are instances of 'Num', so you can use
@@ -64,3 +66,9 @@ class PGFractional a where
 instance (PGNum a, PGFractional a) => Fractional (Column a) where
   fromRational = pgFromRational
   (/) = binOp HPQ.OpDiv
+
+class PGString a where
+    pgFromString :: String -> Column a
+
+instance PGString a => IsString (Column a) where
+  fromString = pgFromString
