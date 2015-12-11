@@ -28,9 +28,12 @@ import           Data.Int (Int64)
 import           Data.String (fromString)
 import qualified Data.List.NonEmpty as NEL
 
+
+-- | Returns the number of rows inserted
 runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
+-- | Returns the number of rows inserted
 runInsertMany :: PGS.Connection
               -> T.Table columns columns'
               -> [columns]
@@ -40,17 +43,17 @@ runInsertMany conn table columns = case NEL.nonEmpty columns of
   Nothing       -> return 0
   Just columns' -> (PGS.execute_ conn . fromString .: arrangeInsertManySql) table columns'
 
--- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
+-- | @runInsertManyReturning@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertReturning@.
-runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
-                      => PGS.Connection
-                      -> T.Table columnsW columnsR
-                      -> columnsW
-                      -> (columnsR -> returned)
-                      -> IO [haskells]
-runInsertReturning = runInsertReturningExplicit D.def
+runInsertManyReturning :: (D.Default RQ.QueryRunner returned haskells)
+                       => PGS.Connection
+                       -> T.Table columnsW columnsR
+                       -> [columnsW]
+                       -> (columnsR -> returned)
+                       -> IO [haskells]
+runInsertManyReturning = runInsertManyReturningExplicit D.def
 
 -- | Where the predicate is true, update rows using the supplied
 -- function.
@@ -64,12 +67,12 @@ runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
 -- strongly recommended that you provide full type signatures when
 -- using @runInsertReturning@.
 runUpdateReturning :: (D.Default RQ.QueryRunner returned haskells)
-                      => PGS.Connection
-                      -> T.Table columnsW columnsR
-                      -> (columnsR -> columnsW)
-                      -> (columnsR -> Column PGBool)
-                      -> (columnsR -> returned)
-                      -> IO [haskells]
+                   => PGS.Connection
+                   -> T.Table columnsW columnsR
+                   -> (columnsR -> columnsW)
+                   -> (columnsR -> Column PGBool)
+                   -> (columnsR -> returned)
+                   -> IO [haskells]
 runUpdateReturning = runUpdateReturningExplicit D.def
 
 -- | Delete rows where the predicate is true.
@@ -78,21 +81,24 @@ runDelete :: PGS.Connection -> T.Table a columnsR -> (columnsR -> Column PGBool)
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 
 -- | You probably don't need this, but can just use
--- 'runInsertReturning' instead.  You only need it if you want to run
+-- 'runInsertManyReturning' instead.  You only need it if you want to run
 -- an UPDATE RETURNING statement but need to be explicit about the
 -- 'QueryRunner'.
-runInsertReturningExplicit :: RQ.QueryRunner returned haskells
-                            -> PGS.Connection
-                            -> T.Table columnsW columnsR
-                            -> columnsW
-                            -> (columnsR -> returned)
-                            -> IO [haskells]
-runInsertReturningExplicit qr conn t w r = PGS.queryWith_ parser conn
-                                             (fromString
-                                             (arrangeInsertReturningSql u t w r))
+runInsertManyReturningExplicit :: RQ.QueryRunner returned haskells
+                               -> PGS.Connection
+                               -> T.Table columnsW columnsR
+                               -> [columnsW]
+                               -> (columnsR -> returned)
+                               -> IO [haskells]
+runInsertManyReturningExplicit qr conn table columns returnf = case NEL.nonEmpty columns of
+  Nothing       -> return []
+  Just columns' -> PGS.queryWith_ parser conn (fromString (arrangeInsertManyReturningSql u table columns' returnf))
+-- runInsertManyReturningExplicit qr conn t w r = PGS.queryWith_ parser conn
+--                                              (fromString
+--                                              (arrangeInsertManyReturningSql u t w r))
   where IRQ.QueryRunner u _ _ = qr
-        parser = IRQ.prepareRowParser qr (r v)
-        TI.Table _ (TI.TableProperties _ (TI.View v)) = t
+        parser = IRQ.prepareRowParser qr (returnf v)
+        TI.Table _ (TI.TableProperties _ (TI.View v)) = table
         -- This method of getting hold of the return type feels a bit
         -- suspect.  I haven't checked it for validity.
 
@@ -174,28 +180,28 @@ arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
-arrangeInsertReturning :: U.Unpackspec returned ignored
-                       -> T.Table columnsW columnsR
-                       -> columnsW
-                       -> (columnsR -> returned)
-                       -> Sql.Returning HSql.SqlInsert
-arrangeInsertReturning unpackspec table columns returningf =
+arrangeInsertManyReturning :: U.Unpackspec returned ignored
+                           -> T.Table columnsW columnsR
+                           -> NEL.NonEmpty columnsW
+                           -> (columnsR -> returned)
+                           -> Sql.Returning HSql.SqlInsert
+arrangeInsertManyReturning unpackspec table columns returningf =
   Sql.Returning insert returningSEs
-  where insert = arrangeInsert table columns
+  where insert = arrangeInsertMany table columns
         TI.View columnsR = TI.tablePropertiesView (TI.tableProperties table)
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
-arrangeInsertReturningSql :: U.Unpackspec returned ignored
+arrangeInsertManyReturningSql :: U.Unpackspec returned ignored
                           -> T.Table columnsW columnsR
-                          -> columnsW
+                          -> NEL.NonEmpty columnsW
                           -> (columnsR -> returned)
                           -> String
-arrangeInsertReturningSql = show
+arrangeInsertManyReturningSql = show
                             . Print.ppInsertReturning
-                            .:: arrangeInsertReturning
+                            .:: arrangeInsertManyReturning
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
