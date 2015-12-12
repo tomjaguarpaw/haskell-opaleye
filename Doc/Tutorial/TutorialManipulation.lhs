@@ -8,10 +8,10 @@
 >                           arrangeUpdateSql, arrangeInsertReturningSql,
 >                           PGInt4, PGFloat8)
 >
-> import           Data.Profunctor.Product (p3)
+> import           Data.Profunctor.Product (p4)
 > import           Data.Profunctor.Product.Default (Default, def)
 > import qualified Opaleye.Internal.Unpackspec as U
-
+> import qualified Opaleye.PGTypes as P
 
 Manipulation
 ============
@@ -30,15 +30,19 @@ it is wrapped in a Maybe.  That means we don't necessarily need to
 specify it when writing to the table.  The database will automatically
 fill in a value for us.
 
-> table :: Table (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8)
->                (Column PGInt4, Column PGFloat8, Column PGFloat8)
-> table = Table "tablename" (p3 (optional "id", required "x", required "y"))
+> table :: Table
+>     (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8, Column P.PGText)
+>     (Column PGInt4, Column PGFloat8, Column PGFloat8, Column P.PGText)
+> table = Table "tablename" (p4 ( optional "id"
+>                               , required "x"
+>                               , required "y"
+>                               , required "s" ))
 
 To perform a delete we provide an expression from our read type to
 `Column Bool`.  All rows for which the expression is true are deleted.
 
 > delete :: String
-> delete = arrangeDeleteSql table (\(_, x, y) -> x .< y)
+> delete = arrangeDeleteSql table (\(_, x, y, _) -> x .< y)
 
 ghci> putStrLn delete
 DELETE FROM tablename
@@ -46,10 +50,14 @@ WHERE ((x) < (y))
 
 
 To insert we provide a row with the write type.  Optional columns can
-be omitted by providing `Nothing` instead.
+be omitted by providing `Nothing` instead.  Numeric SQL types have a
+Haskell `Num` instance so we can write them using numeric literals.
+Values of other types should be created using the functions in the
+`Opaleye.PGTypes` module, for example `pgString` to create a `Column
+P.PGText` from a `String`.
 
 > insertNothing :: String
-> insertNothing = arrangeInsertSql table (Nothing, 2, 3)
+> insertNothing = arrangeInsertSql table (Nothing, 2, 3, P.pgString "Hello")
 
 ghci> putStrLn insertNothing
 INSERT INTO tablename (x,
@@ -61,7 +69,7 @@ VALUES (2.0,
 If we really want to specify an optional column we can use `Just`.
 
 > insertJust :: String
-> insertJust = arrangeInsertSql table (Just 1, 2, 3)
+> insertJust = arrangeInsertSql table (Just 1, 2, 3, P.pgString "Hello")
 
 ghci> putStrLn insertJust
 INSERT INTO tablename (id,
@@ -78,8 +86,8 @@ type, and a condition given by a function from the read type to
 according to the update function.
 
 > update :: String
-> update = arrangeUpdateSql table (\(_, x, y) -> (Nothing, x + y, x - y))
->                                 (\(id_, _, _) -> id_ .== 5)
+> update = arrangeUpdateSql table (\(_, x, y, s) -> (Nothing, x + y, x - y, s))
+>                                 (\(id_, _, _, _) -> id_ .== 5)
 
 ghci> putStrLn update
 UPDATE tablename
@@ -94,8 +102,9 @@ it in future queries.  SQL supports that via INSERT RETURNING and
 Opaleye supports it also.
 
 > insertReturning :: String
-> insertReturning = arrangeInsertReturningSql def' table (Nothing, 4, 5)
->                                             (\(id_, _, _) -> id_)
+> insertReturning = arrangeInsertReturningSql def' table
+>                                             (Nothing, 4, 5, P.pgString "Bye")
+>                                             (\(id_, _, _, _) -> id_)
 >                   -- TODO: vv This is too messy
 >                   where def' :: U.Unpackspec (Column a) (Column a)
 >                         def' = def
