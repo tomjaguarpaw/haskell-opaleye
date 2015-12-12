@@ -11,6 +11,7 @@
 > import           Opaleye (Column, Nullable, matchNullable, isNull,
 >                          Table(Table), required, queryTable,
 >                          Query, QueryArr, restrict, (.==), (.<=), (.&&), (.<),
+>                          (.===),
 >                          (.++), ifThenElse, pgString, aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runQuery,
 >                          showSqlForPostgres, Unpackspec,
@@ -771,13 +772,22 @@ On the other hand we can make a newtype for the warehouse ID
 >                               , wLocation = required "location"
 >                               , wNumGoods = required "num_goods" })
 
-Now the comparison will not pass the type checker.
+Now the comparison will not pass the type checker
 
 > -- forbiddenComparison :: GoodWarehouseColumn -> Column PGBool
 > -- forbiddenComparison w = wId w .== wNumGoods w
 > --
 > -- => Couldn't match type `WarehouseId' (Column PGInt4)' with `Column PGInt4'
 
+but we can compare two `WarehouseIdColumn`s.
+
+> permittedComparison :: GoodWarehouseColumn
+>                     -> GoodWarehouseColumn
+>                     -> Column PGBool
+> permittedComparison w1 w2 = wId w1 .=== wId w2
+
+(Currently we use `.===`, a more polymorphic version of `.==`, but
+`.==` may be generalised in the future.)
 
 Running queries on Postgres
 ===========================
