@@ -51,6 +51,9 @@ instance C.PGNum PGInt8 where
 instance C.PGFractional PGFloat8 where
   pgFromRational = pgDouble . fromRational
 
+instance C.PGString PGText where
+  pgFromString = pgString
+
 literalColumn :: HPQ.Literal -> Column a
 literalColumn = IPT.literalColumn
 {-# WARNING literalColumn

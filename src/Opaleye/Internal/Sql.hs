@@ -22,6 +22,7 @@ data Select = SelectFrom From
             | SelectJoin Join
             | SelectValues Values
             | SelectBinary Binary
+            | SelectLabel Label
             deriving Show
 
 data SelectAttrs =
@@ -61,6 +62,11 @@ data Binary = Binary {
 data JoinType = LeftJoin deriving Show
 data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
 
+data Label = Label {
+  lLabel  :: String,
+  lSelect :: Select
+} deriving Show
+
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
 sqlQueryGenerator :: PQ.PrimQueryFold Select
@@ -73,7 +79,8 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.limit     = limit_
   , PQ.join      = join
   , PQ.values    = values
-  , PQ.binary    = binary }
+  , PQ.binary    = binary
+  , PQ.label     = label }
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
@@ -206,3 +213,6 @@ ensureColumnsGen :: (HSql.SqlExpr -> a)
               -> NEL.NonEmpty a
 ensureColumnsGen f = M.fromMaybe (return . f $ HSql.ConstSqlExpr "0")
                    . NEL.nonEmpty
+
+label :: String -> Select -> Select
+label l s = SelectLabel (Label l s)
