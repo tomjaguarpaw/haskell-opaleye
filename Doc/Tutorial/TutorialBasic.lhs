@@ -756,10 +756,7 @@ it holds.
 
 On the other hand we can make a newtype for the warehouse ID
 
-> -- TODO: Since the `makeAdaptorAndInstance` Template Haskell is
-> -- poorly written we have to make this `data` rather than `newtype` but
-> -- this will be fixed in a later version.
-> data WarehouseId' a = WarehouseId a
+> newtype WarehouseId' a = WarehouseId a
 > $(makeAdaptorAndInstance "pWarehouseId" ''WarehouseId')
 >
 > type WarehouseIdColumn = WarehouseId' (Column PGInt4)
