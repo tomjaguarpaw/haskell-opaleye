@@ -1,5 +1,21 @@
 {-# LANGUAGE FlexibleContexts #-}
 
+-- | Please note that you currently you can only INSERT or UPDATE with
+-- constant values, not the result of SELECTS.  That is, you can
+-- generate SQL of the form
+--
+-- @
+-- INSERT INTO thetable ('John', 1);
+-- @
+--
+-- but not
+--
+-- @
+-- INSERT INTO thetable
+--    SELECT 'John',
+--    (SELECT num FROM thetable ORDER BY num DESC LIMIT 1) + 1;
+-- @
+
 module Opaleye.Manipulation (module Opaleye.Manipulation,
                              U.Unpackspec) where
 
