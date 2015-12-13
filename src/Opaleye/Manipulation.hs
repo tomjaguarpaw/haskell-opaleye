@@ -43,7 +43,7 @@ runInsertMany conn table columns = case NEL.nonEmpty columns of
   Nothing       -> return 0
   Just columns' -> (PGS.execute_ conn . fromString .: arrangeInsertManySql) table columns'
 
---| @runInsertReturning@'s use of the 'D.Default' typeclass means that the
+-- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertReturning@.
@@ -105,6 +105,11 @@ runInsertReturningExplicit :: RQ.QueryRunner returned haskells
 runInsertReturningExplicit qr conn t w r = PGS.queryWith_ parser conn
                                              (fromString
                                              (arrangeInsertReturningSql u t w r))
+  where IRQ.QueryRunner u _ _ = qr
+        parser = IRQ.prepareRowParser qr (r v)
+        TI.Table _ (TI.TableProperties _ (TI.View v)) = t
+        -- This method of getting hold of the return type feels a bit
+        -- suspect.  I haven't checked it for validity.
 
 -- | You probably don't need this, but can just use
 -- 'runInsertManyReturning' instead.  You only need it if you want to run
@@ -210,7 +215,7 @@ arrangeInsertReturning :: U.Unpackspec returned ignored
                        -> Sql.Returning HSql.SqlInsert
 arrangeInsertReturning unpackspec table columns returningf =
    Sql.Returning insert returningSEs
--  where insert = arrangeInsert table columns
+   where insert = arrangeInsert table columns
          TI.View columnsR = TI.tablePropertiesView (TI.tableProperties table)
          returningPEs = U.collectPEs unpackspec (returningf columnsR)
          returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
@@ -237,6 +242,7 @@ arrangeInsertManyReturning unpackspec table columns returningf =
         TI.View columnsR = TI.tablePropertiesView (TI.tableProperties table)
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
+
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
