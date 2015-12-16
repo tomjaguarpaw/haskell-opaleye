@@ -16,6 +16,7 @@ import qualified Data.Ord as Ord
 import qualified Data.List as L
 import           Data.Monoid ((<>))
 import qualified Data.String as String
+import qualified Data.Time   as Time
 
 import qualified System.Exit as Exit
 import qualified System.Environment as Environment
@@ -581,6 +582,12 @@ testInQuery conn = do
 
   return (and r && and s)
 
+testAtTimeZone :: Test
+testAtTimeZone = testG (A.pure (O.timestamptzAtTimeZone t (O.pgString "CET"))) (== [t'])
+  where t = O.pgUTCTime (Time.UTCTime d (Time.secondsToDiffTime 3600))
+        t' = Time.LocalTime d (Time.TimeOfDay 2 0 0)
+        d = Time.fromGregorian 2015 1 1
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateFunction,
@@ -591,7 +598,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
             testValuesEmpty, testUnionAll, testTableFunctor, testUpdate,
-            testKeywordColNames, testInsertSerial, testInQuery
+            testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone
            ]
 
 -- Environment.getEnv throws an exception on missing environment variable!

@@ -157,6 +157,7 @@ showBinOp  OpBitAnd     = "&"
 showBinOp  OpBitOr      = "|"
 showBinOp  OpBitXor     = "^"
 showBinOp  OpAsg        = "="
+showBinOp  OpAtTimeZone = "AT TIME ZONE"
 
 
 data UnOpType = UnOpFun | UnOpPrefix | UnOpPostfix
