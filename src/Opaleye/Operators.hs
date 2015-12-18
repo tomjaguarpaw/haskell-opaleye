@@ -146,3 +146,8 @@ inQuery c q = qj'
                      . Column.isNull
                      . snd)
               A.<<< qj
+
+timestamptzAtTimeZone :: Column T.PGTimestamptz
+                      -> Column T.PGText
+                      -> Column T.PGTimestamp
+timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone

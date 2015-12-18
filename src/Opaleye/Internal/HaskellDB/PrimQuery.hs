@@ -52,7 +52,7 @@ data BinOp      = OpEq | OpLt | OpLtEq | OpGt | OpGtEq | OpNotEq
                 | OpCat
                 | OpPlus | OpMinus | OpMul | OpDiv | OpMod
                 | OpBitNot | OpBitAnd | OpBitOr | OpBitXor
-                | OpAsg
+                | OpAsg | OpAtTimeZone
                 deriving (Show,Read)
 
 data UnOp = OpNot

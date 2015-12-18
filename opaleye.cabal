@@ -106,6 +106,7 @@ test-suite test
     product-profunctors,
     QuickCheck,
     semigroups,
+    time,
     opaleye
   ghc-options: -Wall
 
