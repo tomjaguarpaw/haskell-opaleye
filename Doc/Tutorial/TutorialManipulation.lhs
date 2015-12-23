@@ -12,6 +12,7 @@
 > import           Data.Profunctor.Product.Default (Default, def)
 > import qualified Opaleye.Internal.Unpackspec as U
 > import qualified Opaleye.PGTypes as P
+> import qualified Opaleye.Constant as C
 
 Manipulation
 ============
@@ -64,6 +65,23 @@ INSERT INTO tablename (x,
                        y)
 VALUES (2.0,
         3.0)
+
+
+If we'd like to pass a value into the insertion function, we can't
+rely on the Num instance and must use constant:
+
+> insertNonLiteral :: Double -> String
+> insertNonLiteral i = arrangeInsertSql table (Nothing, 2, C.constant i, P.pgString "Hello")
+
+ghci> > putStrLn $ insertNonLiteral 12.0
+INSERT INTO "tablename" ("id",
+                         "x",
+                         "y",
+                         "s")
+VALUES (DEFAULT,
+        2.0,
+        12.0,
+        E'Hello')
 
 
 If we really want to specify an optional column we can use `Just`.
