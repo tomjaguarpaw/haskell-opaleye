@@ -1,8 +1,6 @@
-> {-# LANGUAGE Arrows #-}
 > {-# LANGUAGE FlexibleContexts #-}
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
-> {-# LANGUAGE TemplateHaskell #-}
 > {-# LANGUAGE UndecidableInstances #-}
 >
 > module TutorialBasicMonomorphic where
