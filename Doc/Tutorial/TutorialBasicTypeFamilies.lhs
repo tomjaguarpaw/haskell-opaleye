@@ -196,27 +196,36 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data Widget a b c d e = Widget { style    :: a
->                                , color    :: b
->                                , location :: c
->                                , quantity :: d
->                                , radius   :: e }
+> data Widget f = Widget { style    :: Field f String PGText
+>                        , color    :: Field f String PGText
+>                        , location :: Field f String PGText
+>                        , quantity :: Field f Int    PGInt4
+>                        , radius   :: Field f Double PGFloat8
+>                        }
 >
-> $(makeAdaptorAndInstance "pWidget" ''Widget)
+> instance ( Applicative (p (Widget a))
+>          , P.Profunctor p
+>          , Default p (Field a String PGText)   (Field b String PGText)
+>          , Default p (Field a Int    PGInt4)   (Field b Int    PGInt4)
+>          , Default p (Field a Double PGFloat8) (Field b Double PGFloat8)
+>          , Default p (Field a Day    PGDate)   (Field b Day    PGDate)) =>
+>   Default p (Widget a) (Widget b) where
+>   def = Widget <$> P.lmap style    D.def
+>                <*> P.lmap color    D.def
+>                <*> P.lmap location D.def
+>                <*> P.lmap quantity D.def
+>                <*> P.lmap radius   D.def
 
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
 
-> widgetTable :: Table (Widget (Column PGText) (Column PGText) (Column PGText)
->                              (Column PGInt4) (Column PGFloat8))
->                      (Widget (Column PGText) (Column PGText) (Column PGText)
->                              (Column PGInt4) (Column PGFloat8))
+> widgetTable :: Table (Widget O) (Widget O)
 > widgetTable = Table "widgetTable"
->                      (pWidget Widget { style    = required "style"
->                                      , color    = required "color"
->                                      , location = required "location"
->                                      , quantity = required "quantity"
->                                      , radius   = required "radius" })
+>                      (Widget <$> P.lmap style    (required "style")
+>                              <*> P.lmap color    (required "color")
+>                              <*> P.lmap location (required "location")
+>                              <*> P.lmap quantity (required "quantity")
+>                              <*> P.lmap radius   (required "radius"))
 
 
 Say we want to group by the style and color of widgets, calculating
@@ -224,13 +233,13 @@ how many (possibly duplicated) locations there are, the total number
 of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
-> aggregateWidgets :: Query (Widget (Column PGText) (Column PGText) (Column PGInt8)
->                                   (Column PGInt4) (Column PGFloat8))
-> aggregateWidgets = aggregate (pWidget (Widget { style    = groupBy
->                                               , color    = groupBy
->                                               , location = count
->                                               , quantity = sum
->                                               , radius   = avg }))
+> aggregateWidgets :: Query (Column PGText, Column PGText, Column PGInt8,
+>                            Column PGInt4, Column PGFloat8)
+> aggregateWidgets = aggregate ((,,,,) <$> P.lmap style    groupBy
+>                                      <*> P.lmap color    groupBy
+>                                      <*> P.lmap location count
+>                                      <*> P.lmap quantity sum
+>                                      <*> P.lmap radius   avg)
 >                              (queryTable widgetTable)
 
 The generated SQL is
