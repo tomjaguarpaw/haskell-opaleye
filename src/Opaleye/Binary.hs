@@ -82,4 +82,3 @@ except = exceptExplicit def
 exceptExplicit :: B.Binaryspec columns columns'
               -> Query columns -> Query columns -> Query columns'
 exceptExplicit = B.sameTypeBinOpHelper PQ.Except
-
