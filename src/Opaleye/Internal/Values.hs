@@ -2,8 +2,6 @@
 
 module Opaleye.Internal.Values where
 
-import qualified Opaleye.PGTypes as T
-
 import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
@@ -44,17 +42,13 @@ valuesU unpack valuesspec rows ((), t) = (newColumns, primQ', T.next t)
           PM.run (runValuesspec valuesspec (extractValuesField t))
 
         valuesPEs = map fst valuesPEs_nulls
-        nulls = map snd valuesPEs_nulls
-
-        yieldNoRows :: PQ.PrimQuery -> PQ.PrimQuery
-        yieldNoRows = PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False))
 
         values' :: [[HPQ.PrimExpr]]
-        (values', wrap) = if null rows
-                          then ([nulls], yieldNoRows)
-                          else (map runRow rows, id)
+        values' = map runRow rows
 
-        primQ' = wrap (PQ.Values valuesPEs values')
+        primQ' = if null rows
+                 then PQ.Empty ()
+                 else PQ.Values valuesPEs values'
 
 -- We don't actually use the return value of this.  It might be better
 -- to come up with another Applicative instance for specifically doing
@@ -79,7 +73,7 @@ runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 -- all 'Column a's.  However, in order to get around the NULL problem
 -- mentioned above we should just add an explicit Empty constructor to
 -- PrimQuery (and optimize it away before generating code).
-instance Default Valuesspec (Column T.PGInt4) (Column T.PGInt4) where
+instance Default Valuesspec (Column a) (Column a) where
   def = Valuesspec (PM.PackMap (\f () -> fmap Column (f (HPQ.ConstExpr HPQ.NullLit))))
 
 -- {

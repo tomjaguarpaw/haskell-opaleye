@@ -14,6 +14,7 @@ import qualified Opaleye.Internal.Tag as T
 
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Maybe as M
+import qualified Data.Void as V
 
 import qualified Control.Arrow as Arr
 
@@ -69,9 +70,10 @@ data Label = Label {
 
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
-sqlQueryGenerator :: PQ.PrimQueryFold Select
+sqlQueryGenerator :: PQ.PrimQueryFold' V.Void Select
 sqlQueryGenerator = PQ.PrimQueryFold
   { PQ.unit      = unit
+  , PQ.empty     = empty
   , PQ.baseTable = baseTable
   , PQ.product   = product
   , PQ.aggregate = aggregate
@@ -82,7 +84,7 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.binary    = binary
   , PQ.label     = label }
 
-sql :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> Select
+sql :: ([HPQ.PrimExpr], PQ.PrimQuery' V.Void, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
                                           , tables = [pqSelect] }
   where pqSelect = PQ.foldPrimQuery sqlQueryGenerator pq
@@ -91,6 +93,9 @@ sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (
 
 unit :: Select
 unit = SelectFrom newSelect { attrs  = SelectAttrs (ensureColumns []) }
+
+empty :: V.Void -> select
+empty = V.absurd
 
 baseTable :: PQ.TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> Select
 baseTable ti columns = SelectFrom $

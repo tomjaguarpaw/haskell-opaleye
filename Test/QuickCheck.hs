@@ -40,10 +40,13 @@ type Haskells = [Either Int Bool]
 columnsOfHaskells :: Haskells -> Columns
 columnsOfHaskells = O.constantExplicit eitherPP
 
+columnsList :: (a, b) -> [Either a b]
+columnsList (x, y) = [Left x, Right y]
+
 newtype ArbitraryQuery   = ArbitraryQuery (O.Query Columns)
 newtype ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Haskells }
                         deriving Show
-newtype ArbitraryColumnsList = ArbitraryColumnsList { unArbitraryColumnsList :: [Int] }
+newtype ArbitraryColumnsList = ArbitraryColumnsList { unArbitraryColumnsList :: [(Int, Bool)] }
                              deriving Show
 newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
@@ -58,7 +61,8 @@ unpackColumns :: O.Unpackspec Columns Columns
 unpackColumns = eitherPP
 
 instance Show ArbitraryQuery where
-  show (ArbitraryQuery q) = O.showSqlForPostgresExplicit unpackColumns q
+  show (ArbitraryQuery q) = maybe "Empty query" id
+                              (O.showSqlForPostgresExplicit unpackColumns q)
 
 instance Show ArbitraryGarble where
   show = const "A permutation"
@@ -98,7 +102,7 @@ instance TQ.Arbitrary ArbitraryQuery where
         aq (restrictFirstBool Arrow.<<< q)
     , do
         ArbitraryColumnsList l <- TQ.arbitrary
-        aq (fmap (return . Left) (O.values (fmap O.constant l)))
+        aq (fmap columnsList (O.values (fmap O.constant l)))
     ]
     where aq = return . ArbitraryQuery
 
@@ -321,8 +325,8 @@ restrict conn (ArbitraryQuery q) = do
 
 values :: PGS.Connection -> ArbitraryColumnsList -> IO Bool
 values conn (ArbitraryColumnsList l) = do
-  compareNoSort conn (denotation' (fmap (return . Left) (O.values (fmap O.constant l))))
-                     (pureList (fmap (return . Left) l))
+  compareNoSort conn (denotation' (fmap columnsList (O.values (fmap O.constant l))))
+                     (pureList (fmap columnsList l))
 
 {- TODO
 

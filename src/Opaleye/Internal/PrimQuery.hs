@@ -35,22 +35,28 @@ tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
 
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
-data PrimQuery = Unit
-               | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
-               | Product   (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]
-               | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] PrimQuery
-               | Order     [HPQ.OrderExpr] PrimQuery
-               | Limit     LimitOp PrimQuery
-               | Join      JoinType HPQ.PrimExpr PrimQuery PrimQuery
-               | Values    [Symbol] [[HPQ.PrimExpr]]
-               | Binary    BinOp
-                           [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
-                           (PrimQuery, PrimQuery)
-               | Label     String PrimQuery
+data PrimQuery' a = Unit
+                  | Empty a
+                  | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
+                  | Product   (NEL.NonEmpty (PrimQuery' a)) [HPQ.PrimExpr]
+                  | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))]
+                              (PrimQuery' a)
+                  | Order     [HPQ.OrderExpr] (PrimQuery' a)
+                  | Limit     LimitOp (PrimQuery' a)
+                  | Join      JoinType HPQ.PrimExpr (PrimQuery' a) (PrimQuery' a)
+                  | Values    [Symbol] [[HPQ.PrimExpr]]
+                  | Binary    BinOp
+                              [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
+                              (PrimQuery' a, PrimQuery' a)
+                  | Label     String (PrimQuery' a)
                  deriving Show
 
-data PrimQueryFold p = PrimQueryFold
+type PrimQuery = PrimQuery' ()
+type PrimQueryFold = PrimQueryFold' ()
+
+data PrimQueryFold' a p = PrimQueryFold
   { unit      :: p
+  , empty     :: a -> p
   , baseTable :: TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> p
   , product   :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
   , aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
@@ -63,9 +69,10 @@ data PrimQueryFold p = PrimQueryFold
   }
 
 
-primQueryFoldDefault :: PrimQueryFold PrimQuery
+primQueryFoldDefault :: PrimQueryFold' a (PrimQuery' a)
 primQueryFoldDefault = PrimQueryFold
   { unit      = Unit
+  , empty     = Empty
   , baseTable = BaseTable
   , product   = Product
   , aggregate = Aggregate
@@ -76,10 +83,11 @@ primQueryFoldDefault = PrimQueryFold
   , binary    = Binary
   , label     = Label }
 
-foldPrimQuery :: PrimQueryFold p -> PrimQuery -> p
+foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
 foldPrimQuery f = fix fold
   where fold self primQ = case primQ of
           Unit                       -> unit      f
+          Empty a                    -> empty     f a
           BaseTable ti syms          -> baseTable f ti syms
           Product pqs pes            -> product   f (fmap self pqs) pes
           Aggregate aggrs pq         -> aggregate f aggrs (self pq)
@@ -97,6 +105,6 @@ times q q' = Product (q NEL.:| [q']) []
 restrict :: HPQ.PrimExpr -> PrimQuery -> PrimQuery
 restrict cond primQ = Product (return primQ) [cond]
 
-isUnit :: PrimQuery -> Bool
+isUnit :: PrimQuery' a -> Bool
 isUnit Unit = True
 isUnit _    = False

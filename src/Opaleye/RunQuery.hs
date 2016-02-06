@@ -50,7 +50,7 @@ runQueryExplicit :: QueryRunner columns haskells
                  -> PGS.Connection
                  -> Query columns
                  -> IO [haskells]
-runQueryExplicit qr conn q = PGS.queryWith_ parser conn sql
+runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
   where (sql, parser) = prepareQuery qr q
 
 -- | @runQueryFold@ streams the results of a query incrementally and consumes
@@ -74,13 +74,16 @@ runQueryFoldExplicit
   -> b
   -> (b -> haskells -> IO b)
   -> IO b
-runQueryFoldExplicit qr conn q z f = PGS.foldWith_ parser conn sql z f
+runQueryFoldExplicit qr conn q z f = case sql of
+  Nothing   -> return z
+  Just sql' -> PGS.foldWith_ parser conn sql' z f
   where (sql, parser) = prepareQuery qr q
 
-prepareQuery :: QueryRunner columns haskells -> Query columns -> (PGS.Query, FR.RowParser haskells)
+-- TODO: This should be internal
+prepareQuery :: QueryRunner columns haskells -> Query columns -> (Maybe PGS.Query, FR.RowParser haskells)
 prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
-  where sql :: PGS.Query
-        sql = String.fromString (S.showSqlForPostgresExplicit u q)
+  where sql :: Maybe PGS.Query
+        sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
         -- FIXME: We're doing work twice here
         (b, _, _) = Q.runSimpleQueryArrStart q ()
         parser = IRQ.prepareRowParser qr b
