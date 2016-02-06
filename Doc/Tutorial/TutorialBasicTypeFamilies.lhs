@@ -120,28 +120,38 @@ Record types
 Opaleye can use user defined types such as record types in queries.
 
 Contrary to popular belief, you don't have to define your data types
-to be polymorphic in all their fields.  Monomorphic field types will
-mean that you have to define more datatypes and more instances for
-them.
+to be polymorphic in all their fields.  In fact there's a nice scheme
+using type families that reduces boiler plate and has always been
+compatible with Opaleye!
 
-> type family Field f a b
+> type family Field f a b n req
 >
 > data H
 > data O
-> data N
-> 
-> type instance Field H h o = h
-> type instance Field O h o = Column o
-> type instance Field N h o = Column (Nullable o)
+> data Nulls
+> data W
 >
-> data Birthday f = Birthday { bdName :: Field f String PGText
->                            , bdDay  :: Field f Day    PGDate
+> data NN
+> data N
+>
+> data Req
+> data Opt
+> 
+> type instance Field H     h o NN b   = h
+> type instance Field H     h o N  b   = Maybe h
+> type instance Field O     h o a  b   = Column o
+> type instance Field W     h o a  Req = Column o
+> type instance Field W     h o a  Opt = Maybe (Column o)
+> type instance Field Nulls h o a  b   = Column (Nullable o)
+>
+> data Birthday f = Birthday { bdName :: Field f String PGText NN Req
+>                            , bdDay  :: Field f Day    PGDate NN Req
 >                            }
 >
 > instance ( Applicative (p (Birthday a))
 >          , P.Profunctor p
->          , Default p (Field a String PGText) (Field b String PGText)
->          , Default p (Field a Day    PGDate) (Field b Day    PGDate)) =>
+>          , Default p (Field a String PGText NN Req) (Field b String PGText NN Req)
+>          , Default p (Field a Day    PGDate NN Req) (Field b Day    PGDate NN Req)) =>
 >   Default p (Birthday a) (Birthday b) where
 >   def = Birthday <$> P.lmap bdName D.def
 >                  <*> P.lmap bdDay  D.def
@@ -185,19 +195,19 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data Widget f = Widget { style    :: Field f String PGText
->                        , color    :: Field f String PGText
->                        , location :: Field f String PGText
->                        , quantity :: Field f Int    PGInt4
->                        , radius   :: Field f Double PGFloat8
+> data Widget f = Widget { style    :: Field f String PGText   NN Req
+>                        , color    :: Field f String PGText   NN Req
+>                        , location :: Field f String PGText   NN Req
+>                        , quantity :: Field f Int    PGInt4   NN Req
+>                        , radius   :: Field f Double PGFloat8 NN Req
 >                        }
 >
 > instance ( Applicative (p (Widget a))
 >          , P.Profunctor p
->          , Default p (Field a String PGText)   (Field b String PGText)
->          , Default p (Field a Int    PGInt4)   (Field b Int    PGInt4)
->          , Default p (Field a Double PGFloat8) (Field b Double PGFloat8)
->          , Default p (Field a Day    PGDate)   (Field b Day    PGDate)) =>
+>          , Default p (Field a String PGText NN Req)   (Field b String PGText NN Req)
+>          , Default p (Field a Int    PGInt4 NN Req)   (Field b Int    PGInt4 NN Req)
+>          , Default p (Field a Double PGFloat8 NN Req) (Field b Double PGFloat8 NN Req)
+>          , Default p (Field a Day    PGDate NN Req)   (Field b Day    PGDate NN Req)) =>
 >   Default p (Widget a) (Widget b) where
 >   def = Widget <$> P.lmap style    D.def
 >                <*> P.lmap color    D.def
@@ -288,7 +298,7 @@ A left join is expressed by specifying the two tables to join and the
 join condition.
 
 > personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
->                                  Birthday N)
+>                                  Birthday Nulls)
 > personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
 >     where eqName ((name, _, _), birthdayRow) = name .== bdName birthdayRow
 
