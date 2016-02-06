@@ -381,4 +381,4 @@ Utilities
 This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Query a -> IO ()
-> printSql = putStrLn . showSqlForPostgres
+> printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres
