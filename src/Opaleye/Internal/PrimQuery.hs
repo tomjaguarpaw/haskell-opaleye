@@ -27,7 +27,7 @@ data TableIdentifier = TableIdentifier
 
 tiToSqlTable :: TableIdentifier -> HSql.SqlTable
 tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
-                                , HSql.sqlTableName = tiTableName ti }
+                                , HSql.sqlTableName       = tiTableName ti }
 
 
 -- In the future it may make sense to introduce this datatype
