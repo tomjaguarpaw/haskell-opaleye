@@ -36,7 +36,7 @@ tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
 data PrimQuery' a = Unit
-                  | Empty a
+                  | Empty     a
                   | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
                   | Product   (NEL.NonEmpty (PrimQuery' a)) [HPQ.PrimExpr]
                   | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))]
