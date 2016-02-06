@@ -5,7 +5,7 @@
 > {-# LANGUAGE TypeFamilies #-}
 > {-# LANGUAGE EmptyDataDecls #-}
 >
-> module TutorialBasicMonomorphic where
+> module TutorialBasicTypeFamilies where
 >
 > import           Prelude hiding (sum)
 >
