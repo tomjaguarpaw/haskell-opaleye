@@ -291,6 +291,8 @@ conditions.
 >
 >   returnA -< row
 
+ghci> printSql twentiesAtAddress
+
 SELECT name0_1 as result1,
        age1_1 as result2,
        address2_1 as result3
@@ -390,6 +392,8 @@ employee whether they have a boss.
 >
 >   returnA -< name .++ pgString " has " .++ aOrNo .++ pgString " boss"
 
+ghci> printSql hasBoss
+
 SELECT (((name0_1) || ' has ')
        || (CASE WHEN boss1_1 IS NULL THEN 'no' ELSE 'a' END))
        || ' boss' as result1
@@ -433,6 +437,7 @@ and in pure Haskell the same computation could be expressed as
 Then we get the following SQL.
 
 ghci> printSql (bossQuery <<< queryTable employeeTable)
+
 SELECT CASE WHEN boss1_1 IS NULL THEN (name0_1) || ' has no boss'
      ELSE (('The boss of ' || (name0_1)) || ' is ') || (boss1_1) END as result1
 FROM (SELECT *
