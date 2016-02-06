@@ -9,6 +9,7 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor (Profunctor, dimap, rmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
@@ -46,9 +47,9 @@ valuesU unpack valuesspec rows ((), t) = (newColumns, primQ', T.next t)
         values' :: [[HPQ.PrimExpr]]
         values' = map runRow rows
 
-        primQ' = if null rows
-                 then PQ.Empty ()
-                 else PQ.Values valuesPEs values'
+        primQ' = case NEL.nonEmpty values' of
+          Nothing       -> PQ.Empty ()
+          Just values'' -> PQ.Values valuesPEs values''
 
 -- We don't actually use the return value of this.  It might be better
 -- to come up with another Applicative instance for specifically doing

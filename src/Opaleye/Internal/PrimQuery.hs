@@ -44,7 +44,7 @@ data PrimQuery' a = Unit
                   | Order     [HPQ.OrderExpr] (PrimQuery' a)
                   | Limit     LimitOp (PrimQuery' a)
                   | Join      JoinType HPQ.PrimExpr (PrimQuery' a) (PrimQuery' a)
-                  | Values    [Symbol] [[HPQ.PrimExpr]]
+                  | Values    [Symbol] (NEL.NonEmpty [HPQ.PrimExpr])
                   | Binary    BinOp
                               [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
                               (PrimQuery' a, PrimQuery' a)
@@ -63,7 +63,7 @@ data PrimQueryFold' a p = PrimQueryFold
   , order     :: [HPQ.OrderExpr] -> p -> p
   , limit     :: LimitOp -> p -> p
   , join      :: JoinType -> HPQ.PrimExpr -> p -> p -> p
-  , values    :: [Symbol] -> [[HPQ.PrimExpr]] -> p
+  , values    :: [Symbol] -> (NEL.NonEmpty [HPQ.PrimExpr]) -> p
   , binary    :: BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
   , label     :: String -> p -> p
   }
