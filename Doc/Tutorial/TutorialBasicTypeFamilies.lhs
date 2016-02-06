@@ -2,8 +2,10 @@
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE UndecidableInstances #-}
+>
 > {-# LANGUAGE TypeFamilies #-}
 > {-# LANGUAGE EmptyDataDecls #-}
+> {-# LANGUAGE FunctionalDependencies #-}
 >
 > module TutorialBasicTypeFamilies where
 >
@@ -15,6 +17,7 @@
 >                          count, avg, sum, leftJoin, runQuery,
 >                          showSqlForPostgres, Unpackspec,
 >                          PGInt4, PGInt8, PGText, PGDate, PGFloat8)
+> import qualified Opaleye as O
 >
 > import           Control.Applicative     ((<$>), (<*>), Applicative)
 >
@@ -148,6 +151,20 @@ compatible with Opaleye!
 > type instance TableField W     h o n Req = Field O h o n
 > type instance TableField W     h o n Opt = Maybe (Field O h o n)
 > type instance TableField Nulls h o n b   = Column (Nullable o)
+>
+>
+> -- { If you use Tableable you don't even have to specify required or optional
+>      
+> class Tableable a b | a -> b where
+>   tableField :: String -> O.TableProperties a b
+>
+> instance Tableable (Column a) (Column a) where
+>   tableField = required
+>
+> instance Tableable (Maybe (Column a)) (Column a) where
+>   tableField = O.optional
+>
+> -- }
 >
 > data Birthday f = Birthday { bdName :: TableField f String PGText NN Req
 >                            , bdDay  :: TableField f Day    PGDate NN Req
