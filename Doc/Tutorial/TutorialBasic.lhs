@@ -640,8 +640,8 @@ Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
 "adaptor" to specify how columns are aggregated.  Note that this is
 yet another example of avoiding a headache by keeping your datatype
-fully polymorphic, because the 'count' aggregator changes a 'Wire
-String' into a 'Wire Int64'.
+fully polymorphic, because the 'count' aggregator changes a 'Column
+String' into a 'Column Int64'.
 
 Outer join
 ==========
