@@ -124,7 +124,8 @@ to be polymorphic in all their fields.  In fact there's a nice scheme
 using type families that reduces boiler plate and has always been
 compatible with Opaleye!
 
-> type family Field f a b n req
+> type family Field      f a b n
+> type family TableField f a b n req
 >
 > data H
 > data O
@@ -137,21 +138,25 @@ compatible with Opaleye!
 > data Req
 > data Opt
 > 
-> type instance Field H     h o NN b   = h
-> type instance Field H     h o N  b   = Maybe h
-> type instance Field O     h o a  b   = Column o
-> type instance Field W     h o a  Req = Column o
-> type instance Field W     h o a  Opt = Maybe (Column o)
-> type instance Field Nulls h o a  b   = Column (Nullable o)
+> type instance Field H h o NN = h
+> type instance Field H h o N  = Maybe h
+> type instance Field O h o NN = Column o
+> type instance Field O h o N  = Column (Nullable o)
 >
-> data Birthday f = Birthday { bdName :: Field f String PGText NN Req
->                            , bdDay  :: Field f Day    PGDate NN Req
+> type instance TableField H     h o n b   = Field H h o n
+> type instance TableField O     h o n b   = Field O h o n
+> type instance TableField W     h o a Req = Column o
+> type instance TableField W     h o a Opt = Maybe (Column o)
+> type instance TableField Nulls h o a b   = Column (Nullable o)
+>
+> data Birthday f = Birthday { bdName :: TableField f String PGText NN Req
+>                            , bdDay  :: TableField f Day    PGDate NN Req
 >                            }
 >
 > instance ( Applicative (p (Birthday a))
 >          , P.Profunctor p
->          , Default p (Field a String PGText NN Req) (Field b String PGText NN Req)
->          , Default p (Field a Day    PGDate NN Req) (Field b Day    PGDate NN Req)) =>
+>          , Default p (TableField a String PGText NN Req) (TableField b String PGText NN Req)
+>          , Default p (TableField a Day    PGDate NN Req) (TableField b Day    PGDate NN Req)) =>
 >   Default p (Birthday a) (Birthday b) where
 >   def = Birthday <$> P.lmap bdName D.def
 >                  <*> P.lmap bdDay  D.def
@@ -195,19 +200,19 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data Widget f = Widget { style    :: Field f String PGText   NN Req
->                        , color    :: Field f String PGText   NN Req
->                        , location :: Field f String PGText   NN Req
->                        , quantity :: Field f Int    PGInt4   NN Req
->                        , radius   :: Field f Double PGFloat8 NN Req
+> data Widget f = Widget { style    :: TableField f String PGText   NN Req
+>                        , color    :: TableField f String PGText   NN Req
+>                        , location :: TableField f String PGText   NN Req
+>                        , quantity :: TableField f Int    PGInt4   NN Req
+>                        , radius   :: TableField f Double PGFloat8 NN Req
 >                        }
 >
 > instance ( Applicative (p (Widget a))
 >          , P.Profunctor p
->          , Default p (Field a String PGText NN Req)   (Field b String PGText NN Req)
->          , Default p (Field a Int    PGInt4 NN Req)   (Field b Int    PGInt4 NN Req)
->          , Default p (Field a Double PGFloat8 NN Req) (Field b Double PGFloat8 NN Req)
->          , Default p (Field a Day    PGDate NN Req)   (Field b Day    PGDate NN Req)) =>
+>          , Default p (TableField a String PGText NN Req)   (TableField b String PGText NN Req)
+>          , Default p (TableField a Int    PGInt4 NN Req)   (TableField b Int    PGInt4 NN Req)
+>          , Default p (TableField a Double PGFloat8 NN Req) (TableField b Double PGFloat8 NN Req)
+>          , Default p (TableField a Day    PGDate NN Req)   (TableField b Day    PGDate NN Req)) =>
 >   Default p (Widget a) (Widget b) where
 >   def = Widget <$> P.lmap style    D.def
 >                <*> P.lmap color    D.def
