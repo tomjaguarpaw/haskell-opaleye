@@ -200,19 +200,19 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data Widget f = Widget { style    :: TableField f String PGText   NN Req
->                        , color    :: TableField f String PGText   NN Req
->                        , location :: TableField f String PGText   NN Req
->                        , quantity :: TableField f Int    PGInt4   NN Req
->                        , radius   :: TableField f Double PGFloat8 NN Req
+> data Widget f = Widget { style    :: Field f String PGText   NN
+>                        , color    :: Field f String PGText   NN
+>                        , location :: Field f String PGText   NN
+>                        , quantity :: Field f Int    PGInt4   NN
+>                        , radius   :: Field f Double PGFloat8 NN
 >                        }
 >
 > instance ( Applicative (p (Widget a))
 >          , P.Profunctor p
->          , Default p (TableField a String PGText NN Req)   (TableField b String PGText NN Req)
->          , Default p (TableField a Int    PGInt4 NN Req)   (TableField b Int    PGInt4 NN Req)
->          , Default p (TableField a Double PGFloat8 NN Req) (TableField b Double PGFloat8 NN Req)
->          , Default p (TableField a Day    PGDate NN Req)   (TableField b Day    PGDate NN Req)) =>
+>          , Default p (Field a String PGText NN)   (Field b String PGText NN)
+>          , Default p (Field a Int    PGInt4 NN)   (Field b Int    PGInt4 NN)
+>          , Default p (Field a Double PGFloat8 NN) (Field b Double PGFloat8 NN)
+>          , Default p (Field a Day    PGDate NN)   (Field b Day    PGDate NN)) =>
 >   Default p (Widget a) (Widget b) where
 >   def = Widget <$> P.lmap style    D.def
 >                <*> P.lmap color    D.def
