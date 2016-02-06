@@ -9,8 +9,6 @@ import qualified Opaleye.Internal.Unpackspec as U
 
 import           Data.Profunctor.Product.Default (Default, def)
 
--- FIXME: Isn't this better implemented via Constant now?
-
 -- | Example type specialization:
 --
 -- @
