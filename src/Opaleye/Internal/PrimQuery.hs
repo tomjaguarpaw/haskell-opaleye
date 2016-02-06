@@ -86,17 +86,17 @@ primQueryFoldDefault = PrimQueryFold
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
 foldPrimQuery f = fix fold
   where fold self primQ = case primQ of
-          Unit                       -> unit      f
-          Empty a                    -> empty     f a
-          BaseTable ti syms          -> baseTable f ti syms
-          Product pqs pes            -> product   f (fmap self pqs) pes
-          Aggregate aggrs pq         -> aggregate f aggrs (self pq)
-          Order pes pq               -> order     f pes (self pq)
-          Limit op pq                -> limit     f op (self pq)
-          Join j cond q1 q2          -> join      f j cond (self q1) (self q2)
-          Values ss pes              -> values    f ss pes
-          Binary binop pes (pq, pq') -> binary    f binop pes (self pq, self pq')
-          Label l pq                 -> label     f l (self pq)
+          Unit                      -> unit      f
+          Empty a                   -> empty     f a
+          BaseTable ti syms         -> baseTable f ti syms
+          Product qs pes            -> product   f (fmap self qs) pes
+          Aggregate aggrs q         -> aggregate f aggrs (self q)
+          Order pes q               -> order     f pes (self q)
+          Limit op q                -> limit     f op (self q)
+          Join j cond q1 q2         -> join      f j cond (self q1) (self q2)
+          Values ss pes             -> values    f ss pes
+          Binary binop pes (q1, q2) -> binary    f binop pes (self q1, self q2)
+          Label l pq                -> label     f l (self pq)
         fix f = let x = f x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
