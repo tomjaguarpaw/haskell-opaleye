@@ -59,10 +59,6 @@ runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (HPQ.PrimExpr -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
--- TODO: We should remove the T.PGInt4 constraint.  It should work for
--- all 'Column a's.  However, in order to get around the NULL problem
--- mentioned above we should just add an explicit Empty constructor to
--- PrimQuery (and optimize it away before generating code).
 instance Default Valuesspec (Column a) (Column a) where
   def = Valuesspec (PM.PackMap (\f () -> fmap Column (f (HPQ.ConstExpr HPQ.NullLit))))
 
