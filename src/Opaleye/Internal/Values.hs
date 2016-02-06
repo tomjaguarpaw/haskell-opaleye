@@ -17,6 +17,8 @@ import           Data.Profunctor.Product.Default (Default, def)
 
 import           Control.Applicative (Applicative, pure, (<*>))
 
+-- FIXME: We don't currently handle the case of zero columns.  Need to
+-- emit some dummy columns and data.
 valuesU :: U.Unpackspec columns columns'
         -> Valuesspec columns columns'
         -> [columns]
