@@ -43,6 +43,8 @@ columnsOfHaskells = O.constantExplicit eitherPP
 newtype ArbitraryQuery   = ArbitraryQuery (O.Query Columns)
 newtype ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Haskells }
                         deriving Show
+newtype ArbitraryColumnsList = ArbitraryColumnsList { unArbitraryColumnsList :: [Int] }
+                             deriving Show
 newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
 newtype ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
@@ -111,6 +113,12 @@ instance TQ.Arbitrary ArbitraryColumns where
     l <- TQ.listOf (TQ.oneof (map (return . Left) [-1, 0, 1]
                              ++ map (return . Right) [False, True]))
     return (ArbitraryColumns l)
+
+instance TQ.Arbitrary ArbitraryColumnsList where
+  arbitrary = do
+    k <- TQ.choose (0, 5)
+    l <- TQ.vectorOf k TQ.arbitrary
+    return (ArbitraryColumnsList l)
 
 instance TQ.Arbitrary ArbitraryPositiveInt where
   arbitrary = fmap ArbitraryPositiveInt (TQ.choose (0, 100))
@@ -181,6 +189,9 @@ arbitraryOrdering = Monoid.mconcat
 
 instance Functor QueryDenotation where
   fmap f = QueryDenotation . (fmap . fmap . fmap) f .unQueryDenotation
+
+pureList :: [a] -> QueryDenotation a
+pureList = QueryDenotation . pure . pure
 
 instance Applicative QueryDenotation where
   pure    = QueryDenotation . pure . pure . pure
@@ -310,6 +321,11 @@ restrict conn (ArbitraryQuery q) = do
   compare' conn (denotation' (restrictFirstBool Arrow.<<< q))
                 (onList restrictFirstBoolList (denotation' q))
 
+values :: PGS.Connection -> ArbitraryColumnsList -> IO Bool
+values conn (ArbitraryColumnsList l) = do
+  compareNoSort conn (denotation' (fmap (return . Left) (O.values (fmap O.constant l))))
+                     (pureList (fmap (return . Left) l))
+
 {- TODO
 
   * Aggregation
@@ -325,7 +341,6 @@ restrict conn (ArbitraryQuery q) = do
   * Label (check it has no effect)
   * Operators (mathematical, logical, etc.)
   * >>>?
-  * Values
 
 -}
 
@@ -364,6 +379,7 @@ run conn = do
   test2 order
   test1 distinct
   test1 restrict
+  test1 values
 
 -- }
 
