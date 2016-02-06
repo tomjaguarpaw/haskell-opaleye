@@ -302,6 +302,25 @@ restrict conn (ArbitraryQuery q) = do
   compare' conn (denotation' (restrictFirstBool Arrow.<<< q))
                 (onList restrictFirstBoolList (denotation' q))
 
+{- TODO
+
+  * Aggregation
+  * Binary operations
+      * union
+      * unionAll
+      * intersect
+      * intersectAll
+      * except
+      * exceptAll
+  * Nullability
+  * Left join
+  * Label (check it has no effect)
+  * Operators (mathematical, logical, etc.)
+  * >>>?
+  * Values
+
+-}
+
 -- }
 
 -- { Running the QuickCheck
