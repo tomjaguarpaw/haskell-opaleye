@@ -3,6 +3,7 @@
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE UndecidableInstances #-}
 > {-# LANGUAGE TypeFamilies #-}
+> {-# LANGUAGE EmptyDataDecls #-}
 >
 > module TutorialBasicMonomorphic where
 >
@@ -125,9 +126,9 @@ them.
 
 > type family Field f a b
 >
-> data H = H
-> data O = O
-> data N = N
+> data H
+> data O
+> data N
 > 
 > type instance Field H h o = h
 > type instance Field O h o = Column o
