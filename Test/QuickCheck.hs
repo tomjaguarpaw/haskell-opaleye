@@ -100,9 +100,7 @@ instance TQ.Arbitrary ArbitraryQuery where
         -- We don't want to choose very big lists because we take
         -- products of queries and so their sizes are going to end up
         -- multiplying.
-        k <- TQ.choose (0, 5)
-        l <- TQ.vectorOf k TQ.arbitrary
-        let _ = l :: [Int]
+        ArbitraryColumnsList l <- TQ.arbitrary
         aq (fmap (return . Left) (O.values (fmap O.constant l)))
     ]
     where aq = return . ArbitraryQuery
