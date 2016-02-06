@@ -44,12 +44,12 @@ valuesU unpack valuesspec rows ((), t) = (newColumns, primQ', T.next t)
 
         valuesPEs = map fst valuesPEs_nulls
 
-        values' :: [[HPQ.PrimExpr]]
-        values' = map runRow rows
+        values :: [[HPQ.PrimExpr]]
+        values = map runRow rows
 
-        primQ' = case NEL.nonEmpty values' of
+        primQ' = case NEL.nonEmpty values of
           Nothing       -> PQ.Empty ()
-          Just values'' -> PQ.Values valuesPEs values''
+          Just values' -> PQ.Values valuesPEs values'
 
 -- We don't actually use the return value of this.  It might be better
 -- to come up with another Applicative instance for specifically doing
