@@ -164,7 +164,7 @@ compatible with Opaleye!
 Then we can use 'Table' to make a table on our record type in exactly
 the same way as before.
 
-> birthdayTable :: Table (Birthday O) (Birthday O)
+> birthdayTable :: Table (Birthday W) (Birthday O)
 > birthdayTable = Table "birthdayTable"
 >                        (Birthday <$> P.lmap bdName (required "name")
 >                                  <*> P.lmap bdDay  (required "birthday"))
