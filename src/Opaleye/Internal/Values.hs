@@ -48,19 +48,19 @@ extractValuesEntry pe = do
   PM.write pe
   return pe
 
-extractValuesField :: T.Tag -> HPQ.PrimExpr
-                   -> PM.PM [(HPQ.Symbol, HPQ.PrimExpr)] HPQ.PrimExpr
+extractValuesField :: T.Tag -> primExpr
+                   -> PM.PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractValuesField = PM.extractAttr "values"
 
 newtype Valuesspec columns columns' =
-  Valuesspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
+  Valuesspec (PM.PackMap () HPQ.PrimExpr () columns')
 
 runValuesspec :: Applicative f => Valuesspec columns columns'
-              -> (HPQ.PrimExpr -> f HPQ.PrimExpr) -> f columns'
+              -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
 instance Default Valuesspec (Column a) (Column a) where
-  def = Valuesspec (PM.PackMap (\f () -> fmap Column (f (HPQ.ConstExpr HPQ.NullLit))))
+  def = Valuesspec (PM.PackMap (\f () -> fmap Column (f ())))
 
 -- {
 
