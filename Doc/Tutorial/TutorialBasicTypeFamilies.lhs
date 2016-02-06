@@ -152,6 +152,10 @@ compatible with Opaleye!
 > type instance TableField W     h o n Opt = Maybe (Field O h o n)
 > type instance TableField Nulls h o n b   = Column (Nullable o)
 >
+> -- Cryptic remark: If we were willing to only support 7.8 and up we
+> -- could even have a symbol field containing the table name and use
+> -- https://hackage.haskell.org/package/base-4.8.2.0/docs/GHC-TypeLits.html#v:symbolVal
+> 
 >
 > -- { If you use Tableable you don't even have to specify required or optional
 >      
