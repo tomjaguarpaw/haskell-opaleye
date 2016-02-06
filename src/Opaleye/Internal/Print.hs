@@ -21,12 +21,12 @@ import qualified Data.Text          as ST
 type TableAlias = String
 
 ppSql :: Select -> Doc
-ppSql (SelectFrom s) = ppSelectFrom s
-ppSql (Table table) = HPrint.ppTable table
-ppSql (SelectJoin j) = ppSelectJoin j
+ppSql (SelectFrom s)   = ppSelectFrom s
+ppSql (Table table)    = HPrint.ppTable table
+ppSql (SelectJoin j)   = ppSelectJoin j
 ppSql (SelectValues v) = ppSelectValues v
 ppSql (SelectBinary v) = ppSelectBinary v
-ppSql (SelectLabel v) = ppSelectLabel v
+ppSql (SelectLabel v)  = ppSelectLabel v
 
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
