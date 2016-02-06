@@ -18,9 +18,9 @@ optimize = mergeProduct . removeUnit
 removeUnit :: PQ.PrimQuery' a -> PQ.PrimQuery' a
 removeUnit = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
   where product pqs pes = PQ.Product pqs' pes
-          where pqs' = case NEL.filter (not . PQ.isUnit) pqs of
-                         [] -> return PQ.Unit
-                         xs -> NEL.fromList xs
+          where pqs' = case NEL.nonEmpty (NEL.filter (not . PQ.isUnit) pqs) of
+                         Nothing -> return PQ.Unit
+                         Just xs -> xs
 
 mergeProduct :: PQ.PrimQuery' a -> PQ.PrimQuery' a
 mergeProduct = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
