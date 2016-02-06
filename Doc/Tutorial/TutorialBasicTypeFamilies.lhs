@@ -145,9 +145,9 @@ compatible with Opaleye!
 >
 > type instance TableField H     h o n b   = Field H h o n
 > type instance TableField O     h o n b   = Field O h o n
-> type instance TableField W     h o a Req = Column o
-> type instance TableField W     h o a Opt = Maybe (Column o)
-> type instance TableField Nulls h o a b   = Column (Nullable o)
+> type instance TableField W     h o n Req = Field O h o n
+> type instance TableField W     h o n Opt = Maybe (Field O h o n)
+> type instance TableField Nulls h o n b   = Column (Nullable o)
 >
 > data Birthday f = Birthday { bdName :: TableField f String PGText NN Req
 >                            , bdDay  :: TableField f Day    PGDate NN Req
