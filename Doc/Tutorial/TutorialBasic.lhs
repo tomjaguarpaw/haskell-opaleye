@@ -134,6 +134,10 @@ Template Haskell.
 
 > $(makeAdaptorAndInstance "pBirthday" ''Birthday')
 
+You don't have to use Template Haskell, but it just saves us writing
+things out by hand here.  If you want to avoid Template Haskell see
+[Data.Profunctor.Product.TH](https://hackage.haskell.org/package/product-profunctors-0.6.3.1/docs/Data-Profunctor-Product-TH.html).
+
 Then we can use 'Table' to make a table on our record type in exactly
 the same way as before.
 
