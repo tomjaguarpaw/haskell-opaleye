@@ -116,6 +116,8 @@ test-suite tutorial
   other-modules: TutorialAdvanced,
                  TutorialBasic,
                  TutorialManipulation,
+                 TutorialBasicMonomorphic,
+                 TutorialBasicTypeFamilies,
                  DefaultExplanation
   hs-source-dirs: Doc/Tutorial
   build-depends:
