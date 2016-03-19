@@ -40,8 +40,7 @@ import qualified Data.Functor.Identity as I
 -- 'ProductProfunctor') in @s@ and @t@.  It is unclear at this point
 -- whether we want the same @Traversal@ laws to hold or not.  Our use
 -- cases may be much more general.
-data PackMap a b s t = PackMap (Applicative f =>
-                                (a -> f b) -> s -> f t)
+data PackMap a b s t = PackMap (forall f. Applicative f => (a -> f b) -> s -> f t)
 
 -- | Replaces the targeted occurences of @a@ in @s@ with @b@ (changing
 -- the @s@ to a @t@ in the process).  This can be done via an
@@ -135,8 +134,13 @@ instance ProductProfunctor (PackMap a b) where
   (***!) = PP.defaultProfunctorProduct
 
 instance PP.SumProfunctor (PackMap a b) where
-  f +++! g = (PackMap (\x -> eitherFunction (f' x) (g' x)))
-    where PackMap f' = f
-          PackMap g' = g
+  f +++! g =
+    PackMap (\x ->
+               case f of
+                 PackMap f' ->
+                   case g of
+                     PackMap g' ->
+                       eitherFunction (f' x)
+                                      (g' x))
 
 -- }
