@@ -95,7 +95,7 @@ runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 
 -- | You probably don't need this, but can just use
 -- 'runInsertReturning' instead.  You only need it if you want to run
--- an UPDATE RETURNING statement but need to be explicit about the
+-- an INSERT RETURNING statement but need to be explicit about the
 -- 'QueryRunner'.
 runInsertReturningExplicit :: RQ.QueryRunner returned haskells
                             -> PGS.Connection
