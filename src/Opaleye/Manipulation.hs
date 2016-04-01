@@ -45,6 +45,8 @@ import           Data.String (fromString)
 import qualified Data.List.NonEmpty as NEL
 
 -- | Returns the number of rows inserted
+--
+-- This will be deprecated in a future release.  Use 'runInsertMany' instead.
 runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
@@ -62,6 +64,9 @@ runInsertMany conn table columns = case NEL.nonEmpty columns of
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertReturning@.
+--
+-- This will be deprecated in a future release.  Use
+-- 'runInsertManyReturning' instead.
 runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
                    => PGS.Connection
                    -> T.Table columnsW columnsR
