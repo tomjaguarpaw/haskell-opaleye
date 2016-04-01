@@ -70,6 +70,18 @@ runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
                       -> IO [haskells]
 runInsertReturning = runInsertReturningExplicit D.def
 
+-- | @runInsertManyReturning@'s use of the 'D.Default' typeclass means that the
+-- compiler will have trouble inferring types.  It is strongly
+-- recommended that you provide full type signatures when using
+-- @runInsertManyReturning@.
+runInsertManyReturning :: (D.Default RQ.QueryRunner returned haskells)
+                       => PGS.Connection
+                       -> T.Table columnsW columnsR
+                       -> [columnsW]
+                       -> (columnsR -> returned)
+                       -> IO [haskells]
+runInsertManyReturning = runInsertManyReturningExplicit D.def
+
 -- | Where the predicate is true, update rows using the supplied
 -- function.
 runUpdate :: PGS.Connection -> T.Table columnsW columnsR
@@ -105,9 +117,25 @@ runInsertReturningExplicit :: RQ.QueryRunner returned haskells
                             -> columnsW
                             -> (columnsR -> returned)
                             -> IO [haskells]
-runInsertReturningExplicit qr conn t w r = PGS.queryWith_ parser conn
-                                             (fromString
-                                             (arrangeInsertReturningSql u t w r))
+runInsertReturningExplicit qr conn t =
+  runInsertManyReturningExplicit qr conn t . return
+
+-- | You probably don't need this, but can just use
+-- 'runInsertManyReturning' instead.  You only need it if you want to
+-- run an UPDATE RETURNING statement but need to be explicit about the
+-- 'QueryRunner'.
+runInsertManyReturningExplicit :: RQ.QueryRunner returned haskells
+                               -> PGS.Connection
+                               -> T.Table columnsW columnsR
+                               -> [columnsW]
+                               -> (columnsR -> returned)
+                               -> IO [haskells]
+runInsertManyReturningExplicit qr conn t columns r =
+  case NEL.nonEmpty columns of
+    Nothing       -> return []
+    Just columns' -> PGS.queryWith_ parser conn
+                       (fromString
+                        (arrangeInsertManyReturningSql u t columns' r))
   where IRQ.QueryRunner u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
         TI.Table _ (TI.TableProperties _ (TI.View v)) = t
@@ -198,22 +226,34 @@ arrangeInsertReturning :: U.Unpackspec returned ignored
                        -> (columnsR -> returned)
                        -> Sql.Returning HSql.SqlInsert
 arrangeInsertReturning unpackspec table columns returningf =
+  arrangeInsertManyReturning unpackspec table (return columns) returningf
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+arrangeInsertManyReturning :: U.Unpackspec returned ignored
+                           -> T.Table columnsW columnsR
+                           -> NEL.NonEmpty columnsW
+                           -> (columnsR -> returned)
+                           -> Sql.Returning HSql.SqlInsert
+arrangeInsertManyReturning unpackspec table columns returningf =
   Sql.Returning insert returningSEs
-  where insert = arrangeInsert table columns
+  where insert = arrangeInsertMany table columns
         TI.View columnsR = TI.tablePropertiesView (TI.tableProperties table)
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
-arrangeInsertReturningSql :: U.Unpackspec returned ignored
+arrangeInsertManyReturningSql
+                          :: U.Unpackspec returned ignored
                           -> T.Table columnsW columnsR
-                          -> columnsW
+                          -> NEL.NonEmpty columnsW
                           -> (columnsR -> returned)
                           -> String
-arrangeInsertReturningSql = show
+arrangeInsertManyReturningSql =
+                            show
                             . Print.ppInsertReturning
-                            .:: arrangeInsertReturning
+                            .:: arrangeInsertManyReturning
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
