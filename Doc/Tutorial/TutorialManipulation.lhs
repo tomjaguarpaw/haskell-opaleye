@@ -58,7 +58,7 @@ Values of other types should be created using the functions in the
 P.PGText` from a `String`.
 
 > insertNothing :: String
-> insertNothing = arrangeInsertManySql table [(Nothing, 2, 3, P.pgString "Hello")]
+> insertNothing = arrangeInsertManySql table (return (Nothing, 2, 3, P.pgString "Hello"))
 
 ghci> putStrLn insertNothing
 INSERT INTO tablename (x,
@@ -72,7 +72,7 @@ rely on the Num instance and must use constant:
 
 > insertNonLiteral :: Double -> String
 > insertNonLiteral i =
->   arrangeInsertManySql table [(Nothing, 2, C.constant i, P.pgString "Hello")]
+>   arrangeInsertManySql table (return (Nothing, 2, C.constant i, P.pgString "Hello"))
 
 ghci> > putStrLn $ insertNonLiteral 12.0
 INSERT INTO "tablename" ("id",
@@ -88,7 +88,7 @@ VALUES (DEFAULT,
 If we really want to specify an optional column we can use `Just`.
 
 > insertJust :: String
-> insertJust = arrangeInsertManySql table [(Just 1, 2, 3, P.pgString "Hello")]
+> insertJust = arrangeInsertManySql table (return (Just 1, 2, 3, P.pgString "Hello"))
 
 ghci> putStrLn insertJust
 INSERT INTO tablename (id,
@@ -122,7 +122,7 @@ Opaleye supports it also.
 
 > insertReturning :: String
 > insertReturning =
->   arrangeInsertManyReturningSql def' table (Nothing, 4, 5, P.pgString "Bye")
+>   arrangeInsertManyReturningSql def' table (return (Nothing, 4, 5, P.pgString "Bye"))
 >                                            (\(id_, _, _, _) -> id_)
 >   -- TODO: vv This is too messy
 >   where def' :: U.Unpackspec (Column a) (Column a)
