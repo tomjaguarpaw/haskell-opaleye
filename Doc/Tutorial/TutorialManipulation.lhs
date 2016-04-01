@@ -148,5 +148,4 @@ run them you should use `runInsertMany` instead of `arrangeInsertManySql`,
 Comments
 ========
 
-Opaleye does not currently support inserting more than one row at
-once, or SELECT-valued INSERT or UPDATE.
+Opaleye does not currently support SELECT-valued INSERT or UPDATE.
