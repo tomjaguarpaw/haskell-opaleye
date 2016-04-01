@@ -521,7 +521,7 @@ testUpdate conn = do
     if resultD /= expectedD
       then return False
       else do
-      returned <- O.runInsertReturning conn table4 insertT returning
+      returned <- O.runInsertManyReturning conn table4 insertT returning
       _ <- O.runInsertMany conn table4 insertTMany
       resultI <- runQueryTable4
 
@@ -537,17 +537,17 @@ testUpdate conn = do
         expectedD = [(1, 10)]
         runQueryTable4 = O.runQuery conn (O.queryTable table4)
 
-        insertT :: (Column O.PGInt4, Column O.PGInt4)
-        insertT = (1, 2)
+        insertT :: [(Column O.PGInt4, Column O.PGInt4)]
+        insertT = [(1, 2), (3, 5)]
 
         insertTMany :: [(Column O.PGInt4, Column O.PGInt4)]
         insertTMany = [(20, 30), (40, 50)]
 
         expectedI :: [(Int, Int)]
-        expectedI = [(1, 10), (1, 2), (20, 30), (40, 50)]
+        expectedI = [(1, 10), (1, 2), (3, 5), (20, 30), (40, 50)]
         returning (x, y) = x - y
         expectedR :: [Int]
-        expectedR = [-1]
+        expectedR = [-1, -2]
 
 testKeywordColNames :: Test
 testKeywordColNames conn = do
