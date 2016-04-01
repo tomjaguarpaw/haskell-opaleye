@@ -63,11 +63,11 @@ runInsertMany conn table columns = case NEL.nonEmpty columns of
 -- recommended that you provide full type signatures when using
 -- @runInsertReturning@.
 runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
-                      => PGS.Connection
-                      -> T.Table columnsW columnsR
-                      -> columnsW
-                      -> (columnsR -> returned)
-                      -> IO [haskells]
+                   => PGS.Connection
+                   -> T.Table columnsW columnsR
+                   -> columnsW
+                   -> (columnsR -> returned)
+                   -> IO [haskells]
 runInsertReturning = runInsertReturningExplicit D.def
 
 -- | @runInsertManyReturning@'s use of the 'D.Default' typeclass means that the
