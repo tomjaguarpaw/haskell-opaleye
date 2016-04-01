@@ -521,7 +521,7 @@ testUpdate conn = do
     if resultD /= expectedD
       then return False
       else do
-      returned <- O.runInsertReturning conn table4 insertT returning
+      returned <- O.runInsertManyReturning conn table4 [insertT] returning
       _ <- O.runInsertMany conn table4 insertTMany
       resultI <- runQueryTable4
 
