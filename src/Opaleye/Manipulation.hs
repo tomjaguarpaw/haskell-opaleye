@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 
--- | Please note that you currently you can only INSERT or UPDATE with
+-- | Inserts, updates and deletes
+--
+-- Please note that you currently you can only INSERT or UPDATE with
 -- constant values, not the result of SELECTS.  That is, you can
 -- generate SQL of the form
 --
