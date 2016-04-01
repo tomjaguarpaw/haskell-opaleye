@@ -97,7 +97,7 @@ foldPrimQuery f = fix fold
           Values ss pes             -> values    f ss pes
           Binary binop pes (q1, q2) -> binary    f binop pes (self q1, self q2)
           Label l pq                -> label     f l (self pq)
-        fix f = let x = f x in x
+        fix g = let x = g x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
 times q q' = Product (q NEL.:| [q']) []
