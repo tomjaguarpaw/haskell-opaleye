@@ -220,16 +220,6 @@ arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
-arrangeInsertReturning :: U.Unpackspec returned ignored
-                       -> T.Table columnsW columnsR
-                       -> columnsW
-                       -> (columnsR -> returned)
-                       -> Sql.Returning HSql.SqlInsert
-arrangeInsertReturning unpackspec table columns returningf =
-  arrangeInsertManyReturning unpackspec table (return columns) returningf
-
--- | For internal use only.  Do not use.  Will be removed in a
--- subsequent release.
 arrangeInsertManyReturning :: U.Unpackspec returned ignored
                            -> T.Table columnsW columnsR
                            -> NEL.NonEmpty columnsW

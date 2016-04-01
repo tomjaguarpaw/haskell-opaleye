@@ -4,8 +4,8 @@
 >
 > import           Opaleye (Column, Table(Table),
 >                           required, optional, (.==), (.<),
->                           arrangeDeleteSql, arrangeInsertSql,
->                           arrangeUpdateSql, arrangeInsertReturningSql,
+>                           arrangeDeleteSql, arrangeInsertManySql,
+>                           arrangeUpdateSql, arrangeInsertManyReturningSql,
 >                           PGInt4, PGFloat8)
 >
 > import           Data.Profunctor.Product (p4)
@@ -58,7 +58,7 @@ Values of other types should be created using the functions in the
 P.PGText` from a `String`.
 
 > insertNothing :: String
-> insertNothing = arrangeInsertSql table (Nothing, 2, 3, P.pgString "Hello")
+> insertNothing = arrangeInsertManySql table [(Nothing, 2, 3, P.pgString "Hello")]
 
 ghci> putStrLn insertNothing
 INSERT INTO tablename (x,
@@ -71,7 +71,8 @@ If we'd like to pass a value into the insertion function, we can't
 rely on the Num instance and must use constant:
 
 > insertNonLiteral :: Double -> String
-> insertNonLiteral i = arrangeInsertSql table (Nothing, 2, C.constant i, P.pgString "Hello")
+> insertNonLiteral i =
+>   arrangeInsertManySql table [(Nothing, 2, C.constant i, P.pgString "Hello")]
 
 ghci> > putStrLn $ insertNonLiteral 12.0
 INSERT INTO "tablename" ("id",
@@ -87,7 +88,7 @@ VALUES (DEFAULT,
 If we really want to specify an optional column we can use `Just`.
 
 > insertJust :: String
-> insertJust = arrangeInsertSql table (Just 1, 2, 3, P.pgString "Hello")
+> insertJust = arrangeInsertManySql table [(Just 1, 2, 3, P.pgString "Hello")]
 
 ghci> putStrLn insertJust
 INSERT INTO tablename (id,
@@ -120,12 +121,12 @@ it in future queries.  SQL supports that via INSERT RETURNING and
 Opaleye supports it also.
 
 > insertReturning :: String
-> insertReturning = arrangeInsertReturningSql def' table
->                                             (Nothing, 4, 5, P.pgString "Bye")
->                                             (\(id_, _, _, _) -> id_)
->                   -- TODO: vv This is too messy
->                   where def' :: U.Unpackspec (Column a) (Column a)
->                         def' = def
+> insertReturning =
+>   arrangeInsertManyReturningSql def' table (Nothing, 4, 5, P.pgString "Bye")
+>                                            (\(id_, _, _, _) -> id_)
+>   -- TODO: vv This is too messy
+>   where def' :: U.Unpackspec (Column a) (Column a)
+>         def' = def
 
 ghci> putStrLn insertReturning
 INSERT INTO tablename (x,
@@ -140,7 +141,7 @@ Running the queries
 
 This tutorial has only shown you how to generate the SQL string for
 manipulation queries.  In practice you actually want to run them!  To
-run them you should use `runInsert` instead of `arrangeInsertSql`,
+run them you should use `runInsertMany` instead of `arrangeInsertManySql`,
 `runDelete` instead of `arrangeDeleteSql`, etc..
 
 
