@@ -44,9 +44,11 @@ import           Data.Int (Int64)
 import           Data.String (fromString)
 import qualified Data.List.NonEmpty as NEL
 
+-- | Returns the number of rows inserted
 runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
+-- | Returns the number of rows inserted
 runInsertMany :: PGS.Connection
               -> T.Table columns columns'
               -> [columns]
