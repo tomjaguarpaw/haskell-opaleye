@@ -33,7 +33,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Time as Time
 import qualified Data.String as String
 import           Data.UUID (UUID)
-import           GHC.Int (Int64)
+import           GHC.Int (Int32, Int64)
 
 -- { Only needed for annoying postgresql-simple patch below
 
@@ -123,6 +123,9 @@ class QueryRunnerColumnDefault pgType haskellType where
   queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
 
 instance QueryRunnerColumnDefault T.PGInt4 Int where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+instance QueryRunnerColumnDefault T.PGInt4 Int32 where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGInt8 Int64 where
