@@ -202,7 +202,10 @@ defaultSqlLiteral _ l =
                     -> binQuote s
       StringLit s   -> quote s
       IntegerLit i  -> show i
-      DoubleLit d   -> show d
+      DoubleLit d   -> if isNaN d then "'NaN'"
+                       else if isInfinite d && d < 0 then "'-Infinity'"
+                       else if isInfinite d && d > 0 then "'Infinity'"
+                       else show d
       OtherLit o    -> o
 
 
