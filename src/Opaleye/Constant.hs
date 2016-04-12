@@ -105,6 +105,9 @@ instance D.Default Constant LBS.ByteString (Column T.PGJsonb) where
 instance D.Default Constant Ae.Value (Column T.PGJsonb) where
   def = Constant T.pgValueJSONB
 
+instance D.Default Constant haskell (Column sql) => D.Default Constant (Maybe haskell) (Maybe (Column sql)) where
+  def = Constant (constant <$>)
+
 -- { Boilerplate instances
 
 instance Functor (Constant a) where
