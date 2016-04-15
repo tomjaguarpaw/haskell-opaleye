@@ -123,7 +123,7 @@ ppSqlExpr expr =
       PrefixSqlExpr op e  -> text op <+> ppSqlExpr e
       PostfixSqlExpr op e -> ppSqlExpr e <+> text op
       FunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
-      AggrFunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
+      AggrFunSqlExpr f es ord -> text f <> parens (commaH ppSqlExpr es <+> ppOrderBy ord)
       ConstSqlExpr c      -> text c
       CaseSqlExpr cs el   -> text "CASE" <+> vcat (map ppWhen cs)
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"

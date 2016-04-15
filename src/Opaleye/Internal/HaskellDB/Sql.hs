@@ -38,7 +38,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | PrefixSqlExpr  String SqlExpr
              | PostfixSqlExpr String SqlExpr
              | FunSqlExpr     String [SqlExpr]
-             | AggrFunSqlExpr String [SqlExpr] -- ^ Aggregate functions separate from normal functions.
+             | AggrFunSqlExpr String [SqlExpr] [(SqlExpr, SqlOrder)] -- ^ Aggregate functions separate from normal functions.
              | ConstSqlExpr   String
              | CaseSqlExpr    [(SqlExpr,SqlExpr)] SqlExpr
              | ListSqlExpr    [SqlExpr]
