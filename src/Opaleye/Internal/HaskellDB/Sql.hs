@@ -47,6 +47,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | ParensSqlExpr SqlExpr
              | CastSqlExpr String SqlExpr
              | DefaultSqlExpr
+             | ArraySqlExpr [SqlExpr]
   deriving Show
 
 -- | Data type for SQL UPDATE statements.

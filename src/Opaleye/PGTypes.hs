@@ -1,4 +1,5 @@
 {-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Opaleye.PGTypes (module Opaleye.PGTypes) where
 
@@ -7,7 +8,7 @@ import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.PGTypes as IPT
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
-import qualified Opaleye.Internal.HaskellDB.Sql.Default as HSD (quote)
+import qualified Opaleye.Internal.HaskellDB.Sql.Default as HSD
 
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Aeson as Ae
@@ -150,3 +151,51 @@ pgLazyJSONB = pgJSONB . IPT.lazyDecodeUtf8
 
 pgValueJSONB :: Ae.ToJSON a => a -> Column PGJsonb
 pgValueJSONB = pgLazyJSONB . Ae.encode
+
+pgArray :: forall a b. IsPGType b => (a -> C.Column b) -> [a] -> C.Column (PGArray b)
+pgArray pgEl xs = C.unsafeCast arrayTy $
+  C.Column (HPQ.ArrayExpr (map oneEl xs))
+  where
+    oneEl = C.unColumn . pgEl
+    arrayTy = showPGType ([] :: [PGArray b])
+
+class IsPGType pgType where
+  showPGType :: proxy pgType -> String
+instance IsPGType PGBool where
+  showPGType _ = "boolean"
+instance IsPGType PGDate where
+  showPGType _ = "date"
+instance IsPGType PGFloat4 where
+  showPGType _ = "real"
+instance IsPGType PGFloat8 where
+  showPGType _ = "double precision"
+instance IsPGType PGInt8 where
+  showPGType _ = "bigint"
+instance IsPGType PGInt4 where
+  showPGType _ = "integer"
+instance IsPGType PGInt2 where
+  showPGType _ = "smallint"
+instance IsPGType PGNumeric where
+  showPGType _ = "numeric"
+instance IsPGType PGText where
+  showPGType _ = "text"
+instance IsPGType PGTime where
+  showPGType _ = "time"
+instance IsPGType PGTimestamp where
+  showPGType _ = "timestamp"
+instance IsPGType PGTimestamptz where
+  showPGType _ = "timestamp with time zone"
+instance IsPGType PGUuid where
+  showPGType _ = "uuid"
+instance IsPGType PGCitext where
+  showPGType _ =  "citext"
+instance IsPGType PGBytea where
+  showPGType _ = "bytea"
+instance IsPGType a => IsPGType (PGArray a) where
+  showPGType _ = showPGType ([] :: [a]) ++ "[]"
+instance IsPGType a => IsPGType (C.Nullable a) where
+  showPGType _ = showPGType ([] :: [a])
+instance IsPGType PGJson where
+  showPGType _ = "json"
+instance IsPGType PGJsonb where
+  showPGType _ = "jsonb"
