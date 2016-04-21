@@ -35,6 +35,12 @@ tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
 
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
+
+-- The type parameter 'a' is used to control whether the 'Empty'
+-- constructor can appear.  If 'a' = '()' then it can appear.  If 'a'
+-- = 'Void' then it cannot.  When we create queries it is more
+-- convenient to allow 'Empty', but it is hard to represent 'Empty' in
+-- SQL so we remove it in 'Optimize' and set 'a = Void'.
 data PrimQuery' a = Unit
                   | Empty     a
                   | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
