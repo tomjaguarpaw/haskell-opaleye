@@ -37,7 +37,7 @@ valuesU unpack valuesspec rows ((), t) = (newColumns, primQ', T.next t)
         values = map runRow rows
 
         primQ' = case NEL.nonEmpty values of
-          Nothing       -> PQ.Empty ()
+          Nothing      -> PQ.Empty ()
           Just values' -> PQ.Values valuesPEs values'
 
 -- We don't actually use the return value of this.  It might be better
