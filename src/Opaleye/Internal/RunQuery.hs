@@ -93,7 +93,7 @@ queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
     where QueryRunnerColumn u fp = qrc
 
 queryRunnerColumnNullable :: QueryRunnerColumn a b
-                       -> QueryRunnerColumn (Nullable a) (Maybe b)
+                          -> QueryRunnerColumn (Nullable a) (Maybe b)
 queryRunnerColumnNullable qr =
   QueryRunnerColumn (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
   where QueryRunnerColumn u fp = qr
