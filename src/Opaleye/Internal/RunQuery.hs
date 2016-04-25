@@ -85,10 +85,10 @@ data QueryRunner columns haskells =
               -- have to make sure we read a single Int.
 
 fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn coltype haskell
-fieldQueryRunnerColumn = queryRunnerColumn fromField
+fieldQueryRunnerColumn = fieldParserQueryRunnerColumn fromField
 
-queryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn coltype haskell
-queryRunnerColumn = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
+fieldParserQueryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn coltype haskell
+fieldParserQueryRunnerColumn = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
 
 queryRunner :: QueryRunnerColumn a b -> QueryRunner (Column a) b
 queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
@@ -176,13 +176,13 @@ instance QueryRunnerColumnDefault T.PGCitext (CI.CI LT.Text) where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGJson String where
-  queryRunnerColumnDefault = queryRunnerColumn jsonFieldParser
+  queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonFieldParser
 
 instance QueryRunnerColumnDefault T.PGJson Ae.Value where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGJsonb String where
-  queryRunnerColumnDefault = queryRunnerColumn jsonbFieldParser
+  queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonbFieldParser
 
 instance QueryRunnerColumnDefault T.PGJsonb Ae.Value where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
