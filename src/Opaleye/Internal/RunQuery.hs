@@ -119,6 +119,24 @@ instance QueryRunnerColumnDefault a b =>
 -- | A 'QueryRunnerColumnDefault' @pgType@ @haskellType@ represents
 -- the default way to turn a @pgType@ result from the database into a
 -- Haskell value of type @haskelType@.
+--
+-- Adding a 'QueryRunnerColumnDefault' instance for your own type can be as
+-- simple as defining an instance of 'FromField' for your type.
+--
+-- Let's assume we have a type called Foo:
+--
+-- > newtype Foo = Foo String
+--
+-- We can create an instance of 'QueryRunnerColumnDefault' for Foo by using
+-- 'QueryRunnerColumnDefault''s default method, as long as we have an instance
+-- of 'FromField' for Foo.
+--
+-- > instance FromField Foo where
+-- >   fromField :: FieldParser Foo
+-- >   fromField field Nothing = returnError UnexpectedNull field ""
+-- >   fromField field (Just foo) = pure . Foo $ ByteString.unpack foo
+-- >
+-- > instance QueryRunnerColumnDefault PGText Foo
 class QueryRunnerColumnDefault pgType haskellType where
   queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
   default queryRunnerColumnDefault :: FromField haskellType => QueryRunnerColumn pgType haskellType
