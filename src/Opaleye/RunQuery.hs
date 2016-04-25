@@ -84,8 +84,13 @@ runQueryFoldExplicit qr conn q z f = case sql of
 --
 -- @
 -- newtype Foo = Foo Int
--- instance Default QueryRunnerColumn Foo Foo where
---    def = queryRunnerColumn ('Opaleye.Column.unsafeCoerce' :: Column Foo -> Column PGInt4) Foo def
+--
+-- instance QueryRunnerColumnDefault Foo Foo where
+--    queryRunnerColumnDefault =
+--        queryRunnerColumn ('Opaleye.Column.unsafeCoerceColumn'
+--                               :: Column Foo -> Column PGInt4)
+--                          Foo
+--                          queryRunnerColumnDefault
 -- @
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
                   -> IRQ.QueryRunnerColumn a b -> IRQ.QueryRunnerColumn a' b'
