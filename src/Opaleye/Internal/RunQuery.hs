@@ -66,7 +66,7 @@ import           Data.Typeable (Typeable)
 -- be that we can't add nullability to a RowParser, only to a
 -- FieldParser, so we have to have some type that we know contains
 -- just a FieldParser.
-data QueryRunnerColumn pgType haskellType =
+newtype QueryRunnerColumn pgType haskellType =
   QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
 
 data QueryRunner columns haskells =
