@@ -25,6 +25,17 @@ import qualified Opaleye.Join      as J
 Given a 'Query' producing rows of type @a@ and an 'Aggregator' accepting rows of
 type @a@, apply the aggregator to the results of the query.
 
+Please note that when aggregating an empty query with no @GROUP BY@
+clause, Opaleye's behaviour differs from Postgres's behaviour.
+Postgres returns a single row whereas Opaleye returns zero rows.
+(Opaleye's behaviour is consistent with the meaning of aggregating
+over groups of rows and Postgres's behaviour is inconsistent.  When a
+query has zero rows it has zero groups, and thus zero rows in the
+result of an aggregation.)
+
+If you simply want to count the number of rows in a query you might
+find the 'countRows' function more convenient.
+
 -}
 aggregate :: Aggregator a b -> Query a -> Query b
 aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
