@@ -1,15 +1,19 @@
 -- | Perform aggregations on query results.
 module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
 
+import           Control.Applicative (pure)
+
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
 import qualified Opaleye.Internal.Column as IC
-import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
-import qualified Opaleye.Column as C
-import qualified Opaleye.Order as Ord
-import qualified Opaleye.PGTypes as T
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+
+import           Opaleye.QueryArr  (Query)
+import qualified Opaleye.Column    as C
+import qualified Opaleye.Order     as Ord
+import qualified Opaleye.PGTypes   as T
+import qualified Opaleye.Join      as J
 
 -- This page of Postgres documentation tell us what aggregate
 -- functions are available
@@ -71,3 +75,25 @@ arrayAgg = A.makeAggr HPQ.AggrArr
 
 stringAgg :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
 stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
+
+-- | Count the number of rows in a query.  This is different from
+-- 'aggregate' 'count' because always returns exactly one row, even
+-- when the input query is empty.
+
+-- This is currently implemented in a cheeky way with a LEFT JOIN.  If
+-- there are any performance issues it could be rewritten to use an
+-- SQL COUNT aggregation which groups by nothing.  This would require
+-- changing the AST though, so I'm not too keen.
+--
+-- See https://github.com/tomjaguarpaw/haskell-opaleye/issues/162
+countRows :: Query a -> Query (C.Column T.PGInt8)
+countRows = fmap (C.fromNullable 0)
+            . fmap snd
+            . (\q -> J.leftJoin (pure ())
+                                (aggregate count q)
+                                (const (T.pgBool True)))
+            . fmap (const (0 :: C.Column T.PGInt4))
+            -- ^ The count aggregator requires an input of type
+            -- 'Column a' rather than 'a' (I'm not sure if there's a
+            -- good reason for this).  To deal with that restriction
+            -- we just map a dummy integer value over it.

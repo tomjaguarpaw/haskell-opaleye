@@ -418,6 +418,16 @@ testOverwriteAggregateOrdered = testG q expected
                       )
                      ] == r
 
+testCountRows0 :: Test
+testCountRows0 = testG q expected
+  where q        = O.countRows (O.keepWhen (const (O.pgBool False)) <<< table7Q)
+        expected = (== [0 :: Int64])
+
+testCountRows3 :: Test
+testCountRows3 = testG q expected
+  where q        = O.countRows table7Q
+        expected = (== [3 :: Int64])
+
 testOrderByG :: O.Order (Column O.PGInt4, Column O.PGInt4)
                 -> ((Int, Int) -> (Int, Int) -> Ordering)
                 -> Test
@@ -657,7 +667,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testValuesEmpty, testUnionAll, testTableFunctor, testUpdate,
             testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone,
             testStringArrayAggregateOrdered, testMultipleAggregateOrdered,
-            testOverwriteAggregateOrdered
+            testOverwriteAggregateOrdered, testCountRows0, testCountRows3
             ]
 
 -- Environment.getEnv throws an exception on missing environment variable!
