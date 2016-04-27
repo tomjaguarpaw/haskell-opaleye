@@ -99,7 +99,7 @@ countRows = fmap (C.fromNullable 0)
                                 (aggregate count q)
                                 (const (T.pgBool True)))
             . fmap (const (0 :: C.Column T.PGInt4))
-            -- ^ The count aggregator requires an input of type
+            --- ^^ The count aggregator requires an input of type
             -- 'Column a' rather than 'a' (I'm not sure if there's a
             -- good reason for this).  To deal with that restriction
             -- we just map a dummy integer value over it.
