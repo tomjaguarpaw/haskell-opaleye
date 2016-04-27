@@ -77,7 +77,7 @@ stringAgg :: C.Column T.PGText -> Aggregator (C.Column T.PGText) (C.Column T.PGT
 stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 
 -- | Count the number of rows in a query.  This is different from
--- 'aggregate' 'count' because always returns exactly one row, even
+-- 'aggregate' 'count' because it always returns exactly one row, even
 -- when the input query is empty.
 
 -- This is currently implemented in a cheeky way with a LEFT JOIN.  If
