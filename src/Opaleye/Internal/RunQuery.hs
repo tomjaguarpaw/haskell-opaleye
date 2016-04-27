@@ -75,11 +75,8 @@ instance Functor (QueryRunnerColumn u) where
 data QueryRunner columns haskells =
   QueryRunner (U.Unpackspec columns ())
               (columns -> RowParser haskells)
-              -- We never actually
-              -- look at the columns
-              -- except to see its
-              -- "type" in the case
-              -- of a sum profunctor
+              -- We never actually look at the columns except to see
+              -- its "type" in the case of a sum profunctor
               (columns -> Bool)
               -- ^ Have we actually requested any columns?  If we
               -- asked for zero columns then the SQL generator will
