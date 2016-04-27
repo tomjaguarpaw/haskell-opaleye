@@ -2,6 +2,7 @@
 module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
 
 import           Control.Applicative (pure)
+import           Data.Profunctor     (lmap)
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
@@ -51,6 +52,11 @@ sum = A.makeAggr HPQ.AggrSum
 -- | Count the number of non-null rows in a group.
 count :: Aggregator (C.Column a) (C.Column T.PGInt8)
 count = A.makeAggr HPQ.AggrCount
+
+-- | Count the number of rows in a group.  This 'Aggregator' is named
+-- @countStar@ after SQL's @COUNT(*)@ aggregation function.
+countStar :: Aggregator a (C.Column T.PGInt8)
+countStar = lmap (const (0 :: C.Column T.PGInt4)) count
 
 -- | Average of a group
 avg :: Aggregator (C.Column T.PGFloat8) (C.Column T.PGFloat8)
