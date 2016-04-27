@@ -352,6 +352,13 @@ testAggregate = testG (Arr.second aggregateCoerceFIXME
                                            table1Q)
                       (\r -> [(1, 400) :: (Int, Int64), (2, 300)] == L.sort r)
 
+testAggregate0 :: Test
+testAggregate0 = testG (Arr.second aggregateCoerceFIXME
+                        <<< O.aggregate (PP.p2 (O.sum, O.sum))
+                                        (O.keepWhen (const (O.pgBool False))
+                                         <<< table1Q))
+                      (== ([] :: [(Int, Int64)]))
+
 testAggregateFunction :: Test
 testAggregateFunction = testG (Arr.second aggregateCoerceFIXME
                         <<< O.aggregate (PP.p2 (O.groupBy, O.sum))
@@ -657,7 +664,7 @@ testAtTimeZone = testG (A.pure (O.timestamptzAtTimeZone t (O.pgString "CET"))) (
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
-            testDistinct, testAggregate, testAggregateFunction,
+            testDistinct, testAggregate, testAggregate0, testAggregateFunction,
             testAggregateProfunctor, testStringArrayAggregate, testStringAggregate,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
