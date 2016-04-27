@@ -107,7 +107,7 @@ product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
 
-aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
+aggregate :: [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
                                                (ensureColumns (map attr aggrs))
                                            , tables = [s]
@@ -134,8 +134,8 @@ aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
         aggrOp (_, (x, _)) = x
 
 
-aggrExpr :: Maybe HPQ.AggrOp -> HPQ.PrimExpr -> HPQ.PrimExpr
-aggrExpr = maybe id HPQ.AggrExpr
+aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr]) -> HPQ.PrimExpr -> HPQ.PrimExpr
+aggrExpr = maybe id (\(op, ord) e -> HPQ.AggrExpr op e ord)
 
 order :: [HPQ.OrderExpr] -> Select -> Select
 order oes s = SelectFrom $

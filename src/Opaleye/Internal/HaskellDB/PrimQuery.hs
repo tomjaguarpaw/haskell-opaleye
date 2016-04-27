@@ -20,7 +20,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | CompositeExpr     PrimExpr Attribute -- ^ Composite Type Query
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
-                | AggrExpr  AggrOp PrimExpr
+                | AggrExpr  AggrOp PrimExpr [OrderExpr]
                 | ConstExpr Literal
                 | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
                 | ListExpr [PrimExpr]
@@ -73,14 +73,14 @@ data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 deriving (Show,Read)
 
 data OrderExpr = OrderExpr OrderOp PrimExpr
-               deriving (Show)
+               deriving (Show,Read)
 
 data OrderNulls = NullsFirst | NullsLast
-                deriving Show
+                deriving (Show,Read)
 
 data OrderDirection = OpAsc | OpDesc
-                    deriving Show
+                    deriving (Show,Read)
 
 data OrderOp = OrderOp { orderDirection :: OrderDirection
                        , orderNulls     :: OrderNulls }
-               deriving (Show)
+               deriving (Show,Read)

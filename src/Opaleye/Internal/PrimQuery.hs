@@ -45,7 +45,7 @@ data PrimQuery' a = Unit
                   | Empty     a
                   | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
                   | Product   (NEL.NonEmpty (PrimQuery' a)) [HPQ.PrimExpr]
-                  | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))]
+                  | Aggregate [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))]
                               (PrimQuery' a)
                   | Order     [HPQ.OrderExpr] (PrimQuery' a)
                   | Limit     LimitOp (PrimQuery' a)
@@ -65,7 +65,7 @@ data PrimQueryFold' a p = PrimQueryFold
   , empty     :: a -> p
   , baseTable :: TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> p
   , product   :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-  , aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
+  , aggregate :: [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))] -> p -> p
   , order     :: [HPQ.OrderExpr] -> p -> p
   , limit     :: LimitOp -> p -> p
   , join      :: JoinType -> HPQ.PrimExpr -> p -> p -> p

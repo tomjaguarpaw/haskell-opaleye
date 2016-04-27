@@ -2,7 +2,7 @@
 module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
 
 import qualified Opaleye.Internal.Aggregate as A
-import           Opaleye.Internal.Aggregate (Aggregator)
+import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
 import qualified Opaleye.Internal.Column as IC
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
@@ -23,6 +23,18 @@ type @a@, apply the aggregator to the results of the query.
 -}
 aggregate :: Aggregator a b -> Query a -> Query b
 aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
+
+-- | Order the values within each aggregation in `Aggregator` using
+-- the given ordering. This is only relevant for aggregations that
+-- depend on the order they get their elements, like `arrayAgg` and
+-- `stringAgg`.
+--
+-- Note that this orders all aggregations with the same ordering. If
+-- you need different orderings for different aggregations, use
+-- 'Opaleye.Internal.Aggregate.orderAggregate'.
+
+aggregateOrdered  :: Ord.Order a -> Aggregator a b -> Query a -> Query b
+aggregateOrdered o agg = aggregate (orderAggregate o agg)
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
 groupBy :: Aggregator (C.Column a) (C.Column a)

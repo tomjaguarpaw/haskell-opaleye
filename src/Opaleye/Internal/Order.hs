@@ -50,9 +50,11 @@ order op f = Order (fmap (\column -> [(op, IC.unColumn column)]) f)
 
 orderByU :: Order a -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 orderByU os (columns, primQ, t) = (columns, primQ', t)
-  where primQ' = PQ.Order orderExprs primQ
-        Order sos = os
-        orderExprs = map (uncurry HPQ.OrderExpr) (sos columns)
+  where primQ' = PQ.Order oExprs primQ
+        oExprs = orderExprs columns os
+
+orderExprs :: a -> Order a -> [HPQ.OrderExpr]
+orderExprs x (Order os) = map (uncurry HPQ.OrderExpr) (os x)
 
 limit' :: Int -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 limit' n (x, q, t) = (x, PQ.Limit (PQ.LimitOp n) q, t)

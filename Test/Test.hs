@@ -7,6 +7,7 @@ import qualified QuickCheck
 
 import           Opaleye (Column, Nullable, Query, QueryArr, (.==), (.>))
 import qualified Opaleye as O
+import qualified Opaleye.Internal.Aggregate as IA
 
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Data.Profunctor.Product.Default as D
@@ -21,6 +22,7 @@ import qualified Data.Time   as Time
 import qualified System.Exit as Exit
 import qualified System.Environment as Environment
 
+import           Control.Applicative ((<$>), (<*>))
 import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), (<<<), (>>>))
@@ -143,6 +145,9 @@ table5 = O.TableWithSchema "public" "table5" (PP.p2 (O.optional "column1", O.opt
 table6 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
 table6 = O.Table "table6" (PP.p2 (O.required "column1", O.required "column2"))
 
+table7 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
+table7 = O.Table "table7" (PP.p2 (O.required "column1", O.required "column2"))
+
 tableKeywordColNames :: O.Table (Column O.PGInt4, Column O.PGInt4)
                                 (Column O.PGInt4, Column O.PGInt4)
 tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
@@ -158,6 +163,9 @@ table3Q = O.queryTable table3
 
 table6Q :: Query (Column O.PGText, Column O.PGText)
 table6Q = O.queryTable table6
+
+table7Q :: Query (Column O.PGText, Column O.PGText)
+table7Q = O.queryTable table7
 
 table1dataG :: Num a => [(a, a)]
 table1dataG = [ (1, 100)
@@ -206,6 +214,12 @@ table6data = [("xy", "a"), ("z", "a"), ("more text", "a")]
 table6columndata :: [(Column O.PGText, Column O.PGText)]
 table6columndata = map (\(column1, column2) -> (O.pgString column1, O.pgString column2)) table6data
 
+table7data :: [(String, String)]
+table7data = [("foo", "c"), ("bar", "a"), ("baz", "b")]
+
+table7columndata :: [(Column O.PGText, Column O.PGText)]
+table7columndata = map (O.pgString *** O.pgString) table7data
+
 -- We have to quote the table names here because upper case letters in
 -- table names are treated as lower case unless the name is quoted!
 dropAndCreateTable :: String -> (String, [String]) -> PGS.Query
@@ -246,13 +260,16 @@ tables = map columns2 ["table1", "TABLE2", "table3", "table4"]
 serialTables :: [Table_]
 serialTables = map columns2 ["table5"]
 
+textTables :: [Table_]
+textTables = map columns2 ["table6", "table7"]
+
 dropAndCreateDB :: PGS.Connection -> IO ()
 dropAndCreateDB conn = do
   mapM_ execute tables
-  _ <- executeTextTable
+  mapM_ executeTextTable textTables
   mapM_ executeSerial serialTables
   where execute = PGS.execute_ conn . dropAndCreateTableInt
-        executeTextTable = (PGS.execute_ conn . dropAndCreateTableText . columns2) "table6"
+        executeTextTable = PGS.execute_ conn . dropAndCreateTableText
         executeSerial = PGS.execute_ conn . dropAndCreateTableSerial
 
 type Test = PGS.Connection -> IO Bool
@@ -360,6 +377,46 @@ testStringAggregate = testG q expected
         expected r = [(
           (foldl1 (\x y -> x ++ "_" ++ y) . map fst) table6data ,
           head (map snd table6data))] == r
+
+-- | Using aggregateOrdered applies the ordering to all aggregates.
+
+testStringArrayAggregateOrdered :: Test
+testStringArrayAggregateOrdered = testG q expected
+  where q = O.aggregateOrdered (O.asc snd) (PP.p2 (O.arrayAgg, O.stringAgg . O.pgString $ ",")) table7Q
+        expected r = [( map fst sortedData
+                      , L.intercalate "," . map snd $ sortedData
+                      )
+                     ] == r
+        sortedData = L.sortBy (Ord.comparing snd) table7data
+
+-- | Using orderAggregate you can apply different orderings to
+-- different aggregates.
+
+testMultipleAggregateOrdered :: Test
+testMultipleAggregateOrdered = testG q expected
+  where q = O.aggregate ((,) <$> IA.orderAggregate (O.asc snd)
+                                                   (P.lmap fst O.arrayAgg)
+                             <*> IA.orderAggregate (O.desc snd)
+                                                   (P.lmap snd (O.stringAgg . O.pgString $ ","))
+                        ) table7Q
+        expected r = [( map fst . L.sortBy (Ord.comparing snd) $ table7data
+                      , L.intercalate "," . map snd . L.sortBy (Ord.comparing (Ord.Down . snd)) $ table7data
+                      )
+                     ] == r
+
+-- | Applying an order to an ordered aggregate overwrites the old
+-- order, just like with ordered queries.
+--
+testOverwriteAggregateOrdered :: Test
+testOverwriteAggregateOrdered = testG q expected
+  where q = O.aggregate ( IA.orderAggregate (O.asc snd)
+                        . IA.orderAggregate (O.desc snd)
+                        $ PP.p2 (O.arrayAgg, O.max)
+                        ) table7Q
+        expected r = [( map fst (L.sortBy (Ord.comparing snd) table7data)
+                      , maximum (map snd table7data)
+                      )
+                     ] == r
 
 testOrderByG :: O.Order (Column O.PGInt4, Column O.PGInt4)
                 -> ((Int, Int) -> (Int, Int) -> Ordering)
@@ -591,15 +648,17 @@ testAtTimeZone = testG (A.pure (O.timestamptzAtTimeZone t (O.pgString "CET"))) (
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregateFunction,
-            testAggregateProfunctor, testStringAggregate,
+            testAggregateProfunctor, testStringArrayAggregate, testStringAggregate,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
             testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
             testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
             testValuesEmpty, testUnionAll, testTableFunctor, testUpdate,
-            testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone
-           ]
+            testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone,
+            testStringArrayAggregateOrdered, testMultipleAggregateOrdered,
+            testOverwriteAggregateOrdered
+            ]
 
 -- Environment.getEnv throws an exception on missing environment variable!
 getEnv :: String -> IO (Maybe String)
@@ -635,6 +694,7 @@ main = do
                , (table3, table3columndata)
                , (table4, table4columndata) ]
   insert (table6, table6columndata)
+  insert (table7, table7columndata)
 
   -- Need to run quickcheck after table data has been inserted
   QuickCheck.run conn
