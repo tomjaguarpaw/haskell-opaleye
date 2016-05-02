@@ -105,7 +105,7 @@ instance D.Default Constant LBS.ByteString (Column T.PGJsonb) where
 instance D.Default Constant Ae.Value (Column T.PGJsonb) where
   def = Constant T.pgValueJSONB
 
-instance (D.Default Constant a (Column b), T.IsPGType b)
+instance (D.Default Constant a (Column b), T.IsSqlType b)
          => D.Default Constant [a] (Column (T.PGArray b)) where
   def = Constant (T.pgArray (constantExplicit D.def))
 

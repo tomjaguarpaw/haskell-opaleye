@@ -152,50 +152,50 @@ pgLazyJSONB = pgJSONB . IPT.lazyDecodeUtf8
 pgValueJSONB :: Ae.ToJSON a => a -> Column PGJsonb
 pgValueJSONB = pgLazyJSONB . Ae.encode
 
-pgArray :: forall a b. IsPGType b => (a -> C.Column b) -> [a] -> C.Column (PGArray b)
+pgArray :: forall a b. IsSqlType b => (a -> C.Column b) -> [a] -> C.Column (PGArray b)
 pgArray pgEl xs = C.unsafeCast arrayTy $
   C.Column (HPQ.ArrayExpr (map oneEl xs))
   where
     oneEl = C.unColumn . pgEl
     arrayTy = showPGType ([] :: [PGArray b])
 
-class IsPGType pgType where
+class IsSqlType pgType where
   showPGType :: proxy pgType -> String
-instance IsPGType PGBool where
+instance IsSqlType PGBool where
   showPGType _ = "boolean"
-instance IsPGType PGDate where
+instance IsSqlType PGDate where
   showPGType _ = "date"
-instance IsPGType PGFloat4 where
+instance IsSqlType PGFloat4 where
   showPGType _ = "real"
-instance IsPGType PGFloat8 where
+instance IsSqlType PGFloat8 where
   showPGType _ = "double precision"
-instance IsPGType PGInt8 where
+instance IsSqlType PGInt8 where
   showPGType _ = "bigint"
-instance IsPGType PGInt4 where
+instance IsSqlType PGInt4 where
   showPGType _ = "integer"
-instance IsPGType PGInt2 where
+instance IsSqlType PGInt2 where
   showPGType _ = "smallint"
-instance IsPGType PGNumeric where
+instance IsSqlType PGNumeric where
   showPGType _ = "numeric"
-instance IsPGType PGText where
+instance IsSqlType PGText where
   showPGType _ = "text"
-instance IsPGType PGTime where
+instance IsSqlType PGTime where
   showPGType _ = "time"
-instance IsPGType PGTimestamp where
+instance IsSqlType PGTimestamp where
   showPGType _ = "timestamp"
-instance IsPGType PGTimestamptz where
+instance IsSqlType PGTimestamptz where
   showPGType _ = "timestamp with time zone"
-instance IsPGType PGUuid where
+instance IsSqlType PGUuid where
   showPGType _ = "uuid"
-instance IsPGType PGCitext where
+instance IsSqlType PGCitext where
   showPGType _ =  "citext"
-instance IsPGType PGBytea where
+instance IsSqlType PGBytea where
   showPGType _ = "bytea"
-instance IsPGType a => IsPGType (PGArray a) where
+instance IsSqlType a => IsSqlType (PGArray a) where
   showPGType _ = showPGType ([] :: [a]) ++ "[]"
-instance IsPGType a => IsPGType (C.Nullable a) where
+instance IsSqlType a => IsSqlType (C.Nullable a) where
   showPGType _ = showPGType ([] :: [a])
-instance IsPGType PGJson where
+instance IsSqlType PGJson where
   showPGType _ = "json"
-instance IsPGType PGJsonb where
+instance IsSqlType PGJsonb where
   showPGType _ = "jsonb"
