@@ -32,6 +32,7 @@ data PrimExpr   = AttrExpr  Symbol
                                     -- TODO: I'm not sure this belongs
                                     -- here.  Perhaps a special type is
                                     -- needed for insert expressions.
+                | ArrayExpr [PrimExpr] -- ^ ARRAY[..]
                 deriving (Read,Show)
 
 data Literal = NullLit

@@ -136,6 +136,7 @@ defaultSqlExpr gen expr =
       FunExpr n exprs  -> FunSqlExpr n (map (sqlExpr gen) exprs)
       CastExpr typ e1 -> CastSqlExpr typ (sqlExpr gen e1)
       DefaultInsertExpr -> DefaultSqlExpr
+      ArrayExpr es -> ArraySqlExpr (map (sqlExpr gen) es)
 
 showBinOp :: BinOp -> String
 showBinOp  OpEq         = "="

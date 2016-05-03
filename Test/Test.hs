@@ -1,5 +1,6 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
@@ -662,6 +663,24 @@ testAtTimeZone = testG (A.pure (O.timestamptzAtTimeZone t (O.pgString "CET"))) (
         t' = Time.LocalTime d (Time.TimeOfDay 2 0 0)
         d = Time.fromGregorian 2015 1 1
 
+testArrayLiterals :: Test
+testArrayLiterals = testG (A.pure $ O.pgArray O.pgInt4 vals) (== [vals])
+  where vals = [1,2,3]
+
+-- This test fails without the explicit cast in pgArray since postgres
+-- can't determine the type of the array.
+
+testEmptyArray :: Test
+testEmptyArray = testG (A.pure $ O.pgArray O.pgInt4 []) (== [[] :: [Int]])
+
+-- This test fails without the explicit cast in pgArray since postgres
+-- defaults the numbers to 'integer' but postgresql-simple expects 'float8'.
+
+testFloatArray :: Test
+testFloatArray = testG (A.pure $ O.pgArray O.pgDouble doubles) (== [doubles])
+  where
+    doubles = [1 :: Double, 2]
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregate0, testAggregateFunction,
@@ -674,7 +693,8 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testValuesEmpty, testUnionAll, testTableFunctor, testUpdate,
             testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone,
             testStringArrayAggregateOrdered, testMultipleAggregateOrdered,
-            testOverwriteAggregateOrdered, testCountRows0, testCountRows3
+            testOverwriteAggregateOrdered, testCountRows0, testCountRows3,
+            testArrayLiterals, testEmptyArray, testFloatArray
             ]
 
 -- Environment.getEnv throws an exception on missing environment variable!

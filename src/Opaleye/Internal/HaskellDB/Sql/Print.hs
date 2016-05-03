@@ -26,7 +26,7 @@ import Data.List (intersperse)
 import qualified Data.List.NonEmpty as NEL
 import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
                                   empty, equals, hcat, hsep, parens, punctuate,
-                                  text, vcat)
+                                  text, vcat, brackets)
 
 -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first
 -- column.  We need an identity function, but due to
@@ -134,6 +134,7 @@ ppSqlExpr expr =
       PlaceHolderSqlExpr -> text "?"
       CastSqlExpr typ e -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)
       DefaultSqlExpr    -> text "DEFAULT"
+      ArraySqlExpr es -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
 
 commaH :: (a -> Doc) -> [a] -> Doc
 commaH f = hcat . punctuate comma . map f

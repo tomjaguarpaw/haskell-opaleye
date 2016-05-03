@@ -151,3 +151,12 @@ timestamptzAtTimeZone :: Column T.PGTimestamptz
                       -> Column T.PGText
                       -> Column T.PGTimestamp
 timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
+
+emptyArray :: T.IsSqlType a => Column (T.PGArray a)
+emptyArray = T.pgArray id []
+
+arrayPrepend :: Column a -> Column (T.PGArray a) -> Column (T.PGArray a)
+arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es])
+
+singletonArray :: T.IsSqlType a => Column a -> Column (T.PGArray a)
+singletonArray x = arrayPrepend x emptyArray
