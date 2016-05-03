@@ -674,12 +674,12 @@ testEmptyArray :: Test
 testEmptyArray = testG (A.pure $ O.pgArray O.pgInt4 []) (== [[] :: [Int]])
 
 -- This test fails without the explicit cast in pgArray since postgres
--- defaults the text to 'text' but postgresql-simple expects 'citext'.
+-- defaults the numbers to 'integer' but postgresql-simple expects 'float8'.
 
-testCITextArray :: Test
-testCITextArray = testG (A.pure $ O.pgArray O.pgCiStrictText texts) (== [texts])
+testFloatArray :: Test
+testFloatArray = testG (A.pure $ O.pgArray O.pgDouble doubles) (== [doubles])
   where
-    texts = ["hello", "world"]
+    doubles = [1 :: Double, 2]
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
@@ -694,7 +694,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone,
             testStringArrayAggregateOrdered, testMultipleAggregateOrdered,
             testOverwriteAggregateOrdered, testCountRows0, testCountRows3,
-            testArrayLiterals, testEmptyArray, testCITextArray
+            testArrayLiterals, testEmptyArray, testFloatArray
             ]
 
 -- Environment.getEnv throws an exception on missing environment variable!
