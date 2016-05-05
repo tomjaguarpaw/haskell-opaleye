@@ -71,6 +71,10 @@ ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
         Sql.SqlNullsFirst -> "NULLS FIRST"
         Sql.SqlNullsLast  -> "NULLS LAST"
 
+ppSqlDistinct :: Sql.SqlDistinct -> Doc
+ppSqlDistinct Sql.SqlDistinct = text "DISTINCT"
+ppSqlDistinct Sql.SqlNotDistinct = mempty
+
 ppAs :: Maybe String -> Doc -> Doc
 ppAs Nothing      expr = expr
 ppAs (Just alias) expr = expr <+> hsep [text "as", doubleQuotes (text alias)]
@@ -135,7 +139,7 @@ ppSqlExpr expr =
       PrefixSqlExpr op e  -> text op <+> ppSqlExpr e
       PostfixSqlExpr op e -> ppSqlExpr e <+> text op
       FunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
-      AggrFunSqlExpr f es ord -> text f <> parens (commaH ppSqlExpr es <+> ppOrderBy ord)
+      AggrFunSqlExpr f es ord distinct -> text f <> parens (ppSqlDistinct distinct <+> commaH ppSqlExpr es <+> ppOrderBy ord)
       ConstSqlExpr c      -> text c
       CaseSqlExpr cs el   -> text "CASE" <+> vcat (toList (fmap ppWhen cs))
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"

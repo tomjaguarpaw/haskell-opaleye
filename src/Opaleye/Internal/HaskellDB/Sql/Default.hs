@@ -122,13 +122,15 @@ defaultSqlExpr gen expr =
       -- because it leads to a non-uniformity of treatment, as seen
       -- below.  Perhaps we should have just `AggrExpr AggrOp` and
       -- always put the `PrimExpr` in the `AggrOp`.
-      AggrExpr op e ord -> let op' = showAggrOp op
-                               e' = sqlExpr gen e
-                               ord' = toSqlOrder gen <$> ord
-                               moreAggrFunParams = case op of
-                                 AggrStringAggr primE -> [sqlExpr gen primE]
-                                 _ -> []
-                            in AggrFunSqlExpr op' (e' : moreAggrFunParams) ord'
+      AggrExpr distinct op e ord -> let op' = showAggrOp op
+                                        e' = sqlExpr gen e
+                                        ord' = toSqlOrder gen <$> ord
+                                        distinct' | distinct == AggrDistinct = SqlDistinct
+                                                  | distinct == AggrAll = SqlNotDistinct
+                                        moreAggrFunParams = case op of
+                                          AggrStringAggr primE -> [sqlExpr gen primE]
+                                          _ -> []
+                                     in AggrFunSqlExpr op' (e' : moreAggrFunParams) ord' distinct'
       ConstExpr l      -> ConstSqlExpr (sqlLiteral gen l)
       CaseExpr cs e    -> let cs' = [(sqlExpr gen c, sqlExpr gen x)| (c,x) <- cs]
                               e'  = sqlExpr gen e
