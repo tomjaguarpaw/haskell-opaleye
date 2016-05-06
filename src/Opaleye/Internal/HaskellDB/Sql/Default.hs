@@ -4,6 +4,8 @@
 
 module Opaleye.Internal.HaskellDB.Sql.Default  where
 
+import Control.Applicative ((<$>))
+
 import Opaleye.Internal.HaskellDB.PrimQuery
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as PQ
 import Opaleye.Internal.HaskellDB.Sql
@@ -118,12 +120,13 @@ defaultSqlExpr gen expr =
       -- because it leads to a non-uniformity of treatment, as seen
       -- below.  Perhaps we should have just `AggrExpr AggrOp` and
       -- always put the `PrimExpr` in the `AggrOp`.
-      AggrExpr op e    -> let op' = showAggrOp op
-                              e' = sqlExpr gen e
-                              moreAggrFunParams = case op of
-                                AggrStringAggr primE -> [sqlExpr gen primE]
-                                _ -> []
-                           in AggrFunSqlExpr op' (e' : moreAggrFunParams)
+      AggrExpr op e ord -> let op' = showAggrOp op
+                               e' = sqlExpr gen e
+                               ord' = toSqlOrder gen <$> ord
+                               moreAggrFunParams = case op of
+                                 AggrStringAggr primE -> [sqlExpr gen primE]
+                                 _ -> []
+                            in AggrFunSqlExpr op' (e' : moreAggrFunParams) ord'
       ConstExpr l      -> ConstSqlExpr (sqlLiteral gen l)
       CaseExpr cs e    -> let cs' = [(sqlExpr gen c, sqlExpr gen x)| (c,x) <- cs]
                               e'  = sqlExpr gen e
@@ -133,6 +136,7 @@ defaultSqlExpr gen expr =
       FunExpr n exprs  -> FunSqlExpr n (map (sqlExpr gen) exprs)
       CastExpr typ e1 -> CastSqlExpr typ (sqlExpr gen e1)
       DefaultInsertExpr -> DefaultSqlExpr
+      ArrayExpr es -> ArraySqlExpr (map (sqlExpr gen) es)
 
 showBinOp :: BinOp -> String
 showBinOp  OpEq         = "="

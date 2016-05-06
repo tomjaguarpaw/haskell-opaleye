@@ -108,6 +108,10 @@ instance D.Default Constant Ae.Value (Column T.PGJsonb) where
 instance D.Default Constant haskell (Column sql) => D.Default Constant (Maybe haskell) (Maybe (Column sql)) where
   def = Constant (constant <$>)
 
+instance (D.Default Constant a (Column b), T.IsSqlType b)
+         => D.Default Constant [a] (Column (T.PGArray b)) where
+  def = Constant (T.pgArray (constantExplicit D.def))
+
 -- { Boilerplate instances
 
 instance Functor (Constant a) where

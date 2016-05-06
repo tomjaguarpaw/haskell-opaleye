@@ -35,11 +35,17 @@ tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
 
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
+
+-- The type parameter 'a' is used to control whether the 'Empty'
+-- constructor can appear.  If 'a' = '()' then it can appear.  If 'a'
+-- = 'Void' then it cannot.  When we create queries it is more
+-- convenient to allow 'Empty', but it is hard to represent 'Empty' in
+-- SQL so we remove it in 'Optimize' and set 'a = Void'.
 data PrimQuery' a = Unit
                   | Empty     a
                   | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
                   | Product   (NEL.NonEmpty (PrimQuery' a)) [HPQ.PrimExpr]
-                  | Aggregate [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))]
+                  | Aggregate [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))]
                               (PrimQuery' a)
                   | Order     [HPQ.OrderExpr] (PrimQuery' a)
                   | Limit     LimitOp (PrimQuery' a)
@@ -59,7 +65,7 @@ data PrimQueryFold' a p = PrimQueryFold
   , empty     :: a -> p
   , baseTable :: TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> p
   , product   :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-  , aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> p -> p
+  , aggregate :: [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))] -> p -> p
   , order     :: [HPQ.OrderExpr] -> p -> p
   , limit     :: LimitOp -> p -> p
   , join      :: JoinType -> HPQ.PrimExpr -> p -> p -> p

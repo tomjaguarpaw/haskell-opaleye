@@ -79,22 +79,18 @@ runQueryFoldExplicit qr conn q z f = case sql of
   Just sql' -> PGS.foldWith_ parser conn sql' z f
   where (sql, parser) = prepareQuery qr q
 
--- TODO: This should be internal
-prepareQuery :: QueryRunner columns haskells -> Query columns -> (Maybe PGS.Query, FR.RowParser haskells)
-prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
-  where sql :: Maybe PGS.Query
-        sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
-        -- FIXME: We're doing work twice here
-        (b, _, _) = Q.runSimpleQueryArrStart q ()
-        parser = IRQ.prepareRowParser qr b
-
 -- | Use 'queryRunnerColumn' to make an instance to allow you to run queries on
 --   your own datatypes.  For example:
 --
 -- @
 -- newtype Foo = Foo Int
--- instance Default QueryRunnerColumn Foo Foo where
---    def = queryRunnerColumn ('Opaleye.Column.unsafeCoerce' :: Column Foo -> Column PGInt4) Foo def
+--
+-- instance QueryRunnerColumnDefault Foo Foo where
+--    queryRunnerColumnDefault =
+--        queryRunnerColumn ('Opaleye.Column.unsafeCoerceColumn'
+--                               :: Column Foo -> Column PGInt4)
+--                          Foo
+--                          queryRunnerColumnDefault
 -- @
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
                   -> IRQ.QueryRunnerColumn a b -> IRQ.QueryRunnerColumn a' b'
@@ -102,3 +98,13 @@ queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
                                                             (fmapFP haskellF fp)
   where IRQ.QueryRunnerColumn u fp = qrc
         fmapFP = fmap . fmap . fmap
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+prepareQuery :: QueryRunner columns haskells -> Query columns -> (Maybe PGS.Query, FR.RowParser haskells)
+prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
+  where sql :: Maybe PGS.Query
+        sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
+        -- FIXME: We're doing work twice here
+        (b, _, _) = Q.runSimpleQueryArrStart q ()
+        parser = IRQ.prepareRowParser qr b

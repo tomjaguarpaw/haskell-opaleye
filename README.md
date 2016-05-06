@@ -10,6 +10,11 @@ wonderful about relational databases and give it type safety and
 composition (i.e. what is wonderful about Haskell)" &ndash; Daniel
 Patterson, [Position Development](http://positiondev.com/)
 
+> "We use it for most of our DB code. It's very flexible and almost
+  always as performant as manually written queries" &ndash; [Adam
+  Bergmark](http://ircbrowse.net/browse/haskell?id=22634197&timestamp=1460980502#t1460980502),
+  [Silk.co](http://www.silk.co/)
+
 Opaleye allows you to define your database tables and write queries
 against them in Haskell code, and aims to be typesafe in the sense
 that if your code compiles then the generated SQL query will not fail

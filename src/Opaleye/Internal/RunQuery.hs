@@ -69,14 +69,14 @@ import           Data.Typeable (Typeable)
 data QueryRunnerColumn pgType haskellType =
   QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
 
+instance Functor (QueryRunnerColumn u) where
+  fmap f ~(QueryRunnerColumn u fp) = QueryRunnerColumn u ((fmap . fmap . fmap) f fp)
+
 data QueryRunner columns haskells =
   QueryRunner (U.Unpackspec columns ())
               (columns -> RowParser haskells)
-              -- We never actually
-              -- look at the columns
-              -- except to see its
-              -- "type" in the case
-              -- of a sum profunctor
+              -- We never actually look at the columns except to see
+              -- its "type" in the case of a sum profunctor
               (columns -> Bool)
               -- ^ Have we actually requested any columns?  If we
               -- asked for zero columns then the SQL generator will
@@ -85,15 +85,17 @@ data QueryRunner columns haskells =
               -- have to make sure we read a single Int.
 
 fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn coltype haskell
-fieldQueryRunnerColumn =
-  QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) fromField
+fieldQueryRunnerColumn = fieldParserQueryRunnerColumn fromField
+
+fieldParserQueryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn coltype haskell
+fieldParserQueryRunnerColumn = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
 
 queryRunner :: QueryRunnerColumn a b -> QueryRunner (Column a) b
 queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
     where QueryRunnerColumn u fp = qrc
 
 queryRunnerColumnNullable :: QueryRunnerColumn a b
-                       -> QueryRunnerColumn (Nullable a) (Maybe b)
+                          -> QueryRunnerColumn (Nullable a) (Maybe b)
 queryRunnerColumnNullable qr =
   QueryRunnerColumn (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
   where QueryRunnerColumn u fp = qr
@@ -174,15 +176,13 @@ instance QueryRunnerColumnDefault T.PGCitext (CI.CI LT.Text) where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGJson String where
-  queryRunnerColumnDefault =
-    QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) jsonFieldParser
+  queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonFieldParser
 
 instance QueryRunnerColumnDefault T.PGJson Ae.Value where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGJsonb String where
-  queryRunnerColumnDefault =
-    QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) jsonbFieldParser
+  queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonbFieldParser
 
 instance QueryRunnerColumnDefault T.PGJsonb Ae.Value where
   queryRunnerColumnDefault = fieldQueryRunnerColumn

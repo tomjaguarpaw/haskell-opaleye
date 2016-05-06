@@ -20,6 +20,13 @@ unsafeCoerce = unsafeCoerceColumn
 unsafeCoerceColumn :: Column a -> Column b
 unsafeCoerceColumn (Column e) = Column e
 
+-- | Cast a column to any other type. This is safe for some conversions such as uuid to text.
+unsafeCast :: String -> Column a -> Column b
+unsafeCast = mapColumn . HPQ.CastExpr
+  where
+    mapColumn :: (HPQ.PrimExpr -> HPQ.PrimExpr) -> Column c -> Column a
+    mapColumn primExpr c = Column (primExpr (unColumn c))
+
 unsafeCompositeField :: Column a -> String -> Column b
 unsafeCompositeField (Column e) fieldName =
   Column (HPQ.CompositeExpr e fieldName)
