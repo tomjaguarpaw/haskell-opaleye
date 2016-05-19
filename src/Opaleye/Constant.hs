@@ -22,6 +22,7 @@ import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor                 as P
 
 import           Control.Applicative (Applicative, pure, (<*>))
+import           Data.Functor                    ((<$>))
 
 
 newtype Constant haskells columns =
