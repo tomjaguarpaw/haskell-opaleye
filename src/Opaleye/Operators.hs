@@ -110,6 +110,9 @@ upper = C.unOp HPQ.OpUpper
 like :: Column T.PGText -> Column T.PGText -> Column T.PGBool
 like = C.binOp HPQ.OpLike
 
+charLength :: C.PGString a => Column a -> Column Int
+charLength (Column e) = Column (HPQ.FunExpr "char_length" [e])
+
 -- | True when any element of the container is true
 ors :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
 ors = F.foldl' (.||) (T.pgBool False)
