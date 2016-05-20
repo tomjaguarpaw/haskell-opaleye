@@ -55,6 +55,9 @@ instance C.PGFractional PGFloat8 where
 instance C.PGString PGText where
   pgFromString = pgString
 
+instance C.PGString PGCitext where
+  pgFromString = pgCiLazyText . CI.mk . LText.pack
+
 literalColumn :: HPQ.Literal -> Column a
 literalColumn = IPT.literalColumn
 {-# WARNING literalColumn
