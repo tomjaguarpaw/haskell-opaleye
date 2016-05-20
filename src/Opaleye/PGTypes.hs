@@ -52,6 +52,10 @@ instance C.PGNum PGInt8 where
 instance C.PGFractional PGFloat8 where
   pgFromRational = pgDouble . fromRational
 
+instance C.PGIntegral PGInt2
+instance C.PGIntegral PGInt4
+instance C.PGIntegral PGInt8
+
 instance C.PGString PGText where
   pgFromString = pgString
 
