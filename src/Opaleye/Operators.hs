@@ -85,6 +85,12 @@ infix 4 .>=
 (.>=) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
 (.>=) = C.binOp HPQ.OpGtEq
 
+quot_ :: C.PGIntegral a => Column a -> Column a -> Column a
+quot_ = C.binOp HPQ.OpDiv
+
+rem_ :: C.PGIntegral a => Column a -> Column a -> Column a
+rem_ = C.binOp HPQ.OpMod
+
 case_ :: [(Column T.PGBool, Column a)] -> Column a -> Column a
 case_ = unsafeCase_
 

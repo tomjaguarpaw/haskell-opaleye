@@ -74,6 +74,8 @@ instance (PGNum a, PGFractional a) => Fractional (Column a) where
   fromRational = pgFromRational
   (/) = binOp HPQ.OpDiv
 
+class PGIntegral a
+
 class PGString a where
     pgFromString :: String -> Column a
 
