@@ -23,6 +23,10 @@ import           Data.Profunctor.Product.Default (Default, def)
 --          -> Query (Foo (Column a) (Column b) (Column c))
 --          -> Query (Foo (Column a) (Column b) (Column c))
 -- @
+--
+-- By design there is no union function of type @QueryArr a b ->
+-- QueryArr a b -> QueryArr a b@.  Such a function would allow
+-- violation of SQL's scoping rules and lead to invalid queries.
 unionAll :: Default B.Binaryspec columns columns =>
             Query columns -> Query columns -> Query columns
 unionAll = unionAllExplicit def

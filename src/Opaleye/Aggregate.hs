@@ -36,6 +36,9 @@ result of an aggregation.)
 If you simply want to count the number of rows in a query you might
 find the 'countRows' function more convenient.
 
+By design there is no aggregation function of type @Aggregator b b' ->
+QueryArr a b -> QueryArr a b'@.  Such a function would allow violation
+of SQL's scoping rules and lead to invalid queries.
 -}
 aggregate :: Aggregator a b -> Query a -> Query b
 aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
