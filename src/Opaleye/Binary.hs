@@ -36,7 +36,7 @@ unionAllExplicit :: B.Binaryspec columns columns'
 unionAllExplicit = B.sameTypeBinOpHelper PQ.UnionAll
 
 
--- | The same as unionAll, except that it additionally removes any 
+-- | The same as unionAll, except that it additionally removes any
 --   duplicate rows.
 union :: Default B.Binaryspec columns columns =>
          Query columns -> Query columns -> Query columns
@@ -57,7 +57,7 @@ intersectAllExplicit :: B.Binaryspec columns columns'
 intersectAllExplicit = B.sameTypeBinOpHelper PQ.IntersectAll
 
 
--- | The same as intersectAll, except that it additionally removes any 
+-- | The same as intersectAll, except that it additionally removes any
 --   duplicate rows.
 intersect :: Default B.Binaryspec columns columns =>
          Query columns -> Query columns -> Query columns
@@ -77,7 +77,7 @@ exceptAllExplicit :: B.Binaryspec columns columns'
 exceptAllExplicit = B.sameTypeBinOpHelper PQ.ExceptAll
 
 
--- | The same as exceptAll, except that it additionally removes any 
+-- | The same as exceptAll, except that it additionally removes any
 --   duplicate rows.
 except :: Default B.Binaryspec columns columns =>
          Query columns -> Query columns -> Query columns

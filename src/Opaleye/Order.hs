@@ -82,4 +82,3 @@ instance PGOrd T.PGTimestamp
 instance PGOrd T.PGCitext
 instance PGOrd T.PGUuid
 instance PGOrd a => PGOrd (C.Nullable a)
-
