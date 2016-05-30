@@ -1,3 +1,13 @@
+## 0.5.0.0
+
+* Added
+    * `(.===)`, `aggregateOrdered`, `countStar`, `countRows`,
+      `quot_`, `rem_`, 'charLength`
+    * intersection and except query binary operators
+    * `Constant` instances for `Maybe` and lists
+    * `runInsertManyReturning`
+    * `runQueryFold`
+
 ## 0.4.2.0
 
 * Added `.===` and `./==` for comparison of product types
