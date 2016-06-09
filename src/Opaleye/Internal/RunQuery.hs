@@ -121,6 +121,24 @@ instance QueryRunnerColumnDefault a b =>
 -- | A 'QueryRunnerColumnDefault' @pgType@ @haskellType@ represents
 -- the default way to turn a @pgType@ result from the database into a
 -- Haskell value of type @haskelType@.
+--
+-- Creating an instance of 'QueryRunnerColumnDefault' for your own types is
+-- necessary for retrieving those types from the database.
+--
+-- You should use one of the three methods below for writing a
+-- 'QueryRunnerColumnDefault' instance.
+--
+-- 1. If you already have a 'FromField' instance for your @haskellType@, use
+-- 'fieldQueryRunnerColumn'.  (This is how most of the built-in instances are
+-- defined.)
+--
+-- 2. If you don't have a 'FromField' instance, use
+-- 'Opaleye.RunQuery.queryRunnerColumn' if possible.  See the documentation for
+-- 'Opaleye.RunQuery.queryRunnerColumn' for an example.
+--
+-- 3. If you have a more complicated case, but not a 'FromField' instance,
+-- write a 'FieldParser' for your type and use 'fieldParserQueryRunnerColumn'.
+-- You can also add a 'FromField' instance using this.
 class QueryRunnerColumnDefault pgType haskellType where
   queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
 
