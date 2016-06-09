@@ -28,6 +28,24 @@ import           Data.Functor                    ((<$>))
 newtype Constant haskells columns =
   Constant { constantExplicit :: haskells -> columns }
 
+-- | 'constant' can be used with functions like
+-- 'Opaleye.Manipulation.runInsert' to insert custom Haskell types into the
+-- database.
+--
+-- The following is an example of a function for inserting custom types.
+--
+-- @
+--   customInsert
+--      :: ( 'D.Default' 'Constant' haskells columns )
+--      => Connection
+--      -> 'Opaleye.Table' columns columns'
+--      -> haskells
+--      -> IO Int64
+--   customInsert conn table haskells = 'Opaleye.Manipulation.runInsert' conn table $ 'constant' haskells
+-- @
+--
+-- In order to use this function with your custom types, you need to define an
+-- instance of 'D.Default' 'Constant' for your custom types.
 constant :: D.Default Constant haskells columns
          => haskells -> columns
 constant = constantExplicit D.def
