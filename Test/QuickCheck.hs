@@ -109,9 +109,9 @@ instance TQ.Arbitrary ArbitraryQuery where
 
 instance TQ.Arbitrary ArbitraryColumns where
     arbitrary = do
-    l <- TQ.listOf (TQ.oneof (map (return . Left) [-1, 0, 1]
-                             ++ map (return . Right) [False, True]))
-    return (ArbitraryColumns l)
+      l <- TQ.listOf (TQ.oneof (map (return . Left) [-1, 0, 1]
+                               ++ map (return . Right) [False, True]))
+      return (ArbitraryColumns l)
 
 instance TQ.Arbitrary ArbitraryColumnsList where
   -- We don't want to choose very big lists because we take
