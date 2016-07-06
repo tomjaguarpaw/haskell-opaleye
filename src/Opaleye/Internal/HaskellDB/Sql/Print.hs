@@ -125,8 +125,11 @@ ppSqlExpr expr =
       FunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
       AggrFunSqlExpr f es ord -> text f <> parens (commaH ppSqlExpr es <+> ppOrderBy ord)
       ConstSqlExpr c      -> text c
-      CaseSqlExpr cs el   -> text "CASE" <+> vcat (map ppWhen cs)
-                             <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
+      CaseSqlExpr cs el   ->
+          if null cs
+          then ppSqlExpr el
+          else text "CASE" <+> vcat (map ppWhen cs)
+               <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
           where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w
                                <+> text "THEN" <+> ppSqlExpr t
       ListSqlExpr es      -> parens (commaH ppSqlExpr es)

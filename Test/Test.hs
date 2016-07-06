@@ -334,6 +334,16 @@ testCase = testG q (== expected)
         expected :: [Int]
         expected = [12, 12, 21, 33]
 
+-- This tests case_ with an empty list of cases, to make sure it generates valid
+-- SQL.
+testCaseEmpty :: Test
+testCaseEmpty = testG q (== expected)
+  where q :: Query (Column O.PGInt4)
+        q = table1Q >>> proc _ ->
+          Arr.returnA -< O.case_ [] 33
+        expected :: [Int]
+        expected = [33, 33, 33, 33]
+
 testDistinct :: Test
 testDistinct = testG (O.distinct table1Q)
                (\r -> L.sort (L.nub table1data) == L.sort r)
@@ -694,7 +704,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone,
             testStringArrayAggregateOrdered, testMultipleAggregateOrdered,
             testOverwriteAggregateOrdered, testCountRows0, testCountRows3,
-            testArrayLiterals, testEmptyArray, testFloatArray
+            testArrayLiterals, testEmptyArray, testFloatArray, testCaseEmpty
             ]
 
 -- Environment.getEnv throws an exception on missing environment variable!
