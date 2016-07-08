@@ -130,7 +130,9 @@ defaultSqlExpr gen expr =
       ConstExpr l      -> ConstSqlExpr (sqlLiteral gen l)
       CaseExpr cs e    -> let cs' = [(sqlExpr gen c, sqlExpr gen x)| (c,x) <- cs]
                               e'  = sqlExpr gen e
-                           in CaseSqlExpr cs' e'
+                          in case NEL.nonEmpty cs' of
+                            Just nel -> CaseSqlExpr nel e'
+                            Nothing  -> e'
       ListExpr es      -> ListSqlExpr (map (sqlExpr gen) es)
       ParamExpr n _    -> ParamSqlExpr n PlaceHolderSqlExpr
       FunExpr n exprs  -> FunSqlExpr n (map (sqlExpr gen) exprs)

@@ -27,6 +27,7 @@ import qualified Data.List.NonEmpty as NEL
 import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
                                   empty, equals, hcat, hsep, parens, punctuate,
                                   text, vcat, brackets)
+import Data.Foldable (toList)
 
 -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first
 -- column.  We need an identity function, but due to
@@ -125,11 +126,8 @@ ppSqlExpr expr =
       FunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
       AggrFunSqlExpr f es ord -> text f <> parens (commaH ppSqlExpr es <+> ppOrderBy ord)
       ConstSqlExpr c      -> text c
-      CaseSqlExpr cs el   ->
-          if null cs
-          then ppSqlExpr el
-          else text "CASE" <+> vcat (map ppWhen cs)
-               <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
+      CaseSqlExpr cs el   -> text "CASE" <+> vcat (toList (fmap ppWhen cs))
+                             <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
           where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w
                                <+> text "THEN" <+> ppSqlExpr t
       ListSqlExpr es      -> parens (commaH ppSqlExpr es)
