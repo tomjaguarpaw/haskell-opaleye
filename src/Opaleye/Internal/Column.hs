@@ -74,6 +74,7 @@ instance (PGNum a, PGFractional a) => Fractional (Column a) where
   fromRational = pgFromRational
   (/) = binOp HPQ.OpDiv
 
+-- | A dummy typeclass whose instances support integral operations.
 class PGIntegral a
 
 class PGString a where
