@@ -3,7 +3,9 @@
 module Opaleye.RunQuery (module Opaleye.RunQuery,
                          QueryRunner,
                          IRQ.QueryRunnerColumn,
-                         IRQ.fieldQueryRunnerColumn) where
+                         IRQ.QueryRunnerColumnDefault (..),
+                         IRQ.fieldQueryRunnerColumn,
+                         IRQ.fieldParserQueryRunnerColumn) where
 
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.FromRow as FR
@@ -18,8 +20,6 @@ import qualified Opaleye.Internal.QueryArr as Q
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
-
-import           Control.Applicative ((*>))
 
 -- | @runQuery@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
@@ -51,28 +51,47 @@ runQueryExplicit :: QueryRunner columns haskells
                  -> PGS.Connection
                  -> Query columns
                  -> IO [haskells]
-runQueryExplicit (QueryRunner u rowParser nonZeroColumns) conn q =
-  PGS.queryWith_ parser conn sql
-  where sql :: PGS.Query
-        sql = String.fromString (S.showSqlForPostgresExplicit u q)
-        -- FIXME: We're doing work twice here
-        (b, _, _) = Q.runSimpleQueryArrStart q ()
-        parser = if nonZeroColumns b
-                 then rowParser b
-                 else (FR.fromRow :: FR.RowParser (PGS.Only Int)) *> rowParser b
-                 -- If we are selecting zero columns then the SQL
-                 -- generator will have to put a dummy 0 into the
-                 -- SELECT statement, since we can't select zero
-                 -- columns.  In that case we have to make sure we
-                 -- read a single Int.
+runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
+  where (sql, parser) = prepareQuery qr q
+
+-- | @runQueryFold@ streams the results of a query incrementally and consumes
+-- the results with a left fold.
+--
+-- This fold is /not/ strict. The stream consumer is responsible for
+-- forcing the evaluation of its result to avoid space leaks.
+runQueryFold
+  :: D.Default QueryRunner columns haskells
+  => PGS.Connection
+  -> Query columns
+  -> b
+  -> (b -> haskells -> IO b)
+  -> IO b
+runQueryFold = runQueryFoldExplicit D.def
+
+runQueryFoldExplicit
+  :: QueryRunner columns haskells
+  -> PGS.Connection
+  -> Query columns
+  -> b
+  -> (b -> haskells -> IO b)
+  -> IO b
+runQueryFoldExplicit qr conn q z f = case sql of
+  Nothing   -> return z
+  Just sql' -> PGS.foldWith_ parser conn sql' z f
+  where (sql, parser) = prepareQuery qr q
 
 -- | Use 'queryRunnerColumn' to make an instance to allow you to run queries on
 --   your own datatypes.  For example:
 --
 -- @
 -- newtype Foo = Foo Int
--- instance Default QueryRunnerColumn Foo Foo where
---    def = queryRunnerColumn ('Opaleye.Column.unsafeCoerce' :: Column Foo -> Column PGInt4) Foo def
+--
+-- instance QueryRunnerColumnDefault Foo Foo where
+--    queryRunnerColumnDefault =
+--        queryRunnerColumn ('Opaleye.Column.unsafeCoerceColumn'
+--                               :: Column Foo -> Column PGInt4)
+--                          Foo
+--                          queryRunnerColumnDefault
 -- @
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
                   -> IRQ.QueryRunnerColumn a b -> IRQ.QueryRunnerColumn a' b'
@@ -80,3 +99,13 @@ queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
                                                             (fmapFP haskellF fp)
   where IRQ.QueryRunnerColumn u fp = qrc
         fmapFP = fmap . fmap . fmap
+
+-- | For internal use only.  Do not use.  Will be removed in a
+-- subsequent release.
+prepareQuery :: QueryRunner columns haskells -> Query columns -> (Maybe PGS.Query, FR.RowParser haskells)
+prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
+  where sql :: Maybe PGS.Query
+        sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
+        -- FIXME: We're doing work twice here
+        (b, _, _) = Q.runSimpleQueryArrStart q ()
+        parser = IRQ.prepareRowParser qr b

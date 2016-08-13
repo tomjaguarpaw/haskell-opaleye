@@ -7,8 +7,9 @@ import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
                                               SelectJoin,
                                               SelectValues,
                                               SelectBinary,
+                                              SelectLabel,
                                               WithRecursive),
-                                       From, Join, Values, Binary, Recursive)
+                                       From, Join, Values, Binary, Label, Recursive)
 
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
@@ -16,15 +17,17 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Text          as ST
 
 type TableAlias = String
 
 ppSql :: Select -> Doc
-ppSql (SelectFrom s) = ppSelectFrom s
-ppSql (Table table) = HPrint.ppTable table
-ppSql (SelectJoin j) = ppSelectJoin j
+ppSql (SelectFrom s)   = ppSelectFrom s
+ppSql (Table table)    = HPrint.ppTable table
+ppSql (SelectJoin j)   = ppSelectJoin j
 ppSql (SelectValues v) = ppSelectValues v
 ppSql (SelectBinary v) = ppSelectBinary v
+ppSql (SelectLabel v)  = ppSelectLabel v
 ppSql (WithRecursive r) = ppWithRecursive r
 
 ppSelectFrom :: From -> Doc
@@ -59,6 +62,16 @@ ppSelectBinary b = ppSql (Sql.bSelect1 b)
                    $$ ppBinOp (Sql.bOp b)
                    $$ ppSql (Sql.bSelect2 b)
 
+ppSelectLabel :: Label -> Doc
+ppSelectLabel l = text "/*" <+> text (defuseComments (Sql.lLabel l)) <+> text "*/"
+                  $$ ppSql (Sql.lSelect l)
+  where
+    defuseComments = ST.unpack
+                   . ST.replace (ST.pack "--") (ST.pack " - - ")
+                   . ST.replace (ST.pack "/*") (ST.pack " / * ")
+                   . ST.replace (ST.pack "*/") (ST.pack " * / ")
+                   . ST.pack
+
 ppWithRecursive :: Recursive -> Doc
 ppWithRecursive r
   =  text "WITH RECURSIVE"
@@ -77,6 +90,8 @@ ppWithRecursive r
 
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
+ppJoinType Sql.RightJoin = text "RIGHT OUTER JOIN"
+ppJoinType Sql.FullJoin = text "FULL OUTER JOIN"
 
 ppAttrs :: Sql.SelectAttrs -> Doc
 ppAttrs Sql.Star             = text "*"
@@ -84,7 +99,7 @@ ppAttrs (Sql.SelectAttrs xs) = (HPrint.commaV nameAs . NEL.toList) xs
 
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
-nameAs (expr, name) = HPrint.ppAs (maybe "" unColumn name) (HPrint.ppSqlExpr expr)
+nameAs (expr, name) = HPrint.ppAs (fmap unColumn name) (HPrint.ppSqlExpr expr)
   where unColumn (HSql.SqlColumn s) = s
 
 ppTables :: [Select] -> Doc
@@ -96,13 +111,14 @@ tableAlias i select = ("T" ++ show i, select)
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
-ppTable (alias, select) = case select of
-  Table table -> HPrint.ppAs alias (HPrint.ppTable table)
-  SelectFrom selectFrom -> HPrint.ppAs alias (parens (ppSelectFrom selectFrom))
-  SelectJoin slj -> HPrint.ppAs alias (parens (ppSelectJoin slj))
-  SelectValues slv -> HPrint.ppAs alias (parens (ppSelectValues slv))
-  SelectBinary slb -> HPrint.ppAs alias (parens (ppSelectBinary slb))
-  WithRecursive r -> HPrint.ppAs alias (parens (ppWithRecursive r))
+ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
+  Table table           -> HPrint.ppTable table
+  SelectFrom selectFrom -> parens (ppSelectFrom selectFrom)
+  SelectJoin slj        -> parens (ppSelectJoin slj)
+  SelectValues slv      -> parens (ppSelectValues slv)
+  SelectBinary slb      -> parens (ppSelectBinary slb)
+  SelectLabel sll       -> parens (ppSelectLabel sll)
+  WithRecursive r       -> parens (ppWithRecursive r)
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
@@ -117,25 +133,28 @@ ppOffset Nothing = empty
 ppOffset (Just n) = text ("OFFSET " ++ show n)
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = HPrint.ppAs "V" (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
+ppValues v = HPrint.ppAs (Just "V") (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
 
 ppValuesRow :: [HSql.SqlExpr] -> Doc
 ppValuesRow = parens . HPrint.commaH HPrint.ppSqlExpr
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of
-  Sql.Union    -> "UNION"
-  Sql.UnionAll -> "UNION ALL"
-  Sql.Except   -> "EXCEPT"
+  Sql.Union        -> "UNION"
+  Sql.UnionAll     -> "UNION ALL"
+  Sql.Except       -> "EXCEPT"
+  Sql.ExceptAll    -> "EXCEPT ALL"
+  Sql.Intersect    -> "INTERSECT"
+  Sql.IntersectAll -> "INTERSECT ALL"
 
 ppInsertReturning :: Sql.Returning HSql.SqlInsert -> Doc
 ppInsertReturning (Sql.Returning insert returnExprs) =
   HPrint.ppInsert insert
   $$ text "RETURNING"
-  <+> HPrint.commaV HPrint.ppSqlExpr returnExprs
+  <+> HPrint.commaV HPrint.ppSqlExpr (NEL.toList returnExprs)
 
 ppUpdateReturning :: Sql.Returning HSql.SqlUpdate -> Doc
 ppUpdateReturning (Sql.Returning update returnExprs) =
   HPrint.ppUpdate update
   $$ text "RETURNING"
-  <+> HPrint.commaV HPrint.ppSqlExpr returnExprs
+  <+> HPrint.commaV HPrint.ppSqlExpr (NEL.toList returnExprs)

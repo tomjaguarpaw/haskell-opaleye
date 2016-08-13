@@ -1,8 +1,10 @@
 module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.Binary
                , module Opaleye.Column
+               , module Opaleye.Constant
                , module Opaleye.Distinct
                , module Opaleye.Join
+               , module Opaleye.Label
                , module Opaleye.Manipulation
                , module Opaleye.Operators
                , module Opaleye.Order
@@ -18,8 +20,10 @@ module Opaleye ( module Opaleye.Aggregate
 import Opaleye.Aggregate
 import Opaleye.Binary
 import Opaleye.Column
+import Opaleye.Constant
 import Opaleye.Distinct
 import Opaleye.Join
+import Opaleye.Label
 import Opaleye.Manipulation
 import Opaleye.Operators
 import Opaleye.Order

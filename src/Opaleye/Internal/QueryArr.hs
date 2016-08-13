@@ -17,7 +17,10 @@ import           Control.Applicative (Applicative, pure, (<*>))
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 
+-- | @QueryArr a b@ is analogous to a Haskell function @a -> [b]@.
 newtype QueryArr a b = QueryArr ((a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag))
+
+-- | @Query a@ is analogous to a Haskell value @[a]@.
 type Query = QueryArr ()
 
 simpleQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b

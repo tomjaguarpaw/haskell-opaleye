@@ -1,4 +1,6 @@
 import TutorialBasic ()
+import TutorialBasicMonomorphic ()
+import TutorialBasicTypeFamilies ()
 import TutorialManipulation ()
 import TutorialAdvanced ()
 import DefaultExplanation ()

@@ -3,6 +3,7 @@
 -- License     :  BSD-style
 
 module Opaleye.Internal.HaskellDB.Sql.Print (
+                                     deliteral,
                                      ppUpdate,
                                      ppDelete,
                                      ppInsert,
@@ -25,8 +26,17 @@ import Data.List (intersperse)
 import qualified Data.List.NonEmpty as NEL
 import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
                                   empty, equals, hcat, hsep, parens, punctuate,
-                                  text, vcat)
+                                  text, vcat, brackets)
+import Data.Foldable (toList)
 
+-- Silliness to avoid "ORDER BY 1" etc. meaning order by the first
+-- column.  We need an identity function, but due to
+-- https://github.com/tomjaguarpaw/haskell-opaleye/issues/100 we need
+-- to be careful not to be over enthusiastic.  Just apply COALESCE to
+-- literals.
+deliteral :: SqlExpr -> SqlExpr
+deliteral expr@(ConstSqlExpr _) = FunSqlExpr "COALESCE" [expr]
+deliteral expr                  = expr
 
 ppWhere :: [SqlExpr] -> Doc
 ppWhere [] = empty
@@ -38,13 +48,7 @@ ppGroupBy :: [SqlExpr] -> Doc
 ppGroupBy es = text "GROUP BY" <+> ppGroupAttrs es
   where
     ppGroupAttrs :: [SqlExpr] -> Doc
-    ppGroupAttrs cs = commaV nameOrExpr cs
-    nameOrExpr :: SqlExpr -> Doc
-    nameOrExpr (ColumnSqlExpr (SqlColumn col)) = text col
-    -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first column
-    -- Any identity function will do
-    --  nameOrExpr expr = parens (ppSqlExpr expr)
-    nameOrExpr expr = text "COALESCE" <+> parens (ppSqlExpr expr)
+    ppGroupAttrs cs = commaV (ppSqlExpr . deliteral) cs
 
 ppOrderBy :: [(SqlExpr,SqlOrder)] -> Doc
 ppOrderBy [] = empty
@@ -53,8 +57,7 @@ ppOrderBy ord = text "ORDER BY" <+> commaV ppOrd ord
     -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first column
     -- Any identity function will do
     --   ppOrd (e,o) = ppSqlExpr e <+> ppSqlDirection o <+> ppSqlNulls o
-      ppOrd (e,o) = text "COALESCE"
-                      <+> parens (ppSqlExpr e)
+      ppOrd (e,o) = ppSqlExpr (deliteral e)
                       <+> ppSqlDirection o
                       <+> ppSqlNulls o
 
@@ -68,9 +71,9 @@ ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
         Sql.SqlNullsFirst -> "NULLS FIRST"
         Sql.SqlNullsLast  -> "NULLS LAST"
 
-ppAs :: String -> Doc -> Doc
-ppAs alias expr    | null alias    = expr
-                   | otherwise     = expr <+> (hsep . map text) ["as",alias]
+ppAs :: Maybe String -> Doc -> Doc
+ppAs Nothing      expr = expr
+ppAs (Just alias) expr = expr <+> hsep [text "as", doubleQuotes (text alias)]
 
 
 ppUpdate :: SqlUpdate -> Doc
@@ -102,23 +105,28 @@ ppInsert (SqlInsert table names values)
 ppColumn :: SqlColumn -> Doc
 ppColumn (SqlColumn s) = doubleQuotes (text s)
 
--- Postgres treats upper case letters in table names as lower case,
--- unless the name is quoted!
+-- Postgres treats schema and table names as lower case unless quoted.
 ppTable :: SqlTable -> Doc
-ppTable (SqlTable s) = doubleQuotes (text s)
+ppTable st = case sqlTableSchemaName st of
+    Just sn -> doubleQuotes (text sn) <> text "." <> tname
+    Nothing -> tname
+  where
+    tname = doubleQuotes (text (sqlTableName st))
+
 
 ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =
     case expr of
       ColumnSqlExpr c     -> ppColumn c
+      CompositeSqlExpr s x -> parens (ppSqlExpr s) <> text "." <> text x
       ParensSqlExpr e -> parens (ppSqlExpr e)
       BinSqlExpr op e1 e2 -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2
       PrefixSqlExpr op e  -> text op <+> ppSqlExpr e
       PostfixSqlExpr op e -> ppSqlExpr e <+> text op
       FunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
-      AggrFunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
+      AggrFunSqlExpr f es ord -> text f <> parens (commaH ppSqlExpr es <+> ppOrderBy ord)
       ConstSqlExpr c      -> text c
-      CaseSqlExpr cs el   -> text "CASE" <+> vcat (map ppWhen cs)
+      CaseSqlExpr cs el   -> text "CASE" <+> vcat (toList (fmap ppWhen cs))
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
           where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w
                                <+> text "THEN" <+> ppSqlExpr t
@@ -127,6 +135,7 @@ ppSqlExpr expr =
       PlaceHolderSqlExpr -> text "?"
       CastSqlExpr typ e -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)
       DefaultSqlExpr    -> text "DEFAULT"
+      ArraySqlExpr es -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
 
 commaH :: (a -> Doc) -> [a] -> Doc
 commaH f = hcat . punctuate comma . map f

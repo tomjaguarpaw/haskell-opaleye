@@ -11,6 +11,7 @@
 > import           Opaleye (Column, Nullable, matchNullable, isNull,
 >                          Table(Table), required, queryTable,
 >                          Query, QueryArr, restrict, (.==), (.<=), (.&&), (.<),
+>                          (.===),
 >                          (.++), ifThenElse, pgString, aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runQuery,
 >                          showSqlForPostgres, Unpackspec,
@@ -63,6 +64,10 @@ manipulation tutorial you can see an example of when they might differ.
 > personTable = Table "personTable" (p3 ( required "name"
 >                                       , required "age"
 >                                       , required "address" ))
+
+By default, the table `"personTable"` is looked up in PostgreSQL's
+default `"public"` schema. If we wanted to specify a different schema we
+could have used the `TableWithSchema` constructor instead of `Table`.
 
 To query a table we use `queryTable`.
 
@@ -128,6 +133,10 @@ have instances defined for them.  The instances are derivable with
 Template Haskell.
 
 > $(makeAdaptorAndInstance "pBirthday" ''Birthday')
+
+You don't have to use Template Haskell, but it just saves us writing
+things out by hand here.  If you want to avoid Template Haskell see
+[Data.Profunctor.Product.TH](https://hackage.haskell.org/package/product-profunctors-0.6.3.1/docs/Data-Profunctor-Product-TH.html).
 
 Then we can use 'Table' to make a table on our record type in exactly
 the same way as before.
@@ -286,6 +295,8 @@ conditions.
 >
 >   returnA -< row
 
+ghci> printSql twentiesAtAddress
+
 SELECT name0_1 as result1,
        age1_1 as result2,
        address2_1 as result3
@@ -385,6 +396,8 @@ employee whether they have a boss.
 >
 >   returnA -< name .++ pgString " has " .++ aOrNo .++ pgString " boss"
 
+ghci> printSql hasBoss
+
 SELECT (((name0_1) || ' has ')
        || (CASE WHEN boss1_1 IS NULL THEN 'no' ELSE 'a' END))
        || ' boss' as result1
@@ -428,6 +441,7 @@ and in pure Haskell the same computation could be expressed as
 Then we get the following SQL.
 
 ghci> printSql (bossQuery <<< queryTable employeeTable)
+
 SELECT CASE WHEN boss1_1 IS NULL THEN (name0_1) || ' has no boss'
      ELSE (('The boss of ' || (name0_1)) || ' is ') || (boss1_1) END as result1
 FROM (SELECT *
@@ -630,8 +644,8 @@ Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
 "adaptor" to specify how columns are aggregated.  Note that this is
 yet another example of avoiding a headache by keeping your datatype
-fully polymorphic, because the 'count' aggregator changes a 'Wire
-String' into a 'Wire Int64'.
+fully polymorphic, because the 'count' aggregator changes a 'Column
+String' into a 'Column Int64'.
 
 Outer join
 ==========
@@ -752,10 +766,7 @@ it holds.
 
 On the other hand we can make a newtype for the warehouse ID
 
-> -- TODO: Since the `makeAdaptorAndInstance` Template Haskell is
-> -- poorly written we have to make this `data` rather than `newtype` but
-> -- this will be fixed in a later version.
-> data WarehouseId' a = WarehouseId a
+> newtype WarehouseId' a = WarehouseId a
 > $(makeAdaptorAndInstance "pWarehouseId" ''WarehouseId')
 >
 > type WarehouseIdColumn = WarehouseId' (Column PGInt4)
@@ -770,13 +781,22 @@ On the other hand we can make a newtype for the warehouse ID
 >                               , wLocation = required "location"
 >                               , wNumGoods = required "num_goods" })
 
-Now the comparison will not pass the type checker.
+Now the comparison will not pass the type checker
 
 > -- forbiddenComparison :: GoodWarehouseColumn -> Column PGBool
 > -- forbiddenComparison w = wId w .== wNumGoods w
 > --
 > -- => Couldn't match type `WarehouseId' (Column PGInt4)' with `Column PGInt4'
 
+but we can compare two `WarehouseIdColumn`s.
+
+> permittedComparison :: GoodWarehouseColumn
+>                     -> GoodWarehouseColumn
+>                     -> Column PGBool
+> permittedComparison w1 w2 = wId w1 .=== wId w2
+
+(Currently we use `.===`, a more polymorphic version of `.==`, but
+`.==` may be generalised in the future.)
 
 Running queries on Postgres
 ===========================
@@ -837,4 +857,4 @@ Utilities
 This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Query a -> IO ()
-> printSql = putStrLn . showSqlForPostgres
+> printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres

@@ -1,10 +1,11 @@
 module Opaleye.Internal.Column where
 
+import Data.String
+
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
--- | The 'Num' and 'Fractional' instances for 'Column' 'a' are too
--- general.  For example, they allow you to add two 'Column'
--- 'String's.  This will be fixed in a subsequent release.
+-- | Numeric 'Column' types are instances of 'Num', so you can use
+-- '*', '/', '+', '-' on them.
 newtype Column a = Column HPQ.PrimExpr deriving Show
 
 data Nullable a = Nullable
@@ -18,6 +19,17 @@ unsafeCoerce = unsafeCoerceColumn
 
 unsafeCoerceColumn :: Column a -> Column b
 unsafeCoerceColumn (Column e) = Column e
+
+-- | Cast a column to any other type. This is safe for some conversions such as uuid to text.
+unsafeCast :: String -> Column a -> Column b
+unsafeCast = mapColumn . HPQ.CastExpr
+  where
+    mapColumn :: (HPQ.PrimExpr -> HPQ.PrimExpr) -> Column c -> Column a
+    mapColumn primExpr c = Column (primExpr (unColumn c))
+
+unsafeCompositeField :: Column a -> String -> Column b
+unsafeCompositeField (Column e) fieldName =
+  Column (HPQ.CompositeExpr e fieldName)
 
 binOp :: HPQ.BinOp -> Column a -> Column b -> Column c
 binOp op (Column e) (Column e') = Column (HPQ.BinExpr op e e')
@@ -61,3 +73,11 @@ class PGFractional a where
 instance (PGNum a, PGFractional a) => Fractional (Column a) where
   fromRational = pgFromRational
   (/) = binOp HPQ.OpDiv
+
+class PGIntegral a
+
+class PGString a where
+    pgFromString :: String -> Column a
+
+instance PGString a => IsString (Column a) where
+  fromString = pgFromString

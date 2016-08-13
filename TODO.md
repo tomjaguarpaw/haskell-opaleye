@@ -31,3 +31,4 @@
 * Randomised testing in a QuickCheck style
 * distinct, union and aggregate can be made to work with QueryArr
   rather than just Query if we use LATERAL JOIN
+* Escape hatch for embedding raw SQL

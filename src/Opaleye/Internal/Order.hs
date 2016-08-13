@@ -10,6 +10,7 @@ import qualified Data.Functor.Contravariant as C
 import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Profunctor as P
 import qualified Data.Monoid as M
+import qualified Data.Semigroup as S
 import qualified Data.Void as Void
 
 {-|
@@ -28,9 +29,12 @@ newtype Order a = Order (a -> [(HPQ.OrderOp, HPQ.PrimExpr)])
 instance C.Contravariant Order where
   contramap f (Order g) = Order (P.lmap f g)
 
+instance S.Semigroup (Order a) where
+  Order o <> Order o' = Order (o S.<> o')
+
 instance M.Monoid (Order a) where
   mempty = Order M.mempty
-  Order o `mappend` Order o' = Order (o `M.mappend` o')
+  mappend = (S.<>)
 
 instance Divisible.Divisible Order where
   divide f o o' = M.mappend (C.contramap (fst . f) o)
@@ -46,9 +50,11 @@ order op f = Order (fmap (\column -> [(op, IC.unColumn column)]) f)
 
 orderByU :: Order a -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 orderByU os (columns, primQ, t) = (columns, primQ', t)
-  where primQ' = PQ.Order orderExprs primQ
-        Order sos = os
-        orderExprs = map (uncurry HPQ.OrderExpr) (sos columns)
+  where primQ' = PQ.Order oExprs primQ
+        oExprs = orderExprs columns os
+
+orderExprs :: a -> Order a -> [HPQ.OrderExpr]
+orderExprs x (Order os) = map (uncurry HPQ.OrderExpr) (os x)
 
 limit' :: Int -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 limit' n (x, q, t) = (x, PQ.Limit (PQ.LimitOp n) q, t)

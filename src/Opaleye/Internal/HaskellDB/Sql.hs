@@ -11,7 +11,10 @@ import qualified Data.List.NonEmpty as NEL
 -- * SQL data type
 -----------------------------------------------------------
 
-newtype SqlTable = SqlTable String deriving Show
+data SqlTable = SqlTable
+  { sqlTableSchemaName :: Maybe String
+  , sqlTableName       :: String
+  } deriving Show
 
 newtype SqlColumn = SqlColumn String deriving Show
 
@@ -30,19 +33,21 @@ data SqlOrder = SqlOrder { sqlOrderDirection :: SqlOrderDirection
 
 -- | Expressions in SQL statements.
 data SqlExpr = ColumnSqlExpr  SqlColumn
+             | CompositeSqlExpr SqlExpr String
              | BinSqlExpr     String SqlExpr SqlExpr
              | PrefixSqlExpr  String SqlExpr
              | PostfixSqlExpr String SqlExpr
              | FunSqlExpr     String [SqlExpr]
-             | AggrFunSqlExpr String [SqlExpr] -- ^ Aggregate functions separate from normal functions.
+             | AggrFunSqlExpr String [SqlExpr] [(SqlExpr, SqlOrder)] -- ^ Aggregate functions separate from normal functions.
              | ConstSqlExpr   String
-             | CaseSqlExpr    [(SqlExpr,SqlExpr)] SqlExpr
+             | CaseSqlExpr    (NEL.NonEmpty (SqlExpr,SqlExpr)) SqlExpr
              | ListSqlExpr    [SqlExpr]
              | ParamSqlExpr (Maybe SqlName) SqlExpr
              | PlaceHolderSqlExpr
              | ParensSqlExpr SqlExpr
              | CastSqlExpr String SqlExpr
              | DefaultSqlExpr
+             | ArraySqlExpr [SqlExpr]
   deriving Show
 
 -- | Data type for SQL UPDATE statements.

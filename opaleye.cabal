@@ -1,6 +1,6 @@
 name:            opaleye
-copyright:       Copyright (c) 2014-2015 Purely Agile Limited
-version:         0.3.1.2
+copyright:       Copyright (c) 2014-2016 Purely Agile Limited
+version:         0.5.0.0
 synopsis:        An SQL-generating DSL targeting PostgreSQL
 description:     An SQL-generating DSL targeting PostgreSQL.  Allows
                  Postgres queries to be written within Haskell in a
@@ -13,7 +13,7 @@ author:          Purely Agile
 maintainer:      Purely Agile
 category:        Database
 build-type:      Simple
-cabal-version:   >= 1.8
+cabal-version:   >= 1.10
 extra-doc-files: *.md,
                  Doc/*.md
 tested-with:     GHC==7.10.1, GHC==7.8.4, GHC==7.6.3
@@ -23,24 +23,26 @@ source-repository head
   location: https://github.com/tomjaguarpaw/haskell-opaleye.git
 
 library
+  default-language: Haskell2010
   hs-source-dirs: src
   build-depends:
       -- attoparsec can be removed once postgresql-simple patch in
       -- Internal.RunQuery is merged upstream
-      attoparsec          >= 0.10.3  && < 0.14
-    , base                >= 4       && < 5
+      aeson               >= 0.6     && < 0.12
+    , attoparsec          >= 0.10.3  && < 0.14
+    , base                >= 4.6     && < 5
     , base16-bytestring   >= 0.1.1.6 && < 0.2
     , case-insensitive    >= 1.2     && < 1.3
     , bytestring          >= 0.10    && < 0.11
-    , contravariant       >= 1.2     && < 1.4
-    , postgresql-simple   >= 0.4.8.0 && < 0.5
+    , contravariant       >= 1.2     && < 1.5
+    , postgresql-simple   >= 0.5     && < 0.6
     , pretty              >= 1.1.1.0 && < 1.2
-    , product-profunctors >= 0.6.2   && < 0.7
-    , profunctors         >= 4.0     && < 5.2
-    , semigroups          >= 0.13    && < 0.17
+    , product-profunctors >= 0.6.2   && < 0.8
+    , profunctors         >= 4.0     && < 5.3
+    , semigroups          >= 0.13    && < 0.19
     , text                >= 0.11    && < 1.3
-    , transformers        >= 0.3     && < 0.5
-    , time                >= 1.4     && < 1.6
+    , transformers        >= 0.3     && < 0.6
+    , time                >= 1.4     && < 1.7
     , time-locale-compat  >= 0.1     && < 0.2
     , uuid                >= 1.3     && < 1.4
     , void                >= 0.4     && < 0.8
@@ -48,8 +50,10 @@ library
                    Opaleye.Aggregate,
                    Opaleye.Binary,
                    Opaleye.Column,
+                   Opaleye.Constant,
                    Opaleye.Distinct,
                    Opaleye.Join,
+                   Opaleye.Label,
                    Opaleye.Manipulation,
                    Opaleye.Operators,
                    Opaleye.Order,
@@ -66,7 +70,9 @@ library
                    Opaleye.Internal.Distinct,
                    Opaleye.Internal.Helpers,
                    Opaleye.Internal.Join,
+                   Opaleye.Internal.Label,
                    Opaleye.Internal.Order,
+                   Opaleye.Internal.Operators,
                    Opaleye.Internal.Optimize,
                    Opaleye.Internal.PackMap,
                    Opaleye.Internal.PGTypes,
@@ -88,6 +94,7 @@ library
   ghc-options:     -Wall
 
 test-suite test
+  default-language: Haskell2010
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules: QuickCheck
@@ -96,20 +103,25 @@ test-suite test
     base >= 4 && < 5,
     containers,
     contravariant,
+    multiset,
     postgresql-simple,
     profunctors,
     product-profunctors,
     QuickCheck,
     semigroups,
+    time,
     opaleye
   ghc-options: -Wall
 
 test-suite tutorial
+  default-language: Haskell2010
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules: TutorialAdvanced,
                  TutorialBasic,
                  TutorialManipulation,
+                 TutorialBasicMonomorphic,
+                 TutorialBasicTypeFamilies,
                  DefaultExplanation
   hs-source-dirs: Doc/Tutorial
   build-depends:

@@ -8,11 +8,13 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Opaleye.Internal.HaskellDB.PrimQuery (Symbol(Symbol))
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Default as SD
+import qualified Opaleye.Internal.HaskellDB.Sql.Print as SP
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
 import qualified Opaleye.Internal.Tag as T
 
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Maybe as M
+import qualified Data.Void as V
 
 import qualified Control.Arrow as Arr
 
@@ -21,6 +23,7 @@ data Select = SelectFrom From
             | SelectJoin Join
             | SelectValues Values
             | SelectBinary Binary
+            | SelectLabel Label
             | WithRecursive Recursive
             deriving Show
 
@@ -58,6 +61,14 @@ data Binary = Binary {
   bSelect2 :: Select
 } deriving Show
 
+data JoinType = LeftJoin | RightJoin | FullJoin deriving Show
+data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
+
+data Label = Label {
+  lLabel  :: String,
+  lSelect :: Select
+} deriving Show
+
 data Recursive = Recursive {
   rAttrs     :: SelectAttrs,  -- The names of the columns, i.e. WITH RECURSIVE .. (a1, a2) AS
   rTable     :: HSql.SqlTable, -- The name of the result, i.e. WITH RECURSIVE <name> AS
@@ -65,18 +76,26 @@ data Recursive = Recursive {
   rRecursive :: Select
 } deriving Show
 
-data JoinType = LeftJoin deriving Show
-data BinOp = Except | Union | UnionAll deriving Show
-
 data TableName = String
 
-data Returning a = Returning a [HSql.SqlExpr]
+data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
-sqlQueryGenerator :: PQ.PrimQueryFold Select
-sqlQueryGenerator = (unit, baseTable, product, aggregate, order, limit_, join,
-                     values, binary, withRecursive)
+sqlQueryGenerator :: PQ.PrimQueryFold' V.Void Select
+sqlQueryGenerator = PQ.PrimQueryFold
+  { PQ.unit      = unit
+  , PQ.empty     = empty
+  , PQ.baseTable = baseTable
+  , PQ.product   = product
+  , PQ.aggregate = aggregate
+  , PQ.order     = order
+  , PQ.limit     = limit_
+  , PQ.join      = join
+  , PQ.values    = values
+  , PQ.binary    = binary
+  , PQ.label     = label
+  , PQ.recursive = withRecursive }
 
-sql :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> Select
+sql :: ([HPQ.PrimExpr], PQ.PrimQuery' V.Void, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
                                           , tables = [pqSelect] }
   where pqSelect = PQ.foldPrimQuery sqlQueryGenerator pq
@@ -86,17 +105,20 @@ sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (
 unit :: Select
 unit = SelectFrom newSelect { attrs  = SelectAttrs (ensureColumns []) }
 
-baseTable :: String -> [(Symbol, HPQ.PrimExpr)] -> Select
-baseTable name columns = SelectFrom $
+empty :: V.Void -> select
+empty = V.absurd
+
+baseTable :: PQ.TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> Select
+baseTable ti columns = SelectFrom $
     newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
-              , tables = [Table (HSql.SqlTable name)] }
+              , tables = [Table (HSql.SqlTable (PQ.tiSchemaName ti) (PQ.tiTableName ti))] }
 
 product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
 product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
 
-aggregate :: [(Symbol, (Maybe HPQ.AggrOp, HPQ.PrimExpr))] -> Select -> Select
+aggregate :: [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
                                                (ensureColumns (map attr aggrs))
                                            , tables = [s]
@@ -109,7 +131,7 @@ aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
         --- constant.
         handleEmpty :: [HSql.SqlExpr] -> NEL.NonEmpty HSql.SqlExpr
         handleEmpty =
-          M.fromMaybe (return (HSql.FunSqlExpr "COALESCE" [HSql.ConstSqlExpr "0"]))
+          M.fromMaybe (return (SP.deliteral (HSql.ConstSqlExpr "0")))
           . NEL.nonEmpty
 
         groupBy' :: [(symbol, (Maybe aggrOp, HPQ.PrimExpr))]
@@ -123,8 +145,8 @@ aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
         aggrOp (_, (x, _)) = x
 
 
-aggrExpr :: Maybe HPQ.AggrOp -> HPQ.PrimExpr -> HPQ.PrimExpr
-aggrExpr = maybe id HPQ.AggrExpr
+aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr]) -> HPQ.PrimExpr -> HPQ.PrimExpr
+aggrExpr = maybe id (\(op, ord) e -> HPQ.AggrExpr op e ord)
 
 order :: [HPQ.OrderExpr] -> Select -> Select
 order oes s = SelectFrom $
@@ -148,9 +170,9 @@ join j cond s1 s2 = SelectJoin Join { jJoinType = joinType j
 -- Postgres seems to name columns of VALUES clauses "column1",
 -- "column2", ... . I'm not sure to what extent it is customisable or
 -- how robust it is to rely on this
-values :: [Symbol] -> [[HPQ.PrimExpr]] -> Select
+values :: [Symbol] -> NEL.NonEmpty [HPQ.PrimExpr] -> Select
 values columns pes = SelectValues Values { vAttrs  = SelectAttrs (mkColumns columns)
-                                         , vValues = (map . map) sqlExpr pes }
+                                         , vValues = NEL.toList ((fmap . map) sqlExpr pes) }
   where mkColumns = ensureColumns . zipWith (flip (curry (sqlBinding . Arr.second mkColumn))) [1..]
         mkColumn i = (HPQ.BaseTableAttrExpr . ("column" ++) . show) (i::Int)
 
@@ -178,7 +200,7 @@ withRecursive columns recColumns (Symbol sym t) qb qr = WithRecursive $ Recursiv
       }
   }
   where
-   recTable = HSql.SqlTable (T.tagWith t sym)
+   recTable = HSql.SqlTable Nothing (T.tagWith t sym)
    addTable tbl (SelectFrom from)     = SelectFrom from { tables = Table tbl : tables from }
    addTable _   tbl@Table{}           = tbl
    addTable tbl (SelectJoin jn)       = SelectJoin jn { jTables = (addTable tbl Arr.*** addTable tbl) (jTables jn) } -- TODO: test
@@ -186,18 +208,24 @@ withRecursive columns recColumns (Symbol sym t) qb qr = WithRecursive $ Recursiv
    addTable tbl (SelectBinary bin) = SelectBinary bin { bSelect1 = addTable tbl (bSelect1 bin)
                                                       , bSelect2 = addTable tbl (bSelect2 bin)
                                                       } -- TODO: test
+   addTable tbl (SelectLabel l)       = SelectLabel l
    addTable tbl (WithRecursive rec) = WithRecursive rec { rBase      = addTable tbl (rBase rec)
                                                         , rRecursive = addTable tbl (rRecursive rec)
                                                         } -- TODO: test
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
+joinType PQ.RightJoin = RightJoin
+joinType PQ.FullJoin = FullJoin
 
 binOp :: PQ.BinOp -> BinOp
 binOp o = case o of
-  PQ.Except   -> Except
-  PQ.Union    -> Union
-  PQ.UnionAll -> UnionAll
+  PQ.Except       -> Except
+  PQ.ExceptAll    -> ExceptAll
+  PQ.Union        -> Union
+  PQ.UnionAll     -> UnionAll
+  PQ.Intersect    -> Intersect
+  PQ.IntersectAll -> IntersectAll
 
 newSelect :: From
 newSelect = From {
@@ -218,6 +246,15 @@ sqlBinding (Symbol sym t, pe) =
   (sqlExpr pe, Just (HSql.SqlColumn (T.tagWith t sym)))
 
 ensureColumns :: [(HSql.SqlExpr, Maybe a)]
-              -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
-ensureColumns = M.fromMaybe (return (HSql.ConstSqlExpr "0", Nothing))
-                . NEL.nonEmpty
+             -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
+ensureColumns = ensureColumnsGen (\x -> (x,Nothing))
+
+-- | For ensuring that we have at least one column in a SELECT or RETURNING
+ensureColumnsGen :: (HSql.SqlExpr -> a)
+              -> [a]
+              -> NEL.NonEmpty a
+ensureColumnsGen f = M.fromMaybe (return . f $ HSql.ConstSqlExpr "0")
+                   . NEL.nonEmpty
+
+label :: String -> Select -> Select
+label l s = SelectLabel (Label l s)

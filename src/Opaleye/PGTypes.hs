@@ -1,4 +1,5 @@
 {-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Opaleye.PGTypes (module Opaleye.PGTypes) where
 
@@ -7,9 +8,10 @@ import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.PGTypes as IPT
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
-import qualified Opaleye.Internal.HaskellDB.Sql.Default as HSD (quote)
+import qualified Opaleye.Internal.HaskellDB.Sql.Default as HSD
 
 import qualified Data.CaseInsensitive as CI
+import qualified Data.Aeson as Ae
 import qualified Data.Text as SText
 import qualified Data.Text.Lazy as LText
 import qualified Data.ByteString as SByteString
@@ -49,6 +51,16 @@ instance C.PGNum PGInt8 where
 
 instance C.PGFractional PGFloat8 where
   pgFromRational = pgDouble . fromRational
+
+instance C.PGIntegral PGInt2
+instance C.PGIntegral PGInt4
+instance C.PGIntegral PGInt8
+
+instance C.PGString PGText where
+  pgFromString = pgString
+
+instance C.PGString PGCitext where
+  pgFromString = pgCiLazyText . CI.mk . LText.pack
 
 literalColumn :: HPQ.Literal -> Column a
 literalColumn = IPT.literalColumn
@@ -96,13 +108,13 @@ pgDay :: Time.Day -> Column PGDate
 pgDay = IPT.unsafePgFormatTime "date" "'%F'"
 
 pgUTCTime :: Time.UTCTime -> Column PGTimestamptz
-pgUTCTime = IPT.unsafePgFormatTime "timestamptz" "'%FT%TZ'"
+pgUTCTime = IPT.unsafePgFormatTime "timestamptz" "'%FT%T%QZ'"
 
 pgLocalTime :: Time.LocalTime -> Column PGTimestamp
-pgLocalTime = IPT.unsafePgFormatTime "timestamp" "'%FT%T'"
+pgLocalTime = IPT.unsafePgFormatTime "timestamp" "'%FT%T%Q'"
 
 pgTimeOfDay :: Time.TimeOfDay -> Column PGTime
-pgTimeOfDay = IPT.unsafePgFormatTime "time" "'%T'"
+pgTimeOfDay = IPT.unsafePgFormatTime "time" "'%T%Q'"
 
 -- "We recommend not using the type time with time zone"
 -- http://www.postgresql.org/docs/8.3/static/datatype-datetime.html
@@ -127,10 +139,14 @@ pgStrictJSON = pgJSON . IPT.strictDecodeUtf8
 pgLazyJSON :: LByteString.ByteString -> Column PGJson
 pgLazyJSON = pgJSON . IPT.lazyDecodeUtf8
 
+pgValueJSON :: Ae.ToJSON a => a -> Column PGJson
+pgValueJSON = pgLazyJSON . Ae.encode
+
 -- The jsonb data type was introduced in PostgreSQL version 9.4
 -- JSONB values must be SQL string quoted
 --
--- TODO: We need to add literal JSON and JSONB types.
+-- TODO: We need to add literal JSON and JSONB types so we can say
+-- `castToTypeTyped JSONB` rather than `castToType "jsonb"`.
 pgJSONB :: String -> Column PGJsonb
 pgJSONB = IPT.castToType "jsonb" . HSD.quote
 
@@ -139,3 +155,54 @@ pgStrictJSONB = pgJSONB . IPT.strictDecodeUtf8
 
 pgLazyJSONB :: LByteString.ByteString -> Column PGJsonb
 pgLazyJSONB = pgJSONB . IPT.lazyDecodeUtf8
+
+pgValueJSONB :: Ae.ToJSON a => a -> Column PGJsonb
+pgValueJSONB = pgLazyJSONB . Ae.encode
+
+pgArray :: forall a b. IsSqlType b => (a -> C.Column b) -> [a] -> C.Column (PGArray b)
+pgArray pgEl xs = C.unsafeCast arrayTy $
+  C.Column (HPQ.ArrayExpr (map oneEl xs))
+  where
+    oneEl = C.unColumn . pgEl
+    arrayTy = showPGType ([] :: [PGArray b])
+
+class IsSqlType pgType where
+  showPGType :: proxy pgType -> String
+instance IsSqlType PGBool where
+  showPGType _ = "boolean"
+instance IsSqlType PGDate where
+  showPGType _ = "date"
+instance IsSqlType PGFloat4 where
+  showPGType _ = "real"
+instance IsSqlType PGFloat8 where
+  showPGType _ = "double precision"
+instance IsSqlType PGInt8 where
+  showPGType _ = "bigint"
+instance IsSqlType PGInt4 where
+  showPGType _ = "integer"
+instance IsSqlType PGInt2 where
+  showPGType _ = "smallint"
+instance IsSqlType PGNumeric where
+  showPGType _ = "numeric"
+instance IsSqlType PGText where
+  showPGType _ = "text"
+instance IsSqlType PGTime where
+  showPGType _ = "time"
+instance IsSqlType PGTimestamp where
+  showPGType _ = "timestamp"
+instance IsSqlType PGTimestamptz where
+  showPGType _ = "timestamp with time zone"
+instance IsSqlType PGUuid where
+  showPGType _ = "uuid"
+instance IsSqlType PGCitext where
+  showPGType _ =  "citext"
+instance IsSqlType PGBytea where
+  showPGType _ = "bytea"
+instance IsSqlType a => IsSqlType (PGArray a) where
+  showPGType _ = showPGType ([] :: [a]) ++ "[]"
+instance IsSqlType a => IsSqlType (C.Nullable a) where
+  showPGType _ = showPGType ([] :: [a])
+instance IsSqlType PGJson where
+  showPGType _ = "json"
+instance IsSqlType PGJsonb where
+  showPGType _ = "jsonb"

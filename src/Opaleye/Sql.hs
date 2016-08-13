@@ -15,33 +15,38 @@ import qualified Opaleye.Internal.Tag as T
 
 import qualified Data.Profunctor.Product.Default as D
 
--- | Example type specialization:
+-- | When 'Nothing' is returned it means that the query has no results.
+--
+-- Example type specialization:
 --
 -- @
--- showSqlForPostgres :: Query (Column a, Column b) -> String
+-- showSqlForPostgres :: Query (Column a, Column b) -> Maybe String
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- showSqlForPostgres :: Query (Foo (Column a) (Column b) (Column c)) -> String
+-- showSqlForPostgres :: Query (Foo (Column a) (Column b) (Column c)) -> Maybe String
 -- @
 showSqlForPostgres :: forall columns . D.Default U.Unpackspec columns columns =>
-                      Q.Query columns -> String
+                      Q.Query columns -> Maybe String
 showSqlForPostgres = showSqlForPostgresExplicit (D.def :: U.Unpackspec columns columns)
 
 showSqlForPostgresUnopt :: forall columns . D.Default U.Unpackspec columns columns =>
-                           Q.Query columns -> String
+                           Q.Query columns -> Maybe String
 showSqlForPostgresUnopt = showSqlForPostgresUnoptExplicit (D.def :: U.Unpackspec columns columns)
 
-showSqlForPostgresExplicit :: U.Unpackspec columns b -> Q.Query columns -> String
+showSqlForPostgresExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
 showSqlForPostgresExplicit = formatAndShowSQL
                              . (\(x, y, z) -> (x, Op.optimize y, z))
                              .: Q.runQueryArrUnpack
 
-showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> String
+showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
 showSqlForPostgresUnoptExplicit = formatAndShowSQL .: Q.runQueryArrUnpack
 
-formatAndShowSQL :: ([HPQ.PrimExpr], PQ.PrimQuery, T.Tag) -> String
-formatAndShowSQL = show . Pr.ppSql . Sql.sql
+formatAndShowSQL :: ([HPQ.PrimExpr], PQ.PrimQuery' a, T.Tag) -> Maybe String
+formatAndShowSQL = fmap (show . Pr.ppSql . Sql.sql) . traverse2Of3 Op.removeEmpty
+  where -- Just a lens
+        traverse2Of3 :: Functor f => (a -> f b) -> (x, a, y) -> f (x, b, y)
+        traverse2Of3 f (x, y, z) = fmap (\y' -> (x, y', z)) (f y)

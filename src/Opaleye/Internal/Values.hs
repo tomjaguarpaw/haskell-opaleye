@@ -2,8 +2,6 @@
 
 module Opaleye.Internal.Values where
 
-import qualified Opaleye.PGTypes as T
-
 import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
@@ -11,6 +9,7 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor (Profunctor, dimap, rmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
@@ -18,19 +17,8 @@ import           Data.Profunctor.Product.Default (Default, def)
 
 import           Control.Applicative (Applicative, pure, (<*>))
 
--- There are two annoyances with creating SQL VALUES statements
---
--- 1. SQL does not allow empty VALUES statements so if we want to
---    create a VALUES statement from an empty list we have to fake it
---    somehow.  The current approach is to make a VALUES statement
---    with a single row of NULLs and then restrict it with WHERE
---    FALSE.
-
--- 2. Postgres's type inference of constants is pretty poor so we will
---    sometimes have to give explicit type signatures.  The future
---    ShowConstant class will have the same problem.  NB We don't
---    actually currently address this problem.
-
+-- FIXME: We don't currently handle the case of zero columns.  Need to
+-- emit a dummy column and data.
 valuesU :: U.Unpackspec columns columns'
         -> Valuesspec columns columns'
         -> [columns]
@@ -44,17 +32,13 @@ valuesU unpack valuesspec rows ((), t) = (newColumns, primQ', T.next t)
           PM.run (runValuesspec valuesspec (extractValuesField t))
 
         valuesPEs = map fst valuesPEs_nulls
-        nulls = map snd valuesPEs_nulls
 
-        yieldNoRows :: PQ.PrimQuery -> PQ.PrimQuery
-        yieldNoRows = PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False))
+        values :: [[HPQ.PrimExpr]]
+        values = map runRow rows
 
-        values' :: [[HPQ.PrimExpr]]
-        (values', wrap) = if null rows
-                          then ([nulls], yieldNoRows)
-                          else (map runRow rows, id)
-
-        primQ' = wrap (PQ.Values valuesPEs values')
+        primQ' = case NEL.nonEmpty values of
+          Nothing      -> PQ.Empty ()
+          Just values' -> PQ.Values valuesPEs values'
 
 -- We don't actually use the return value of this.  It might be better
 -- to come up with another Applicative instance for specifically doing
@@ -64,19 +48,19 @@ extractValuesEntry pe = do
   PM.write pe
   return pe
 
-extractValuesField :: T.Tag -> HPQ.PrimExpr
-                   -> PM.PM [(HPQ.Symbol, HPQ.PrimExpr)] HPQ.PrimExpr
+extractValuesField :: T.Tag -> primExpr
+                   -> PM.PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractValuesField = PM.extractAttr "values"
 
 newtype Valuesspec columns columns' =
-  Valuesspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
+  Valuesspec (PM.PackMap () HPQ.PrimExpr () columns')
 
 runValuesspec :: Applicative f => Valuesspec columns columns'
-              -> (HPQ.PrimExpr -> f HPQ.PrimExpr) -> f columns'
+              -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
-instance Default Valuesspec (Column T.PGInt4) (Column T.PGInt4) where
-  def = Valuesspec (PM.PackMap (\f () -> fmap Column (f (HPQ.ConstExpr HPQ.NullLit))))
+instance Default Valuesspec (Column a) (Column a) where
+  def = Valuesspec (PM.PackMap (\f () -> fmap Column (f ())))
 
 -- {
 

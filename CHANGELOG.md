@@ -1,12 +1,42 @@
-* Added `runUpdateReturning`.
-* Added string and array aggregations.
+## 0.5.0.0
+
+* Added
+    * `(.===)`, `aggregateOrdered`, `countStar`, `countRows`,
+      `quot_`, `rem_`, 'charLength`
+    * intersection and except query binary operators
+    * `Constant` instances for `Maybe` and lists
+    * `runInsertManyReturning`
+    * `runQueryFold`
+
+## 0.4.2.0
+
+* Added `.===` and `./==` for comparison of product types
+* Added `keepWhen` as an alternative to `restrict`
+* Added `constant` conversion to and from Aeson
+* Added `pgValueJSON` and `pgValueJSONB`
+
+## 0.4.1.0
+
+* Added `Opaleye.Constant` for lifting constant values
+* Support microseconds in `pgLocalTime`, `pgTimeOfDay` and `pgUTCTime`
+* Added `unsafeCompositeField` to help with defining composite types
+* `Order` is an instance of `Semigroup`
+
+Thanks to Adam Bergmark and Matt Wraith for helping with these
+changes.
+
+## 0.4.0.0
+
+* Added `runUpdateReturning`
+* Ordering operators and `max` and `min` aggregators are now restricted to a typeclass
+* Added `stringAgg` and `arrayAgg` aggregations.
 * Added `PGOrd` typeclass for typesafe ordering operations.
-* Support sorting NULLs first or last
-* Added JSON types.
+* Support sorting NULLs first or last with `ascNullsFirst` and `descNullsFirst`
+* Added JSON types
 * Added `runInsertMany`
 
-Thanks to Travis Staton, Jakub Ryška and Christopher Lewis for helping
-with these changes.
+Thanks to Travis Staton, Jakub Ryška and Christopher Lewis for
+helping with these changes.
 
 ## 0.3.1.2
 

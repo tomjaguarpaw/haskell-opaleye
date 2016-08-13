@@ -2,13 +2,13 @@
 
 module Opaleye.Internal.RunQuery where
 
-import           Control.Applicative (Applicative, pure, (<*>), liftA2)
+import           Control.Applicative (Applicative, pure, (*>), (<*>), liftA2)
 
 import           Database.PostgreSQL.Simple.Internal (RowParser)
 import           Database.PostgreSQL.Simple.FromField (FieldParser, FromField,
                                                        fromField)
-import           Database.PostgreSQL.Simple.FromRow (fieldWith)
-import           Database.PostgreSQL.Simple.Types (fromPGArray)
+import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
+import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
 import           Opaleye.Column (Column)
 import           Opaleye.Internal.Column (Nullable)
@@ -24,6 +24,7 @@ import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product (empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
 
+import qualified Data.Aeson as Ae
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
@@ -32,7 +33,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Time as Time
 import qualified Data.String as String
 import           Data.UUID (UUID)
-import           GHC.Int (Int64)
+import           GHC.Int (Int32, Int64)
 
 -- { Only needed for annoying postgresql-simple patch below
 
@@ -60,17 +61,22 @@ import           Data.Typeable (Typeable)
 -- This is *not* a Product Profunctor because it is the only way I
 -- know of to get the instance generation to work for non-Nullable and
 -- Nullable types at once.
+
+-- I can no longer remember what the above comment means, but it might
+-- be that we can't add nullability to a RowParser, only to a
+-- FieldParser, so we have to have some type that we know contains
+-- just a FieldParser.
 data QueryRunnerColumn pgType haskellType =
   QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
+
+instance Functor (QueryRunnerColumn u) where
+  fmap f ~(QueryRunnerColumn u fp) = QueryRunnerColumn u ((fmap . fmap . fmap) f fp)
 
 data QueryRunner columns haskells =
   QueryRunner (U.Unpackspec columns ())
               (columns -> RowParser haskells)
-              -- We never actually
-              -- look at the columns
-              -- except to see its
-              -- "type" in the case
-              -- of a sum profunctor
+              -- We never actually look at the columns except to see
+              -- its "type" in the case of a sum profunctor
               (columns -> Bool)
               -- ^ Have we actually requested any columns?  If we
               -- asked for zero columns then the SQL generator will
@@ -79,15 +85,17 @@ data QueryRunner columns haskells =
               -- have to make sure we read a single Int.
 
 fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn coltype haskell
-fieldQueryRunnerColumn =
-  QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) fromField
+fieldQueryRunnerColumn = fieldParserQueryRunnerColumn fromField
+
+fieldParserQueryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn coltype haskell
+fieldParserQueryRunnerColumn = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
 
 queryRunner :: QueryRunnerColumn a b -> QueryRunner (Column a) b
 queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
     where QueryRunnerColumn u fp = qrc
 
 queryRunnerColumnNullable :: QueryRunnerColumn a b
-                       -> QueryRunnerColumn (Nullable a) (Maybe b)
+                          -> QueryRunnerColumn (Nullable a) (Maybe b)
 queryRunnerColumnNullable qr =
   QueryRunnerColumn (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
   where QueryRunnerColumn u fp = qr
@@ -113,10 +121,31 @@ instance QueryRunnerColumnDefault a b =>
 -- | A 'QueryRunnerColumnDefault' @pgType@ @haskellType@ represents
 -- the default way to turn a @pgType@ result from the database into a
 -- Haskell value of type @haskelType@.
+--
+-- Creating an instance of 'QueryRunnerColumnDefault' for your own types is
+-- necessary for retrieving those types from the database.
+--
+-- You should use one of the three methods below for writing a
+-- 'QueryRunnerColumnDefault' instance.
+--
+-- 1. If you already have a 'FromField' instance for your @haskellType@, use
+-- 'fieldQueryRunnerColumn'.  (This is how most of the built-in instances are
+-- defined.)
+--
+-- 2. If you don't have a 'FromField' instance, use
+-- 'Opaleye.RunQuery.queryRunnerColumn' if possible.  See the documentation for
+-- 'Opaleye.RunQuery.queryRunnerColumn' for an example.
+--
+-- 3. If you have a more complicated case, but not a 'FromField' instance,
+-- write a 'FieldParser' for your type and use 'fieldParserQueryRunnerColumn'.
+-- You can also add a 'FromField' instance using this.
 class QueryRunnerColumnDefault pgType haskellType where
   queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
 
 instance QueryRunnerColumnDefault T.PGInt4 Int where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+instance QueryRunnerColumnDefault T.PGInt4 Int32 where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGInt8 Int64 where
@@ -165,12 +194,16 @@ instance QueryRunnerColumnDefault T.PGCitext (CI.CI LT.Text) where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGJson String where
-  queryRunnerColumnDefault =
-    QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) jsonFieldParser
+  queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonFieldParser
+
+instance QueryRunnerColumnDefault T.PGJson Ae.Value where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGJsonb String where
-  queryRunnerColumnDefault =
-    QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn) jsonbFieldParser
+  queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonbFieldParser
+
+instance QueryRunnerColumnDefault T.PGJsonb Ae.Value where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
@@ -265,3 +298,14 @@ jsonFieldTypeParser jsonTypeName field mData = do
         _       -> returnError UnexpectedNull field ""
 
 -- }
+
+prepareRowParser :: QueryRunner columns haskells -> columns -> RowParser haskells
+prepareRowParser (QueryRunner _ rowParser nonZeroColumns) cols =
+  if nonZeroColumns cols
+  then rowParser cols
+  else (fromRow :: RowParser (Only Int)) *> rowParser cols
+     -- If we are selecting zero columns then the SQL
+     -- generator will have to put a dummy 0 into the
+     -- SELECT statement, since we can't select zero
+     -- columns.  In that case we have to make sure we
+     -- read a single Int.

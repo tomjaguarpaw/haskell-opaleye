@@ -1,6 +1,6 @@
 # Brief introduction to Opaleye [![Hackage version](https://img.shields.io/hackage/v/opaleye.svg?style=flat)](https://hackage.haskell.org/package/opaleye) [![Build Status](https://img.shields.io/travis/tomjaguarpaw/haskell-opaleye.svg?style=flat)](https://travis-ci.org/tomjaguarpaw/haskell-opaleye)
 
-Opaleye is a Haskell library which provides an SQL-generating embedded
+Opaleye is a Haskell library that provides an SQL-generating embedded
 domain specific language for targeting Postgres.  You need Opaleye if
 you want to use Haskell to write typesafe and composable code to query
 a Postgres database.
@@ -8,7 +8,12 @@ a Postgres database.
 > "Opaleye really is great. You've managed to bring what is so
 wonderful about relational databases and give it type safety and
 composition (i.e. what is wonderful about Haskell)" &ndash; Daniel
-Patterson, [Position Development](http://www.positiondev.com/)
+Patterson, [Position Development](http://positiondev.com/)
+
+> "We use it for most of our DB code. It's very flexible and almost
+  always as performant as manually written queries" &ndash; [Adam
+  Bergmark](http://ircbrowse.net/browse/haskell?id=22634197&timestamp=1460980502#t1460980502),
+  [Silk.co](http://www.silk.co/)
 
 Opaleye allows you to define your database tables and write queries
 against them in Haskell code, and aims to be typesafe in the sense
@@ -20,12 +25,17 @@ delete from tables are also provided.  Code written using Opaleye is
 composable at a very fine level of granularity, promoting code reuse
 and high levels of abstraction.
 
+## Getting Opaleye
+
+* Github: https://github.com/tomjaguarpaw/haskell-opaleye
+* Hackage: https://hackage.haskell.org/package/opaleye
+
 ## Tutorials
 
 Please get started with Opaleye by referring to these two tutorials
 
-* [Basic tutorial](Doc/Tutorial/TutorialBasic.lhs)
-* [Manipulation tutorial](Doc/Tutorial/TutorialManipulation.lhs)
+* [Basic tutorial](https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialBasic.lhs)
+* [Manipulation tutorial](https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialManipulation.lhs)
 
 # Contact
 

@@ -1,0 +1,120 @@
+name:            opaleye-sqlite
+copyright:       Copyright (c) 2014-2015 Purely Agile Limited
+version:         0.0.1.0
+synopsis:        An SQL-generating DSL targeting SQLite
+description:     An SQL-generating DSL targeting SQLite.  Allows
+                 SQLite queries to be written within Haskell in a
+                 typesafe and composable fashion.
+homepage:        https://github.com/tomjaguarpaw/haskell-opaleye
+bug-reports:     https://github.com/tomjaguarpaw/haskell-opaleye/issues
+license:         BSD3
+license-file:    LICENSE
+author:          Purely Agile
+maintainer:      Purely Agile
+category:        Database
+build-type:      Simple
+cabal-version:   >= 1.8
+extra-doc-files: Doc/*.md
+tested-with:     GHC==7.10.1, GHC==7.8.4, GHC==7.6.3
+
+source-repository head
+  type:     git
+  location: https://github.com/tomjaguarpaw/haskell-opaleye.git
+
+library
+  hs-source-dirs: src
+  build-depends:
+      base                >= 4       && < 5
+    , base16-bytestring   >= 0.1.1.6 && < 0.2
+    , case-insensitive    >= 1.2     && < 1.3
+    , bytestring          >= 0.10    && < 0.11
+    , contravariant       >= 1.2     && < 1.4
+    , direct-sqlite       >= 2.3.13  && < 2.4
+    , pretty              >= 1.1.1.0 && < 1.2
+    , product-profunctors >= 0.6.2   && < 0.7
+    , profunctors         >= 4.0     && < 5.2
+    , semigroups          >= 0.13    && < 0.17
+    , sqlite-simple
+    , text                >= 0.11    && < 1.3
+    , transformers        >= 0.3     && < 0.5
+    , time                >= 1.4     && < 1.6
+    , time-locale-compat  >= 0.1     && < 0.2
+    , uuid                >= 1.3     && < 1.4
+    , void                >= 0.4     && < 0.8
+  exposed-modules: Opaleye.SQLite,
+                   Opaleye.SQLite.Aggregate,
+                   Opaleye.SQLite.Binary,
+                   Opaleye.SQLite.Column,
+                   Opaleye.SQLite.Constant,
+                   Opaleye.SQLite.Distinct,
+                   Opaleye.SQLite.Join,
+                   Opaleye.SQLite.Manipulation,
+                   Opaleye.SQLite.Operators,
+                   Opaleye.SQLite.Order,
+                   Opaleye.SQLite.PGTypes,
+                   Opaleye.SQLite.QueryArr,
+                   Opaleye.SQLite.RunQuery,
+                   Opaleye.SQLite.Sql,
+                   Opaleye.SQLite.SqlTypes,
+                   Opaleye.SQLite.Table,
+                   Opaleye.SQLite.Values,
+                   Opaleye.SQLite.Internal.Aggregate,
+                   Opaleye.SQLite.Internal.Binary,
+                   Opaleye.SQLite.Internal.Column,
+                   Opaleye.SQLite.Internal.Distinct,
+                   Opaleye.SQLite.Internal.Helpers,
+                   Opaleye.SQLite.Internal.Join,
+                   Opaleye.SQLite.Internal.Order,
+                   Opaleye.SQLite.Internal.Optimize,
+                   Opaleye.SQLite.Internal.PackMap,
+                   Opaleye.SQLite.Internal.PGTypes,
+                   Opaleye.SQLite.Internal.PrimQuery,
+                   Opaleye.SQLite.Internal.Print,
+                   Opaleye.SQLite.Internal.QueryArr,
+                   Opaleye.SQLite.Internal.RunQuery,
+                   Opaleye.SQLite.Internal.Sql,
+                   Opaleye.SQLite.Internal.Table,
+                   Opaleye.SQLite.Internal.TableMaker,
+                   Opaleye.SQLite.Internal.Tag,
+                   Opaleye.SQLite.Internal.Unpackspec,
+                   Opaleye.SQLite.Internal.Values
+                   Opaleye.SQLite.Internal.HaskellDB.PrimQuery,
+                   Opaleye.SQLite.Internal.HaskellDB.Sql,
+                   Opaleye.SQLite.Internal.HaskellDB.Sql.Default,
+                   Opaleye.SQLite.Internal.HaskellDB.Sql.Generate,
+                   Opaleye.SQLite.Internal.HaskellDB.Sql.Print
+  ghc-options:     -Wall
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  other-modules: QuickCheck
+  hs-source-dirs: Test
+  build-depends:
+    base >= 4 && < 5,
+    containers,
+    contravariant,
+    profunctors,
+    product-profunctors,
+    QuickCheck,
+    semigroups,
+    sqlite-simple,
+    opaleye-sqlite
+  ghc-options: -Wall
+
+test-suite tutorial
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules: TutorialAdvanced,
+                 TutorialBasic,
+                 TutorialManipulation,
+                 DefaultExplanation
+  hs-source-dirs: Doc/Tutorial
+  build-depends:
+    base >= 4 && < 5,
+    profunctors,
+    product-profunctors >= 0.6,
+    sqlite-simple,
+    time,
+    opaleye-sqlite
+  ghc-options: -Wall

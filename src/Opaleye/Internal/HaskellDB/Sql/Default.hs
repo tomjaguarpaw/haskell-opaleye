@@ -4,6 +4,8 @@
 
 module Opaleye.Internal.HaskellDB.Sql.Default  where
 
+import Control.Applicative ((<$>))
+
 import Opaleye.Internal.HaskellDB.PrimQuery
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as PQ
 import Opaleye.Internal.HaskellDB.Sql
@@ -50,29 +52,29 @@ toSqlAssoc gen = map (\(attr,expr) -> (toSqlColumn attr, sqlExpr gen expr))
 
 
 defaultSqlUpdate :: SqlGenerator
-                 -> TableName  -- ^ Name of the table to update.
+                 -> SqlTable   -- ^ Table to update
                  -> [PrimExpr] -- ^ Conditions which must all be true for a row
                                --   to be updated.
                  -> Assoc -- ^ Update the data with this.
                  -> SqlUpdate
-defaultSqlUpdate gen name criteria assigns
-        = SqlUpdate (SqlTable name) (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria)
+defaultSqlUpdate gen tbl criteria assigns
+        = SqlUpdate tbl (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria)
 
 
 defaultSqlInsert :: SqlGenerator
-                 -> TableName
+                 -> SqlTable
                  -> [Attribute]
                  -> NEL.NonEmpty [PrimExpr]
                  -> SqlInsert
-defaultSqlInsert gen name attrs exprs =
-  SqlInsert (SqlTable name) (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
+defaultSqlInsert gen tbl attrs exprs =
+  SqlInsert tbl (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
 
 defaultSqlDelete :: SqlGenerator
-                 -> TableName -- ^ Name of the table
+                 -> SqlTable
                  -> [PrimExpr] -- ^ Criteria which must all be true for a row
                                --   to be deleted.
                  -> SqlDelete
-defaultSqlDelete gen name criteria = SqlDelete (SqlTable name) (map (sqlExpr gen) criteria)
+defaultSqlDelete gen tbl criteria = SqlDelete tbl (map (sqlExpr gen) criteria)
 
 
 defaultSqlExpr :: SqlGenerator -> PrimExpr -> SqlExpr
@@ -80,6 +82,7 @@ defaultSqlExpr gen expr =
     case expr of
       AttrExpr (Symbol a t) -> ColumnSqlExpr (SqlColumn (tagWith t a))
       BaseTableAttrExpr a -> ColumnSqlExpr (SqlColumn a)
+      CompositeExpr e x -> CompositeSqlExpr (defaultSqlExpr gen e) x
       BinExpr op e1 e2 ->
         let leftE = sqlExpr gen e1
             rightE = sqlExpr gen e2
@@ -117,21 +120,25 @@ defaultSqlExpr gen expr =
       -- because it leads to a non-uniformity of treatment, as seen
       -- below.  Perhaps we should have just `AggrExpr AggrOp` and
       -- always put the `PrimExpr` in the `AggrOp`.
-      AggrExpr op e    -> let op' = showAggrOp op
-                              e' = sqlExpr gen e
-                              moreAggrFunParams = case op of
-                                AggrStringAggr primE -> [sqlExpr gen primE]
-                                _ -> []
-                           in AggrFunSqlExpr op' (e' : moreAggrFunParams)
+      AggrExpr op e ord -> let op' = showAggrOp op
+                               e' = sqlExpr gen e
+                               ord' = toSqlOrder gen <$> ord
+                               moreAggrFunParams = case op of
+                                 AggrStringAggr primE -> [sqlExpr gen primE]
+                                 _ -> []
+                            in AggrFunSqlExpr op' (e' : moreAggrFunParams) ord'
       ConstExpr l      -> ConstSqlExpr (sqlLiteral gen l)
       CaseExpr cs e    -> let cs' = [(sqlExpr gen c, sqlExpr gen x)| (c,x) <- cs]
                               e'  = sqlExpr gen e
-                           in CaseSqlExpr cs' e'
+                          in case NEL.nonEmpty cs' of
+                            Just nel -> CaseSqlExpr nel e'
+                            Nothing  -> e'
       ListExpr es      -> ListSqlExpr (map (sqlExpr gen) es)
       ParamExpr n _    -> ParamSqlExpr n PlaceHolderSqlExpr
       FunExpr n exprs  -> FunSqlExpr n (map (sqlExpr gen) exprs)
       CastExpr typ e1 -> CastSqlExpr typ (sqlExpr gen e1)
       DefaultInsertExpr -> DefaultSqlExpr
+      ArrayExpr es -> ArraySqlExpr (map (sqlExpr gen) es)
 
 showBinOp :: BinOp -> String
 showBinOp  OpEq         = "="
@@ -156,6 +163,7 @@ showBinOp  OpBitAnd     = "&"
 showBinOp  OpBitOr      = "|"
 showBinOp  OpBitXor     = "^"
 showBinOp  OpAsg        = "="
+showBinOp  OpAtTimeZone = "AT TIME ZONE"
 
 
 data UnOpType = UnOpFun | UnOpPrefix | UnOpPostfix
@@ -200,7 +208,10 @@ defaultSqlLiteral _ l =
                     -> binQuote s
       StringLit s   -> quote s
       IntegerLit i  -> show i
-      DoubleLit d   -> show d
+      DoubleLit d   -> if isNaN d then "'NaN'"
+                       else if isInfinite d && d < 0 then "'-Infinity'"
+                       else if isInfinite d && d > 0 then "'Infinity'"
+                       else show d
       OtherLit o    -> o
 
 

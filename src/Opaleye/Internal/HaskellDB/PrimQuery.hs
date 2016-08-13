@@ -17,9 +17,10 @@ data Symbol = Symbol String T.Tag deriving (Read, Show)
 
 data PrimExpr   = AttrExpr  Symbol
                 | BaseTableAttrExpr Attribute
+                | CompositeExpr     PrimExpr Attribute -- ^ Composite Type Query
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
-                | AggrExpr  AggrOp PrimExpr
+                | AggrExpr  AggrOp PrimExpr [OrderExpr]
                 | ConstExpr Literal
                 | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
                 | ListExpr [PrimExpr]
@@ -31,6 +32,7 @@ data PrimExpr   = AttrExpr  Symbol
                                     -- TODO: I'm not sure this belongs
                                     -- here.  Perhaps a special type is
                                     -- needed for insert expressions.
+                | ArrayExpr [PrimExpr] -- ^ ARRAY[..]
                 deriving (Read,Show)
 
 data Literal = NullLit
@@ -51,7 +53,7 @@ data BinOp      = OpEq | OpLt | OpLtEq | OpGt | OpGtEq | OpNotEq
                 | OpCat
                 | OpPlus | OpMinus | OpMul | OpDiv | OpMod
                 | OpBitNot | OpBitAnd | OpBitOr | OpBitXor
-                | OpAsg
+                | OpAsg | OpAtTimeZone
                 deriving (Show,Read)
 
 data UnOp = OpNot
@@ -72,14 +74,14 @@ data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 deriving (Show,Read)
 
 data OrderExpr = OrderExpr OrderOp PrimExpr
-               deriving (Show)
+               deriving (Show,Read)
 
 data OrderNulls = NullsFirst | NullsLast
-                deriving Show
+                deriving (Show,Read)
 
 data OrderDirection = OpAsc | OpDesc
-                    deriving Show
+                    deriving (Show,Read)
 
 data OrderOp = OrderOp { orderDirection :: OrderDirection
                        , orderNulls     :: OrderNulls }
-               deriving (Show)
+               deriving (Show,Read)
