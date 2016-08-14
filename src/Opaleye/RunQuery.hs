@@ -23,9 +23,11 @@ import qualified Data.String as String
 import           Opaleye.Column (Column)
 import qualified Opaleye.Select as S
 import qualified Opaleye.Sql as S
+import qualified Opaleye.Internal.PackMap as PM
 import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
 import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Internal.QueryArr as Q
+import qualified Opaleye.Internal.Unpackspec as U
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
@@ -140,3 +142,15 @@ prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
         -- FIXME: We're doing work twice here
         (b, _, _) = Q.runSimpleQueryArrStart q ()
         parser = IRQ.prepareRowParser qr b
+
+-- | Naughty and dangerous, but sometimes fun
+app :: QueryRunner (columns, QueryRunner columns haskells) haskells
+app = QueryRunner
+      (U.Unpackspec (PM.PackMap (\traverseExprs (columns, qr) -> case u qr of
+                                    U.Unpackspec (PM.PackMap uqr) ->
+                                      uqr traverseExprs columns)))
+      (\(columns, qr) -> r qr columns)
+      (\(columns, qr) -> b qr columns)
+  where u (QueryRunner u' _ _) = u'
+        r (QueryRunner _ r' _) = r'
+        b (QueryRunner _ _ b') = b'
