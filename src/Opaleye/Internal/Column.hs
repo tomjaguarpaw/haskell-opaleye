@@ -46,19 +46,19 @@ unsafeIfThenElse :: Column pgBool -> Column a -> Column a -> Column a
 unsafeIfThenElse cond t f = unsafeCase_ [(cond, t)] f
 
 unsafeGt :: Column a -> Column a -> Column pgBool
-unsafeGt = binOp HPQ.OpGt
+unsafeGt = binOp (HPQ.:>)
 
 unsafeEq :: Column a -> Column a -> Column pgBool
-unsafeEq = binOp HPQ.OpEq
+unsafeEq = binOp (HPQ.:==)
 
 class PGNum a where
   pgFromInteger :: Integer -> Column a
 
 instance PGNum a => Num (Column a) where
   fromInteger = pgFromInteger
-  (*) = binOp HPQ.OpMul
-  (+) = binOp HPQ.OpPlus
-  (-) = binOp HPQ.OpMinus
+  (*) = binOp (HPQ.:*)
+  (+) = binOp (HPQ.:+)
+  (-) = binOp (HPQ.:-)
 
   abs = unOp HPQ.OpAbs
   negate = unOp HPQ.OpNegate
@@ -72,7 +72,7 @@ class PGFractional a where
 
 instance (PGNum a, PGFractional a) => Fractional (Column a) where
   fromRational = pgFromRational
-  (/) = binOp HPQ.OpDiv
+  (/) = binOp (HPQ.:/)
 
 -- | A dummy typeclass whose instances support integral operations.
 class PGIntegral a
