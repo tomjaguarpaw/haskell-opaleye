@@ -99,6 +99,7 @@ test-suite test
   other-modules: QuickCheck
   hs-source-dirs: Test
   build-depends:
+    aeson >= 0.6 && < 0.12,
     base >= 4 && < 5,
     containers,
     contravariant,
@@ -108,6 +109,7 @@ test-suite test
     product-profunctors,
     QuickCheck,
     semigroups,
+    text >= 0.11 && < 1.3,
     time,
     opaleye
   ghc-options: -Wall
