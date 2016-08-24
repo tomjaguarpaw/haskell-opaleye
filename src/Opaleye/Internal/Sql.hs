@@ -203,15 +203,15 @@ withRecursive columns recColumns (Symbol sym t) qb qr = WithRecursive $ Recursiv
    recTable = HSql.SqlTable Nothing (T.tagWith t sym)
    addTable tbl (SelectFrom from)     = SelectFrom from { tables = Table tbl : tables from }
    addTable _   tbl@Table{}           = tbl
-   addTable tbl (SelectJoin jn)       = SelectJoin jn { jTables = (addTable tbl Arr.*** addTable tbl) (jTables jn) } -- TODO: test
+   addTable tbl (SelectJoin jn)       = SelectJoin jn { jTables = (addTable tbl Arr.*** addTable tbl) (jTables jn) }
    addTable _   v@SelectValues{}      = v
    addTable tbl (SelectBinary bin) = SelectBinary bin { bSelect1 = addTable tbl (bSelect1 bin)
                                                       , bSelect2 = addTable tbl (bSelect2 bin)
-                                                      } -- TODO: test
+                                                      }
    addTable tbl (SelectLabel l)       = SelectLabel l
    addTable tbl (WithRecursive rec) = WithRecursive rec { rBase      = addTable tbl (rBase rec)
                                                         , rRecursive = addTable tbl (rRecursive rec)
-                                                        } -- TODO: test
+                                                        }
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin

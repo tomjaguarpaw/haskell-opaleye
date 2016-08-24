@@ -343,6 +343,7 @@ values conn (ArbitraryColumnsList l) = do
   * Label (check it has no effect)
   * Operators (mathematical, logical, etc.)
   * >>>?
+  * With recursive
 
 -}
 
