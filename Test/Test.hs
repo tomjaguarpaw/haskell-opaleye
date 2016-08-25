@@ -149,6 +149,10 @@ table6 = O.Table "table6" (PP.p2 (O.required "column1", O.required "column2"))
 table7 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
 table7 = O.Table "table7" (PP.p2 (O.required "column1", O.required "column2"))
 
+table8 :: O.Table (Column O.PGInt4, Column (Nullable O.PGInt4))
+                  (Column O.PGInt4, Column (Nullable O.PGInt4))
+table8 = O.Table "table8" (PP.p2 (O.required "column1", O.required "column2"))
+
 tableKeywordColNames :: O.Table (Column O.PGInt4, Column O.PGInt4)
                                 (Column O.PGInt4, Column O.PGInt4)
 tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
@@ -221,6 +225,19 @@ table7data = [("foo", "c"), ("bar", "a"), ("baz", "b")]
 table7columndata :: [(Column O.PGText, Column O.PGText)]
 table7columndata = map (O.pgString *** O.pgString) table7data
 
+table8dataG :: (Num a, Num b) => [(a, Maybe b)]
+table8dataG = [ (1, Nothing)
+              , (2, Just 1)
+              , (3, Nothing)
+              , (4, Just 2)
+              , (5, Just 3) ]
+
+table8data :: [(Int, Maybe Int)]
+table8data = table8dataG
+
+table8columndata :: [(Column O.PGInt4, Column (Nullable (O.PGInt4)))]
+table8columndata = map (fmap O.maybeToNullable) table8dataG
+
 -- We have to quote the table names here because upper case letters in
 -- table names are treated as lower case unless the name is quoted!
 dropAndCreateTable :: String -> (String, [String]) -> PGS.Query
@@ -255,7 +272,7 @@ columns2 t = (t, ["column1", "column2"])
 
 -- This should ideally be derived from the table definition above
 tables :: [Table_]
-tables = map columns2 ["table1", "TABLE2", "table3", "table4"]
+tables = map columns2 ["table1", "TABLE2", "table3", "table4", "table7", "table8"]
          ++ [("keywordtable", ["column", "where"])]
 
 serialTables :: [Table_]
@@ -691,6 +708,26 @@ testFloatArray = testG (A.pure $ O.pgArray O.pgDouble doubles) (== [doubles])
   where
     doubles = [1 :: Double, 2]
 
+testWithRecursive :: Test
+testWithRecursive = testG q (== expected)
+  where
+    q = O.withRecursive baseQ recQ
+    -- Query the item with 'column1' equal to 1...
+    baseQ = proc () -> do
+      r <- O.queryTable table8 -< ()
+      O.restrict -< fst r .== 1
+      Arr.returnA -< r
+    -- And everything where 'column2' equals a selected 'column1',
+    -- recursively.
+    recQ = proc base -> do
+      recursive <- O.queryTable table8 -< ()
+      O.restrict -< O.toNullable (fst base) .== snd recursive
+      Arr.returnA -< recursive
+    expected :: [(Int, Maybe Int)]
+    expected = [ (1, Nothing)
+               , (2, Just 1)
+               , (4, Just 2) ]
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregate0, testAggregateFunction,
@@ -704,8 +741,10 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone,
             testStringArrayAggregateOrdered, testMultipleAggregateOrdered,
             testOverwriteAggregateOrdered, testCountRows0, testCountRows3,
-            testArrayLiterals, testEmptyArray, testFloatArray, testCaseEmpty
-            ]
+            testArrayLiterals, testEmptyArray, testFloatArray, testCaseEmpty,
+            testKeywordColNames, testInsertSerial,
+            testWithRecursive
+           ]
 
 -- Environment.getEnv throws an exception on missing environment variable!
 getEnv :: String -> IO (Maybe String)
@@ -742,6 +781,7 @@ main = do
                , (table4, table4columndata) ]
   insert (table6, table6columndata)
   insert (table7, table7columndata)
+  insert (table8, table8columndata)
 
   -- Need to run quickcheck after table data has been inserted
   QuickCheck.run conn

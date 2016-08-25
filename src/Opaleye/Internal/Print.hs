@@ -7,8 +7,9 @@ import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
                                               SelectJoin,
                                               SelectValues,
                                               SelectBinary,
-                                              SelectLabel),
-                                       From, Join, Values, Binary, Label)
+                                              SelectLabel,
+                                              WithRecursive),
+                                       From, Join, Values, Binary, Label, Recursive)
 
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
@@ -27,6 +28,7 @@ ppSql (SelectJoin j)   = ppSelectJoin j
 ppSql (SelectValues v) = ppSelectValues v
 ppSql (SelectBinary v) = ppSelectBinary v
 ppSql (SelectLabel v)  = ppSelectLabel v
+ppSql (WithRecursive r) = ppWithRecursive r
 
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
@@ -70,6 +72,22 @@ ppSelectLabel l = text "/*" <+> text (defuseComments (Sql.lLabel l)) <+> text "*
                    . ST.replace (ST.pack "*/") (ST.pack " * / ")
                    . ST.pack
 
+ppWithRecursive :: Recursive -> Doc
+ppWithRecursive r
+  =  text "WITH RECURSIVE"
+  <+> HPrint.ppTable (Sql.rTable r)
+  <+> parens (ppAttrs (Sql.rAttrs r))
+  <+> text "AS"
+  $$ parens
+     (  ppSql (Sql.rBase r)
+     $$ text "UNION ALL"
+     $$ ppSql (Sql.rRecursive r)
+     )
+  $$ text "SELECT"
+  <+> ppAttrs Sql.Star
+  <+> text "FROM"
+  <+> HPrint.ppTable (Sql.rTable r)
+
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 ppJoinType Sql.RightJoin = text "RIGHT OUTER JOIN"
@@ -100,6 +118,7 @@ ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
   SelectValues slv      -> parens (ppSelectValues slv)
   SelectBinary slb      -> parens (ppSelectBinary slb)
   SelectLabel sll       -> parens (ppSelectLabel sll)
+  WithRecursive r       -> parens (ppWithRecursive r)
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty

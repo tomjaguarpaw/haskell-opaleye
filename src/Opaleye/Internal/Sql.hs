@@ -24,6 +24,7 @@ data Select = SelectFrom From
             | SelectValues Values
             | SelectBinary Binary
             | SelectLabel Label
+            | WithRecursive Recursive
             deriving Show
 
 data SelectAttrs =
@@ -68,6 +69,15 @@ data Label = Label {
   lSelect :: Select
 } deriving Show
 
+data Recursive = Recursive {
+  rAttrs     :: SelectAttrs,  -- The names of the columns, i.e. WITH RECURSIVE .. (a1, a2) AS
+  rTable     :: HSql.SqlTable, -- The name of the result, i.e. WITH RECURSIVE <name> AS
+  rBase      :: Select,
+  rRecursive :: Select
+} deriving Show
+
+data TableName = String
+
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
 sqlQueryGenerator :: PQ.PrimQueryFold' V.Void Select
@@ -82,7 +92,8 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.join      = join
   , PQ.values    = values
   , PQ.binary    = binary
-  , PQ.label     = label }
+  , PQ.label     = label
+  , PQ.recursive = withRecursive }
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery' V.Void, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
@@ -177,6 +188,30 @@ binary op pes (select1, select2) = SelectBinary Binary {
                                     tables = [select2] }
   }
   where mkColumn e = sqlBinding . Arr.second e
+
+withRecursive :: [HPQ.PrimExpr] -> [(Symbol, HPQ.PrimExpr)] -> Symbol -> Select -> Select -> Select
+withRecursive columns recColumns (Symbol sym t) qb qr = WithRecursive $ Recursive
+  { rAttrs     = SelectAttrs (ensureColumns (map (\c -> (sqlExpr c, Nothing)) columns))
+  , rTable     = recTable
+  , rBase      = qb
+  , rRecursive = SelectFrom newSelect
+      { attrs = SelectAttrs (ensureColumns (map sqlBinding recColumns)) -- Select only the original columns, since we add a table below.
+      , tables = [addTable recTable qr] -- Add a table binding for the recursive result.
+      }
+  }
+  where
+   recTable = HSql.SqlTable Nothing (T.tagWith t sym)
+   addTable tbl (SelectFrom from)     = SelectFrom from { tables = Table tbl : tables from }
+   addTable _   tbl@Table{}           = tbl
+   addTable tbl (SelectJoin jn)       = SelectJoin jn { jTables = (addTable tbl Arr.*** addTable tbl) (jTables jn) }
+   addTable _   v@SelectValues{}      = v
+   addTable tbl (SelectBinary bin) = SelectBinary bin { bSelect1 = addTable tbl (bSelect1 bin)
+                                                      , bSelect2 = addTable tbl (bSelect2 bin)
+                                                      }
+   addTable tbl (SelectLabel l)       = SelectLabel l
+   addTable tbl (WithRecursive rec) = WithRecursive rec { rBase      = addTable tbl (rBase rec)
+                                                        , rRecursive = addTable tbl (rRecursive rec)
+                                                        }
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin

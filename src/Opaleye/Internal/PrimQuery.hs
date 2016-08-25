@@ -55,6 +55,7 @@ data PrimQuery' a = Unit
                               [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
                               (PrimQuery' a, PrimQuery' a)
                   | Label     String (PrimQuery' a)
+                  | WithRecursive [HPQ.PrimExpr] [(Symbol, HPQ.PrimExpr)] Symbol (PrimQuery' a) (PrimQuery' a)
                  deriving Show
 
 type PrimQuery = PrimQuery' ()
@@ -72,6 +73,7 @@ data PrimQueryFold' a p = PrimQueryFold
   , values    :: [Symbol] -> (NEL.NonEmpty [HPQ.PrimExpr]) -> p
   , binary    :: BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
   , label     :: String -> p -> p
+  , recursive :: [HPQ.PrimExpr] -> [(Symbol, HPQ.PrimExpr)] -> Symbol -> p -> p -> p
   }
 
 
@@ -87,7 +89,8 @@ primQueryFoldDefault = PrimQueryFold
   , join      = Join
   , values    = Values
   , binary    = Binary
-  , label     = Label }
+  , label     = Label
+  , recursive = WithRecursive }
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
 foldPrimQuery f = fix fold
@@ -103,6 +106,7 @@ foldPrimQuery f = fix fold
           Values ss pes             -> values    f ss pes
           Binary binop pes (q1, q2) -> binary    f binop pes (self q1, self q2)
           Label l pq                -> label     f l (self pq)
+          WithRecursive s rs t qb qr -> recursive f s rs t (self qb) (self qr)
         fix g = let x = g x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
