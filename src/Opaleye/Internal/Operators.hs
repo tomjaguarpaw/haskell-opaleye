@@ -21,6 +21,7 @@ infixr 3 .&&
 (.&&) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
 (.&&) = C.binOp HPQ.OpAnd
 
+-- Probably should be newtype
 data EqPP a b = EqPP (a -> a -> Column T.PGBool)
 
 eqExplicit :: EqPP columns a -> columns -> columns -> Column T.PGBool
