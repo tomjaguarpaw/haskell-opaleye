@@ -20,6 +20,8 @@ import qualified Control.Arrow as Arr
 
 data Select = SelectFrom From
             | Table HSql.SqlTable
+            | RelExpr HSql.SqlExpr
+            -- ^ A relation-valued expression
             | SelectJoin Join
             | SelectValues Values
             | SelectBinary Binary
@@ -82,7 +84,9 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.join      = join
   , PQ.values    = values
   , PQ.binary    = binary
-  , PQ.label     = label }
+  , PQ.label     = label
+  , PQ.relExpr   = relExpr
+  }
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery' V.Void, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
@@ -223,3 +227,10 @@ ensureColumnsGen f = M.fromMaybe (return . f $ HSql.ConstSqlExpr "0")
 
 label :: String -> Select -> Select
 label l s = SelectLabel (Label l s)
+
+-- Very similar to 'baseTable'
+relExpr :: HPQ.PrimExpr -> [(Symbol, HPQ.PrimExpr)] -> Select
+relExpr pe columns = SelectFrom $
+    newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
+              , tables = [RelExpr (sqlExpr pe)]
+              }

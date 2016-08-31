@@ -3,7 +3,9 @@ module Opaleye.Internal.Print where
 import           Prelude hiding (product)
 
 import qualified Opaleye.Internal.Sql as Sql
-import           Opaleye.Internal.Sql (Select(SelectFrom, Table,
+import           Opaleye.Internal.Sql (Select(SelectFrom,
+                                              Table,
+                                              RelExpr,
                                               SelectJoin,
                                               SelectValues,
                                               SelectBinary,
@@ -95,6 +97,7 @@ tableAlias i select = ("T" ++ show i, select)
 ppTable :: (TableAlias, Select) -> Doc
 ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
   Table table           -> HPrint.ppTable table
+  RelExpr expr          -> HPrint.ppSqlExpr expr
   SelectFrom selectFrom -> parens (ppSelectFrom selectFrom)
   SelectJoin slj        -> parens (ppSelectJoin slj)
   SelectValues slv      -> parens (ppSelectValues slv)

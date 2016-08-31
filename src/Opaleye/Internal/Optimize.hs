@@ -55,6 +55,7 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
       PQ.UnionAll     -> binary Just            Just            PQ.UnionAll
       PQ.IntersectAll -> binary (const Nothing) (const Nothing) PQ.IntersectAll
   , PQ.label     = fmap . PQ.Label
+  , PQ.relExpr   = return .: PQ.RelExpr
   }
   where -- If only the first argument is Just, do n1 on it
         -- If only the second argument is Just, do n2 on it
