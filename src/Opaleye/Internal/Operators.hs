@@ -37,6 +37,7 @@ instance D.Default EqPP (Column a) (Column a) where
   def = EqPP C.unsafeEq
 
 
+-- This seems to be the only place we use ViewColumnMaker now.
 data RelExprMaker a b =
   forall c. RelExprMaker {
       relExprVCM :: TM.ViewColumnMaker a c
