@@ -45,15 +45,15 @@ data Literal = NullLit
              | OtherLit String       -- ^ used for hacking in custom SQL
                deriving (Read,Show)
 
-data BinOp      = OpEq | OpLt | OpLtEq | OpGt | OpGtEq | OpNotEq
+data BinOp      = (:==) | (:<) | (:<=) | (:>) | (:>=) | (:<>)
                 | OpAnd | OpOr
                 | OpLike | OpIn
                 | OpOther String
 
-                | OpCat
-                | OpPlus | OpMinus | OpMul | OpDiv | OpMod
-                | OpBitNot | OpBitAnd | OpBitOr | OpBitXor
-                | OpAsg | OpAtTimeZone
+                | (:||)
+                | (:+) | (:-) | (:*) | (:/) | OpMod
+                | (:~) | (:&) | (:|) | (:^)
+                | (:=) | OpAtTimeZone
                 deriving (Show,Read)
 
 data UnOp = OpNot

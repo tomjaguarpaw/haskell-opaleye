@@ -49,11 +49,11 @@ doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
 
 infix 4 .==
 (.==) :: Column a -> Column a -> Column T.PGBool
-(.==) = C.binOp HPQ.OpEq
+(.==) = C.binOp (HPQ.:==)
 
 infix 4 ./=
 (./=) :: Column a -> Column a -> Column T.PGBool
-(./=) = C.binOp HPQ.OpNotEq
+(./=) = C.binOp (HPQ.:<>)
 
 infix 4 .===
 -- | A polymorphic equality operator that works for all types that you
@@ -75,18 +75,18 @@ infix 4 .>
 
 infix 4 .<
 (.<) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
-(.<) = C.binOp HPQ.OpLt
+(.<) = C.binOp (HPQ.:<)
 
 infix 4 .<=
 (.<=) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
-(.<=) = C.binOp HPQ.OpLtEq
+(.<=) = C.binOp (HPQ.:<=)
 
 infix 4 .>=
 (.>=) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
-(.>=) = C.binOp HPQ.OpGtEq
+(.>=) = C.binOp (HPQ.:>=)
 
 quot_ :: C.PGIntegral a => Column a -> Column a -> Column a
-quot_ = C.binOp HPQ.OpDiv
+quot_ = C.binOp (HPQ.:/)
 
 rem_ :: C.PGIntegral a => Column a -> Column a -> Column a
 rem_ = C.binOp HPQ.OpMod
@@ -105,7 +105,7 @@ not :: Column T.PGBool -> Column T.PGBool
 not = C.unOp HPQ.OpNot
 
 (.++) :: Column T.PGText -> Column T.PGText -> Column T.PGText
-(.++) = C.binOp HPQ.OpCat
+(.++) = C.binOp (HPQ.:||)
 
 lower :: Column T.PGText -> Column T.PGText
 lower = C.unOp HPQ.OpLower
