@@ -19,6 +19,8 @@ import qualified Data.List as L
 import           Data.Monoid ((<>))
 import qualified Data.String as String
 import qualified Data.Time   as Time
+import qualified Data.Aeson as Json
+import qualified Data.Text as T
 
 import qualified System.Exit as Exit
 import qualified System.Environment as Environment
@@ -149,6 +151,12 @@ table6 = O.Table "table6" (PP.p2 (O.required "column1", O.required "column2"))
 table7 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
 table7 = O.Table "table7" (PP.p2 (O.required "column1", O.required "column2"))
 
+table8 :: O.Table (Column O.PGJson) (Column O.PGJson)
+table8 = O.Table "table8" (O.required "column1")
+
+table9 :: O.Table (Column O.PGJsonb) (Column O.PGJsonb)
+table9 = O.Table "table9" (O.required "column1")
+
 tableKeywordColNames :: O.Table (Column O.PGInt4, Column O.PGInt4)
                                 (Column O.PGInt4, Column O.PGInt4)
 tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
@@ -167,6 +175,12 @@ table6Q = O.queryTable table6
 
 table7Q :: Query (Column O.PGText, Column O.PGText)
 table7Q = O.queryTable table7
+
+table8Q :: Query (Column O.PGJson)
+table8Q = O.queryTable table8
+
+table9Q :: Query (Column O.PGJsonb)
+table9Q = O.queryTable table9
 
 table1dataG :: Num a => [(a, a)]
 table1dataG = [ (1, 100)
@@ -221,6 +235,20 @@ table7data = [("foo", "c"), ("bar", "a"), ("baz", "b")]
 table7columndata :: [(Column O.PGText, Column O.PGText)]
 table7columndata = map (O.pgString *** O.pgString) table7data
 
+table8data :: [Json.Value]
+table8data = [ Json.object
+               [ "a" Json..= ([10,20..100] :: [Int])
+               , "b" Json..= Json.object ["x" Json..= (42 :: Int)]
+               , "c" Json..= (21 :: Int)
+               ]
+             ]
+
+table8columndata :: [Column O.PGJson]
+table8columndata = map O.pgValueJSON table8data
+
+table9columndata :: [Column O.PGJsonb]
+table9columndata = map O.pgValueJSONB table8data
+
 -- We have to quote the table names here because upper case letters in
 -- table names are treated as lower case unless the name is quoted!
 dropAndCreateTable :: String -> (String, [String]) -> PGS.Query
@@ -247,6 +275,12 @@ dropAndCreateTableSerial (t, cols) = String.fromString drop_
         integer c = ("\"" ++ c ++ "\"" ++ " SERIAL")
         commas = L.intercalate "," . map integer
 
+dropAndCreateTableJson :: (String, [String]) -> PGS.Query
+dropAndCreateTableJson = dropAndCreateTable "json"
+
+dropAndCreateTableJsonb :: (String, [String]) -> PGS.Query
+dropAndCreateTableJsonb = dropAndCreateTable "jsonb"
+
 type Table_ = (String, [String])
 
 -- This should ideally be derived from the table definition above
@@ -264,14 +298,25 @@ serialTables = map columns2 ["table5"]
 textTables :: [Table_]
 textTables = map columns2 ["table6", "table7"]
 
+jsonTables :: [Table_]
+jsonTables = [("table8", ["column1"])]
+
+jsonbTables :: [Table_]
+jsonbTables = [("table9", ["column1"])]
+
 dropAndCreateDB :: PGS.Connection -> IO ()
 dropAndCreateDB conn = do
   mapM_ execute tables
   mapM_ executeTextTable textTables
   mapM_ executeSerial serialTables
+  mapM_ executeJson jsonTables
+  -- Disabled until Travis supports Postgresql >= 9.4
+  -- mapM_ executeJsonb jsonbTables
   where execute = PGS.execute_ conn . dropAndCreateTableInt
         executeTextTable = PGS.execute_ conn . dropAndCreateTableText
         executeSerial = PGS.execute_ conn . dropAndCreateTableSerial
+        executeJson = PGS.execute_ conn . dropAndCreateTableJson
+        -- executeJsonb = PGS.execute_ conn . dropAndCreateTableJsonb
 
 type Test = PGS.Connection -> IO Bool
 
@@ -691,6 +736,100 @@ testFloatArray = testG (A.pure $ O.pgArray O.pgDouble doubles) (== [doubles])
   where
     doubles = [1 :: Double, 2]
 
+-- Test opaleye's equivalent of c1->'c'
+testJsonGetFieldValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
+testJsonGetFieldValue dataQuery = testG q (== expected)
+  where q = dataQuery >>> proc c1 -> do
+            Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "c"
+        expected :: [Maybe Json.Value]
+        expected = [Just $ Json.Number $ fromInteger 21]
+
+-- Test opaleye's equivalent of c1->>'c'
+testJsonGetFieldText :: (O.PGIsJson a) => Query (Column a) -> Test
+testJsonGetFieldText dataQuery = testG q (== expected)
+  where q = dataQuery >>> proc c1 -> do
+            Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "c"
+        expected :: [Maybe T.Text]
+        expected = [Just "21"]
+
+-- Test opaleye's equivalent of c1->'a'->2
+testJsonGetArrayValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
+testJsonGetArrayValue dataQuery = testG q (== expected)
+  where q = dataQuery >>> proc c1 -> do
+            Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "a" O..-> O.pgInt4 2
+        expected :: [Maybe Json.Value]
+        expected = [Just $ Json.Number $ fromInteger 30]
+
+-- Test opaleye's equivalent of c1->'a'->>2
+testJsonGetArrayText :: (O.PGIsJson a) => Query (Column a) -> Test
+testJsonGetArrayText dataQuery = testG q (== expected)
+  where q = dataQuery >>> proc c1 -> do
+            Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "a" O..->> O.pgInt4 2
+        expected :: [Maybe T.Text]
+        expected = [Just "30"]
+
+-- Test opaleye's equivalent of c1->>'missing'
+-- Note that the missing field does not exist.
+testJsonGetMissingField :: (O.PGIsJson a) => Query (Column a) -> Test
+testJsonGetMissingField dataQuery = testG q (== expected)
+  where q = dataQuery >>> proc c1 -> do
+            Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "missing"
+        expected :: [Maybe T.Text]
+        expected = [Nothing]
+
+-- Test opaleye's equivalent of c1#>'{b,x}'
+testJsonGetPathValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
+testJsonGetPathValue dataQuery = testG q (== expected)
+  where q = dataQuery >>> proc c1 -> do
+              Arr.returnA -< O.toNullable c1 O..#> O.pgArray O.pgStrictText ["b", "x"]
+        expected :: [Maybe Json.Value]
+        expected = [Just $ Json.Number $ fromInteger 42]
+
+-- Test opaleye's equivalent of c1#>>'{b,x}'
+testJsonGetPathText :: (O.PGIsJson a) => Query (Column a) -> Test
+testJsonGetPathText dataQuery = testG q (== expected)
+  where q = dataQuery >>> proc c1 -> do
+              Arr.returnA -< O.toNullable c1 O..#>> O.pgArray O.pgStrictText ["b", "x"]
+        expected :: [Maybe T.Text]
+        expected = [Just "42"]
+
+-- Test opaleye's equivalent of c1 @> '{"c":21}'::jsonb
+testJsonbRightInLeft :: Test
+testJsonbRightInLeft = testG q (== [True])
+  where q = table9Q >>> proc c1 -> do
+              Arr.returnA -< c1 O..@> O.pgJSONB "{\"c\":21}"
+
+-- Test opaleye's equivalent of '{"c":21}'::jsonb <@ c1
+testJsonbLeftInRight :: Test
+testJsonbLeftInRight = testG q (== [True])
+  where q = table9Q >>> proc c1 -> do
+              Arr.returnA -< O.pgJSONB "{\"c\":21}" O..<@ c1
+
+-- Test opaleye's equivalent of c1 ? 'b'
+testJsonbContains :: Test
+testJsonbContains = testG q (== [True])
+  where q = table9Q >>> proc c1 -> do
+              Arr.returnA -< c1 O..? O.pgStrictText "c"
+
+-- Test opaleye's equivalent of c1 ? 'missing'
+-- Note that the missing field does not exist.
+testJsonbContainsMissing :: Test
+testJsonbContainsMissing = testG q (== [False])
+  where q = table9Q >>> proc c1 -> do
+              Arr.returnA -< c1 O..? O.pgStrictText "missing"
+
+-- Test opaleye's equivalent of c1 ?| array['b', 'missing']
+testJsonbContainsAny :: Test
+testJsonbContainsAny = testG q (== [True])
+  where q = table9Q >>> proc c1 -> do
+              Arr.returnA -< c1 O..?| O.pgArray O.pgStrictText ["b", "missing"]
+
+-- Test opaleye's equivalent of c1 ?& array['a', 'b', 'c']
+testJsonbContainsAll :: Test
+testJsonbContainsAll = testG q (== [True])
+  where q = table9Q >>> proc c1 -> do
+              Arr.returnA -< c1 O..?& O.pgArray O.pgStrictText ["a", "b", "c"]
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregate0, testAggregateFunction,
@@ -704,8 +843,24 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone,
             testStringArrayAggregateOrdered, testMultipleAggregateOrdered,
             testOverwriteAggregateOrdered, testCountRows0, testCountRows3,
-            testArrayLiterals, testEmptyArray, testFloatArray, testCaseEmpty
+            testArrayLiterals, testEmptyArray, testFloatArray, testCaseEmpty,
+            testJsonGetFieldValue   table8Q, testJsonGetFieldText  table8Q,
+            testJsonGetMissingField table8Q, testJsonGetArrayValue table8Q,
+            testJsonGetArrayText    table8Q, testJsonGetPathValue  table8Q,
+            testJsonGetPathText     table8Q
             ]
+
+-- Note: these tests are left out of allTests until Travis supports
+-- Postgresql >= 9.4
+jsonbTests :: [Test]
+jsonbTests = [testJsonGetFieldValue  table9Q,testJsonGetFieldText  table9Q,
+             testJsonGetMissingField table9Q,testJsonGetArrayValue table9Q,
+             testJsonGetArrayText    table9Q,testJsonGetPathValue  table9Q,
+             testJsonGetPathText     table9Q,
+             testJsonbRightInLeft, testJsonbLeftInRight,
+             testJsonbContains, testJsonbContainsMissing,
+             testJsonbContainsAny, testJsonbContainsAll
+             ]
 
 -- Environment.getEnv throws an exception on missing environment variable!
 getEnv :: String -> IO (Maybe String)
@@ -742,6 +897,9 @@ main = do
                , (table4, table4columndata) ]
   insert (table6, table6columndata)
   insert (table7, table7columndata)
+  insert (table8, table8columndata)
+  -- Disabled until Travis supports Postgresql >= 9.4
+  -- insert (table9, table9columndata)
 
   -- Need to run quickcheck after table data has been inserted
   QuickCheck.run conn

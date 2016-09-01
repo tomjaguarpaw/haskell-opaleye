@@ -169,3 +169,79 @@ arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es
 
 singletonArray :: T.IsSqlType a => Column a -> Column (T.PGArray a)
 singletonArray x = arrayPrepend x emptyArray
+
+-- | Class of Postgres types that represent json values.
+--
+-- Used to overload functions and operators that work on both 'T.PGJson' and 'T.PGJsonb'.
+--
+-- Warning: making additional instances of this class can lead to broken code!
+class PGIsJson a
+
+instance PGIsJson T.PGJson
+instance PGIsJson T.PGJsonb
+
+-- | Class of Postgres types that can be used to index json values.
+--
+-- Warning: making additional instances of this class can lead to broken code!
+class PGJsonIndex a
+
+instance PGJsonIndex T.PGInt4
+instance PGJsonIndex T.PGInt8
+instance PGJsonIndex T.PGText
+
+-- | Get JSON object field by key.
+infixl 8 .->
+(.->) :: (PGIsJson a, PGJsonIndex k)
+      => Column (C.Nullable a) -- ^
+      -> Column k -- ^ key or index
+      -> Column (C.Nullable a)
+(.->) = C.binOp (HPQ.:->)
+
+-- | Get JSON object field as text.
+infixl 8 .->>
+(.->>) :: (PGIsJson a, PGJsonIndex k)
+       => Column (C.Nullable a) -- ^
+       -> Column k -- ^ key or index
+       -> Column (C.Nullable T.PGText)
+(.->>) = C.binOp (HPQ.:->>)
+
+-- | Get JSON object at specified path.
+infixl 8 .#>
+(.#>) :: (PGIsJson a)
+      => Column (C.Nullable a) -- ^
+      -> Column (T.PGArray T.PGText) -- ^ path
+      -> Column (C.Nullable a)
+(.#>) = C.binOp (HPQ.:#>)
+
+-- | Get JSON object at specified path as text.
+infixl 8 .#>>
+(.#>>) :: (PGIsJson a)
+       => Column (C.Nullable a) -- ^
+       -> Column (T.PGArray T.PGText) -- ^ path
+       -> Column (C.Nullable T.PGText)
+(.#>>) = C.binOp (HPQ.:#>>)
+
+-- | Does the left JSON value contain within it the right value?
+infix 4 .@>
+(.@>) :: Column T.PGJsonb -> Column T.PGJsonb -> Column T.PGBool
+(.@>) = C.binOp (HPQ.:@>)
+
+-- | Is the left JSON value contained within the right value?
+infix 4 .<@
+(.<@) :: Column T.PGJsonb -> Column T.PGJsonb -> Column T.PGBool
+(.<@) = C.binOp (HPQ.:<@)
+
+-- | Does the key/element string exist within the JSON value?
+infix 4 .?
+(.?) :: Column T.PGJsonb -> Column T.PGText -> Column T.PGBool
+(.?) = C.binOp (HPQ.:?)
+
+-- | Do any of these key/element strings exist?
+infix 4 .?|
+(.?|) :: Column T.PGJsonb -> Column (T.PGArray T.PGText) -> Column T.PGBool
+(.?|) = C.binOp (HPQ.:?|)
+
+-- | Do all of these key/element strings exist?
+infix 4 .?&
+(.?&) :: Column T.PGJsonb -> Column (T.PGArray T.PGText) -> Column T.PGBool
+(.?&) = C.binOp (HPQ.:?&)

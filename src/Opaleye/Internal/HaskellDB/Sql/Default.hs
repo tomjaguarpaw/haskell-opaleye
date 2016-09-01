@@ -164,6 +164,15 @@ showBinOp  (:|)         = "|"
 showBinOp  (:^)         = "^"
 showBinOp  (:=)         = "="
 showBinOp  OpAtTimeZone = "AT TIME ZONE"
+showBinOp  (:->)        = "->"
+showBinOp  (:->>)       = "->>"
+showBinOp  (:#>)        = "#>"
+showBinOp  (:#>>)       = "#>>"
+showBinOp  (:@>)        = "@>"
+showBinOp  (:<@)        = "<@"
+showBinOp  (:?)         = "?"
+showBinOp  (:?|)        = "?|"
+showBinOp  (:?&)        = "?&"
 
 
 data UnOpType = UnOpFun | UnOpPrefix | UnOpPostfix
