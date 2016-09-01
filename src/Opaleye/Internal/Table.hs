@@ -127,11 +127,11 @@ instance Monoid (Zip a) where
     where mempty' = [] `NEL.cons` mempty'
   Zip xs `mappend` Zip ys = Zip (NEL.zipWith (++) xs ys)
 
-required :: String -> Writer (Column a) (Column a)
+required :: String -> Writer (Column a) (TM.TableColumn a)
 required columnName =
   Writer (PM.PackMap (\f columns -> f (fmap unColumn columns, columnName)))
 
-optional :: String -> Writer (Maybe (Column a)) (Column a)
+optional :: String -> Writer (Maybe (Column a)) (TM.TableColumn a)
 optional columnName =
   Writer (PM.PackMap (\f columns -> f (fmap maybeUnColumn columns, columnName)))
   where maybeUnColumn Nothing = HPQ.DefaultInsertExpr

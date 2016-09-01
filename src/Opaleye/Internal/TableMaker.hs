@@ -15,6 +15,12 @@ import           Control.Applicative (Applicative, pure, (<*>))
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+data TableColumn column = TableColumn ColumnDescription
+
+data ColumnDescription = ColumnDescription {
+  name :: String ,
+  type_ :: String ,
+  options :: String }
 
 -- If we switch to a more lens-like approach to PackMap this should be
 -- the equivalent of a Setter
@@ -40,15 +46,15 @@ tableColumn = ViewColumnMaker
               (PM.PackMap (\f s -> fmap (const (mkColumn s)) (f ())))
   where mkColumn = IC.Column . HPQ.BaseTableAttrExpr
 
-column :: ColumnMaker (C.Column a) (C.Column a)
+column :: ColumnMaker (TableColumn a) (C.Column a)
 column = ColumnMaker
-         (PM.PackMap (\f (IC.Column s)
-                      -> fmap IC.Column (f s)))
+         (PM.PackMap (\f (TableColumn s)
+                      -> fmap IC.Column ((f . HPQ.BaseTableAttrExpr . name) s)))
 
 instance Default ViewColumnMaker String (C.Column a) where
   def = tableColumn
 
-instance Default ColumnMaker (C.Column a) (C.Column a) where
+instance Default ColumnMaker (TableColumn a) (C.Column a) where
   def = column
 
 -- {
