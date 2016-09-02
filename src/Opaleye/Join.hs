@@ -4,11 +4,9 @@ module Opaleye.Join where
 
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Join as J
-import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
 import           Opaleye.QueryArr (Query)
-import qualified Opaleye.Internal.QueryArr as Q
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.PGTypes as T
 
 import qualified Data.Profunctor.Product.Default as D
@@ -61,15 +59,8 @@ leftJoinExplicit :: U.Unpackspec columnsA columnsA
                  -> Query columnsA -> Query columnsB
                  -> ((columnsA, columnsB) -> Column T.PGBool)
                  -> Query (columnsA, nullableColumnsB)
-leftJoinExplicit _ _ nullmaker qA qB cond = Q.simpleQueryArr q where
-  q ((), startTag) = ((columnsA, nullableColumnsB), primQueryR, T.next endTag)
-    where (columnsA, primQueryA, midTag) = Q.runSimpleQueryArr qA ((), startTag)
-          (columnsB, primQueryB, endTag) = Q.runSimpleQueryArr qB ((), midTag)
-
-          nullableColumnsB = J.toNullable nullmaker columnsB
-
-          Column cond' = cond (columnsA, columnsB)
-          primQueryR = PQ.Join PQ.LeftJoin cond' primQueryA primQueryB
+leftJoinExplicit _ _ nullmaker =
+  J.joinExplicit id (J.toNullable nullmaker) PQ.LeftJoin
 
 rightJoinExplicit :: U.Unpackspec columnsA columnsA
                   -> U.Unpackspec columnsB columnsB
@@ -77,15 +68,8 @@ rightJoinExplicit :: U.Unpackspec columnsA columnsA
                   -> Query columnsA -> Query columnsB
                   -> ((columnsA, columnsB) -> Column T.PGBool)
                   -> Query (nullableColumnsA, columnsB)
-rightJoinExplicit _ _ nullmaker qA qB cond = Q.simpleQueryArr q where
-  q ((), startTag) = ((nullableColumnsA, columnsB), primQueryR, T.next endTag)
-    where (columnsA, primQueryA, midTag) = Q.runSimpleQueryArr qA ((), startTag)
-          (columnsB, primQueryB, endTag) = Q.runSimpleQueryArr qB ((), midTag)
-
-          nullableColumnsA = J.toNullable nullmaker columnsA
-
-          Column cond' = cond (columnsA, columnsB)
-          primQueryR = PQ.Join PQ.RightJoin cond' primQueryA primQueryB
+rightJoinExplicit _ _ nullmaker =
+  J.joinExplicit (J.toNullable nullmaker) id PQ.RightJoin
 
 
 fullJoinExplicit :: U.Unpackspec columnsA columnsA
@@ -95,13 +79,5 @@ fullJoinExplicit :: U.Unpackspec columnsA columnsA
                  -> Query columnsA -> Query columnsB
                  -> ((columnsA, columnsB) -> Column T.PGBool)
                  -> Query (nullableColumnsA, nullableColumnsB)
-fullJoinExplicit _ _ nullmakerA nullmakerB qA qB cond = Q.simpleQueryArr q where
-  q ((), startTag) = ((nullableColumnsA, nullableColumnsB), primQueryR, T.next endTag)
-    where (columnsA, primQueryA, midTag) = Q.runSimpleQueryArr qA ((), startTag)
-          (columnsB, primQueryB, endTag) = Q.runSimpleQueryArr qB ((), midTag)
-
-          nullableColumnsA = J.toNullable nullmakerA columnsA
-          nullableColumnsB = J.toNullable nullmakerB columnsB
-
-          Column cond' = cond (columnsA, columnsB)
-          primQueryR = PQ.Join PQ.FullJoin cond' primQueryA primQueryB
+fullJoinExplicit _ _ nullmakerA nullmakerB =
+  J.joinExplicit (J.toNullable nullmakerA) (J.toNullable nullmakerB) PQ.FullJoin
