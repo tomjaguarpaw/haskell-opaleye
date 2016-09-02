@@ -123,6 +123,11 @@ charLength (Column e) = Column (HPQ.FunExpr "char_length" [e])
 ors :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
 ors = F.foldl' (.||) (T.pgBool False)
 
+-- | 'in_' is designed to be used in prefix form.
+--
+-- 'in_' @validProducts@ @product@ checks whether @product@ is a valid
+-- product.  'in_' @validProducts@ is a function which checks whether
+-- a product is a valid product.
 in_ :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> Column T.PGBool
 in_ hs w = ors . fmap (w .==) $ hs
 
