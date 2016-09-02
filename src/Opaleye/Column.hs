@@ -1,3 +1,8 @@
+-- | Functions for working directly with 'Column's.
+--
+-- Please note that numeric 'Column' types are instances of 'Num', so
+-- you can use '*', '/', '+', '-' on them.
+
 module Opaleye.Column (module Opaleye.Column,
                        Column,
                        Nullable,
@@ -17,6 +22,7 @@ import           Prelude hiding (null)
 null :: Column (Nullable a)
 null = C.Column (HPQ.ConstExpr HPQ.NullLit)
 
+-- | @TRUE@ if the value of the column is @NULL@, @FALSE@ otherwise.
 isNull :: Column (Nullable a) -> Column T.PGBool
 isNull = C.unOp HPQ.OpIsNull
 
@@ -24,7 +30,7 @@ isNull = C.unOp HPQ.OpIsNull
 -- otherwise map the underlying @Column a@ using the provided
 -- function.
 --
--- The Opaleye equivalent of the 'Data.Maybe.maybe' function.
+-- The Opaleye equivalent of 'Data.Maybe.maybe'.
 matchNullable :: Column b -> (Column a -> Column b) -> Column (Nullable a)
               -> Column b
 matchNullable replacement f x = C.unsafeIfThenElse (isNull x) replacement
@@ -33,11 +39,13 @@ matchNullable replacement f x = C.unsafeIfThenElse (isNull x) replacement
 -- | If the @Column (Nullable a)@ is NULL then return the provided
 -- @Column a@ otherwise return the underlying @Column a@.
 --
--- The Opaleye equivalent of the 'Data.Maybe.fromMaybe' function
+-- The Opaleye equivalent of 'Data.Maybe.fromMaybe'.
 fromNullable :: Column a -> Column (Nullable a) -> Column a
 fromNullable = flip matchNullable id
 
--- | The Opaleye equivalent of 'Data.Maybe.Just'
+-- | Treat a column as though it were nullable.  This is always safe.
+--
+-- The Opaleye equivalent of 'Data.Maybe.Just'.
 toNullable :: Column a -> Column (Nullable a)
 toNullable = unsafeCoerceColumn
 

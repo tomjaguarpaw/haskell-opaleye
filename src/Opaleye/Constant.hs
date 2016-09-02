@@ -24,14 +24,12 @@ import qualified Data.Profunctor                 as P
 import           Control.Applicative (Applicative, pure, (<*>))
 import           Data.Functor                    ((<$>))
 
-
-newtype Constant haskells columns =
-  Constant { constantExplicit :: haskells -> columns }
-
--- | 'constant' can be used with functions like
--- 'Opaleye.Manipulation.runInsert' to insert custom Haskell types into the
--- database.
+-- | 'constant' provides a convenient typeclass wrapper around the
+-- 'Column' creation functions in "Opaleye.PGTypes".  Besides
+-- convenience it doesn't provide any additional functionality.
 --
+-- It can be used with functions like 'Opaleye.Manipulation.runInsert'
+-- to insert custom Haskell types into the database.
 -- The following is an example of a function for inserting custom types.
 --
 -- @
@@ -49,6 +47,9 @@ newtype Constant haskells columns =
 constant :: D.Default Constant haskells columns
          => haskells -> columns
 constant = constantExplicit D.def
+
+newtype Constant haskells columns =
+  Constant { constantExplicit :: haskells -> columns }
 
 instance D.Default Constant haskell (Column sql)
          => D.Default Constant (Maybe haskell) (Column (C.Nullable sql)) where

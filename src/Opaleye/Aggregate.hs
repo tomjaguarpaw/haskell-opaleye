@@ -1,4 +1,7 @@
--- | Perform aggregations on query results.
+-- | Perform aggregation on 'Query's.  To aggregate a 'Query' you
+-- should construct an 'Aggregator' encoding how you want the
+-- aggregation to proceed, then call 'aggregate' on it.
+
 module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
 
 import           Control.Applicative (pure)
@@ -25,6 +28,13 @@ import qualified Opaleye.Join      as J
 Given a 'Query' producing rows of type @a@ and an 'Aggregator' accepting rows of
 type @a@, apply the aggregator to the results of the query.
 
+If you simply want to count the number of rows in a query you might
+find the 'countRows' function more convenient.
+
+By design there is no aggregation function of type @Aggregator b b' ->
+QueryArr a b -> QueryArr a b'@.  Such a function would allow violation
+of SQL's scoping rules and lead to invalid queries.
+
 Please note that when aggregating an empty query with no @GROUP BY@
 clause, Opaleye's behaviour differs from Postgres's behaviour.
 Postgres returns a single row whereas Opaleye returns zero rows.
@@ -33,12 +43,6 @@ over groups of rows and Postgres's behaviour is inconsistent.  When a
 query has zero rows it has zero groups, and thus zero rows in the
 result of an aggregation.)
 
-If you simply want to count the number of rows in a query you might
-find the 'countRows' function more convenient.
-
-By design there is no aggregation function of type @Aggregator b b' ->
-QueryArr a b -> QueryArr a b'@.  Such a function would allow violation
-of SQL's scoping rules and lead to invalid queries.
 -}
 aggregate :: Aggregator a b -> Query a -> Query b
 aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)

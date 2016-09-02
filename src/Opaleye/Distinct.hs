@@ -8,7 +8,7 @@ import           Opaleye.Internal.Distinct (distinctExplicit, Distinctspec)
 
 import qualified Data.Profunctor.Product.Default as D
 
--- | Remove duplicate items from the query result.
+-- | Remove duplicate rows from the 'Query'.
 --
 -- Example type specialization:
 --
@@ -22,7 +22,7 @@ import qualified Data.Profunctor.Product.Default as D
 -- distinct :: Query (Foo (Column a) (Column b) (Column c)) -> Query (Foo (Column a) (Column b) (Column c))
 -- @
 --
--- By design there is no distinct function of type @QueryArr a b ->
+-- By design there is no @distinct@ function of type @QueryArr a b ->
 -- QueryArr a b@.  Such a function would allow violation of SQL's
 -- scoping rules and lead to invalid queries.
 distinct :: D.Default Distinctspec columns columns =>
