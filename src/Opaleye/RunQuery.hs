@@ -47,13 +47,6 @@ runQuery :: D.Default QueryRunner columns haskells
          -> IO [haskells]
 runQuery = runQueryExplicit D.def
 
-runQueryExplicit :: QueryRunner columns haskells
-                 -> PGS.Connection
-                 -> Query columns
-                 -> IO [haskells]
-runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
-  where (sql, parser) = prepareQuery qr q
-
 -- | @runQueryFold@ streams the results of a query incrementally and consumes
 -- the results with a left fold.
 --
@@ -67,18 +60,6 @@ runQueryFold
   -> (b -> haskells -> IO b)
   -> IO b
 runQueryFold = runQueryFoldExplicit D.def
-
-runQueryFoldExplicit
-  :: QueryRunner columns haskells
-  -> PGS.Connection
-  -> Query columns
-  -> b
-  -> (b -> haskells -> IO b)
-  -> IO b
-runQueryFoldExplicit qr conn q z f = case sql of
-  Nothing   -> return z
-  Just sql' -> PGS.foldWith_ parser conn sql' z f
-  where (sql, parser) = prepareQuery qr q
 
 -- | Use 'queryRunnerColumn' to make an instance to allow you to run queries on
 --   your own datatypes.  For example:
@@ -100,7 +81,26 @@ queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
   where IRQ.QueryRunnerColumn u fp = qrc
         fmapFP = fmap . fmap . fmap
 
--- | For internal use only.  Do not use.  Will be removed in a
+runQueryExplicit :: QueryRunner columns haskells
+                 -> PGS.Connection
+                 -> Query columns
+                 -> IO [haskells]
+runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
+  where (sql, parser) = prepareQuery qr q
+
+runQueryFoldExplicit
+  :: QueryRunner columns haskells
+  -> PGS.Connection
+  -> Query columns
+  -> b
+  -> (b -> haskells -> IO b)
+  -> IO b
+runQueryFoldExplicit qr conn q z f = case sql of
+  Nothing   -> return z
+  Just sql' -> PGS.foldWith_ parser conn sql' z f
+  where (sql, parser) = prepareQuery qr q
+
+-- | For internal use only.  Do not use.  Will be deprecated in a
 -- subsequent release.
 prepareQuery :: QueryRunner columns haskells -> Query columns -> (Maybe PGS.Query, FR.RowParser haskells)
 prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)

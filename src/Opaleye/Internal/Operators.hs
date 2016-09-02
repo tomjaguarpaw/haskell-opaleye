@@ -24,6 +24,8 @@ infix 4 .==
 (.==) = eqExplicit (D.def :: EqPP columns columns)
 
 infixr 3 .&&
+
+-- | Boolean and
 (.&&) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
 (.&&) = C.binOp HPQ.OpAnd
 

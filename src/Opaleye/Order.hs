@@ -1,3 +1,5 @@
+-- | Ordering, @LIMIT@ and @OFFSET@
+
 module Opaleye.Order (module Opaleye.Order, O.Order) where
 
 import qualified Opaleye.Column as C

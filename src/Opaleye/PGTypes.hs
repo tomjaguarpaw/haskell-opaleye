@@ -1,3 +1,6 @@
+-- | Postgres types and functions to create 'Column's of those types.
+-- You may find it more convenient to use "Opaleye.Constant" instead.
+
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -21,25 +24,6 @@ import qualified Data.UUID as UUID
 
 import           Data.Int (Int64)
 
-data PGBool
-data PGDate
-data PGFloat4
-data PGFloat8
-data PGInt8
-data PGInt4
-data PGInt2
-data PGNumeric
-data PGText
-data PGTime
-data PGTimestamp
-data PGTimestamptz
-data PGUuid
-data PGCitext
-data PGArray a
-data PGBytea
-data PGJson
-data PGJsonb
-
 instance C.PGNum PGFloat8 where
   pgFromInteger = pgDouble . fromInteger
 
@@ -61,12 +45,6 @@ instance C.PGString PGText where
 
 instance C.PGString PGCitext where
   pgFromString = pgCiLazyText . CI.mk . LText.pack
-
-literalColumn :: HPQ.Literal -> Column a
-literalColumn = IPT.literalColumn
-{-# WARNING literalColumn
-    "'literalColumn' has been moved to Opaleye.Internal.PGTypes"
-  #-}
 
 pgString :: String -> Column PGText
 pgString = IPT.literalColumn . HPQ.StringLit
@@ -97,12 +75,6 @@ pgBool = IPT.literalColumn . HPQ.BoolLit
 
 pgUUID :: UUID.UUID -> Column PGUuid
 pgUUID = C.unsafeCoerceColumn . pgString . UUID.toString
-
-unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
-unsafePgFormatTime = IPT.unsafePgFormatTime
-{-# WARNING unsafePgFormatTime
-    "'unsafePgFormatTime' has been moved to Opaleye.Internal.PGTypes"
-  #-}
 
 pgDay :: Time.Day -> Column PGDate
 pgDay = IPT.unsafePgFormatTime "date" "'%F'"
@@ -206,3 +178,34 @@ instance IsSqlType PGJson where
   showPGType _ = "json"
 instance IsSqlType PGJsonb where
   showPGType _ = "jsonb"
+
+data PGBool
+data PGDate
+data PGFloat4
+data PGFloat8
+data PGInt8
+data PGInt4
+data PGInt2
+data PGNumeric
+data PGText
+data PGTime
+data PGTimestamp
+data PGTimestamptz
+data PGUuid
+data PGCitext
+data PGArray a
+data PGBytea
+data PGJson
+data PGJsonb
+
+literalColumn :: HPQ.Literal -> Column a
+literalColumn = IPT.literalColumn
+{-# WARNING literalColumn
+    "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be deprecated in a future release"
+  #-}
+
+unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
+unsafePgFormatTime = IPT.unsafePgFormatTime
+{-# WARNING unsafePgFormatTime
+    "'unsafePgFormatTime' has been moved to Opaleye.Internal.PGTypes and will be deprecated in a future release"
+  #-}

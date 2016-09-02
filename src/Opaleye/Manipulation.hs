@@ -47,12 +47,6 @@ import           Data.String (fromString)
 import qualified Data.List.NonEmpty as NEL
 
 -- | Returns the number of rows inserted
---
--- This will be deprecated in a future release.  Use 'runInsertMany' instead.
-runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
-runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
-
--- | Returns the number of rows inserted
 runInsertMany :: PGS.Connection
               -> T.Table columns columns'
               -> [columns]
@@ -61,21 +55,6 @@ runInsertMany conn table columns = case NEL.nonEmpty columns of
   -- Inserting the empty list is just the same as returning 0
   Nothing       -> return 0
   Just columns' -> (PGS.execute_ conn . fromString .: arrangeInsertManySql) table columns'
-
--- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
--- compiler will have trouble inferring types.  It is strongly
--- recommended that you provide full type signatures when using
--- @runInsertReturning@.
---
--- This will be deprecated in a future release.  Use
--- 'runInsertManyReturning' instead.
-runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
-                   => PGS.Connection
-                   -> T.Table columnsW columnsR
-                   -> columnsW
-                   -> (columnsR -> returned)
-                   -> IO [haskells]
-runInsertReturning = runInsertReturningExplicit D.def
 
 -- | @runInsertManyReturning@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
@@ -166,6 +145,27 @@ runUpdateReturningExplicit qr conn t update cond r =
   where IRQ.QueryRunner u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
         TI.Table _ (TI.TableProperties _ (TI.View v)) = t
+
+-- | Returns the number of rows inserted
+--
+-- This will be deprecated in a future release.  Use 'runInsertMany' instead.
+runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
+runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
+
+-- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
+-- compiler will have trouble inferring types.  It is strongly
+-- recommended that you provide full type signatures when using
+-- @runInsertReturning@.
+--
+-- This will be deprecated in a future release.  Use
+-- 'runInsertManyReturning' instead.
+runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
+                   => PGS.Connection
+                   -> T.Table columnsW columnsR
+                   -> columnsW
+                   -> (columnsR -> returned)
+                   -> IO [haskells]
+runInsertReturning = runInsertReturningExplicit D.def
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.

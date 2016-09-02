@@ -20,7 +20,10 @@ import qualified Data.Profunctor.Product as PP
 -- | @QueryArr a b@ is analogous to a Haskell function @a -> [b]@.
 newtype QueryArr a b = QueryArr ((a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag))
 
--- | @Query a@ is analogous to a Haskell value @[a]@.
+-- | A Postgres query, i.e. some functionality that can run via SQL
+-- and produce a collection of rows.
+--
+-- @Query a@ is analogous to a Haskell value @[a]@.
 type Query = QueryArr ()
 
 simpleQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b

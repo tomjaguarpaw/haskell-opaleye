@@ -47,9 +47,9 @@ import qualified Control.Arrow as Arr
 -- @
 data Table writerColumns viewColumns
   = Table String (TableProperties writerColumns viewColumns)
-    -- ^ Uses the default schema name (@"public"@).
+    -- ^ Uses the default schema name (@\"public\"@).
   | TableWithSchema String String (TableProperties writerColumns viewColumns)
-    -- ^ Schema name (@"public"@ by default in PostgreSQL), table name,
+    -- ^ Schema name (@\"public\"@ by default in PostgreSQL), table name,
     --   table properties.
 
 tableIdentifier :: Table writerColumns viewColumns -> PQ.TableIdentifier

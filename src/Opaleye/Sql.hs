@@ -15,7 +15,7 @@ import qualified Opaleye.Internal.Tag as T
 
 import qualified Data.Profunctor.Product.Default as D
 
--- | When 'Nothing' is returned it means that the query has no results.
+-- | When 'Nothing' is returned it means that the 'Query' returns zero rows.
 --
 -- Example type specialization:
 --
@@ -45,6 +45,7 @@ showSqlForPostgresExplicit = formatAndShowSQL
 showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
 showSqlForPostgresUnoptExplicit = formatAndShowSQL .: Q.runQueryArrUnpack
 
+-- | For internal use only.  Do not use.  Will be deprecated in a future release.
 formatAndShowSQL :: ([HPQ.PrimExpr], PQ.PrimQuery' a, T.Tag) -> Maybe String
 formatAndShowSQL = fmap (show . Pr.ppSql . Sql.sql) . traverse2Of3 Op.removeEmpty
   where -- Just a lens

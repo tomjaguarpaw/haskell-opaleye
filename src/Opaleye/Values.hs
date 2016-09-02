@@ -9,7 +9,10 @@ import qualified Opaleye.Internal.Unpackspec as U
 
 import           Data.Profunctor.Product.Default (Default, def)
 
--- | Example type specialization:
+-- | 'values' implements Postgres's @VALUES@ construct and allows you
+-- to create a query that consists of the given rows.
+--
+-- Example type specialization:
 --
 -- @
 -- values :: [(Column a, Column b)] -> Query (Column a, Column b)

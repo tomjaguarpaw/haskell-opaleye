@@ -55,7 +55,7 @@ import           Data.Typeable (Typeable)
 -- | A 'QueryRunnerColumn' @pgType@ @haskellType@ encodes how to turn
 -- a value of Postgres type @pgType@ into a value of Haskell type
 -- @haskellType@.  For example a value of type 'QueryRunnerColumn'
--- 'T.PGText' 'String' encodes how to turn a 'PGText' result from the
+-- 'T.PGText' 'String' encodes how to turn a 'T.PGText' result from the
 -- database into a Haskell 'String'.
 
 -- This is *not* a Product Profunctor because it is the only way I
@@ -84,10 +84,10 @@ data QueryRunner columns haskells =
               -- since we can't select zero columns.  In that case we
               -- have to make sure we read a single Int.
 
-fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn coltype haskell
+fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn pgType haskell
 fieldQueryRunnerColumn = fieldParserQueryRunnerColumn fromField
 
-fieldParserQueryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn coltype haskell
+fieldParserQueryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn pgType haskell
 fieldParserQueryRunnerColumn = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
 
 queryRunner :: QueryRunnerColumn a b -> QueryRunner (Column a) b
@@ -120,7 +120,7 @@ instance QueryRunnerColumnDefault a b =>
 
 -- | A 'QueryRunnerColumnDefault' @pgType@ @haskellType@ represents
 -- the default way to turn a @pgType@ result from the database into a
--- Haskell value of type @haskelType@.
+-- Haskell value of type @haskellType@.
 --
 -- Creating an instance of 'QueryRunnerColumnDefault' for your own types is
 -- necessary for retrieving those types from the database.

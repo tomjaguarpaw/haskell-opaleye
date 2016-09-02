@@ -1,9 +1,6 @@
-{-|
+-- | 'Query' and 'QueryArr' are the composable units of database
+-- querying that are used in Opaleye.
 
-This modules defines the 'QueryArr' arrow, which is an arrow that represents
-selecting data from a database, and composing multiple queries together.
-
--}
-module Opaleye.QueryArr (QueryArr, Query) where
+module Opaleye.QueryArr (Query, QueryArr) where
 
 import           Opaleye.Internal.QueryArr (QueryArr, Query)

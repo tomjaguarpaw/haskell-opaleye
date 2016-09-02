@@ -16,8 +16,8 @@ import qualified Data.Void as Void
 {-|
 An `Order` represents an expression to order on and a sort
 direction. Multiple `Order`s can be composed with
-`Data.Monoid.mappend`.  If two rows are equal according to the first
-`Order`, the second is used, and so on.
+`Data.Monoid.mappend` or @(\<\>)@ from "Data.Monoid".  If two rows are
+equal according to the first `Order`, the second is used, and so on.
 -}
 
 -- Like the (columns -> RowParser haskells) field of QueryRunner this

@@ -1,8 +1,8 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 
--- | Operators on 'Column's.  Numeric 'Column' types are instances of
--- 'Num', so you can use '*', '/', '+', '-' on them.
+-- | Operators on 'Column's.  Please note that numeric 'Column' types
+-- are instances of 'Num', so you can use '*', '/', '+', '-' on them.
 
 module Opaleye.Operators (module Opaleye.Operators,
                           (O..&&)) where
@@ -38,14 +38,11 @@ restrict = QueryArr f where
 {-| Filter a 'QueryArr' to only those rows where the given condition
 holds.  This is the 'QueryArr' equivalent of 'Prelude.filter' from the
 'Prelude'.  You would typically use 'keepWhen' if you want to use a
-"point free" style.-}
+\"point free\" style.-}
 keepWhen :: (a -> Column T.PGBool) -> QueryArr a a
 keepWhen p = proc a -> do
   restrict  -< p a
   A.returnA -< a
-
-doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
-doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
 
 infix 4 .==
 (.==) :: Column a -> Column a -> Column T.PGBool
@@ -98,21 +95,27 @@ ifThenElse :: Column T.PGBool -> Column a -> Column a -> Column a
 ifThenElse = unsafeIfThenElse
 
 infixr 2 .||
+
+-- | Boolean or
 (.||) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
 (.||) = C.binOp HPQ.OpOr
 
 not :: Column T.PGBool -> Column T.PGBool
 not = C.unOp HPQ.OpNot
 
+-- | Concatenate 'Column' 'T.PGText'
 (.++) :: Column T.PGText -> Column T.PGText -> Column T.PGText
 (.++) = C.binOp (HPQ.:||)
 
+-- | To lowercase
 lower :: Column T.PGText -> Column T.PGText
 lower = C.unOp HPQ.OpLower
 
+-- | To uppercase
 upper :: Column T.PGText -> Column T.PGText
 upper = C.unOp HPQ.OpUpper
 
+-- | Postgres @LIKE@ operator
 like :: Column T.PGText -> Column T.PGText -> Column T.PGBool
 like = C.binOp HPQ.OpLike
 
@@ -174,3 +177,7 @@ arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es
 
 singletonArray :: T.IsSqlType a => Column a -> Column (T.PGArray a)
 singletonArray x = arrayPrepend x emptyArray
+
+-- | Cast a 'PGInt4' to a 'PGFloat8'
+doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
+doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
