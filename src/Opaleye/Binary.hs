@@ -22,6 +22,10 @@
 -- of type @QueryArr a b -> QueryArr a b -> QueryArr a b@.  Such
 -- functions would allow violation of SQL's scoping rules and lead to
 -- invalid queries.
+--
+-- `unionAll` is very close to being the @<|>@ operator of a
+-- @Control.Applicative.Alternative@ instance but it fails to work
+-- only because of the typeclass constraint it has.
 
 {-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
 
