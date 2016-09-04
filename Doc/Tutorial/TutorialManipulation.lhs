@@ -61,10 +61,14 @@ P.PGText` from a `String`.
 > insertNothing = arrangeInsertManySql table (return (Nothing, 2, 3, P.pgString "Hello"))
 
 ghci> putStrLn insertNothing
-INSERT INTO tablename (x,
-                       y)
-VALUES (2.0,
-        3.0)
+INSERT INTO "tablename" ("id",
+                         "x",
+                         "y",
+                         "s")
+VALUES (DEFAULT,
+        2.0,
+        3.0,
+        E'Hello')
 
 
 If we'd like to pass a value into the insertion function, we can't
@@ -74,7 +78,7 @@ rely on the Num instance and must use constant:
 > insertNonLiteral i =
 >   arrangeInsertManySql table (return (Nothing, 2, C.constant i, P.pgString "Hello"))
 
-ghci> > putStrLn $ insertNonLiteral 12.0
+ghci> putStrLn $ insertNonLiteral 12.0
 INSERT INTO "tablename" ("id",
                          "x",
                          "y",
@@ -91,12 +95,14 @@ If we really want to specify an optional column we can use `Just`.
 > insertJust = arrangeInsertManySql table (return (Just 1, 2, 3, P.pgString "Hello"))
 
 ghci> putStrLn insertJust
-INSERT INTO tablename (id,
-                       x,
-                       y)
+INSERT INTO "tablename" ("id",
+                         "x",
+                         "y",
+                         "s")
 VALUES (1,
         2.0,
-        3.0)
+        3.0,
+        E'Hello')
 
 
 An update takes an update function from the read type to the write
@@ -109,10 +115,11 @@ according to the update function.
 >                                 (\(id_, _, _, _) -> id_ .== 5)
 
 ghci> putStrLn update
-UPDATE tablename
-SET x = (x) + (y),
-    y = (x) - (y)
-WHERE ((id) = 5)
+SET "id" = DEFAULT,
+    "x" = ("x") + ("y"),
+    "y" = ("x") - ("y"),
+    "s" = "s"
+WHERE (("id") = 5)
 
 
 Sometimes when we insert a row with an automatically generated field
@@ -129,11 +136,15 @@ Opaleye supports it also.
 >         def' = def
 
 ghci> putStrLn insertReturning
-INSERT INTO tablename (x,
-                       y)
-VALUES (4.0,
-        5.0)
-RETURNING id
+INSERT INTO "tablename" ("id",
+                         "x",
+                         "y",
+                         "s")
+VALUES (DEFAULT,
+        4.0,
+        5.0,
+        E'Bye')
+RETURNING "id"
 
 
 Running the queries
