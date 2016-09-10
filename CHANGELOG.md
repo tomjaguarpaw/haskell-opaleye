@@ -1,3 +1,10 @@
+## 0.5.1.0
+
+* Added
+    * support for JSON operators
+    * Many improvements to the Haddocks
+    * RIGHT and FULL OUTER joins
+
 ## 0.5.0.0
 
 * Added
