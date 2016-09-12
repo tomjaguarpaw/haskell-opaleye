@@ -485,13 +485,14 @@ Consider this data type:
 
 Opaleye won't know how to convert the postgres value 'female' to the
 Haskell type `Female`. So we have to provide our own conversion
-implementation. This can be done with through 2 different ways:
+implementation. To do so, you'll have to derive QueryRunnerColumnDefault.
+This can be done through 3 different ways.
 
 FromField method
 ----------------
 
-You can derive both the QueryRunnerColumnDefault and the FromField
-instance for your types like this:
+If you already have a FromField instance then you can use fieldQueryRunnerColumn
+like this:
 
 > instance FromField (Gender) where
 >   fromField f mdata =
@@ -506,13 +507,12 @@ instance for your types like this:
 >   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 The FromField instance is part of the Postgresql-simple package.
-(https://hackage.haskell.org/package/postgresql-simple)
+(https://hackage.haskell.org/package/postgresql-simple/docs/Database-PostgreSQL-Simple-FromField.html)
 
 queryRunnerColumn method
 ------------------------
 
-If you don't have a FromField instance, you can use queryRunnerColumn
-instead like this:
+If you don't have a FromField instance you should use queryRunnerColumn like this:
 
 > toSituation :: String -> Situation
 > toSituation "alive" = Alive
@@ -522,6 +522,13 @@ instead like this:
 > instance QueryRunnerColumnDefault PGText Situation where
 >   queryRunnerColumnDefault = queryRunnerColumn id toSituation fieldQueryRunnerColumn
 
+FieldParser method
+------------------
+
+For more complicated case, you can write your custom field parser and
+use fieldParserQueryRunnerColumn.
+Examples can be found in the source code (https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/src/Opaleye/Internal/RunQuery.hs)
+Like the 'FromField' method, FieldParser are part of the package postgresql-simple. (https://hackage.haskell.org/package/postgresql-simple/docs/Database-PostgreSQL-Simple-FromField.html)
 
 Composability
 =============
