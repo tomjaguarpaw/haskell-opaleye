@@ -3,6 +3,7 @@
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE TemplateHaskell #-}
+> {-# LANGUAGE OverloadedStrings #-}
 >
 > module TutorialBasic where
 >
@@ -17,6 +18,8 @@
 >                          showSqlForPostgres, Unpackspec,
 >                          PGInt4, PGInt8, PGText, PGDate, PGFloat8, PGBool)
 >
+> import           Opaleye.RunQuery
+>
 > import           Data.Profunctor.Product (p2, p3)
 > import           Data.Profunctor.Product.Default (Default)
 > import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
@@ -25,6 +28,7 @@
 > import           Control.Arrow (returnA, (<<<))
 >
 > import qualified Database.PostgreSQL.Simple as PGS
+> import           Database.PostgreSQL.Simple.FromField
 
 Introduction
 ============
@@ -457,6 +461,74 @@ SELECT CASE WHEN boss IS NULL
             END
 FROM employeeTable
 
+
+Database to Haskell types conversion
+====================================
+
+Opaleye provides default implementations that you can seamlessly
+use for simple types but sometimes the types used in your database
+won't get converted to your Haskell types natively.
+
+Consider this data type:
+
+> data User' a b c = User'
+>   { name      :: a
+>   , gender    :: b
+>   , situation :: c
+>   }
+>
+> data Gender    = Female | Male | Other
+> data Situation = Alive | Dead | Unknown
+>
+> type User = User' String Gender Situation
+> type UserColumn = User' (Column PGText) (Column PGText) (Column PGText)
+
+Opaleye won't know how to convert the postgres value 'female' to the
+Haskell type `Female`. So we have to provide our own conversion
+implementation. To do so, you'll have to derive QueryRunnerColumnDefault.
+This can be done through 3 different ways.
+
+FromField method
+----------------
+
+If you already have a FromField instance then you can use fieldQueryRunnerColumn
+like this:
+
+> instance FromField (Gender) where
+>   fromField f mdata =
+>     return gender
+>     where
+>       gender = case mdata of
+>         Just "female" -> Female
+>         Just "male" -> Male
+>         _ -> Other
+>
+> instance QueryRunnerColumnDefault PGText Gender where
+>   queryRunnerColumnDefault = fieldQueryRunnerColumn
+
+The FromField instance is part of the Postgresql-simple package.
+(https://hackage.haskell.org/package/postgresql-simple/docs/Database-PostgreSQL-Simple-FromField.html)
+
+queryRunnerColumn method
+------------------------
+
+If you don't have a FromField instance you should use queryRunnerColumn like this:
+
+> toSituation :: String -> Situation
+> toSituation "alive" = Alive
+> toSituation "dead"  = Dead
+> toSituation _       = Unknown
+>
+> instance QueryRunnerColumnDefault PGText Situation where
+>   queryRunnerColumnDefault = queryRunnerColumn id toSituation fieldQueryRunnerColumn
+
+FieldParser method
+------------------
+
+For more complicated case, you can write your custom field parser and
+use fieldParserQueryRunnerColumn.
+Examples can be found in the source code (https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/src/Opaleye/Internal/RunQuery.hs)
+Like the 'FromField' method, FieldParser are part of the package postgresql-simple. (https://hackage.haskell.org/package/postgresql-simple/docs/Database-PostgreSQL-Simple-FromField.html)
 
 Composability
 =============
