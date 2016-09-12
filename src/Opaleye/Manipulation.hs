@@ -90,7 +90,7 @@ runUpdate :: PGS.Connection
           -- 'runUpdate' will update rows for which @f@ returns @TRUE@
           -- and leave unchanged rows for which @f@ returns @FALSE@.
           -> IO Int64
-          -- ^ The number of updated rows
+          -- ^ The number of rows updated
 runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
 
 
@@ -128,7 +128,7 @@ runDelete :: PGS.Connection
           -- 'runDelete' will delete rows for which @f@ returns @TRUE@
           -- and leave unchanged rows for which @f@ returns @FALSE@.
           -> IO Int64
-          -- ^ The number of deleted rows
+          -- ^ The number of rows deleted
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 
 -- | You probably don't need this, but can just use
