@@ -100,6 +100,8 @@ defaultSqlExpr gen expr =
                 (paren leftE, rightE)
               (OpOr, _, BinExpr OpAnd _ _) ->
                 (leftE, paren rightE)
+              (OpIn, _, ListExpr _) ->
+                (leftE, rightE)
               (_, ConstExpr _, ConstExpr _) ->
                 (leftE, rightE)
               (_, _, ConstExpr _) ->
