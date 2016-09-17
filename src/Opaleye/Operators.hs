@@ -132,7 +132,9 @@ ors = F.foldl' (.||) (T.pgBool False)
 -- product.  'in_' @validProducts@ is a function which checks whether
 -- a product is a valid product.
 in_ :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> Column T.PGBool
-in_ hs w = ors . fmap (w .==) $ hs
+in_ fcas (Column a) = Column $ case F.toList fcas of
+   [] -> HPQ.ConstExpr (HPQ.BoolLit False)
+   xs -> HPQ.BinExpr HPQ.OpIn a (HPQ.ListExpr (map C.unColumn xs))
 
 -- | True if the first argument occurs amongst the rows of the second,
 -- false otherwise.
@@ -156,7 +158,7 @@ inQuery c q = qj'
         qj = Join.leftJoin (A.arr (const 1))
                            (Distinct.distinct q')
                            (uncurry (.==))
-                          
+
         -- Check whether it is 'NULL'
         qj' :: Query (Column T.PGBool)
         qj' = A.arr (Opaleye.Operators.not
