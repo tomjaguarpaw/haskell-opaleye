@@ -135,7 +135,7 @@ defaultSqlExpr gen expr =
                           in case NEL.nonEmpty cs' of
                             Just nel -> CaseSqlExpr nel e'
                             Nothing  -> e'
-      ListExpr es      -> ListSqlExpr (map (sqlExpr gen) es)
+      ListExpr es      -> ListSqlExpr (fmap (sqlExpr gen) es)
       ParamExpr n _    -> ParamSqlExpr n PlaceHolderSqlExpr
       FunExpr n exprs  -> FunSqlExpr n (map (sqlExpr gen) exprs)
       CastExpr typ e1 -> CastSqlExpr typ (sqlExpr gen e1)

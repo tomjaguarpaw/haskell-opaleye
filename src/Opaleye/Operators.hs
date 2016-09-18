@@ -9,6 +9,7 @@ module Opaleye.Operators (module Opaleye.Operators,
 
 import qualified Control.Arrow as A
 import qualified Data.Foldable as F
+import qualified Data.List.NonEmpty as NEL
 
 import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
                                           unsafeIfThenElse, unsafeGt)
@@ -132,9 +133,9 @@ ors = F.foldl' (.||) (T.pgBool False)
 -- product.  'in_' @validProducts@ is a function which checks whether
 -- a product is a valid product.
 in_ :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> Column T.PGBool
-in_ fcas (Column a) = Column $ case F.toList fcas of
-   [] -> HPQ.ConstExpr (HPQ.BoolLit False)
-   xs -> HPQ.BinExpr HPQ.OpIn a (HPQ.ListExpr (map C.unColumn xs))
+in_ fcas (Column a) = Column $ case NEL.nonEmpty (F.toList fcas) of
+   Nothing -> HPQ.ConstExpr (HPQ.BoolLit False)
+   Just xs -> HPQ.BinExpr HPQ.OpIn a (HPQ.ListExpr (fmap C.unColumn xs))
 
 -- | True if the first argument occurs amongst the rows of the second,
 -- false otherwise.
