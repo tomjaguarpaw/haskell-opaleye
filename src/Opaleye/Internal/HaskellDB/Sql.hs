@@ -41,7 +41,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | AggrFunSqlExpr String [SqlExpr] [(SqlExpr, SqlOrder)] -- ^ Aggregate functions separate from normal functions.
              | ConstSqlExpr   String
              | CaseSqlExpr    (NEL.NonEmpty (SqlExpr,SqlExpr)) SqlExpr
-             | ListSqlExpr    [SqlExpr]
+             | ListSqlExpr    (NEL.NonEmpty SqlExpr)
              | ParamSqlExpr (Maybe SqlName) SqlExpr
              | PlaceHolderSqlExpr
              | ParensSqlExpr SqlExpr

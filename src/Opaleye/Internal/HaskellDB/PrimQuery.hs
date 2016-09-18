@@ -6,6 +6,7 @@ module Opaleye.Internal.HaskellDB.PrimQuery where
 
 import qualified Opaleye.Internal.Tag as T
 import Data.ByteString (ByteString)
+import qualified Data.List.NonEmpty as NEL
 
 type TableName  = String
 type Attribute  = String
@@ -23,7 +24,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | AggrExpr  AggrOp PrimExpr [OrderExpr]
                 | ConstExpr Literal
                 | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
-                | ListExpr [PrimExpr]
+                | ListExpr (NEL.NonEmpty PrimExpr)
                 | ParamExpr (Maybe Name) PrimExpr
                 | FunExpr Name [PrimExpr]
                 | CastExpr Name PrimExpr -- ^ Cast an expression to a given type.

@@ -13,7 +13,7 @@ author:          Purely Agile
 maintainer:      Purely Agile
 category:        Database
 build-type:      Simple
-cabal-version:   >= 1.10
+cabal-version:   >= 1.18
 extra-doc-files: *.md,
                  Doc/*.md
 tested-with:     GHC==7.10.1, GHC==7.8.4, GHC==7.6.3
