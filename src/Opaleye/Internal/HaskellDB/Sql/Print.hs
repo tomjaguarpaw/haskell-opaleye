@@ -130,7 +130,7 @@ ppSqlExpr expr =
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
           where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w
                                <+> text "THEN" <+> ppSqlExpr t
-      ListSqlExpr es      -> parens (commaH ppSqlExpr es)
+      ListSqlExpr es      -> parens (commaH ppSqlExpr (NEL.toList es))
       ParamSqlExpr _ v -> ppSqlExpr v
       PlaceHolderSqlExpr -> text "?"
       CastSqlExpr typ e -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)

@@ -1,3 +1,8 @@
+## HEAD
+
+* Fixed handling of `BinExpr OpIn _ (ListExpr _)` in `defaultSqlExpr`.
+* `in_` now actually uses the SQL `IN` operator.
+
 ## 0.5.1.0
 
 * Added
