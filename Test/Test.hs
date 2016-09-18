@@ -11,6 +11,7 @@ import qualified Opaleye as O
 import qualified Opaleye.Internal.Aggregate as IA
 
 import qualified Database.PostgreSQL.Simple as PGS
+import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Profunctor as P
@@ -25,33 +26,40 @@ import qualified Data.Text as T
 import qualified System.Exit as Exit
 import qualified System.Environment as Environment
 
-import           Control.Applicative ((<$>), (<*>))
+import           Control.Applicative ((<$>), (<*>), (<|>), empty)
 import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), (<<<), (>>>))
+import           Control.Monad (guard)
 
 import           GHC.Int (Int64)
 
--- { Set your test database info here.  Then invoke the 'main'
---   function to run the tests, or just use 'cabal test'.  The test
---   database must already exist and the test user must have
---   permissions to modify it.
+-- In order to run the tests, either invoke 'main' or use @cabal test@.
+-- A test database with read-write access must already exist for the tests to
+-- run, see 'getPostgreSqlConnectString' for understanding how this database is
+-- chosen.
 
-connectInfo :: PGS.ConnectInfo
-connectInfo =  PGS.ConnectInfo { PGS.connectHost = "localhost"
-                               , PGS.connectPort = 25433
-                               , PGS.connectUser = "tom"
-                               , PGS.connectPassword = "tom"
-                               , PGS.connectDatabase = "opaleye_test" }
-
-connectInfoTravis :: PGS.ConnectInfo
-connectInfoTravis =  PGS.ConnectInfo { PGS.connectHost = "localhost"
-                                     , PGS.connectPort = 5432
-                                     , PGS.connectUser = "postgres"
-                                     , PGS.connectPassword = ""
-                                     , PGS.connectDatabase = "opaleye_test" }
-
--- }
+-- | Get the PostgreSQL connection string, which varies depending on how tests
+-- are initiated. The lookup procedure is as follows:
+--
+-- 1. If the environment variable `OPALEYE_TEST_PG_CONN` is set, then we use its
+--    contents as the PostgreSQL connection string.
+--
+-- 2. If tests are being run in Travis CI, then the PostgreSQL connection string
+--    points to Travis CI's database.
+--
+-- 3. Otherwise, fallback to `postgresql://tom:tom@localhost:25433/opaleye_test`.
+getPostgreSqlConnectString :: IO BS8.ByteString
+getPostgreSqlConnectString =
+    getCustom <|> getTravis <|> return fallback
+  where
+    fallback = "postgresql://tom:tom@localhost:25433/opaleye_test"
+    getTravis = do
+      guard =<< runningInTravis
+      return "postgresql://postgres@localhost:5432/opaleye_test"
+    getCustom = do
+      x <- getEnv "OPALEYE_TEST_PG_CONN"
+      maybe empty (return . BS8.pack) x
 
 {-
 
@@ -869,10 +877,9 @@ getEnv var = do
   return (lookup var environment)
 
 -- Using an envvar is unpleasant, but it will do for now.
-travis :: IO Bool
-travis = do
+runningInTravis :: IO Bool
+runningInTravis = do
     travis' <- getEnv "TRAVIS"
-
     return (case travis' of
                Nothing    -> False
                Just "yes" -> True
@@ -880,11 +887,7 @@ travis = do
 
 main :: IO ()
 main = do
-  travis' <- travis
-
-  let connectInfo' = if travis' then connectInfoTravis else connectInfo
-
-  conn <- PGS.connect connectInfo'
+  conn <- PGS.connectPostgreSQL =<< getPostgreSqlConnectString
 
   dropAndCreateDB conn
 
