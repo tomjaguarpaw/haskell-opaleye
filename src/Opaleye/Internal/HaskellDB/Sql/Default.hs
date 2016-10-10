@@ -152,6 +152,7 @@ showBinOp  (:<>)        = "<>"
 showBinOp  OpAnd        = "AND"
 showBinOp  OpOr         = "OR"
 showBinOp  OpLike       = "LIKE"
+showBinOp  OpILike      = "ILIKE"
 showBinOp  OpIn         = "IN"
 showBinOp  (OpOther s)  = s
 showBinOp  (:||)        = "||"

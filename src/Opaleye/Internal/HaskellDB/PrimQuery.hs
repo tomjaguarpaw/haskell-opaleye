@@ -48,7 +48,7 @@ data Literal = NullLit
 
 data BinOp      = (:==) | (:<) | (:<=) | (:>) | (:>=) | (:<>)
                 | OpAnd | OpOr
-                | OpLike | OpIn
+                | OpLike | OpILike | OpIn
                 | OpOther String
 
                 | (:||)
