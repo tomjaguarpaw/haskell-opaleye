@@ -120,6 +120,10 @@ upper = C.unOp HPQ.OpUpper
 like :: Column T.PGText -> Column T.PGText -> Column T.PGBool
 like = C.binOp HPQ.OpLike
 
+-- | Postgres @ILIKE@ operator
+ilike :: Column T.PGText -> Column T.PGText -> Column T.PGBool
+ilike = C.binOp HPQ.OpILike
+
 charLength :: C.PGString a => Column a -> Column Int
 charLength (Column e) = Column (HPQ.FunExpr "char_length" [e])
 
