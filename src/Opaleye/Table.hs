@@ -40,11 +40,15 @@ queryTableExplicit cm table = Q.simpleQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
     (retwires, primQ) = T.queryTable cm table t0
 
+-- | 'required' is for columns which are not 'optional'.  You must
+-- provide them on writes.
 required :: String -> TableProperties (Column a) (Column a)
 required columnName = T.TableProperties
   (T.required columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
+-- | 'optional' is for columns that you can omit on writes, such as
+--  columns which have defaults or which are SERIAL.
 optional :: String -> TableProperties (Maybe (Column a)) (Column a)
 optional columnName = T.TableProperties
   (T.optional columnName)
