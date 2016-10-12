@@ -100,6 +100,8 @@ defaultSqlExpr gen expr =
                 (paren leftE, rightE)
               (OpOr, _, BinExpr OpAnd _ _) ->
                 (leftE, paren rightE)
+              (OpIn, _, ListExpr _) ->
+                (leftE, rightE)
               (_, ConstExpr _, ConstExpr _) ->
                 (leftE, rightE)
               (_, _, ConstExpr _) ->
@@ -133,7 +135,7 @@ defaultSqlExpr gen expr =
                           in case NEL.nonEmpty cs' of
                             Just nel -> CaseSqlExpr nel e'
                             Nothing  -> e'
-      ListExpr es      -> ListSqlExpr (map (sqlExpr gen) es)
+      ListExpr es      -> ListSqlExpr (fmap (sqlExpr gen) es)
       ParamExpr n _    -> ParamSqlExpr n PlaceHolderSqlExpr
       FunExpr n exprs  -> FunSqlExpr n (map (sqlExpr gen) exprs)
       CastExpr typ e1 -> CastSqlExpr typ (sqlExpr gen e1)
@@ -150,6 +152,7 @@ showBinOp  (:<>)        = "<>"
 showBinOp  OpAnd        = "AND"
 showBinOp  OpOr         = "OR"
 showBinOp  OpLike       = "LIKE"
+showBinOp  OpILike      = "ILIKE"
 showBinOp  OpIn         = "IN"
 showBinOp  (OpOther s)  = s
 showBinOp  (:||)        = "||"

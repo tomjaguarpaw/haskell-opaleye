@@ -346,6 +346,16 @@ testRestrict = testG query
           O.restrict -< fst t .== 1
           Arr.returnA -< t
 
+testIn :: Test
+testIn = testG query expected
+  where query = proc () -> do
+          t <- table1Q -< ()
+          O.restrict -< O.in_ [O.pgInt4 100, O.pgInt4 200] (snd t)
+          O.restrict -< O.not (O.in_ [] (fst t)) -- Making sure empty lists work.
+          Arr.returnA -< t
+        expected = \r ->
+          filter (flip elem [100, 200] . snd) (L.sort table1data) == L.sort r
+
 testNum :: Test
 testNum = testG query expected
   where query :: Query (Column O.PGInt4)
@@ -835,7 +845,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregate0, testAggregateFunction,
             testAggregateProfunctor, testStringArrayAggregate, testStringAggregate,
             testOrderBy, testOrderBy2, testOrderBySame, testLimit, testOffset,
-            testLimitOffset, testOffsetLimit, testDistinctAndAggregate,
+            testLimitOffset, testOffsetLimit, testDistinctAndAggregate, testIn,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
             testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,

@@ -9,6 +9,7 @@ module Opaleye.Operators (module Opaleye.Operators,
 
 import qualified Control.Arrow as A
 import qualified Data.Foldable as F
+import qualified Data.List.NonEmpty as NEL
 
 import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
                                           unsafeIfThenElse, unsafeGt)
@@ -119,6 +120,10 @@ upper = C.unOp HPQ.OpUpper
 like :: Column T.PGText -> Column T.PGText -> Column T.PGBool
 like = C.binOp HPQ.OpLike
 
+-- | Postgres @ILIKE@ operator
+ilike :: Column T.PGText -> Column T.PGText -> Column T.PGBool
+ilike = C.binOp HPQ.OpILike
+
 charLength :: C.PGString a => Column a -> Column Int
 charLength (Column e) = Column (HPQ.FunExpr "char_length" [e])
 
@@ -132,7 +137,9 @@ ors = F.foldl' (.||) (T.pgBool False)
 -- product.  'in_' @validProducts@ is a function which checks whether
 -- a product is a valid product.
 in_ :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> Column T.PGBool
-in_ hs w = ors . fmap (w .==) $ hs
+in_ fcas (Column a) = Column $ case NEL.nonEmpty (F.toList fcas) of
+   Nothing -> HPQ.ConstExpr (HPQ.BoolLit False)
+   Just xs -> HPQ.BinExpr HPQ.OpIn a (HPQ.ListExpr (fmap C.unColumn xs))
 
 -- | True if the first argument occurs amongst the rows of the second,
 -- false otherwise.
@@ -156,7 +163,7 @@ inQuery c q = qj'
         qj = Join.leftJoin (A.arr (const 1))
                            (Distinct.distinct q')
                            (uncurry (.==))
-                          
+
         -- Check whether it is 'NULL'
         qj' :: Query (Column T.PGBool)
         qj' = A.arr (Opaleye.Operators.not
