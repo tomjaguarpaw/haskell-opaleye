@@ -10,3 +10,7 @@ specified in the type parameter to `Query` as a collection of
 type.  For example a `Query (Column PGInt4, Column PGText, Column
 PGBool)` is the type of a database query which has three columns, of
 types `int4`, `text` and `bool`.
+
+A `Query` is a collection of rows and therefore if we have two of them
+we can form their Cartesian product.  This corresponds exactly to
+Haskells `Applicative` product on lists.
