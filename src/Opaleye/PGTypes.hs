@@ -24,6 +24,8 @@ import qualified Data.UUID as UUID
 
 import           Data.Int (Int64)
 
+import qualified Database.PostgreSQL.Simple.Range as R
+
 instance C.PGNum PGFloat8 where
   pgFromInteger = pgDouble . fromInteger
 
@@ -138,6 +140,11 @@ pgArray pgEl xs = C.unsafeCast arrayTy $
     oneEl = C.unColumn . pgEl
     arrayTy = showPGType ([] :: [PGArray b])
 
+pgRange :: forall a b. IsSqlType a => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a -> C.Column (PGRange a)
+pgRange pgEl start end = C.Column (HPQ.RangeExpr (oneEl start) (oneEl end))
+  where oneEl (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
+        oneEl (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
+
 class IsSqlType pgType where
   showPGType :: proxy pgType -> String
 instance IsSqlType PGBool where
@@ -178,6 +185,8 @@ instance IsSqlType PGJson where
   showPGType _ = "json"
 instance IsSqlType PGJsonb where
   showPGType _ = "jsonb"
+instance IsSqlType a => IsSqlType (PGRange a) where
+  showPGType _ = showPGType ([] :: [a]) ++ "range"
 
 data PGBool
 data PGDate
@@ -197,6 +206,7 @@ data PGArray a
 data PGBytea
 data PGJson
 data PGJsonb
+data PGRange a
 
 literalColumn :: HPQ.Literal -> Column a
 literalColumn = IPT.literalColumn
