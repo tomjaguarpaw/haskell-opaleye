@@ -47,6 +47,7 @@ import           Data.Attoparsec.ByteString.Char8 (Parser, parseOnly)
 import qualified Database.PostgreSQL.Simple.TypeInfo as TI
 import qualified Database.PostgreSQL.Simple.Arrays as Arrays
 import           Database.PostgreSQL.Simple.Arrays (array, fmt)
+import qualified Database.PostgreSQL.Simple.Range as PGSR
 import           Data.String (fromString)
 import           Data.Typeable (Typeable)
 
@@ -220,6 +221,10 @@ instance (Typeable b, QueryRunnerColumnDefault a b) =>
     where QueryRunnerColumn c f = queryRunnerColumnDefault
 
 -- }
+
+instance (Typeable b, FromField b, QueryRunnerColumnDefault a b) =>
+         QueryRunnerColumnDefault (T.PGRange a) (PGSR.PGRange b) where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 -- Boilerplate instances
 
