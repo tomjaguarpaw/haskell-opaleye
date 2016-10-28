@@ -3,8 +3,8 @@
 -- Please note that numeric 'Column' types are instances of 'Num', so
 -- you can use '*', '/', '+', '-' on them.
 
-module Opaleye.Column (module Opaleye.Column,
-                       Column,
+module Opaleye.Column (Column,
+                       module Opaleye.Column,
                        Nullable,
                        unsafeCast,
                        unsafeCoerce,
