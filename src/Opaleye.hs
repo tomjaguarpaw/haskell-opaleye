@@ -1,3 +1,18 @@
+-- | An SQL-generating DSL targeting PostgreSQL.  Allows Postgres
+--   queries to be written within Haskell in a typesafe and composable
+--   fashion.
+--
+-- You might like to look at
+--
+-- * <https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialBasic.lhs Basic tutorial>
+--
+-- * <https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialManipulation.lhs Manipulation tutorial>
+--
+-- * <https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialAdvanced.lhs Advanced tutorial>
+--
+-- * If you are confused about the @Default@ typeclass, then
+-- the <https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/DefaultExplanation.lhs Default explanation>
+
 module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.Binary
                , module Opaleye.Column
