@@ -19,7 +19,7 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
 
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
-                               SqlUpdate(..), SqlTable(..))
+                               SqlUpdate(..), SqlTable(..), SqlRangeBound(..))
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 
 import Data.List (intersperse)
@@ -113,6 +113,11 @@ ppTable st = case sqlTableSchemaName st of
   where
     tname = doubleQuotes (text (sqlTableName st))
 
+ppRangeBound :: Bool -> SqlRangeBound -> Doc
+ppRangeBound False (Inclusive a) = text "'[" <> ppSqlExpr a
+ppRangeBound False (Exclusive a) = text "'(" <> ppSqlExpr a
+ppRangeBound True  (Inclusive a) = text "']" <> ppSqlExpr a
+ppRangeBound True  (Exclusive a) = text "')" <> ppSqlExpr a
 
 ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =
@@ -136,6 +141,7 @@ ppSqlExpr expr =
       CastSqlExpr typ e -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)
       DefaultSqlExpr    -> text "DEFAULT"
       ArraySqlExpr es -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
+      RangeSqlExpr start end -> commaH (uncurry ppRangeBound) [(False, start), (True, end)]
 
 commaH :: (a -> Doc) -> [a] -> Doc
 commaH f = hcat . punctuate comma . map f

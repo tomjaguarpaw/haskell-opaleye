@@ -34,7 +34,7 @@ data PrimExpr   = AttrExpr  Symbol
                                     -- here.  Perhaps a special type is
                                     -- needed for insert expressions.
                 | ArrayExpr [PrimExpr] -- ^ ARRAY[..]
-                | RangeExpr (BoundType PrimExpr) (BoundType PrimExpr)
+                | RangeExpr BoundExpr BoundExpr
                 deriving (Read,Show)
 
 data Literal = NullLit
@@ -92,5 +92,5 @@ data OrderOp = OrderOp { orderDirection :: OrderDirection
                        , orderNulls     :: OrderNulls }
                deriving (Show,Read)
 
-data BoundType a = Inclusive a | Exclusive a
+data BoundExpr = Inclusive PrimExpr | Exclusive PrimExpr
                  deriving (Show,Read)

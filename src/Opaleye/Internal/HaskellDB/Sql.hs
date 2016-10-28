@@ -31,6 +31,9 @@ data SqlOrder = SqlOrder { sqlOrderDirection :: SqlOrderDirection
                          , sqlOrderNulls     :: SqlOrderNulls }
   deriving Show
 
+data SqlRangeBound = Inclusive SqlExpr | Exclusive SqlExpr
+                   deriving Show
+
 -- | Expressions in SQL statements.
 data SqlExpr = ColumnSqlExpr  SqlColumn
              | CompositeSqlExpr SqlExpr String
@@ -48,6 +51,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | CastSqlExpr String SqlExpr
              | DefaultSqlExpr
              | ArraySqlExpr [SqlExpr]
+             | RangeSqlExpr SqlRangeBound SqlRangeBound
   deriving Show
 
 -- | Data type for SQL UPDATE statements.
