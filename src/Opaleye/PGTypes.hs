@@ -24,6 +24,8 @@ import qualified Data.UUID as UUID
 
 import           Data.Int (Int64)
 
+import qualified Database.PostgreSQL.Simple.Range as R
+
 instance C.PGNum PGFloat8 where
   pgFromInteger = pgDouble . fromInteger
 
@@ -140,6 +142,13 @@ pgArray pgEl xs = C.unsafeCast arrayTy $
     oneEl = C.unColumn . pgEl
     arrayTy = showPGType ([] :: [PGArray b])
 
+pgRange :: forall a b. IsRangeType b => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a -> C.Column (PGRange b)
+pgRange pgEl start end = C.Column (HPQ.CastExpr (showRangeType ([] :: [b])) $ HPQ.RangeExpr (oneEl start) (oneEl end))
+  where oneEl (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
+        oneEl (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
+        oneEl (R.NegInfinity) = HPQ.NegInfinity
+        oneEl (R.PosInfinity) = HPQ.PosInfinity
+
 class IsSqlType pgType where
   showPGType :: proxy pgType -> String
 instance IsSqlType PGBool where
@@ -180,6 +189,29 @@ instance IsSqlType PGJson where
   showPGType _ = "json"
 instance IsSqlType PGJsonb where
   showPGType _ = "jsonb"
+instance IsRangeType a => IsSqlType (PGRange a) where
+  showPGType _ = showRangeType ([] :: [a])
+
+class IsSqlType pgType => IsRangeType pgType where
+  showRangeType :: proxy pgType -> String
+
+instance IsRangeType PGInt4 where
+  showRangeType _ = "int4range"
+
+instance IsRangeType PGInt8 where
+  showRangeType _ = "int8range"
+
+instance IsRangeType PGNumeric where
+  showRangeType _ = "numrange"
+
+instance IsRangeType PGTimestamp where
+  showRangeType _ = "tsrange"
+
+instance IsRangeType PGTimestamptz where
+  showRangeType _ = "tstzrange"
+
+instance IsRangeType PGDate where
+  showRangeType _ = "daterange"
 
 -- * SQL datatypes
 
@@ -201,6 +233,7 @@ data PGArray a
 data PGBytea
 data PGJson
 data PGJsonb
+data PGRange a
 
 -- * Deprecated functions
 

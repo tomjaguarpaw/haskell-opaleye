@@ -34,6 +34,7 @@ data PrimExpr   = AttrExpr  Symbol
                                     -- here.  Perhaps a special type is
                                     -- needed for insert expressions.
                 | ArrayExpr [PrimExpr] -- ^ ARRAY[..]
+                | RangeExpr BoundExpr BoundExpr
                 deriving (Read,Show)
 
 data Literal = NullLit
@@ -58,6 +59,7 @@ data BinOp      = (:==) | (:<) | (:<=) | (:>) | (:>=) | (:<>)
 
                 | (:->) | (:->>) | (:#>) | (:#>>)
                 | (:@>) | (:<@) | (:?) | (:?|) | (:?&)
+                | (:&&) | (:<<) | (:>>) | (:&<) | (:&>) | (:-|-)
                 deriving (Show,Read)
 
 data UnOp = OpNot
@@ -89,3 +91,6 @@ data OrderDirection = OpAsc | OpDesc
 data OrderOp = OrderOp { orderDirection :: OrderDirection
                        , orderNulls     :: OrderNulls }
                deriving (Show,Read)
+
+data BoundExpr = Inclusive PrimExpr | Exclusive PrimExpr | PosInfinity | NegInfinity
+                 deriving (Show,Read)
