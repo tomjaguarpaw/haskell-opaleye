@@ -4,10 +4,14 @@ import Data.String
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-newtype Column a = Column HPQ.PrimExpr deriving Show
+-- | A column of a @Query@, of type @pgType@.  For example 'Column'
+-- @PGInt4@ is an @int4@ column and a 'Column' @PGText@ is a @text@
+-- column.
+newtype Column pgType = Column HPQ.PrimExpr deriving Show
 
--- | Only used within a 'Column', to indicate that it can take null
--- values.
+-- | Only used within a 'Column', to indicate that it can be @NULL@.
+-- For example, a 'Column' ('Nullable' @PGText@) can be @NULL@ but a
+-- 'Column' @PGText@ cannot.
 data Nullable a = Nullable
 
 unColumn :: Column a -> HPQ.PrimExpr
