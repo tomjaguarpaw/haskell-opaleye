@@ -31,7 +31,7 @@ data SqlOrder = SqlOrder { sqlOrderDirection :: SqlOrderDirection
                          , sqlOrderNulls     :: SqlOrderNulls }
   deriving Show
 
-data SqlRangeBound = Inclusive SqlExpr | Exclusive SqlExpr
+data SqlRangeBound = Inclusive SqlExpr | Exclusive SqlExpr | PosInfinity | NegInfinity
                    deriving Show
 
 -- | Expressions in SQL statements.

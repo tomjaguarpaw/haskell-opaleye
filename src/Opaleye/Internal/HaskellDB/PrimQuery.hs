@@ -92,5 +92,5 @@ data OrderOp = OrderOp { orderDirection :: OrderDirection
                        , orderNulls     :: OrderNulls }
                deriving (Show,Read)
 
-data BoundExpr = Inclusive PrimExpr | Exclusive PrimExpr
+data BoundExpr = Inclusive PrimExpr | Exclusive PrimExpr | PosInfinity | NegInfinity
                  deriving (Show,Read)

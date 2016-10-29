@@ -140,10 +140,12 @@ pgArray pgEl xs = C.unsafeCast arrayTy $
     oneEl = C.unColumn . pgEl
     arrayTy = showPGType ([] :: [PGArray b])
 
-pgRange :: forall a b. IsSqlType a => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a -> C.Column (PGRange a)
+pgRange :: forall a b. IsSqlType b => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a -> C.Column (PGRange b)
 pgRange pgEl start end = C.Column (HPQ.RangeExpr (oneEl start) (oneEl end))
   where oneEl (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
         oneEl (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
+        oneEl (R.NegInfinity) = HPQ.NegInfinity
+        oneEl (R.PosInfinity) = HPQ.PosInfinity
 
 class IsSqlType pgType where
   showPGType :: proxy pgType -> String

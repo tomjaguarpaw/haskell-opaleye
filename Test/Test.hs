@@ -11,6 +11,7 @@ import qualified Opaleye as O
 import qualified Opaleye.Internal.Aggregate as IA
 
 import qualified Database.PostgreSQL.Simple as PGS
+import qualified Database.PostgreSQL.Simple.Range as R
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Profunctor as P
@@ -840,6 +841,46 @@ testJsonbContainsAll = testG q (== [True])
   where q = table9Q >>> proc c1 -> do
               Arr.returnA -< c1 O..?& O.pgArray O.pgStrictText ["a", "b", "c"]
 
+testRange :: Test
+testRange = testG (A.pure $ O.pgRange O.pgDouble (R.Inclusive (2.0 :: Double)) (R.Exclusive 2.0)) (== [range])
+  where range = R.PGRange (R.Inclusive (2.0 :: Double)) (R.Exclusive 2.0)
+
+testRangeOverlap :: Test
+testRangeOverlap = testG q (== [True])
+  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        q = A.pure $ (range 3 7) `O.overlap` (range 4 12)
+
+testRangeLeftOf :: Test
+testRangeLeftOf = testG q (== [True])
+  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        q = A.pure $ (range 1 10) O..>> (range 100 110)
+
+testRangeRightOf :: Test
+testRangeRightOf = testG q (== [True])
+  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        q = A.pure $ (range 50 60) O..>> (range 20 30)
+
+testRangeRightExtension :: Test
+testRangeRightExtension = testG q (== [True])
+  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        q = A.pure $ (range 1 20) O..&< (range 18 20)
+
+testRangeLeftExtension :: Test
+testRangeLeftExtension = testG q (== [True])
+  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        q = A.pure $ (range 7 20) O..&> (range 5 10)
+
+testRangeAdjacency :: Test
+testRangeAdjacency = testG q (== [True])
+  where range :: Double -> Double -> Column (O.PGRange O.PGFloat8)
+        range a b = O.pgRange O.pgDouble (R.Inclusive a) (R.Inclusive b)
+        q = A.pure $ (range 1.1 2.2) O..-|- (range 2.2 3.3)
+
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDistinct, testAggregate, testAggregate0, testAggregateFunction,
@@ -857,7 +898,9 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testJsonGetFieldValue   table8Q, testJsonGetFieldText  table8Q,
             testJsonGetMissingField table8Q, testJsonGetArrayValue table8Q,
             testJsonGetArrayText    table8Q, testJsonGetPathValue  table8Q,
-            testJsonGetPathText     table8Q
+            testJsonGetPathText     table8Q,
+            testRange, testRangeOverlap, testRangeLeftOf, testRangeRightOf,
+            testRangeRightExtension, testRangeLeftExtension, testRangeAdjacency
             ]
 
 -- Note: these tests are left out of allTests until Travis supports
