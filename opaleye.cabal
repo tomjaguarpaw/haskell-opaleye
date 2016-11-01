@@ -111,7 +111,8 @@ test-suite test
     semigroups,
     text >= 0.11 && < 1.3,
     time,
-    opaleye
+    opaleye,
+    yaml
   ghc-options: -Wall
 
 test-suite tutorial
