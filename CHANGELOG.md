@@ -2,6 +2,8 @@
 
 * Fixed handling of `BinExpr OpIn _ (ListExpr _)` in `defaultSqlExpr`.
 * `in_` now actually uses the SQL `IN` operator.
+* Tests: Allow specifing the PostgreSQL connection string via the
+  `OPALEYE_TEST_PG_CONN` environment variable.
 
 ## 0.5.1.0
 

@@ -101,6 +101,7 @@ test-suite test
   build-depends:
     aeson >= 0.6 && < 1.1,
     base >= 4 && < 5,
+    bytestring,
     containers,
     contravariant,
     multiset,
