@@ -2,6 +2,7 @@
 
 * Fixed handling of `BinExpr OpIn _ (ListExpr _)` in `defaultSqlExpr`.
 * `in_` now actually uses the SQL `IN` operator.
+* Added support for `ILIKE`
 
 ## 0.5.1.0
 
