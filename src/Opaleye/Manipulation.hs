@@ -66,14 +66,14 @@ runInsertMany conn table columns = case NEL.nonEmpty columns of
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertManyReturning@.
-runInsertManyReturning :: (D.Default RQ.QueryRunner returned haskells)
+runInsertManyReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                        => PGS.Connection
                        -- ^
                        -> T.Table columnsW columnsR
                        -- ^ Table to insert into
                        -> [columnsW]
                        -- ^ Rows to insert
-                       -> (columnsR -> returned)
+                       -> (columnsR -> columnsReturned)
                        -- ^ Function @f@ to apply to the inserted rows
                        -> IO [haskells]
                        -- ^ Returned rows after @f@ has been applied
@@ -100,7 +100,7 @@ runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
 -- that the compiler will have trouble inferring types.  It is
 -- strongly recommended that you provide full type signatures when
 -- using @runInsertReturning@.
-runUpdateReturning :: (D.Default RQ.QueryRunner returned haskells)
+runUpdateReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                    => PGS.Connection
                    -- ^
                    -> T.Table columnsW columnsR
@@ -112,7 +112,7 @@ runUpdateReturning :: (D.Default RQ.QueryRunner returned haskells)
                    -- update.  'runUpdate' will update rows for which
                    -- @f@ returns @TRUE@ and leave unchanged rows for
                    -- which @f@ returns @FALSE@.
-                   -> (columnsR -> returned)
+                   -> (columnsR -> columnsReturned)
                    -- ^ Functon @g@ to apply to the updated rows
                    -> IO [haskells]
                    -- ^ Returned rows after @g@ has been applied
@@ -135,11 +135,11 @@ runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 -- 'runInsertReturning' instead.  You only need it if you want to run
 -- an INSERT RETURNING statement but need to be explicit about the
 -- 'QueryRunner'.
-runInsertReturningExplicit :: RQ.QueryRunner returned haskells
+runInsertReturningExplicit :: RQ.QueryRunner columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
                            -> columnsW
-                           -> (columnsR -> returned)
+                           -> (columnsR -> columnsReturned)
                            -> IO [haskells]
 runInsertReturningExplicit qr conn t =
   runInsertManyReturningExplicit qr conn t . return
@@ -148,11 +148,11 @@ runInsertReturningExplicit qr conn t =
 -- 'runInsertManyReturning' instead.  You only need it if you want to
 -- run an UPDATE RETURNING statement but need to be explicit about the
 -- 'QueryRunner'.
-runInsertManyReturningExplicit :: RQ.QueryRunner returned haskells
+runInsertManyReturningExplicit :: RQ.QueryRunner columnsReturned haskells
                                -> PGS.Connection
                                -> T.Table columnsW columnsR
                                -> [columnsW]
-                               -> (columnsR -> returned)
+                               -> (columnsR -> columnsReturned)
                                -> IO [haskells]
 runInsertManyReturningExplicit qr conn t columns r =
   case NEL.nonEmpty columns of
@@ -170,12 +170,12 @@ runInsertManyReturningExplicit qr conn t columns r =
 -- 'runUpdateReturning' instead.  You only need it if you want to run
 -- an UPDATE RETURNING statement but need to be explicit about the
 -- 'QueryRunner'.
-runUpdateReturningExplicit :: RQ.QueryRunner returned haskells
+runUpdateReturningExplicit :: RQ.QueryRunner columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
                            -> (columnsR -> columnsW)
                            -> (columnsR -> Column PGBool)
-                           -> (columnsR -> returned)
+                           -> (columnsR -> columnsReturned)
                            -> IO [haskells]
 runUpdateReturningExplicit qr conn t update cond r =
   PGS.queryWith_ parser conn
@@ -197,11 +197,11 @@ runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 --
 -- This will be deprecated in a future release.  Use
 -- 'runInsertManyReturning' instead.
-runInsertReturning :: (D.Default RQ.QueryRunner returned haskells)
+runInsertReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                    => PGS.Connection
                    -> T.Table columnsW columnsR
                    -> columnsW
-                   -> (columnsR -> returned)
+                   -> (columnsR -> columnsReturned)
                    -> IO [haskells]
 runInsertReturning = runInsertReturningExplicit D.def
 
@@ -265,10 +265,10 @@ arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
-arrangeInsertManyReturning :: U.Unpackspec returned ignored
+arrangeInsertManyReturning :: U.Unpackspec columnsReturned ignored
                            -> T.Table columnsW columnsR
                            -> NEL.NonEmpty columnsW
-                           -> (columnsR -> returned)
+                           -> (columnsR -> columnsReturned)
                            -> Sql.Returning HSql.SqlInsert
 arrangeInsertManyReturning unpackspec table columns returningf =
   Sql.Returning insert returningSEs
@@ -279,21 +279,21 @@ arrangeInsertManyReturning unpackspec table columns returningf =
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
-arrangeInsertManyReturningSql :: U.Unpackspec returned ignored
+arrangeInsertManyReturningSql :: U.Unpackspec columnsReturned ignored
                               -> T.Table columnsW columnsR
                               -> NEL.NonEmpty columnsW
-                              -> (columnsR -> returned)
+                              -> (columnsR -> columnsReturned)
                               -> String
 arrangeInsertManyReturningSql =
   show . Print.ppInsertReturning .:: arrangeInsertManyReturning
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
-arrangeUpdateReturning :: U.Unpackspec returned ignored
+arrangeUpdateReturning :: U.Unpackspec columnsReturned ignored
                        -> T.Table columnsW columnsR
                        -> (columnsR -> columnsW)
                        -> (columnsR -> Column PGBool)
-                       -> (columnsR -> returned)
+                       -> (columnsR -> columnsReturned)
                        -> Sql.Returning HSql.SqlUpdate
 arrangeUpdateReturning unpackspec table updatef cond returningf =
   Sql.Returning update returningSEs
@@ -304,11 +304,11 @@ arrangeUpdateReturning unpackspec table updatef cond returningf =
 
 -- | For internal use only.  Do not use.  Will be removed in a
 -- subsequent release.
-arrangeUpdateReturningSql :: U.Unpackspec returned ignored
+arrangeUpdateReturningSql :: U.Unpackspec columnsReturned ignored
                           -> T.Table columnsW columnsR
                           -> (columnsR -> columnsW)
                           -> (columnsR -> Column PGBool)
-                          -> (columnsR -> returned)
+                          -> (columnsR -> columnsReturned)
                           -> String
 arrangeUpdateReturningSql =
   show . Print.ppUpdateReturning .::. arrangeUpdateReturning
