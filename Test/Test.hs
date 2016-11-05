@@ -841,10 +841,6 @@ testJsonbContainsAll = testG q (== [True])
   where q = table9Q >>> proc c1 -> do
               Arr.returnA -< c1 O..?& O.pgArray O.pgStrictText ["a", "b", "c"]
 
-testRange :: Test
-testRange = testG (A.pure $ O.pgRange O.pgDouble (R.Inclusive (2.0 :: Double)) (R.Exclusive 2.0)) (== [range])
-  where range = R.PGRange (R.Inclusive (2.0 :: Double)) (R.Exclusive 2.0)
-
 testRangeOverlap :: Test
 testRangeOverlap = testG q (== [True])
   where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
@@ -877,9 +873,9 @@ testRangeLeftExtension = testG q (== [True])
 
 testRangeAdjacency :: Test
 testRangeAdjacency = testG q (== [True])
-  where range :: Double -> Double -> Column (O.PGRange O.PGFloat8)
-        range a b = O.pgRange O.pgDouble (R.Inclusive a) (R.Inclusive b)
-        q = A.pure $ (range 1.1 2.2) O..-|- (range 2.2 3.3)
+  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        q = A.pure $ (range 1 2) O..-|- (range 2 3)
 
 allTests :: [Test]
 allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
@@ -899,7 +895,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testJsonGetMissingField table8Q, testJsonGetArrayValue table8Q,
             testJsonGetArrayText    table8Q, testJsonGetPathValue  table8Q,
             testJsonGetPathText     table8Q,
-            testRange, testRangeOverlap, testRangeLeftOf, testRangeRightOf,
+            testRangeOverlap, testRangeLeftOf, testRangeRightOf,
             testRangeRightExtension, testRangeLeftExtension, testRangeAdjacency
             ]
 

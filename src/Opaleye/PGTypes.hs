@@ -140,7 +140,7 @@ pgArray pgEl xs = C.unsafeCast arrayTy $
     oneEl = C.unColumn . pgEl
     arrayTy = showPGType ([] :: [PGArray b])
 
-pgRange :: forall a b. IsSqlType b => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a -> C.Column (PGRange b)
+pgRange :: forall a b. IsRangeType b => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a -> C.Column (PGRange b)
 pgRange pgEl start end = C.Column (HPQ.RangeExpr (oneEl start) (oneEl end))
   where oneEl (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
         oneEl (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
@@ -187,8 +187,29 @@ instance IsSqlType PGJson where
   showPGType _ = "json"
 instance IsSqlType PGJsonb where
   showPGType _ = "jsonb"
-instance IsSqlType a => IsSqlType (PGRange a) where
+instance IsRangeType a => IsSqlType (PGRange a) where
   showPGType _ = showPGType ([] :: [a]) ++ "range"
+
+class IsSqlType pgType => IsRangeType pgType where
+  showRangeType :: proxy pgType -> String
+
+instance IsRangeType PGInt4 where
+  showRangeType = showPGType
+
+instance IsRangeType PGInt8 where
+  showRangeType = showPGType
+
+instance IsRangeType PGNumeric where
+  showRangeType = showPGType
+
+instance IsRangeType PGTimestamp where
+  showRangeType = showPGType
+
+instance IsRangeType PGTimestamptz where
+  showRangeType = showPGType
+
+instance IsRangeType PGDate where
+  showRangeType = showPGType
 
 data PGBool
 data PGDate
