@@ -46,6 +46,8 @@ instance C.PGString PGText where
 instance C.PGString PGCitext where
   pgFromString = pgCiLazyText . CI.mk . LText.pack
 
+-- * Creating SQL values
+
 pgString :: String -> Column PGText
 pgString = IPT.literalColumn . HPQ.StringLit
 
@@ -179,6 +181,8 @@ instance IsSqlType PGJson where
 instance IsSqlType PGJsonb where
   showPGType _ = "jsonb"
 
+-- * SQL datatypes
+
 data PGBool
 data PGDate
 data PGFloat4
@@ -197,6 +201,8 @@ data PGArray a
 data PGBytea
 data PGJson
 data PGJsonb
+
+-- * Deprecated functions
 
 literalColumn :: HPQ.Literal -> Column a
 literalColumn = IPT.literalColumn
