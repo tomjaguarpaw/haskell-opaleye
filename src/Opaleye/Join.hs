@@ -1,4 +1,10 @@
--- | Left, right, and full outer joins.  If you want inner joins, just use 'restrict' instead.
+-- | Left, right, and full outer joins.
+--
+-- "Opaleye.FunctionalJoin" provides a much nicer, Haskelly, interface
+-- to joins than this module, which sticks to the (horrible) standard
+-- \"make missing rows NULL\" interface that SQL provides.
+--
+-- If you want inner joins, just use 'restrict' instead.
 --
 -- The use of the 'D.Default' typeclass means that the compiler will
 -- have trouble inferring types.  It is strongly recommended that you

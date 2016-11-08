@@ -1,6 +1,11 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
+-- | Left, right, and full outer joins.
+--
+-- The interface in this module is much nicer than the standard \"make
+-- missing rows NULL\" interface that SQL provides.  If you really
+-- want the standard interface then use "Opaleye.Join".
 
 module Opaleye.FunctionalJoin where
 
