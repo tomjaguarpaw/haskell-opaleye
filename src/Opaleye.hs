@@ -18,6 +18,7 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.Column
                , module Opaleye.Constant
                , module Opaleye.Distinct
+               , module Opaleye.FunctionalJoin
                , module Opaleye.Join
                , module Opaleye.Label
                , module Opaleye.Manipulation
@@ -36,6 +37,7 @@ import Opaleye.Binary
 import Opaleye.Column
 import Opaleye.Constant
 import Opaleye.Distinct
+import Opaleye.FunctionalJoin
 import Opaleye.Join
 import Opaleye.Label
 import Opaleye.Manipulation

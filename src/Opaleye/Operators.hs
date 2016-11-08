@@ -92,8 +92,19 @@ rem_ = C.binOp HPQ.OpMod
 case_ :: [(Column T.PGBool, Column a)] -> Column a -> Column a
 case_ = unsafeCase_
 
+-- | Monomorphic if\/then\/else.
+--
+-- This may be replaced by 'ifThenElseMany' in a future version.
 ifThenElse :: Column T.PGBool -> Column a -> Column a -> Column a
 ifThenElse = unsafeIfThenElse
+
+-- | Polymorphic if\/then\/else.
+ifThenElseMany :: D.Default O.IfPP columns columns
+               => Column T.PGBool
+               -> columns
+               -> columns
+               -> columns
+ifThenElseMany = O.ifExplict D.def
 
 infixr 2 .||
 

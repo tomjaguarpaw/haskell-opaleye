@@ -606,6 +606,20 @@ testLeftJoinNullable = testG q (== expected)
                    , ((1, 50), ((Just 1, Just 100), (Just 1, Just 50)))
                    , ((1, 50), ((Just 1, Just 200), (Just 1, Just 50))) ]
 
+testLeftJoinF :: Test
+testLeftJoinF = testG q (== expected)
+  where q = O.leftJoinF (,)
+                        (\x -> (x, (-1, -2)))
+                        (\l r -> fst l .== fst r)
+                        table1Q
+                        table3Q
+
+        expected :: [((Int, Int), (Int, Int))]
+        expected = [ ((1, 100), (1, 50))
+                   , ((1, 100), (1, 50))
+                   , ((1, 200), (1, 50))
+                   , ((2, 300), (-1, -2)) ]
+
 testThreeWayProduct :: Test
 testThreeWayProduct = testG q (== expected)
   where q = A.liftA3 (,,) table1Q table2Q table3Q
@@ -849,6 +863,7 @@ allTests = [testSelect, testProduct, testRestrict, testNum, testDiv, testCase,
             testDoubleDistinct, testDoubleAggregate, testDoubleLeftJoin,
             testDoubleValues, testDoubleUnionAll,
             testLeftJoin, testLeftJoinNullable, testThreeWayProduct, testValues,
+            testLeftJoinF,
             testValuesEmpty, testUnionAll, testTableFunctor, testUpdate,
             testKeywordColNames, testInsertSerial, testInQuery, testAtTimeZone,
             testStringArrayAggregateOrdered, testMultipleAggregateOrdered,
