@@ -51,3 +51,57 @@ leftJoinF f fL cond l r = fmap ret j
         nullmakerBool :: IJ.NullMaker (Column T.PGBool)
                                       (Column (Nullable T.PGBool))
         nullmakerBool = D.def
+
+rightJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
+               D.Default IU.Unpackspec columnsL columnsL,
+               D.Default IU.Unpackspec columnsR columnsR)
+           => (columnsL -> columnsR -> columnsResult)
+           -> (columnsR -> columnsResult)
+           -> (columnsL -> columnsR -> Column T.PGBool)
+           -> Query columnsL
+           -> Query columnsR
+           -> Query columnsResult
+rightJoinF f fR cond l r = fmap ret j
+  where a1 = fmap (\x -> (x, T.pgBool True))
+        j  = J.rightJoinExplicit D.def
+                                 D.def
+                                 (PP.p2 ((IJ.NullMaker id), nullmakerBool))
+                                 (a1 l)
+                                 r
+                                 (\((l', _), r') -> cond l' r')
+
+        ret ((lr, lc), rr) = O.ifThenElseMany (C.isNull lc) (fR rr) (f lr rr)
+
+        nullmakerBool :: IJ.NullMaker (Column T.PGBool)
+                                      (Column (Nullable T.PGBool))
+        nullmakerBool = D.def
+
+fullJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
+              D.Default IU.Unpackspec columnsL columnsL,
+              D.Default IU.Unpackspec columnsR columnsR)
+          => (columnsL -> columnsR -> columnsResult)
+          -> (columnsL -> columnsResult)
+          -> (columnsR -> columnsResult)
+          -> (columnsL -> columnsR -> Column T.PGBool)
+          -> Query columnsL
+          -> Query columnsR
+          -> Query columnsResult
+fullJoinF f fL fR cond l r = fmap ret j
+  where a1 = fmap (\x -> (x, T.pgBool True))
+        j  = J.fullJoinExplicit D.def
+                                D.def
+                                (PP.p2 ((IJ.NullMaker id), nullmakerBool))
+                                (PP.p2 ((IJ.NullMaker id), nullmakerBool))
+                                (a1 l)
+                                (a1 r)
+                                (\((l', _), (r', _)) -> cond l' r')
+
+        ret ((lr, lc), (rr, rc)) = O.ifThenElseMany (C.isNull lc)
+                                     (fR rr)
+                                     (O.ifThenElseMany (C.isNull rc)
+                                        (fL lr)
+                                        (f lr rr))
+
+        nullmakerBool :: IJ.NullMaker (Column T.PGBool)
+                                      (Column (Nullable T.PGBool))
+        nullmakerBool = D.def
