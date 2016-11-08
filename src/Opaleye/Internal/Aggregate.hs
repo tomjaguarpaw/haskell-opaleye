@@ -19,6 +19,9 @@ An 'Aggregator' takes a collection of rows of type @a@, groups
 them, and transforms each group into a single row of type @b@. This
 corresponds to aggregators using @GROUP BY@ in SQL.
 
+You should combine basic 'Aggregator's into 'Aggregator's on compound
+types by using the operations in "Data.Profunctor.Product".
+
 An 'Aggregator' corresponds closely to a 'Control.Foldl.Fold' from the
 @foldl@ package.  Whereas an 'Aggregator' @a@ @b@ takes each group of
 type @a@ to a single row of type @b@, a 'Control.Foldl.Fold' @a@ @b@
