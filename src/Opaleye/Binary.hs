@@ -37,6 +37,8 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 
 import           Data.Profunctor.Product.Default (Default, def)
 
+-- * Binary operations
+
 unionAll :: Default B.Binaryspec columns columns =>
             Query columns -> Query columns -> Query columns
 unionAll = unionAllExplicit def
@@ -67,6 +69,7 @@ except :: Default B.Binaryspec columns columns =>
          Query columns -> Query columns -> Query columns
 except = exceptExplicit def
 
+-- * Explicit versions
 
 unionAllExplicit :: B.Binaryspec columns columns'
                  -> Query columns -> Query columns -> Query columns'
