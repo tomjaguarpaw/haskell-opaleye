@@ -15,35 +15,65 @@ import qualified Opaleye.Internal.Tag as T
 
 import qualified Data.Profunctor.Product.Default as D
 
--- | When 'Nothing' is returned it means that the 'Query' returns zero rows.
+-- | Show the SQL query string generated from the query.
+--
+-- When 'Nothing' is returned it means that the 'Query' returns zero
+-- rows.
 --
 -- Example type specialization:
 --
 -- @
--- showSqlForPostgres :: Query (Column a, Column b) -> Maybe String
+-- showSql :: Query (Column a, Column b) -> Maybe String
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- showSqlForPostgres :: Query (Foo (Column a) (Column b) (Column c)) -> Maybe String
+-- showSql :: Query (Foo (Column a) (Column b) (Column c)) -> Maybe String
 -- @
+showSql :: forall columns.
+           D.Default U.Unpackspec columns columns
+        => Q.Query columns
+        -> Maybe String
+showSql = showSqlExplicit (D.def :: U.Unpackspec columns columns)
+
+-- | Show the unoptimized SQL query string generated from the query.
+showSqlUnopt :: forall columns.
+                D.Default U.Unpackspec columns columns
+             => Q.Query columns
+             -> Maybe String
+showSqlUnopt = showSqlUnoptExplicit (D.def :: U.Unpackspec columns columns)
+
+-- * Explicit versions
+
+showSqlExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
+showSqlExplicit = formatAndShowSQL
+                  . (\(x, y, z) -> (x, Op.optimize y, z))
+                  .: Q.runQueryArrUnpack
+
+showSqlUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
+showSqlUnoptExplicit = formatAndShowSQL .: Q.runQueryArrUnpack
+
+-- * Deprecated functions
+
+-- | Will be deprecated in version 0.7.  Use 'showSql' instead.
 showSqlForPostgres :: forall columns . D.Default U.Unpackspec columns columns =>
                       Q.Query columns -> Maybe String
-showSqlForPostgres = showSqlForPostgresExplicit (D.def :: U.Unpackspec columns columns)
+showSqlForPostgres = showSql
 
+-- | Will be deprecated in version 0.7.  Use 'showSqlUnopt' instead.
 showSqlForPostgresUnopt :: forall columns . D.Default U.Unpackspec columns columns =>
                            Q.Query columns -> Maybe String
-showSqlForPostgresUnopt = showSqlForPostgresUnoptExplicit (D.def :: U.Unpackspec columns columns)
+showSqlForPostgresUnopt = showSqlUnopt
 
+-- | Will be deprecated in version 0.7.  Use 'showSqlExplicit' instead.
 showSqlForPostgresExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
-showSqlForPostgresExplicit = formatAndShowSQL
-                             . (\(x, y, z) -> (x, Op.optimize y, z))
-                             .: Q.runQueryArrUnpack
+showSqlForPostgresExplicit = showSqlExplicit
 
+-- | Will be deprecated in version 0.7.  Use 'showSqlUnoptExplicit' instead.
 showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
-showSqlForPostgresUnoptExplicit = formatAndShowSQL .: Q.runQueryArrUnpack
+showSqlForPostgresUnoptExplicit = showSqlUnoptExplicit
 
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
