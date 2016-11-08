@@ -100,8 +100,8 @@ runQueryFoldExplicit qr conn q z f = case sql of
   Just sql' -> PGS.foldWith_ parser conn sql' z f
   where (sql, parser) = prepareQuery qr q
 
--- | For internal use only.  Do not use.  Will be deprecated in a
--- subsequent release.
+-- | For internal use only.  Do not use.  Will be deprecated in
+-- version 0.6.
 prepareQuery :: QueryRunner columns haskells -> Query columns -> (Maybe PGS.Query, FR.RowParser haskells)
 prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
   where sql :: Maybe PGS.Query
