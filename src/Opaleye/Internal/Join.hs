@@ -24,12 +24,10 @@ toNullable :: NullMaker a b -> a -> b
 toNullable (NullMaker f) = f
 
 instance D.Default NullMaker (Column a) (Column (Nullable a)) where
-  -- TODO: This should probably be 'NullMaker C.toNullable'
-  def = NullMaker C.unsafeCoerceColumn
+  def = NullMaker C.toNullable
 
 instance D.Default NullMaker (Column (Nullable a)) (Column (Nullable a)) where
-  -- TODO: This should probably be 'NullMaker id'
-  def = NullMaker C.unsafeCoerceColumn
+  def = NullMaker id
 
 joinExplicit :: U.Unpackspec columnsA columnsA
              -> U.Unpackspec columnsB columnsB
