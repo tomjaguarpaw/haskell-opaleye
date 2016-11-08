@@ -201,11 +201,11 @@ data PGJsonb
 literalColumn :: HPQ.Literal -> Column a
 literalColumn = IPT.literalColumn
 {-# WARNING literalColumn
-    "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be deprecated in a future release"
+    "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be deprecated in version 0.6"
   #-}
 
 unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
 unsafePgFormatTime = IPT.unsafePgFormatTime
 {-# WARNING unsafePgFormatTime
-    "'unsafePgFormatTime' has been moved to Opaleye.Internal.PGTypes and will be deprecated in a future release"
+    "'unsafePgFormatTime' has been moved to Opaleye.Internal.PGTypes and will be deprecated in version 0.6"
   #-}

@@ -186,7 +186,8 @@ runUpdateReturningExplicit qr conn t update cond r =
 
 -- | Returns the number of rows inserted
 --
--- This will be deprecated in a future release.  Use 'runInsertMany' instead.
+-- This will be deprecated in version 0.6.  Use 'runInsertMany'
+-- instead.
 runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
@@ -195,7 +196,7 @@ runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 -- recommended that you provide full type signatures when using
 -- @runInsertReturning@.
 --
--- This will be deprecated in a future release.  Use
+-- This will be deprecated in version 0.6.  Use
 -- 'runInsertManyReturning' instead.
 runInsertReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                    => PGS.Connection
