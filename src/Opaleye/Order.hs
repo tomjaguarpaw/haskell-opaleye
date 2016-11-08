@@ -26,7 +26,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 {-| Order the rows of a `Query` according to the `Order`.
 
 @
-import Data.Monoid (\<\>)
+import Data.Monoid ((\<\>))
 
 \-- Order by the first column ascending.  When first columns are equal
 \-- order by second column descending.
