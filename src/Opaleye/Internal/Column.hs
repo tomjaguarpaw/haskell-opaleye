@@ -17,7 +17,7 @@ data Nullable a = Nullable
 unColumn :: Column a -> HPQ.PrimExpr
 unColumn (Column e) = e
 
-{-# DEPRECATED unsafeCoerce "Will be deprecated in version 0.6.  Use unsafeCoerceColumn instead." #-}
+{-# DEPRECATED unsafeCoerce "Will be removed in version 0.6.  Use unsafeCoerceColumn instead." #-}
 unsafeCoerce :: Column a -> Column b
 unsafeCoerce = unsafeCoerceColumn
 
