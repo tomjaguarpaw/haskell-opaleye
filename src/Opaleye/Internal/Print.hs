@@ -79,8 +79,10 @@ ppJoinType Sql.RightJoin = text "RIGHT OUTER JOIN"
 ppJoinType Sql.FullJoin = text "FULL OUTER JOIN"
 
 ppAttrs :: Sql.SelectAttrs -> Doc
-ppAttrs Sql.Star             = text "*"
-ppAttrs (Sql.SelectAttrs xs) = (HPrint.commaV nameAs . NEL.toList) xs
+ppAttrs Sql.Star                 = text "*"
+ppAttrs (Sql.SelectAttrs xs)     = (HPrint.commaV nameAs . NEL.toList) xs
+ppAttrs (Sql.SelectAttrsStar xs) =
+  HPrint.commaV id ((map nameAs . NEL.toList) xs ++ [text "*"])
 
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc

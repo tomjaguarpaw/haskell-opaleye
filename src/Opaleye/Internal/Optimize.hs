@@ -43,7 +43,7 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
   , PQ.aggregate = fmap . PQ.Aggregate
   , PQ.order     = fmap . PQ.Order
   , PQ.limit     = fmap . PQ.Limit
-  , PQ.join      = \jt pe pq1 pq2 -> PQ.Join jt pe <$> pq1 <*> pq2
+  , PQ.join      = \jt pe pes1 pes2 pq1 pq2 -> PQ.Join jt pe pes1 pes2 <$> pq1 <*> pq2
   , PQ.values    = return .: PQ.Values
   , PQ.binary    = \case
       -- Some unfortunate duplication here
