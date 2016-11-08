@@ -25,6 +25,7 @@ type TableAlias = String
 ppSql :: Select -> Doc
 ppSql (SelectFrom s)   = ppSelectFrom s
 ppSql (Table table)    = HPrint.ppTable table
+ppSql (RelExpr expr)   = HPrint.ppSqlExpr expr
 ppSql (SelectJoin j)   = ppSelectJoin j
 ppSql (SelectValues v) = ppSelectValues v
 ppSql (SelectBinary v) = ppSelectBinary v
