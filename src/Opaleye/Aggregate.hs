@@ -1,8 +1,32 @@
 -- | Perform aggregation on 'Query's.  To aggregate a 'Query' you
 -- should construct an 'Aggregator' encoding how you want the
--- aggregation to proceed, then call 'aggregate' on it.
+-- aggregation to proceed, then call 'aggregate' on it.  The
+-- 'Aggregator' should be constructed from the basic 'Aggregator's
+-- below by using the combining operations from
+-- "Data.Profunctor.Product".
 
-module Opaleye.Aggregate (module Opaleye.Aggregate, Aggregator) where
+module Opaleye.Aggregate
+       (
+       -- * Aggregation
+         aggregate
+       , Aggregator
+       -- * Basic 'Aggregator's
+       , groupBy
+       , Opaleye.Aggregate.sum
+       , count
+       , countStar
+       , avg
+       , Opaleye.Aggregate.max
+       , Opaleye.Aggregate.min
+       , boolOr
+       , boolAnd
+       , arrayAgg
+       , stringAgg
+       -- * Counting rows
+       , countRows
+       -- * Entire module
+       , module Opaleye.Aggregate
+       ) where
 
 import           Control.Applicative (pure)
 import           Data.Profunctor     (lmap)
