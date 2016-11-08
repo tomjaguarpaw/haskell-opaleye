@@ -1,4 +1,4 @@
-## HEAD
+## 0.5.2.0
 
 * Added `Opaleye.FunctionalJoin`
 * Fixed handling of `BinExpr OpIn _ (ListExpr _)` in `defaultSqlExpr`.
