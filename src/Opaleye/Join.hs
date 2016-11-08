@@ -19,7 +19,9 @@
 --          -> Query ((Column a, Column b), (Column (Nullable c), Column (Nullable d)))
 -- @
 
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Opaleye.Join where
 
