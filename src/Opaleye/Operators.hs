@@ -63,7 +63,7 @@ infix 4 .===
 infix 4 ./==
 -- | A polymorphic inequality operator that works for all types that
 -- you have run `makeAdaptorAndInstance` on.  This may be unified with
--- `.==` in a future version.
+-- `./=` in a future version.
 (./==) :: D.Default O.EqPP columns columns => columns -> columns -> Column T.PGBool
 (./==) = Opaleye.Operators.not .: (O..==)
 
