@@ -2,8 +2,10 @@
 
 module Opaleye.RunQuery (module Opaleye.RunQuery,
                          QueryRunner,
+                         -- * Datatypes
                          IRQ.QueryRunnerColumn,
                          IRQ.QueryRunnerColumnDefault (..),
+                         -- * Creating now 'QueryRunnerColumn's
                          IRQ.fieldQueryRunnerColumn,
                          IRQ.fieldParserQueryRunnerColumn) where
 
@@ -20,6 +22,8 @@ import qualified Opaleye.Internal.QueryArr as Q
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
+
+-- * Running 'Query's
 
 -- | @runQuery@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
@@ -61,6 +65,8 @@ runQueryFold
   -> IO b
 runQueryFold = runQueryFoldExplicit D.def
 
+-- * Creating new 'QueryRunnerColumn's
+
 -- | Use 'queryRunnerColumn' to make an instance to allow you to run queries on
 --   your own datatypes.  For example:
 --
@@ -81,6 +87,8 @@ queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
   where IRQ.QueryRunnerColumn u fp = qrc
         fmapFP = fmap . fmap . fmap
 
+-- * Explicit versions
+
 runQueryExplicit :: QueryRunner columns haskells
                  -> PGS.Connection
                  -> Query columns
@@ -99,6 +107,8 @@ runQueryFoldExplicit qr conn q z f = case sql of
   Nothing   -> return z
   Just sql' -> PGS.foldWith_ parser conn sql' z f
   where (sql, parser) = prepareQuery qr q
+
+-- * Deprecated functions
 
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
