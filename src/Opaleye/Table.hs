@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Opaleye.Table (module Opaleye.Table,
+                      -- * Other
                       View,
                       Writer,
                       Table(Table, TableWithSchema),
@@ -34,12 +35,6 @@ queryTable :: D.Default TM.ColumnMaker columns columns =>
               Table a columns -> Q.Query columns
 queryTable = queryTableExplicit D.def
 
-queryTableExplicit :: TM.ColumnMaker tablecolumns columns ->
-                     Table a tablecolumns -> Q.Query columns
-queryTableExplicit cm table = Q.simpleQueryArr f where
-  f ((), t0) = (retwires, primQ, Tag.next t0) where
-    (retwires, primQ) = T.queryTable cm table t0
-
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
 required :: String -> TableProperties (Column a) (Column a)
@@ -53,3 +48,11 @@ optional :: String -> TableProperties (Maybe (Column a)) (Column a)
 optional columnName = T.TableProperties
   (T.optional columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
+
+-- * Explicit versions
+
+queryTableExplicit :: TM.ColumnMaker tablecolumns columns ->
+                     Table a tablecolumns -> Q.Query columns
+queryTableExplicit cm table = Q.simpleQueryArr f where
+  f ((), t0) = (retwires, primQ, Tag.next t0) where
+    (retwires, primQ) = T.queryTable cm table t0
