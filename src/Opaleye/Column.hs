@@ -3,13 +3,23 @@
 -- Please note that numeric 'Column' types are instances of 'Num', so
 -- you can use '*', '/', '+', '-' on them.
 
-module Opaleye.Column (Column,
-                       module Opaleye.Column,
+module Opaleye.Column (-- * 'Column'
+                       Column,
+                       -- * Working with @NULL@
                        Nullable,
+                       null,
+                       isNull,
+                       matchNullable,
+                       fromNullable,
+                       toNullable,
+                       maybeToNullable,
+                       -- * Unsafe operations
                        unsafeCast,
                        unsafeCoerce,
                        unsafeCoerceColumn,
-                       unsafeCompositeField)  where
+                       unsafeCompositeField,
+                       -- * Entire module
+                       module Opaleye.Column)  where
 
 import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerce, unsafeCoerceColumn,
                                           unsafeCast, unsafeCompositeField)
