@@ -15,6 +15,8 @@ import qualified Opaleye.Internal.Tag as T
 
 import qualified Data.Profunctor.Product.Default as D
 
+-- * Showing SQL
+
 -- | Show the SQL query string generated from the query.
 --
 -- When 'Nothing' is returned it means that the 'Query' returns zero
