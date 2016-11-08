@@ -20,11 +20,11 @@ import qualified Opaleye.PGTypes                 as T
 import qualified Opaleye.Operators               as O
 import           Opaleye.QueryArr                (Query)
 
-joinF :: (l -> r -> z)
-      -> (l -> r -> Column T.PGBool)
-      -> Query l
-      -> Query r
-      -> Query z
+joinF :: (columnsL -> columnsR -> columnsResult)
+      -> (columnsL -> columnsR -> Column T.PGBool)
+      -> Query columnsL
+      -> Query columnsR
+      -> Query columnsResult
 joinF f cond l r =
   fmap (uncurry f) (O.keepWhen (uncurry cond) <<< ((,) <$> l <*> r))
 
