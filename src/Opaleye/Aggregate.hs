@@ -38,10 +38,10 @@ of SQL's scoping rules and lead to invalid queries.
 Please note that when aggregating an empty query with no @GROUP BY@
 clause, Opaleye's behaviour differs from Postgres's behaviour.
 Postgres returns a single row whereas Opaleye returns zero rows.
-(Opaleye's behaviour is consistent with the meaning of aggregating
+Opaleye's behaviour is consistent with the meaning of aggregating
 over groups of rows and Postgres's behaviour is inconsistent.  When a
 query has zero rows it has zero groups, and thus zero rows in the
-result of an aggregation.)
+result of an aggregation.
 
 -}
 aggregate :: Aggregator a b -> Query a -> Query b
