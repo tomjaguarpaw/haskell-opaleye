@@ -1,3 +1,7 @@
+## 0.5.2.1
+
+* Improved documentation
+
 ## 0.5.2.0
 
 * Added `Opaleye.FunctionalJoin`
