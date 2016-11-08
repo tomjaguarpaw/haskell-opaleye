@@ -31,6 +31,7 @@ data Select = SelectFrom From
 data SelectAttrs =
     Star
   | SelectAttrs (NEL.NonEmpty (HSql.SqlExpr, Maybe HSql.SqlColumn))
+  | SelectAttrsStar (NEL.NonEmpty (HSql.SqlExpr, Maybe HSql.SqlColumn))
   deriving Show
 
 data From = From {
@@ -155,10 +156,21 @@ limit_ lo s = SelectFrom $ newSelect { tables = [s]
           PQ.OffsetOp n        -> (Nothing, Just n)
           PQ.LimitOffsetOp l o -> (Just l, Just o)
 
-join :: PQ.JoinType -> HPQ.PrimExpr -> Select -> Select -> Select
-join j cond s1 s2 = SelectJoin Join { jJoinType = joinType j
-                                    , jTables = (s1, s2)
-                                    , jCond = sqlExpr cond }
+join :: PQ.JoinType
+     -> HPQ.PrimExpr
+     -> PQ.Bindings HPQ.PrimExpr
+     -> PQ.Bindings HPQ.PrimExpr
+     -> Select
+     -> Select
+     -> Select
+join j cond pes1 pes2 s1 s2 =
+  SelectJoin Join { jJoinType = joinType j
+                  , jTables   = (selectFrom pes1 s1, selectFrom pes2 s2)
+                  , jCond     = sqlExpr cond }
+  where selectFrom pes s = SelectFrom $ newSelect {
+            attrs  = SelectAttrsStar (ensureColumns (map sqlBinding pes))
+          , tables = [s]
+          }
 
 -- Postgres seems to name columns of VALUES clauses "column1",
 -- "column2", ... . I'm not sure to what extent it is customisable or

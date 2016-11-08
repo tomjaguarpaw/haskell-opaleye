@@ -55,17 +55,14 @@ fullJoin  :: (D.Default U.Unpackspec columnsL columnsL,
           -> Query (nullableColumnsL, nullableColumnsR) -- ^ Full outer join
 fullJoin = fullJoinExplicit D.def D.def D.def D.def
 
--- We don't actually need the Unpackspecs any more, but I'm going to
--- leave them here in case they're ever needed again.  I don't want to
--- have to break the API to add them back.
 leftJoinExplicit :: U.Unpackspec columnsL columnsL
                  -> U.Unpackspec columnsR columnsR
                  -> J.NullMaker columnsR nullableColumnsR
                  -> Query columnsL -> Query columnsR
                  -> ((columnsL, columnsR) -> Column T.PGBool)
                  -> Query (columnsL, nullableColumnsR)
-leftJoinExplicit _ _ nullmaker =
-  J.joinExplicit id (J.toNullable nullmaker) PQ.LeftJoin
+leftJoinExplicit uA uB nullmaker =
+  J.joinExplicit uA uB id (J.toNullable nullmaker) PQ.LeftJoin
 
 rightJoinExplicit :: U.Unpackspec columnsL columnsL
                   -> U.Unpackspec columnsR columnsR
@@ -73,8 +70,8 @@ rightJoinExplicit :: U.Unpackspec columnsL columnsL
                   -> Query columnsL -> Query columnsR
                   -> ((columnsL, columnsR) -> Column T.PGBool)
                   -> Query (nullableColumnsL, columnsR)
-rightJoinExplicit _ _ nullmaker =
-  J.joinExplicit (J.toNullable nullmaker) id PQ.RightJoin
+rightJoinExplicit uA uB nullmaker =
+  J.joinExplicit uA uB (J.toNullable nullmaker) id PQ.RightJoin
 
 
 fullJoinExplicit :: U.Unpackspec columnsL columnsL
@@ -84,5 +81,5 @@ fullJoinExplicit :: U.Unpackspec columnsL columnsL
                  -> Query columnsL -> Query columnsR
                  -> ((columnsL, columnsR) -> Column T.PGBool)
                  -> Query (nullableColumnsL, nullableColumnsR)
-fullJoinExplicit _ _ nullmakerA nullmakerB =
-  J.joinExplicit (J.toNullable nullmakerA) (J.toNullable nullmakerB) PQ.FullJoin
+fullJoinExplicit uA uB nullmakerA nullmakerB =
+  J.joinExplicit uA uB (J.toNullable nullmakerA) (J.toNullable nullmakerB) PQ.FullJoin

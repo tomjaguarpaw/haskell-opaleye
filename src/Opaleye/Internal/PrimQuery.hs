@@ -47,7 +47,12 @@ data PrimQuery' a = Unit
                               (PrimQuery' a)
                   | Order     [HPQ.OrderExpr] (PrimQuery' a)
                   | Limit     LimitOp (PrimQuery' a)
-                  | Join      JoinType HPQ.PrimExpr (PrimQuery' a) (PrimQuery' a)
+                  | Join      JoinType
+                              HPQ.PrimExpr
+                              (Bindings HPQ.PrimExpr)
+                              (Bindings HPQ.PrimExpr)
+                              (PrimQuery' a)
+                              (PrimQuery' a)
                   | Values    [Symbol] (NEL.NonEmpty [HPQ.PrimExpr])
                   | Binary    BinOp
                               (Bindings (HPQ.PrimExpr, HPQ.PrimExpr))
@@ -67,7 +72,13 @@ data PrimQueryFold' a p = PrimQueryFold
   , aggregate :: (Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr)) -> p -> p
   , order     :: [HPQ.OrderExpr] -> p -> p
   , limit     :: LimitOp -> p -> p
-  , join      :: JoinType -> HPQ.PrimExpr -> p -> p -> p
+  , join      :: JoinType
+              -> HPQ.PrimExpr
+              -> (Bindings HPQ.PrimExpr)
+              -> (Bindings HPQ.PrimExpr)
+              -> p
+              -> p
+              -> p
   , values    :: [Symbol] -> (NEL.NonEmpty [HPQ.PrimExpr]) -> p
   , binary    :: BinOp -> (Bindings (HPQ.PrimExpr, HPQ.PrimExpr)) -> (p, p) -> p
   , label     :: String -> p -> p
@@ -102,7 +113,7 @@ foldPrimQuery f = fix fold
           Aggregate aggrs q         -> aggregate f aggrs (self q)
           Order pes q               -> order     f pes (self q)
           Limit op q                -> limit     f op (self q)
-          Join j cond q1 q2         -> join      f j cond (self q1) (self q2)
+          Join j cond pe1 pe2 q1 q2 -> join      f j cond pe1 pe2 (self q1) (self q2)
           Values ss pes             -> values    f ss pes
           Binary binop pes (q1, q2) -> binary    f binop pes (self q1, self q2)
           Label l pq                -> label     f l (self pq)
