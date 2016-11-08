@@ -34,6 +34,8 @@ import qualified Opaleye.PGTypes as T
 
 import qualified Data.Profunctor.Product.Default as D
 
+-- * Joins
+
 leftJoin  :: (D.Default U.Unpackspec columnsL columnsL,
               D.Default U.Unpackspec columnsR columnsR,
               D.Default J.NullMaker columnsR nullableColumnsR)
@@ -62,6 +64,8 @@ fullJoin  :: (D.Default U.Unpackspec columnsL columnsL,
           -> ((columnsL, columnsR) -> Column T.PGBool) -- ^ Condition on which to join
           -> Query (nullableColumnsL, nullableColumnsR) -- ^ Full outer join
 fullJoin = fullJoinExplicit D.def D.def D.def D.def
+
+-- * Explicit versions
 
 leftJoinExplicit :: U.Unpackspec columnsL columnsL
                  -> U.Unpackspec columnsR columnsR
