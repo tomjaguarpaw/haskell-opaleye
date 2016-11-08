@@ -4,8 +4,7 @@
 -- | Operators on 'Column's.  Please note that numeric 'Column' types
 -- are instances of 'Num', so you can use '*', '/', '+', '-' on them.
 
-module Opaleye.Operators (module Opaleye.Operators,
-                          (O..&&)) where
+module Opaleye.Operators (module Opaleye.Operators) where
 
 import qualified Control.Arrow as A
 import qualified Data.Foldable as F
@@ -29,6 +28,8 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Profunctor.Product.Default as D
 
+-- * Restriction operators
+
 {-| Restrict query results to a particular condition.  Corresponds to
 the guard method of the MonadPlus class.  You would typically use
 'restrict' if you want to use 'A.Arrow' notation.  -}
@@ -44,6 +45,8 @@ keepWhen :: (a -> Column T.PGBool) -> QueryArr a a
 keepWhen p = proc a -> do
   restrict  -< p a
   A.returnA -< a
+
+-- * Equality operators
 
 infix 4 .==
 (.==) :: Column a -> Column a -> Column T.PGBool
@@ -67,6 +70,8 @@ infix 4 ./==
 (./==) :: D.Default O.EqPP columns columns => columns -> columns -> Column T.PGBool
 (./==) = Opaleye.Operators.not .: (O..==)
 
+-- * Comparison operators
+
 infix 4 .>
 (.>) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
 (.>) = unsafeGt
@@ -83,11 +88,15 @@ infix 4 .>=
 (.>=) :: Ord.PGOrd a => Column a -> Column a -> Column T.PGBool
 (.>=) = C.binOp (HPQ.:>=)
 
+-- * Numerical operators
+
 quot_ :: C.PGIntegral a => Column a -> Column a -> Column a
 quot_ = C.binOp (HPQ.:/)
 
 rem_ :: C.PGIntegral a => Column a -> Column a -> Column a
 rem_ = C.binOp HPQ.OpMod
+
+-- * Conditional operators
 
 case_ :: [(Column T.PGBool, Column a)] -> Column a -> Column a
 case_ = unsafeCase_
@@ -106,14 +115,27 @@ ifThenElseMany :: D.Default O.IfPP columns columns
                -> columns
 ifThenElseMany = O.ifExplict D.def
 
+-- * Logical operators
+
 infixr 2 .||
 
 -- | Boolean or
 (.||) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
 (.||) = C.binOp HPQ.OpOr
 
+-- | Boolean and
+(.&&) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
+(.&&) = (O..&&)
+
+-- | Boolean not
 not :: Column T.PGBool -> Column T.PGBool
 not = C.unOp HPQ.OpNot
+
+-- | True when any element of the container is true
+ors :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
+ors = F.foldl' (.||) (T.pgBool False)
+
+-- * Text operators
 
 -- | Concatenate 'Column' 'T.PGText'
 (.++) :: Column T.PGText -> Column T.PGText -> Column T.PGText
@@ -138,9 +160,7 @@ ilike = C.binOp HPQ.OpILike
 charLength :: C.PGString a => Column a -> Column Int
 charLength (Column e) = Column (HPQ.FunExpr "char_length" [e])
 
--- | True when any element of the container is true
-ors :: F.Foldable f => f (Column T.PGBool) -> Column T.PGBool
-ors = F.foldl' (.||) (T.pgBool False)
+-- * Containment operators
 
 -- | 'in_' is designed to be used in prefix form.
 --
@@ -182,19 +202,7 @@ inQuery c q = qj'
                      . snd)
               A.<<< qj
 
-timestamptzAtTimeZone :: Column T.PGTimestamptz
-                      -> Column T.PGText
-                      -> Column T.PGTimestamp
-timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
-
-emptyArray :: T.IsSqlType a => Column (T.PGArray a)
-emptyArray = T.pgArray id []
-
-arrayPrepend :: Column a -> Column (T.PGArray a) -> Column (T.PGArray a)
-arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es])
-
-singletonArray :: T.IsSqlType a => Column a -> Column (T.PGArray a)
-singletonArray x = arrayPrepend x emptyArray
+-- * JSON operators
 
 -- | Class of Postgres types that represent json values.
 --
@@ -271,6 +279,22 @@ infix 4 .?|
 infix 4 .?&
 (.?&) :: Column T.PGJsonb -> Column (T.PGArray T.PGText) -> Column T.PGBool
 (.?&) = C.binOp (HPQ.:?&)
+
+-- * Other operators
+
+timestamptzAtTimeZone :: Column T.PGTimestamptz
+                      -> Column T.PGText
+                      -> Column T.PGTimestamp
+timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
+
+emptyArray :: T.IsSqlType a => Column (T.PGArray a)
+emptyArray = T.pgArray id []
+
+arrayPrepend :: Column a -> Column (T.PGArray a) -> Column (T.PGArray a)
+arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es])
+
+singletonArray :: T.IsSqlType a => Column a -> Column (T.PGArray a)
+singletonArray x = arrayPrepend x emptyArray
 
 -- | Cast a 'PGInt4' to a 'PGFloat8'
 doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
