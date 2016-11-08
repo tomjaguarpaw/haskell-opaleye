@@ -21,9 +21,13 @@ import qualified Opaleye.Operators               as O
 import           Opaleye.QueryArr                (Query)
 
 joinF :: (columnsL -> columnsR -> columnsResult)
+      -- ^ Calculate result columns from input columns
       -> (columnsL -> columnsR -> Column T.PGBool)
+      -- ^ Condition on which to join
       -> Query columnsL
+      -- ^ Left query
       -> Query columnsR
+      -- ^ Right query
       -> Query columnsResult
 joinF f cond l r =
   fmap (uncurry f) (O.keepWhen (uncurry cond) <<< ((,) <$> l <*> r))
@@ -32,10 +36,17 @@ leftJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
               D.Default IU.Unpackspec columnsL columnsL,
               D.Default IU.Unpackspec columnsR columnsR)
           => (columnsL -> columnsR -> columnsResult)
+          -- ^ Calculate result row from input rows for rows in the
+          -- right query satisfying the join condition
           -> (columnsL -> columnsResult)
+          -- ^ Calculate result row from input row when there are /no/
+          -- rows in the right query satisfying the join condition
           -> (columnsL -> columnsR -> Column T.PGBool)
+          -- ^ Condition on which to join
           -> Query columnsL
+          -- ^ Left query
           -> Query columnsR
+          -- ^ Right query
           -> Query columnsResult
 leftJoinF f fL cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.pgBool True))
@@ -56,10 +67,17 @@ rightJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
                D.Default IU.Unpackspec columnsL columnsL,
                D.Default IU.Unpackspec columnsR columnsR)
            => (columnsL -> columnsR -> columnsResult)
+           -- ^ Calculate result row from input rows for rows in the
+           -- left query satisfying the join condition
            -> (columnsR -> columnsResult)
+           -- ^ Calculate result row from input row when there are /no/
+           -- rows in the left query satisfying the join condition
            -> (columnsL -> columnsR -> Column T.PGBool)
+           -- ^ Condition on which to join
            -> Query columnsL
+           -- ^ Left query
            -> Query columnsR
+           -- ^ Right query
            -> Query columnsResult
 rightJoinF f fR cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.pgBool True))
@@ -80,11 +98,22 @@ fullJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
               D.Default IU.Unpackspec columnsL columnsL,
               D.Default IU.Unpackspec columnsR columnsR)
           => (columnsL -> columnsR -> columnsResult)
+           -- ^ Calculate result row from input rows for rows in the
+           -- left and right query satisfying the join condition
           -> (columnsL -> columnsResult)
+           -- ^ Calculate result row from left input row when there
+           -- are /no/ rows in the right query satisfying the join
+           -- condition
           -> (columnsR -> columnsResult)
+           -- ^ Calculate result row from right input row when there
+           -- are /no/ rows in the left query satisfying the join
+           -- condition
           -> (columnsL -> columnsR -> Column T.PGBool)
+          -- ^ Condition on which to join
           -> Query columnsL
+          -- ^ Left query
           -> Query columnsR
+          -- ^ Right query
           -> Query columnsResult
 fullJoinF f fL fR cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.pgBool True))
