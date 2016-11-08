@@ -29,9 +29,7 @@ tiToSqlTable :: TableIdentifier -> HSql.SqlTable
 tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
                                 , HSql.sqlTableName       = tiTableName ti }
 
-
--- In the future it may make sense to introduce this datatype
--- type Bindings a = [(Symbol, a)]
+type Bindings a = [(Symbol, a)]
 
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
@@ -43,19 +41,19 @@ tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
 -- SQL so we remove it in 'Optimize' and set 'a = Void'.
 data PrimQuery' a = Unit
                   | Empty     a
-                  | BaseTable TableIdentifier [(Symbol, HPQ.PrimExpr)]
+                  | BaseTable TableIdentifier (Bindings HPQ.PrimExpr)
                   | Product   (NEL.NonEmpty (PrimQuery' a)) [HPQ.PrimExpr]
-                  | Aggregate [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))]
+                  | Aggregate (Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))
                               (PrimQuery' a)
                   | Order     [HPQ.OrderExpr] (PrimQuery' a)
                   | Limit     LimitOp (PrimQuery' a)
                   | Join      JoinType HPQ.PrimExpr (PrimQuery' a) (PrimQuery' a)
                   | Values    [Symbol] (NEL.NonEmpty [HPQ.PrimExpr])
                   | Binary    BinOp
-                              [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
+                              (Bindings (HPQ.PrimExpr, HPQ.PrimExpr))
                               (PrimQuery' a, PrimQuery' a)
                   | Label     String (PrimQuery' a)
-                  | RelExpr   HPQ.PrimExpr [(Symbol, HPQ.PrimExpr)]
+                  | RelExpr   HPQ.PrimExpr (Bindings HPQ.PrimExpr)
                  deriving Show
 
 type PrimQuery = PrimQuery' ()
@@ -64,16 +62,16 @@ type PrimQueryFold = PrimQueryFold' ()
 data PrimQueryFold' a p = PrimQueryFold
   { unit      :: p
   , empty     :: a -> p
-  , baseTable :: TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> p
+  , baseTable :: TableIdentifier -> (Bindings HPQ.PrimExpr) -> p
   , product   :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-  , aggregate :: [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))] -> p -> p
+  , aggregate :: (Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr)) -> p -> p
   , order     :: [HPQ.OrderExpr] -> p -> p
   , limit     :: LimitOp -> p -> p
   , join      :: JoinType -> HPQ.PrimExpr -> p -> p -> p
   , values    :: [Symbol] -> (NEL.NonEmpty [HPQ.PrimExpr]) -> p
-  , binary    :: BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))] -> (p, p) -> p
+  , binary    :: BinOp -> (Bindings (HPQ.PrimExpr, HPQ.PrimExpr)) -> (p, p) -> p
   , label     :: String -> p -> p
-  , relExpr   :: HPQ.PrimExpr -> [(Symbol, HPQ.PrimExpr)] -> p
+  , relExpr   :: HPQ.PrimExpr -> (Bindings HPQ.PrimExpr) -> p
     -- ^ A relation-valued expression
   }
 
