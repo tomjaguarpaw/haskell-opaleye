@@ -5,8 +5,8 @@ module Opaleye.Internal.RunQuery where
 import           Control.Applicative (Applicative, pure, (*>), (<*>), liftA2)
 
 import           Database.PostgreSQL.Simple.Internal (RowParser)
-import           Database.PostgreSQL.Simple.FromField (FieldParser, FromField,
-                                                       fromField)
+import           Database.PostgreSQL.Simple.FromField
+  (FieldParser, FromField, fromField, pgArrayFieldParser)
 import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
@@ -216,7 +216,7 @@ arrayColumn = C.unsafeCoerceColumn
 
 instance (Typeable b, QueryRunnerColumnDefault a b) =>
          QueryRunnerColumnDefault (T.PGArray a) [b] where
-  queryRunnerColumnDefault = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (arrayFieldParser f))
+  queryRunnerColumnDefault = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
     where QueryRunnerColumn c f = queryRunnerColumnDefault
 
 -- }
@@ -248,37 +248,6 @@ instance PP.SumProfunctor QueryRunner where
                          (either fb gb)
     where QueryRunner fu fr fb = f
           QueryRunner gu gr gb = g
-
--- }
-
--- { Annoying postgresql-simple patch.  Delete this when it is merged upstream.
-
-arrayFieldParser :: Typeable a => FieldParser a -> FieldParser (PGArray a)
-arrayFieldParser
-    fieldParser f mdat = do
-        info <- typeInfo f
-        case info of
-          TI.Array{} ->
-              case mdat of
-                Nothing  -> returnError UnexpectedNull f ""
-                Just dat -> do
-                   case parseOnly (fromArray fieldParser info f) dat of
-                     Left  err  -> returnError ConversionFailed f err
-                     Right conv -> PGArray <$> conv
-          _ -> returnError Incompatible f ""
-
-fromArray :: FieldParser a -> TypeInfo -> Field -> Parser (Conversion [a])
-fromArray fieldParser tInfo f = sequence . (parseIt <$>) <$> array delim
-  where
-    delim = typdelim (typelem tInfo)
-    fElem = f{ typeOid = typoid (typelem tInfo) }
-
-    parseIt item =
-        fieldParser f' $ if item' == fromString "NULL" then Nothing else Just item'
-      where
-        item' = fmt delim item
-        f' | Arrays.Array _ <- item = f
-           | otherwise              = fElem
 
 -- }
 
