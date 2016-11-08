@@ -14,10 +14,11 @@ import qualified Data.Semigroup as S
 import qualified Data.Void as Void
 
 {-|
-An `Order` represents an expression to order on and a sort
-direction. Multiple `Order`s can be composed with
+An `Order` @a@ represents a sort order and direction for the elements
+of the type @a@. Multiple `Order`s can be composed with
 `Data.Monoid.mappend` or @(\<\>)@ from "Data.Monoid".  If two rows are
-equal according to the first `Order`, the second is used, and so on.
+equal according to the first `Order` in the @mappend@, the second is
+used, and so on.
 -}
 
 -- Like the (columns -> RowParser haskells) field of QueryRunner this
