@@ -21,9 +21,11 @@ toNullable :: NullMaker a b -> a -> b
 toNullable (NullMaker f) = f
 
 instance D.Default NullMaker (Column a) (Column (Nullable a)) where
+  -- TODO: This should probably be 'NullMaker C.toNullable'
   def = NullMaker C.unsafeCoerceColumn
 
 instance D.Default NullMaker (Column (Nullable a)) (Column (Nullable a)) where
+  -- TODO: This should probably be 'NullMaker id'
   def = NullMaker C.unsafeCoerceColumn
 
 joinExplicit :: (columnsA -> returnedColumnsA)
@@ -32,7 +34,7 @@ joinExplicit :: (columnsA -> returnedColumnsA)
              -> Q.Query columnsA -> Q.Query columnsB
              -> ((columnsA, columnsB) -> Column T.PGBool)
              -> Q.Query (returnedColumnsA, returnedColumnsB)
-joinExplicit returnColumnsA returnColumnsB joinType
+joinExplicit uA uB returnColumnsA returnColumnsB joinType
              qA qB cond = Q.simpleQueryArr q where
   q ((), startTag) = ((nullableColumnsA, nullableColumnsB), primQueryR, T.next endTag)
     where (columnsA, primQueryA, midTag) = Q.runSimpleQueryArr qA ((), startTag)
