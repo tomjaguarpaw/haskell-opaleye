@@ -1,6 +1,19 @@
 -- | Ordering, @LIMIT@ and @OFFSET@
 
-module Opaleye.Order (module Opaleye.Order, O.Order) where
+module Opaleye.Order ( -- * Order by
+                       orderBy
+                     , O.Order
+                     -- * Order direction
+                     , asc
+                     , desc
+                     , ascNullsFirst
+                     , descNullsLast
+                     -- * Limit and offset
+                     , limit
+                     , offset
+                     -- * Other
+                     , PGOrd
+                     ) where
 
 import qualified Opaleye.Column as C
 import           Opaleye.QueryArr (Query)
@@ -52,6 +65,8 @@ descNullsLast :: PGOrd b => (a -> C.Column b) -> O.Order a
 descNullsLast = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                                     , HPQ.orderNulls     = HPQ.NullsLast }
 
+-- * Limit and offset
+
 {- |
 Limit the results of the given query to the given maximum number of
 items.
@@ -65,6 +80,8 @@ that many result rows.
 -}
 offset :: Int -> Query a -> Query a
 offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
+
+-- * Other
 
 -- | Typeclass for Postgres types which support ordering operations.
 class PGOrd a where
