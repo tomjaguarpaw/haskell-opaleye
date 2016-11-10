@@ -844,37 +844,37 @@ testJsonbContainsAll = testG q (== [True])
 testRangeOverlap :: Test
 testRangeOverlap = testG q (== [True])
   where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
-        range a b = O.unsafeCast "int4range" $ O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 3 7) `O.overlap` (range 4 12)
 
 testRangeLeftOf :: Test
 testRangeLeftOf = testG q (== [True])
   where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
-        range a b = O.unsafeCast "int4range" $ O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 1 10) O..<< (range 100 110)
 
 testRangeRightOf :: Test
 testRangeRightOf = testG q (== [True])
   where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
-        range a b = O.unsafeCast "int4range" $ O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 50 60) O..>> (range 20 30)
 
 testRangeRightExtension :: Test
 testRangeRightExtension = testG q (== [True])
   where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
-        range a b = O.unsafeCast "int4range" $ O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 1 20) O..&< (range 18 20)
 
 testRangeLeftExtension :: Test
 testRangeLeftExtension = testG q (== [True])
   where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
-        range a b = O.unsafeCast "int4range" $ O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 7 20) O..&> (range 5 10)
 
 testRangeAdjacency :: Test
 testRangeAdjacency = testG q (== [True])
   where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
-        range a b = O.unsafeCast "int4range" $ O.pgRange O.pgInt4 (R.Inclusive a) (R.Exclusive b)
+        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Exclusive b)
         q = A.pure $ (range 1 2) O..-|- (range 2 3)
 
 allTests :: [Test]
@@ -951,7 +951,7 @@ main = do
   -- insert (table9, table9columndata)
 
   -- Need to run quickcheck after table data has been inserted
-  -- QuickCheck.run conn
+  QuickCheck.run conn
 
   results <- mapM ($ conn) allTests
 
