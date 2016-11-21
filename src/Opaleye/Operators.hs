@@ -123,6 +123,8 @@ infixr 2 .||
 (.||) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
 (.||) = C.binOp HPQ.OpOr
 
+infixr 3 .&&
+
 -- | Boolean and
 (.&&) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
 (.&&) = (O..&&)
