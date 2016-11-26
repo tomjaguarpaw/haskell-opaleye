@@ -301,3 +301,26 @@ singletonArray x = arrayPrepend x emptyArray
 -- | Cast a 'PGInt4' to a 'PGFloat8'
 doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
 doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
+
+overlap :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
+overlap = C.binOp (HPQ.:&&)
+
+infix 4 .<<
+(.<<) :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
+(.<<) = C.binOp (HPQ.:<<)
+
+infix 4 .>>
+(.>>) :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
+(.>>) = C.binOp (HPQ.:>>)
+
+infix 4 .&<
+(.&<) :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
+(.&<) = C.binOp (HPQ.:&<)
+
+infix 4 .&>
+(.&>) :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
+(.&>) = C.binOp (HPQ.:&>)
+
+infix 4 .-|-
+(.-|-) :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
+(.-|-) = C.binOp (HPQ.:-|-)
