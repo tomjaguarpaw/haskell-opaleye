@@ -1,3 +1,7 @@
+## 0.5.2.2
+
+* Corrected fixity for .&&
+
 ## 0.5.2.1
 
 * Improved documentation
