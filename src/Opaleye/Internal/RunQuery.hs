@@ -69,11 +69,11 @@ import           Data.Typeable (Typeable)
 -- be that we can't add nullability to a RowParser, only to a
 -- FieldParser, so we have to have some type that we know contains
 -- just a FieldParser.
-data QueryRunnerColumn pgType haskellType =
-  QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
+newtype QueryRunnerColumn pgType haskellType =
+  QueryRunnerColumn (FieldParser haskellType)
 
 instance Functor (FromField u) where
-  fmap f ~(QueryRunnerColumn u fp) = QueryRunnerColumn u ((fmap . fmap . fmap) f fp)
+  fmap f (QueryRunnerColumn fp) = QueryRunnerColumn ((fmap . fmap . fmap) f fp)
 
 type FromField = QueryRunnerColumn
 
@@ -118,17 +118,17 @@ fieldParserQueryRunnerColumn :: FieldParser haskell -> FromField pgType haskell
 fieldParserQueryRunnerColumn = fromPGSFieldParser
 
 fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
-fromPGSFieldParser = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
+fromPGSFieldParser = QueryRunnerColumn
 
 queryRunner :: FromField a b -> FromFields (Column a) b
-queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
-    where QueryRunnerColumn u fp = qrc
+queryRunner qrc = QueryRunner (P.rmap (const ()) U.unpackspecColumn) (const (fieldWith fp)) (const True)
+    where QueryRunnerColumn fp = qrc
 
 queryRunnerColumnNullable :: FromField a b
                           -> FromField (Nullable a) (Maybe b)
 queryRunnerColumnNullable qr =
-  QueryRunnerColumn (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
-  where QueryRunnerColumn u fp = qr
+  QueryRunnerColumn (fromField' fp)
+  where QueryRunnerColumn fp = qr
         fromField' :: FieldParser a -> FieldParser (Maybe a)
         fromField' _ _ Nothing = pure Nothing
         fromField' fp' f bs = fmap Just (fp' f bs)
@@ -272,8 +272,10 @@ arrayColumn = C.unsafeCoerceColumn
 
 instance (Typeable b, DefaultFromField a b) =>
          QueryRunnerColumnDefault (T.PGArray a) [b] where
-  defaultFromField = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
-    where QueryRunnerColumn c f = defaultFromField
+  defaultFromField = foo queryRunnerColumnDefault
+    where foo :: Typeable b => QueryRunnerColumn a b -> QueryRunnerColumn (T.PGArray a) [b]
+          foo x = QueryRunnerColumn ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
+            where QueryRunnerColumn f = x
 
 -- }
 
