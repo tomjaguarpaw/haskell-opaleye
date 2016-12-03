@@ -24,6 +24,8 @@ import qualified Data.Profunctor                 as P
 import           Control.Applicative (Applicative, pure, (<*>))
 import           Data.Functor                    ((<$>))
 
+import qualified Database.PostgreSQL.Simple.Range as R
+
 -- | 'constant' provides a convenient typeclass wrapper around the
 -- 'Column' creation functions in "Opaleye.PGTypes".  Besides
 -- convenience it doesn't provide any additional functionality.
@@ -131,6 +133,24 @@ instance D.Default Constant haskell (Column sql) => D.Default Constant (Maybe ha
 instance (D.Default Constant a (Column b), T.IsSqlType b)
          => D.Default Constant [a] (Column (T.PGArray b)) where
   def = Constant (T.pgArray (constantExplicit D.def))
+
+instance D.Default Constant (R.PGRange Int.Int) (Column (T.PGRange T.PGInt4)) where
+  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgInt4 a b
+
+instance D.Default Constant (R.PGRange Int.Int64) (Column (T.PGRange T.PGInt8)) where
+  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgInt8 a b
+
+-- TODO
+--instance D.Default Constant (R.PGRange _) (Column (T.PGRange PGNumeric)) where
+
+instance D.Default Constant (R.PGRange Time.LocalTime) (Column (T.PGRange T.PGTimestamp)) where
+  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgLocalTime a b
+
+instance D.Default Constant (R.PGRange Time.UTCTime) (Column (T.PGRange T.PGTimestamptz)) where
+  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgUTCTime a b
+
+instance D.Default Constant (R.PGRange Time.Day) (Column (T.PGRange T.PGDate)) where
+  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgDay a b
 
 -- { Boilerplate instances
 
