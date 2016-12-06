@@ -1,5 +1,32 @@
 # The design of Opaleye
 
+*DRAFT!*
+
+## Problems with SQL
+
+It's very heavyweight to abstract over anything in SQL.  You can
+perhaps use temporary tables and views and you can perhaps use named
+columns as "let bindings" but it's all very clumsy.  This means it's
+very hard to reuse code.
+
+It's awkward to generate composable SQL strings from another language
+because you end up needing things like unique names.
+
+You can't generate SQL strings at runtime but know already at compile
+time that it's syntactically correct.
+
+Every subselect has to be given a name.  Typically this is redundant.
+
+### SQL language inconsistencies
+
+This orders by the second column
+
+    SELECT * from table ORDER BY 2;
+
+whereas this orders by the value of 1 + 1, i.e. 2.
+
+    SELECT * from table ORDER BY 1 + 1;
+
 ## `Query` and `Column`
 
 The most important types in Opaleye are `Query` and `Column`.  A
