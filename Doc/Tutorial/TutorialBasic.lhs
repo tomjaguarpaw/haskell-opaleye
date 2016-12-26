@@ -35,6 +35,19 @@ use them to generate selects, joins and filters; use the API of
 Opaleye to make your queries more composable; and finally run the
 queries on Postgres.
 
+
+Type signatures
+---------------
+
+Due to Opaleye's reliance on the `Default` multi-parameter typeclass for
+determining the correct `ProductProfunctor` instance (see
+DefaultExplanation.lhs), type signatures frequently need to be provided so
+the correct `Default` instance can be determined. If you use the
+`makeAdaptorAndInstance` Template Haskell splice and receive compiler errors
+that a `Default` instance cannot be determined for a `ProductProfunctor`,
+you might need to add a type signature.
+
+
 Schema
 ======
 
@@ -663,7 +676,9 @@ purpose, which is just a notational convenience.
 >                                         (Column (Nullable PGDate))
 
 A left join is expressed by specifying the two tables to join and the
-join condition.
+join condition. (Note: as noted in the introduction, left joins are a
+common example of a `Query` that requires a type signature so that the
+correct `Default NullMaker` instance can be determined.)
 
 > personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
 >                                  ColumnNullableBirthday)
