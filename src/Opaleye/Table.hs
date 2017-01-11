@@ -4,6 +4,7 @@ module Opaleye.Table (module Opaleye.Table,
                       -- * Other
                       View,
                       Writer,
+                      TM.TableColumn,
                       Table(Table, TableWithSchema),
                       TableProperties) where
 
@@ -31,28 +32,29 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 -- @
 -- queryTable :: Table w (Foo (Column a) (Column b) (Column c)) -> Query (Foo (Column a) (Column b) (Column c))
 -- @
-queryTable :: D.Default TM.ColumnMaker columns columns =>
-              Table a columns -> Q.Query columns
-queryTable = queryTableExplicit D.def
+queryTable :: (D.Default TM.ColumnMaker columns columns, D.Default TM.TableProjector tableColumns columns) =>
+              Table a tableColumns -> Q.Query columns
+queryTable = queryTableExplicit D.def D.def
 
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
-required :: String -> TableProperties (Column a) (Column a)
+required :: String -> TableProperties (Column a) (TM.TableColumn a)
 required columnName = T.TableProperties
   (T.required columnName)
-  (View (Column (HPQ.BaseTableAttrExpr columnName)))
+  (View (TM.TableColumn columnName))
 
 -- | 'optional' is for columns that you can omit on writes, such as
 --  columns which have defaults or which are SERIAL.
-optional :: String -> TableProperties (Maybe (Column a)) (Column a)
+optional :: String -> TableProperties (Maybe (Column a)) (TM.TableColumn a)
 optional columnName = T.TableProperties
   (T.optional columnName)
-  (View (Column (HPQ.BaseTableAttrExpr columnName)))
+  (View (TM.TableColumn columnName))
 
 -- * Explicit versions
 
-queryTableExplicit :: TM.ColumnMaker tablecolumns columns ->
+queryTableExplicit :: TM.ColumnMaker columns columns ->
+                      TM.TableProjector tablecolumns columns ->
                      Table a tablecolumns -> Q.Query columns
-queryTableExplicit cm table = Q.simpleQueryArr f where
+queryTableExplicit cm tp table = Q.simpleQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
-    (retwires, primQ) = T.queryTable cm table t0
+    (retwires, primQ) = T.queryTable cm tp table t0

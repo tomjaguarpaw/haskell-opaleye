@@ -15,6 +15,8 @@ import           Control.Applicative (Applicative, pure, (<*>))
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+import qualified Data.Functor.Identity as I
+
 
 -- If we switch to a more lens-like approach to PackMap this should be
 -- the equivalent of a Setter
@@ -23,6 +25,10 @@ newtype ViewColumnMaker strings columns =
 
 newtype ColumnMaker columns columns' =
   ColumnMaker (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
+
+newtype TableColumn a = TableColumn String
+  
+newtype TableProjector columns columns' = TableProjector (columns -> I.Identity columns')
 
 runViewColumnMaker :: ViewColumnMaker strings tablecolumns ->
                        strings -> tablecolumns
@@ -45,12 +51,18 @@ column = ColumnMaker
          (PM.PackMap (\f (IC.Column s)
                       -> fmap IC.Column (f s)))
 
+tableProjector :: TableProjector (TableColumn a) (IC.Column a)
+tableProjector = TableProjector (\(TableColumn s) -> (I.Identity . IC.Column . HPQ.BaseTableAttrExpr) s)
+  
 instance Default ViewColumnMaker String (C.Column a) where
   def = tableColumn
 
 instance Default ColumnMaker (C.Column a) (C.Column a) where
   def = column
 
+instance Default TableProjector (TableColumn a) (IC.Column a) where
+  def = tableProjector
+  
 -- {
 
 -- Boilerplate instance definitions.  Theoretically, these are derivable.
@@ -83,4 +95,18 @@ instance ProductProfunctor ColumnMaker where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 
+instance Functor (TableProjector a) where
+  fmap f (TableProjector g) = TableProjector ((fmap . fmap) f g)
+
+instance Applicative (TableProjector a) where
+  pure b = TableProjector ((const . I.Identity) b)
+  TableProjector b <*> TableProjector c = TableProjector (\a -> b a <*> c a)
+
+instance Profunctor TableProjector where
+  dimap f g (TableProjector q) = TableProjector (dimap f (fmap g) q)
+  
+instance ProductProfunctor TableProjector where
+  empty = PP.defaultEmpty
+  (***!) = PP.defaultProfunctorProduct
+  
 --}
