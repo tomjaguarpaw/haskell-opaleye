@@ -20,6 +20,8 @@ import qualified Data.Profunctor.Product.Default as D
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+import qualified Opaleye.Internal.Schema as S
+
 -- | Example type specialization:
 --
 -- @
@@ -38,18 +40,18 @@ queryTable = queryTableExplicit D.def D.def
 
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
-required :: String -> TableProperties (Column a) (TM.TableColumn a)
+required :: S.PGType a => String -> TableProperties (Column a) (TM.TableColumn a)
 required columnName = T.TableProperties
   (T.required columnName)
   (View (TM.TableColumn columnName))
 
 -- | 'optional' is for columns that you can omit on writes, such as
 --  columns which have defaults or which are SERIAL.
-optional :: String -> TableProperties (Maybe (Column a)) (TM.TableColumn a)
+optional :: S.PGType a => String -> TableProperties (Maybe (Column a)) (TM.TableColumn a)
 optional columnName = T.TableProperties
   (T.optional columnName)
   (View (TM.TableColumn columnName))
-
+  
 -- * Explicit versions
 
 queryTableExplicit :: TM.ColumnMaker columns columns ->

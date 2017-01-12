@@ -26,7 +26,10 @@ newtype ViewColumnMaker strings columns =
 newtype ColumnMaker columns columns' =
   ColumnMaker (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
 
-newtype TableColumn a = TableColumn String
+data TableColumn a = TableColumn {
+  name :: String ,
+  pgType :: String ,
+  options :: String }
   
 newtype TableProjector columns columns' = TableProjector (columns -> I.Identity columns')
 
@@ -52,7 +55,7 @@ column = ColumnMaker
                       -> fmap IC.Column (f s)))
 
 tableProjector :: TableProjector (TableColumn a) (IC.Column a)
-tableProjector = TableProjector (\(TableColumn s) -> (I.Identity . IC.Column . HPQ.BaseTableAttrExpr) s)
+tableProjector = TableProjector (\(TableColumn name' _ _) -> (I.Identity . IC.Column . HPQ.BaseTableAttrExpr) name')
   
 instance Default ViewColumnMaker String (C.Column a) where
   def = tableColumn
