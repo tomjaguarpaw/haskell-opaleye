@@ -38,14 +38,14 @@ data TableSchema = TableSchema String [UntypedColumn]
 
 newtype UntypedColumn = UntypedColumn { unUntypedColumn :: forall a. TM.TableColumn a }
 
-discardSchema :: IT.Table a b -> IT.Table a b
-discardSchema (IT.TableWithSchema _ s p) = IT.Table s p
-discardSchema a = a
+discardSchema :: IT.Table a b -> (String, IT.TableProperties a b)
+discardSchema (IT.TableWithSchema _ s p) = (s, p)
+discardSchema (IT.Table s p) = (s, p)
 
 tableSchema :: forall read write.
   (D.Default SchemaMaker read write) =>
   IT.Table write read -> TableSchema
-tableSchema (discardSchema -> IT.Table tableName (IT.TableProperties _ (View tableColumns))) = 
+tableSchema (discardSchema -> (tableName, (IT.TableProperties _ (View tableColumns)))) =
   TableSchema tableName columns
   where
   s :: SchemaMaker read write
@@ -65,7 +65,6 @@ instance D.Default SchemaMaker (TM.TableColumn a) (TM.TableColumn a) where
 
 instance D.Default SchemaMaker (TM.TableColumn a) (Maybe (Column a)) where
   def = columnSchemaMaker
-
 
 newtype SchemaMaker read dummy =
   SchemaMaker (PM.PackMap UntypedColumn () read ())
