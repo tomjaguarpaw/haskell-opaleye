@@ -43,19 +43,22 @@ queryTable :: (D.Default TM.ColumnMaker columns columns, D.Default TM.TableProje
               Table a tableColumns -> Q.Query columns
 queryTable = queryTableExplicit D.def D.def
 
+required' :: S.PGType a => S.SchemaOptions a -> String -> TableProperties (Column a) (TM.TableColumn a)
+required' schemaOptions columnName = T.TableProperties
+  (T.required columnName)
+  (View (TM.TableColumn columnName (S.pgColumnDefinition schemaOptions) ))
+
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
 required :: S.PGType a => String -> TableProperties (Column a) (TM.TableColumn a)
-required columnName = T.TableProperties
-  (T.required columnName)
-  (View (TM.TableColumn columnName "" ""))
+required = required' S.defaultOptions
 
 -- | 'optional' is for columns that you can omit on writes, such as
 --  columns which have defaults or which are SERIAL.
 optional :: S.PGType a => String -> TableProperties (Maybe (Column a)) (TM.TableColumn a)
 optional columnName = T.TableProperties
   (T.optional columnName)
-  (View (TM.TableColumn columnName "" ""))
+  (View (TM.TableColumn columnName ""))
   
 -- * Explicit versions
 
