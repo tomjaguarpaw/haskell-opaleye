@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Opaleye.Table (module Opaleye.Table,
                       -- * Other
@@ -22,6 +23,10 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Opaleye.Internal.Schema as S
 
+type family ColumnFromTableColumn a
+type instance ColumnFromTableColumn (TM.TableColumn a) = (Column a)
+type instance ColumnFromTableColumn (a, b) = (ColumnFromTableColumn a, ColumnFromTableColumn b)
+
 -- | Example type specialization:
 --
 -- @
@@ -34,7 +39,7 @@ import qualified Opaleye.Internal.Schema as S
 -- @
 -- queryTable :: Table w (Foo (Column a) (Column b) (Column c)) -> Query (Foo (Column a) (Column b) (Column c))
 -- @
-queryTable :: (D.Default TM.ColumnMaker columns columns, D.Default TM.TableProjector tableColumns columns) =>
+queryTable :: (D.Default TM.ColumnMaker columns columns, D.Default TM.TableProjector tableColumns columns, ColumnFromTableColumn tableColumns ~ columns) =>
               Table a tableColumns -> Q.Query columns
 queryTable = queryTableExplicit D.def D.def
 
