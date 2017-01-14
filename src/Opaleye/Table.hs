@@ -43,14 +43,14 @@ queryTable = queryTableExplicit D.def D.def
 required :: S.PGType a => String -> TableProperties (Column a) (TM.TableColumn a)
 required columnName = T.TableProperties
   (T.required columnName)
-  (View (TM.TableColumn columnName))
+  (View (TM.TableColumn columnName "" ""))
 
 -- | 'optional' is for columns that you can omit on writes, such as
 --  columns which have defaults or which are SERIAL.
 optional :: S.PGType a => String -> TableProperties (Maybe (Column a)) (TM.TableColumn a)
 optional columnName = T.TableProperties
   (T.optional columnName)
-  (View (TM.TableColumn columnName))
+  (View (TM.TableColumn columnName "" ""))
   
 -- * Explicit versions
 
