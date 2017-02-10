@@ -1,6 +1,5 @@
 resolver: lts-3.16
 packages:
 - '.'
-- opaleye-sqlite/
 extra-deps:
 - postgresql-simple-0.5.1.1
