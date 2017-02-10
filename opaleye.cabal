@@ -80,6 +80,7 @@ library
                    Opaleye.Internal.Print,
                    Opaleye.Internal.QueryArr,
                    Opaleye.Internal.RunQuery,
+                   Opaleye.Internal.Schema ,
                    Opaleye.Internal.Sql,
                    Opaleye.Internal.Table,
                    Opaleye.Internal.TableMaker,
