@@ -1,3 +1,7 @@
+## 0.5.3.0
+
+* Added support for range types
+
 ## 0.5.2.2
 
 * Corrected fixity for .&&
