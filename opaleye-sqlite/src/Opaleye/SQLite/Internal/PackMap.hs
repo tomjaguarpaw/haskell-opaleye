@@ -40,7 +40,7 @@ import qualified Data.Functor.Identity as I
 -- 'ProductProfunctor') in @s@ and @t@.  It is unclear at this point
 -- whether we want the same @Traversal@ laws to hold or not.  Our use
 -- cases may be much more general.
-data PackMap a b s t = PackMap (Applicative f =>
+data PackMap a b s t = PackMap (forall f. Applicative f =>
                                 (a -> f b) -> s -> f t)
 
 -- | Replaces the targeted occurences of @a@ in @s@ with @b@ (changing
