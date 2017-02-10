@@ -12,8 +12,8 @@ very hard to reuse code.
 It's awkward to generate composable SQL strings from another language
 because you end up needing things like unique names.
 
-You can't generate SQL strings at runtime but know already at compile
-time that it's syntactically correct.
+Although you can generate SQL strings at runtime you can't know at
+compile time that your SQL is syntactically correct.
 
 Every subselect has to be given a name.  Typically this is redundant.
 
