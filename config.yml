@@ -1,0 +1,6 @@
+connectHost: "localhost"
+connectPort: 5432
+connectUser: postgres
+connectPassword: ""
+connectDatabase: opaleye_test
+quickcheck: true
