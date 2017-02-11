@@ -71,10 +71,11 @@ runInsertMany conn table columns = case NEL.nonEmpty columns of
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertManyReturning@.
-runInsertManyReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
+runInsertManyReturning :: (D.Default RQ.QueryRunner columnsReturned haskells,
+                          D.Default TM.TableProjector tableColumns columnsR, T.ColumnFromTableColumn tableColumns ~ columnsR)
                        => PGS.Connection
                        -- ^
-                       -> T.Table columnsW columnsR
+                       -> T.Table columnsW tableColumns
                        -- ^ Table to insert into
                        -> [columnsW]
                        -- ^ Rows to insert
@@ -126,9 +127,10 @@ runUpdateReturning :: (D.Default RQ.QueryRunner columnsReturned haskells,
 runUpdateReturning = runUpdateReturningExplicit D.def
 
 -- | Delete rows from a table
-runDelete :: PGS.Connection
+runDelete :: (D.Default TM.TableProjector tableColumns columnsR, T.ColumnFromTableColumn tableColumns ~ columnsR)
+          => PGS.Connection
           -- ^
-          -> T.Table a columnsR
+          -> T.Table a tableColumns
           -- ^ Table to delete rows from
           -> (columnsR -> Column PGBool)
           -- ^ Predicate function @f@ to choose which rows to delete.
@@ -144,9 +146,10 @@ runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
 -- 'runInsertReturning' instead.  You only need it if you want to run
 -- an INSERT RETURNING statement but need to be explicit about the
 -- 'QueryRunner'.
-runInsertReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+runInsertReturningExplicit :: (D.Default TM.TableProjector tableColumns columnsR, T.ColumnFromTableColumn tableColumns ~ columnsR)
+                           => RQ.QueryRunner columnsReturned haskells
                            -> PGS.Connection
-                           -> T.Table columnsW columnsR
+                           -> T.Table columnsW tableColumns
                            -> columnsW
                            -> (columnsR -> columnsReturned)
                            -> IO [haskells]
@@ -157,9 +160,10 @@ runInsertReturningExplicit qr conn t =
 -- 'runInsertManyReturning' instead.  You only need it if you want to
 -- run an UPDATE RETURNING statement but need to be explicit about the
 -- 'QueryRunner'.
-runInsertManyReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+runInsertManyReturningExplicit :: (D.Default TM.TableProjector tableColumns columnsR, T.ColumnFromTableColumn tableColumns ~ columnsR)
+                               => RQ.QueryRunner columnsReturned haskells
                                -> PGS.Connection
-                               -> T.Table columnsW columnsR
+                               -> T.Table columnsW tableColumns
                                -> [columnsW]
                                -> (columnsR -> columnsReturned)
                                -> IO [haskells]
@@ -170,7 +174,7 @@ runInsertManyReturningExplicit qr conn t columns r =
                        (fromString
                         (arrangeInsertManyReturningSql u t columns' r))
   where IRQ.QueryRunner u _ _ = qr
-        parser = IRQ.prepareRowParser qr (r v)
+        parser = IRQ.prepareRowParser qr ((r . TI.runTableProjector D.def) v)
         TI.Table _ (TI.TableProperties _ (TI.View v)) = t
         -- This method of getting hold of the return type feels a bit
         -- suspect.  I haven't checked it for validity.
@@ -210,9 +214,10 @@ runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 --
 -- This will be deprecated in version 0.6.  Use
 -- 'runInsertManyReturning' instead.
-runInsertReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
+runInsertReturning :: (D.Default RQ.QueryRunner columnsReturned haskells, 
+                       D.Default TM.TableProjector tableColumns columnsR, T.ColumnFromTableColumn tableColumns ~ columnsR)
                    => PGS.Connection
-                   -> T.Table columnsW columnsR
+                   -> T.Table columnsW tableColumns
                    -> columnsW
                    -> (columnsR -> columnsReturned)
                    -> IO [haskells]
@@ -270,21 +275,24 @@ arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
 
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
-arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
+arrangeDelete :: (D.Default TM.TableProjector tableColumns columnsR, T.ColumnFromTableColumn tableColumns ~ columnsR)
+              => T.Table a tableColumns -> (columnsR -> Column PGBool) -> HSql.SqlDelete
 arrangeDelete table cond =
   SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier table)) [condExpr]
-  where Column condExpr = cond tableCols
+  where Column condExpr = (cond . TI.runTableProjector D.def) tableCols
         TI.View tableCols = TI.tablePropertiesView (TI.tableProperties table)
 
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
-arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
+arrangeDeleteSql :: (D.Default TM.TableProjector tableColumns columnsR, T.ColumnFromTableColumn tableColumns ~ columnsR)
+                 => T.Table a tableColumns -> (columnsR -> Column PGBool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
-arrangeInsertManyReturning :: U.Unpackspec columnsReturned ignored
-                           -> T.Table columnsW columnsR
+arrangeInsertManyReturning :: (D.Default TM.TableProjector tableColumns columnsR, T.ColumnFromTableColumn tableColumns ~ columnsR)
+                           => U.Unpackspec columnsReturned ignored
+                           -> T.Table columnsW tableColumns
                            -> NEL.NonEmpty columnsW
                            -> (columnsR -> columnsReturned)
                            -> Sql.Returning HSql.SqlInsert
@@ -292,13 +300,14 @@ arrangeInsertManyReturning unpackspec table columns returningf =
   Sql.Returning insert returningSEs
   where insert = arrangeInsertMany table columns
         TI.View columnsR = TI.tablePropertiesView (TI.tableProperties table)
-        returningPEs = U.collectPEs unpackspec (returningf columnsR)
+        returningPEs = U.collectPEs unpackspec ((returningf . TI.runTableProjector D.def) columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
-arrangeInsertManyReturningSql :: U.Unpackspec columnsReturned ignored
-                              -> T.Table columnsW columnsR
+arrangeInsertManyReturningSql :: (D.Default TM.TableProjector tableColumns columnsR, T.ColumnFromTableColumn tableColumns ~ columnsR)
+                              => U.Unpackspec columnsReturned ignored
+                              -> T.Table columnsW tableColumns
                               -> NEL.NonEmpty columnsW
                               -> (columnsR -> columnsReturned)
                               -> String

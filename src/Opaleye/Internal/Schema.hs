@@ -31,6 +31,16 @@ instance PGType PGInt4 where
   pgColumnDefinition _ = "SERIAL"
   defaultOptions = NoIntOptions2
 
+instance PGType PGJson where
+  data SchemaOptions PGJson = NoJsonOpts
+  pgColumnDefinition _ = "json"
+  defaultOptions = NoJsonOpts
+
+instance PGType PGJsonb where
+  data SchemaOptions PGJsonb = NoJsonbOpts
+  pgColumnDefinition _ = "json"
+  defaultOptions = NoJsonbOpts
+
 instance PGType PGInt8 where
   data SchemaOptions PGInt8 = NoIntOptions
   pgColumnDefinition _ = "SERIAL"
