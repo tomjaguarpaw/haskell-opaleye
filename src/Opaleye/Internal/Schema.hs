@@ -26,6 +26,11 @@ class PGType a where
   pgColumnDefinition :: SchemaOptions a -> String
   defaultOptions :: SchemaOptions a
 
+instance PGType PGInt4 where
+  data SchemaOptions PGInt4 = NoIntOptions2
+  pgColumnDefinition _ = "SERIAL"
+  defaultOptions = NoIntOptions2
+
 instance PGType PGInt8 where
   data SchemaOptions PGInt8 = NoIntOptions
   pgColumnDefinition _ = "SERIAL"

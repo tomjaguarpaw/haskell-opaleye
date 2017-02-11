@@ -123,43 +123,43 @@ ways.
 -}
 
 twoIntTable :: String
-            -> O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+            -> O.Table (Column O.PGInt4, Column O.PGInt4) (O.TableColumn O.PGInt4, O.TableColumn O.PGInt4)
 twoIntTable n = O.Table n (PP.p2 (O.required "column1", O.required "column2"))
 
-table1 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table1 :: O.Table (Column O.PGInt4, Column O.PGInt4) (O.TableColumn O.PGInt4, O.TableColumn O.PGInt4)
 table1 = twoIntTable "table1"
 
-table1F :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table1F :: O.Table (Column O.PGInt4, Column O.PGInt4) (O.TableColumn O.PGInt4, O.TableColumn O.PGInt4)
 table1F = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1
 
 -- This is implicitly testing our ability to handle upper case letters in table names.
-table2 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table2 :: O.Table (Column O.PGInt4, Column O.PGInt4) (O.TableColumn O.PGInt4, O.TableColumn O.PGInt4)
 table2 = twoIntTable "TABLE2"
 
-table3 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table3 :: O.Table (Column O.PGInt4, Column O.PGInt4) (O.TableColumn O.PGInt4, O.TableColumn O.PGInt4)
 table3 = twoIntTable "table3"
 
-table4 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table4 :: O.Table (Column O.PGInt4, Column O.PGInt4) (O.TableColumn O.PGInt4, O.TableColumn O.PGInt4)
 table4 = twoIntTable "table4"
 
 table5 :: O.Table (Maybe (Column O.PGInt4), Maybe (Column  O.PGInt4))
-                  (Column O.PGInt4, Column O.PGInt4)
+                  (O.TableColumn O.PGInt4, O.TableColumn O.PGInt4)
 table5 = O.TableWithSchema "public" "table5" (PP.p2 (O.optional "column1", O.optional "column2"))
 
-table6 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
+table6 :: O.Table (Column O.PGText, Column O.PGText) (O.TableColumn O.PGText, O.TableColumn O.PGText)
 table6 = O.Table "table6" (PP.p2 (O.required "column1", O.required "column2"))
 
-table7 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
+table7 :: O.Table (Column O.PGText, Column O.PGText) (O.TableColumn O.PGText, O.TableColumn O.PGText)
 table7 = O.Table "table7" (PP.p2 (O.required "column1", O.required "column2"))
 
-table8 :: O.Table (Column O.PGJson) (Column O.PGJson)
+table8 :: O.Table (Column O.PGJson) (O.TableColumn O.PGJson)
 table8 = O.Table "table8" (O.required "column1")
 
-table9 :: O.Table (Column O.PGJsonb) (Column O.PGJsonb)
+table9 :: O.Table (Column O.PGJsonb) (O.TableColumn O.PGJsonb)
 table9 = O.Table "table9" (O.required "column1")
 
 tableKeywordColNames :: O.Table (Column O.PGInt4, Column O.PGInt4)
-                                (Column O.PGInt4, Column O.PGInt4)
+                                (O.TableColumn O.PGInt4, O.TableColumn O.PGInt4)
 tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
 
 table1Q :: Query (Column O.PGInt4, Column O.PGInt4)
