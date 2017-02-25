@@ -79,16 +79,21 @@ newtype Writer columns dummy =
   Writer (forall f. Functor f =>
           PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
 
-queryTable :: TM.ColumnMaker viewColumns columns
-            -> Table writerColumns viewColumns
+queryTable :: TM.ColumnMaker columns columns
+            -> TM.TableProjector tableColumns columns
+            -> Table writerColumns tableColumns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
-queryTable cm table tag = (primExprs, primQ) where
+queryTable cm tp table tag = (primExprs, primQ) where
   View tableCols = tablePropertiesView (tableProperties table)
-  (primExprs, projcols) = runColumnMaker cm tag tableCols
+  viewCols = runTableProjector tp tableCols
+  (primExprs, projcols) = runColumnMaker cm tag viewCols
   primQ :: PQ.PrimQuery
   primQ = PQ.BaseTable (tableIdentifier table) projcols
 
+runTableProjector :: TM.TableProjector tableColumns columns -> tableColumns -> columns
+runTableProjector (TM.TableProjector f) tc = (I.runIdentity . f) tc
+  
 runColumnMaker :: TM.ColumnMaker tablecolumns columns
                   -> Tag.Tag
                   -> tablecolumns
@@ -127,11 +132,11 @@ instance Monoid (Zip a) where
     where mempty' = [] `NEL.cons` mempty'
   Zip xs `mappend` Zip ys = Zip (NEL.zipWith (++) xs ys)
 
-required :: String -> Writer (Column a) (Column a)
+required :: String -> Writer (Column a) (TM.TableColumn a)
 required columnName =
   Writer (PM.PackMap (\f columns -> f (fmap unColumn columns, columnName)))
 
-optional :: String -> Writer (Maybe (Column a)) (Column a)
+optional :: String -> Writer (Maybe (Column a)) (TM.TableColumn a)
 optional columnName =
   Writer (PM.PackMap (\f columns -> f (fmap maybeUnColumn columns, columnName)))
   where maybeUnColumn Nothing = HPQ.DefaultInsertExpr
