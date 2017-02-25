@@ -298,7 +298,8 @@ arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es
 singletonArray :: T.IsSqlType a => Column a -> Column (T.PGArray a)
 singletonArray x = arrayPrepend x emptyArray
 
--- | Cast a 'PGInt4' to a 'PGFloat8'
+-- | Do not use.  Will be deprecated in version 0.6.  Use
+-- 'C.unsafeCast' instead.
 doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
 doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
 
