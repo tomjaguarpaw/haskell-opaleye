@@ -140,7 +140,7 @@ pgArray pgEl xs = C.unsafeCast arrayTy $
   C.Column (HPQ.ArrayExpr (map oneEl xs))
   where
     oneEl = C.unColumn . pgEl
-    arrayTy = showPGType ([] :: [PGArray b])
+    arrayTy = showSqlType ([] :: [PGArray b])
 
 pgRange :: forall a b. IsRangeType b => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a -> C.Column (PGRange b)
 pgRange pgEl start end = C.Column (HPQ.CastExpr (showRangeType ([] :: [b])) $ HPQ.RangeExpr (oneEl start) (oneEl end))
@@ -150,47 +150,54 @@ pgRange pgEl start end = C.Column (HPQ.CastExpr (showRangeType ([] :: [b])) $ HP
         oneEl (R.PosInfinity) = HPQ.PosInfinity
 
 class IsSqlType pgType where
+  -- | 'showSqlType' will be deprecated in version 0.6.  Use
+  -- 'showSqlType' instead.
   showPGType :: proxy pgType -> String
+  showPGType  = showSqlType
+
+  showSqlType :: proxy pgType -> String
+  showSqlType = showPGType
+
 instance IsSqlType PGBool where
-  showPGType _ = "boolean"
+  showSqlType _ = "boolean"
 instance IsSqlType PGDate where
-  showPGType _ = "date"
+  showSqlType _ = "date"
 instance IsSqlType PGFloat4 where
-  showPGType _ = "real"
+  showSqlType _ = "real"
 instance IsSqlType PGFloat8 where
-  showPGType _ = "double precision"
+  showSqlType _ = "double precision"
 instance IsSqlType PGInt8 where
-  showPGType _ = "bigint"
+  showSqlType _ = "bigint"
 instance IsSqlType PGInt4 where
-  showPGType _ = "integer"
+  showSqlType _ = "integer"
 instance IsSqlType PGInt2 where
-  showPGType _ = "smallint"
+  showSqlType _ = "smallint"
 instance IsSqlType PGNumeric where
-  showPGType _ = "numeric"
+  showSqlType _ = "numeric"
 instance IsSqlType PGText where
-  showPGType _ = "text"
+  showSqlType _ = "text"
 instance IsSqlType PGTime where
-  showPGType _ = "time"
+  showSqlType _ = "time"
 instance IsSqlType PGTimestamp where
-  showPGType _ = "timestamp"
+  showSqlType _ = "timestamp"
 instance IsSqlType PGTimestamptz where
-  showPGType _ = "timestamp with time zone"
+  showSqlType _ = "timestamp with time zone"
 instance IsSqlType PGUuid where
-  showPGType _ = "uuid"
+  showSqlType _ = "uuid"
 instance IsSqlType PGCitext where
-  showPGType _ =  "citext"
+  showSqlType _ =  "citext"
 instance IsSqlType PGBytea where
-  showPGType _ = "bytea"
+  showSqlType _ = "bytea"
 instance IsSqlType a => IsSqlType (PGArray a) where
-  showPGType _ = showPGType ([] :: [a]) ++ "[]"
+  showSqlType _ = showSqlType ([] :: [a]) ++ "[]"
 instance IsSqlType a => IsSqlType (C.Nullable a) where
-  showPGType _ = showPGType ([] :: [a])
+  showSqlType _ = showSqlType ([] :: [a])
 instance IsSqlType PGJson where
-  showPGType _ = "json"
+  showSqlType _ = "json"
 instance IsSqlType PGJsonb where
-  showPGType _ = "jsonb"
+  showSqlType _ = "jsonb"
 instance IsRangeType a => IsSqlType (PGRange a) where
-  showPGType _ = showRangeType ([] :: [a])
+  showSqlType _ = showRangeType ([] :: [a])
 
 class IsSqlType pgType => IsRangeType pgType where
   showRangeType :: proxy pgType -> String
