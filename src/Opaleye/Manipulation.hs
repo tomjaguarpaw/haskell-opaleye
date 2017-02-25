@@ -1,4 +1,6 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 -- | Inserts, updates and deletes
 --
@@ -30,6 +32,7 @@ import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column(Column))
 import           Opaleye.Internal.Helpers ((.:), (.:.), (.::), (.::.))
+import           Opaleye.Internal.Manipulation (Updater(Updater))
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Unpackspec as U
 import           Opaleye.PGTypes (PGBool)
@@ -83,6 +86,28 @@ runInsertManyReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
 runInsertManyReturning = runInsertManyReturningExplicit D.def
 
 -- | Update rows in a table.
+--
+-- (N.B. 'runUpdateEasy''s \"returning\" counterpart
+-- \"@runUpdateEasyReturning@\" hasn't been implemented.  File an
+-- issue if you want it!)
+runUpdateEasy :: D.Default Updater columnsR columnsW
+              => PGS.Connection
+              -> T.Table columnsW columnsR
+              -- ^ Table to update
+              -> (columnsR -> columnsR)
+              -- ^ Update function to apply to chosen rows
+              -> (columnsR -> Column PGBool)
+              -- ^ Predicate function @f@ to choose which rows to update.
+              -- 'runUpdate' will update rows for which @f@ returns @TRUE@
+              -- and leave unchanged rows for which @f@ returns @FALSE@.
+              -> IO Int64
+              -- ^ The number of rows updated
+runUpdateEasy conn table u = runUpdate conn table (u' . u)
+  where Updater u' = D.def
+
+-- | Update rows in a table.  You'll probably find it more convenient
+-- to use 'runUpdateEasy' (although 'runUpdate' provides more
+-- fine-grained control if you need it).
 --
 -- Be careful: providing 'Nothing' to a column created by @optional@
 -- updates the column to its default value.  Many users have been

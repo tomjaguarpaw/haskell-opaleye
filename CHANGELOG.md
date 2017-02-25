@@ -1,3 +1,5 @@
+* Added `runUpdateEasy`
+
 * Deprecated
 
   * `Show` instance of `Column a`
