@@ -1,5 +1,59 @@
 {-# LANGUAGE FlexibleContexts #-}
 
+{- |
+
+ Columns can be required or optional and, independently, nullable or
+ non-nullable.
+
+ A required non-nullable @PGInt4@ (for example) is created with
+ 'required' and gives rise to a
+
+ @
+ TableProperties (Column PGInt4) (Column PGInt4)
+ @
+
+ The leftmost argument is the type of writes. When you insert or
+ update into this column you must give it a @Column PGInt4@ (which you
+ can create with @pgInt4 :: Int -> Column PGInt4@).
+
+ A required nullable @PGInt4@ is created with 'required' and gives rise
+ to a
+
+ @
+ TableProperties (Column (Nullable PGInt4)) (Column (Nullable PGInt4))
+ @
+
+ When you insert or update into this column you must give it a @Column
+ (Nullable PGInt4)@, which you can create either with @pgInt4@ and
+ @toNullable :: Column a -> Column (Nullable a)@, or with @null ::
+ Column (Nullable a)@.
+
+ An optional non-nullable @PGInt4@ is created with optional and gives
+ rise to a
+
+ @
+ TableProperties (Maybe (Column PGInt4)) (Column PGInt4)
+ @
+
+ When you insert or update into this column you must give it a @Maybe
+ (Column PGInt4)@. If you provide @Nothing@ then the column will be
+ omitted from the query and the default value will be used. Otherwise
+ you have to provide a @Just@ containing a @Column PGInt4@.
+
+ An optional non-nullable @PGInt4@ is created with optional and gives
+ rise to a
+
+ @
+ TableProperties (Maybe (Column (Nullable PGInt4))) (Column PGInt4)
+ @
+
+ When you insert or update into this column you must give it a @Maybe
+ (Column (Nullable PGInt4))@. If you provide @Nothing@ then the default
+ value will be used. Otherwise you have to provide a @Just@ containing
+ a @Column (Nullable PGInt4)@ (which can be null).
+
+-}
+
 module Opaleye.Table (module Opaleye.Table,
                       -- * Other
                       View,
