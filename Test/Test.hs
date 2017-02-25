@@ -23,7 +23,6 @@ import qualified Data.Time   as Time
 import qualified Data.Aeson as Json
 import qualified Data.Text as T
 
-import qualified System.Exit as Exit
 import qualified System.Environment as Environment
 
 import           Control.Applicative ((<$>), (<*>))
