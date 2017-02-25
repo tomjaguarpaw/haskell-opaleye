@@ -82,7 +82,12 @@ runInsertManyReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                        -- ^ Returned rows after @f@ has been applied
 runInsertManyReturning = runInsertManyReturningExplicit D.def
 
--- | Update rows in a table
+-- | Update rows in a table.
+--
+-- Be careful: providing 'Nothing' to a column created by @optional@
+-- updates the column to its default value.  Many users have been
+-- confused by this because they assume it means that the column is to
+-- be left unchanged.
 runUpdate :: PGS.Connection
           -> T.Table columnsW columnsR
           -- ^ Table to update
@@ -98,6 +103,11 @@ runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
 
 
 -- | Update rows in a table and return a function of the updated rows
+--
+-- Be careful: providing 'Nothing' to a column created by @optional@
+-- updates the column to its default value.  Many users have been
+-- confused by this because they assume it means that the column is to
+-- be left unchanged.
 --
 -- @runUpdateReturning@'s use of the 'D.Default' typeclass means
 -- that the compiler will have trouble inferring types.  It is
