@@ -26,6 +26,7 @@ data Select = SelectFrom From
             | SelectValues Values
             | SelectBinary Binary
             | SelectLabel Label
+            | SelectAntijoin Antijoin
             deriving Show
 
 data SelectAttrs =
@@ -73,6 +74,11 @@ data Label = Label {
 
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
+data Antijoin = Antijoin
+  { antijoinTable :: Select
+  , antijoinCriteria :: Select
+  } deriving Show
+
 sqlQueryGenerator :: PQ.PrimQueryFold' V.Void Select
 sqlQueryGenerator = PQ.PrimQueryFold
   { PQ.unit      = unit
@@ -87,7 +93,11 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.binary    = binary
   , PQ.label     = label
   , PQ.relExpr   = relExpr
+  , PQ.antijoin  = antijoin
   }
+
+antijoin :: Select -> Select -> Select
+antijoin q1 q2 = SelectAntijoin (Antijoin q1 q2)
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery' V.Void, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
@@ -108,6 +118,7 @@ baseTable ti columns = SelectFrom $
               , tables = [Table (HSql.SqlTable (PQ.tiSchemaName ti) (PQ.tiTableName ti))] }
 
 product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
+product (t NEL.:| []) [] = t
 product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }

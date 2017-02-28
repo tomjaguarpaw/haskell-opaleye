@@ -53,6 +53,7 @@ data PrimQuery' a = Unit
                               (Bindings HPQ.PrimExpr)
                               (PrimQuery' a)
                               (PrimQuery' a)
+                  | Antijoin  (PrimQuery' a) (PrimQuery' a)
                   | Values    [Symbol] (NEL.NonEmpty [HPQ.PrimExpr])
                   | Binary    BinOp
                               (Bindings (HPQ.PrimExpr, HPQ.PrimExpr))
@@ -79,6 +80,7 @@ data PrimQueryFold' a p = PrimQueryFold
               -> p
               -> p
               -> p
+  , antijoin  :: p -> p -> p
   , values    :: [Symbol] -> (NEL.NonEmpty [HPQ.PrimExpr]) -> p
   , binary    :: BinOp -> (Bindings (HPQ.PrimExpr, HPQ.PrimExpr)) -> (p, p) -> p
   , label     :: String -> p -> p
@@ -101,6 +103,7 @@ primQueryFoldDefault = PrimQueryFold
   , binary    = Binary
   , label     = Label
   , relExpr   = RelExpr
+  , antijoin  = Antijoin
   }
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
@@ -118,6 +121,7 @@ foldPrimQuery f = fix fold
           Binary binop pes (q1, q2) -> binary    f binop pes (self q1, self q2)
           Label l pq                -> label     f l (self pq)
           RelExpr pe syms           -> relExpr   f pe syms
+          Antijoin q1 q2            -> antijoin  f (self q1) (self q2)
         fix g = let x = g x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
