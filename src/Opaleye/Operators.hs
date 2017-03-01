@@ -181,7 +181,7 @@ in_ fcas (Column a) = Column $ case NEL.nonEmpty (F.toList fcas) of
 -- expediency, is currently implemented using a @LEFT JOIN@.  Please
 -- file a bug if this causes any issues in practice.
 inQuery :: D.Default O.EqPP columns columns
-        => columns -> QueryArr () columns -> Query (Column T.PGBool)
+        => columns -> Query columns -> Query (Column T.PGBool)
 inQuery c q = qj'
   where -- Remove every row that isn't equal to c
         -- Replace the ones that are with '1'
