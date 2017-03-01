@@ -93,6 +93,8 @@ infix 4 .>=
 quot_ :: C.PGIntegral a => Column a -> Column a -> Column a
 quot_ = C.binOp (HPQ.:/)
 
+-- | The remainder of division named after 'Prelude.rem'.
+-- It maps to 'MOD' ('%') in Postgres, confusingly described as "modulo (remainder)".
 rem_ :: C.PGIntegral a => Column a -> Column a -> Column a
 rem_ = C.binOp HPQ.OpMod
 
