@@ -18,6 +18,9 @@ import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 
 -- | @QueryArr a b@ is analogous to a Haskell function @a -> [b]@.
+
+-- Ideally this should be wrapped in a monad which automatically
+-- increments the Tag, but I couldn't be bothered to do that.
 newtype QueryArr a b = QueryArr ((a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag))
 
 -- | A Postgres query, i.e. some functionality that can run via SQL
