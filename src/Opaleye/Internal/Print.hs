@@ -9,8 +9,9 @@ import           Opaleye.Internal.Sql (Select(SelectFrom,
                                               SelectJoin,
                                               SelectValues,
                                               SelectBinary,
-                                              SelectLabel),
-                                       From, Join, Values, Binary, Label)
+                                              SelectLabel,
+                                              SelectExists),
+                                       From, Join, Values, Binary, Label, Exists)
 
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
@@ -30,6 +31,7 @@ ppSql (SelectJoin j)   = ppSelectJoin j
 ppSql (SelectValues v) = ppSelectValues v
 ppSql (SelectBinary v) = ppSelectBinary v
 ppSql (SelectLabel v)  = ppSelectLabel v
+ppSql (SelectExists v) = ppSelectExists v
 
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
@@ -73,6 +75,16 @@ ppSelectLabel l = text "/*" <+> text (defuseComments (Sql.lLabel l)) <+> text "*
                    . ST.replace (ST.pack "*/") (ST.pack " * / ")
                    . ST.pack
 
+ppSelectExists :: Exists -> Doc
+ppSelectExists v =
+  text "SELECT *"
+  $$ text "FROM"
+  $$ ppTable (tableAlias 1 (Sql.existsTable v))
+  $$ case Sql.existsBool v of
+       True -> text "WHERE EXISTS"
+       False -> text "WHERE NOT EXISTS"
+  $$ parens (ppSql (Sql.existsCriteria v))
+
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 ppJoinType Sql.RightJoin = text "RIGHT OUTER JOIN"
@@ -106,6 +118,7 @@ ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
   SelectValues slv      -> parens (ppSelectValues slv)
   SelectBinary slb      -> parens (ppSelectBinary slb)
   SelectLabel sll       -> parens (ppSelectLabel sll)
+  SelectExists saj      -> parens (ppSelectExists saj)
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty

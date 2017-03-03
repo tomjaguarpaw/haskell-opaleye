@@ -352,6 +352,24 @@ testRestrict = it "restricts the rows returned" $ query `queryShouldReturnSorted
           O.restrict -< fst t .== 1
           Arr.returnA -< t
 
+testExists :: Test
+testExists = it "restricts the rows returned with EXISTS" $ query `queryShouldReturnSorted` filter ((== 1) . fst) (L.sort table1data)
+  where query = proc () -> do
+          t <- table1Q -< ()
+          () <- O.exists (proc t -> do
+                            t' <- table1Q -< ()
+                            O.restrict -< fst t' .> fst t) -< t
+          Arr.returnA -< t
+
+testNotExists :: Test
+testNotExists = it "restricts the rows returned with NOT EXISTS" $ query `queryShouldReturnSorted` filter ((== 2) . fst)  (L.sort table1data)
+  where query = proc () -> do
+          t <- table1Q -< ()
+          () <- O.notExists (proc t -> do
+                               t' <- table1Q -< ()
+                               O.restrict -< fst t' .> fst t) -< t
+          Arr.returnA -< t
+
 testIn :: Test
 testIn = it "restricts values to a range" $ query `queryShouldReturnSorted` filter (flip elem [100, 200] . snd) (L.sort table1data)
   where query = proc () -> do
@@ -941,6 +959,8 @@ main = do
         testSelect
         testProduct
         testRestrict
+        testExists
+        testNotExists
         testIn
         testNum
         testDiv
