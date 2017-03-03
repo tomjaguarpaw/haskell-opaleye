@@ -40,14 +40,14 @@ restrict = QueryArr f where
 {-| Add a @WHERE EXSITS@ clause to the current query. -}
 exists :: QueryArr a b -> QueryArr a ()
 exists criteria = QueryArr f where
-  f (a, primQ, t0) = ((), PQ.exists primQ existsQ, t0) where
-    (_, existsQ, _) = runSimpleQueryArr criteria (a, t0)
+  f (a, primQ, t0) = ((), PQ.exists primQ existsQ, t1) where
+    (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
 {-| Add a @WHERE EXSITS@ clause to the current query. -}
 notExists :: QueryArr a b -> QueryArr a ()
 notExists criteria = QueryArr f where
-  f (a, primQ, t0) = ((), PQ.notExists primQ existsQ, t0) where
-    (_, existsQ, _) = runSimpleQueryArr criteria (a, t0)
+  f (a, primQ, t0) = ((), PQ.notExists primQ existsQ, t1) where
+    (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
 {-| Filter a 'QueryArr' to only those rows where the given condition
 holds.  This is the 'QueryArr' equivalent of 'Prelude.filter' from the
