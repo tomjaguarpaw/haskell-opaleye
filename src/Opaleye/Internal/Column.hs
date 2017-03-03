@@ -7,6 +7,9 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 -- | A column of a @Query@, of type @pgType@.  For example 'Column'
 -- @PGInt4@ is an @int4@ column and a 'Column' @PGText@ is a @text@
 -- column.
+--
+-- Do not use the 'Show' instance of 'Column'.  It will be deprecated
+-- in version 0.6.
 newtype Column pgType = Column HPQ.PrimExpr deriving Show
 
 -- | Only used within a 'Column', to indicate that it can be @NULL@.
