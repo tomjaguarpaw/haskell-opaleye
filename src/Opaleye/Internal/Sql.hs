@@ -119,7 +119,6 @@ baseTable ti columns = SelectFrom $
               , tables = [Table (HSql.SqlTable (PQ.tiSchemaName ti) (PQ.tiTableName ti))] }
 
 product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
-product (t NEL.:| []) [] = t
 product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
