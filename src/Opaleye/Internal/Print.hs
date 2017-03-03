@@ -10,8 +10,8 @@ import           Opaleye.Internal.Sql (Select(SelectFrom,
                                               SelectValues,
                                               SelectBinary,
                                               SelectLabel,
-                                              SelectAntijoin),
-                                       From, Join, Values, Binary, Label, Antijoin)
+                                              SelectExists),
+                                       From, Join, Values, Binary, Label, Exists)
 
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
@@ -24,14 +24,14 @@ import qualified Data.Text          as ST
 type TableAlias = String
 
 ppSql :: Select -> Doc
-ppSql (SelectFrom s)     = ppSelectFrom s
-ppSql (Table table)      = HPrint.ppTable table
-ppSql (RelExpr expr)     = HPrint.ppSqlExpr expr
-ppSql (SelectJoin j)     = ppSelectJoin j
-ppSql (SelectValues v)   = ppSelectValues v
-ppSql (SelectBinary v)   = ppSelectBinary v
-ppSql (SelectLabel v)    = ppSelectLabel v
-ppSql (SelectAntijoin v) = ppSelectAntijoin v
+ppSql (SelectFrom s)   = ppSelectFrom s
+ppSql (Table table)    = HPrint.ppTable table
+ppSql (RelExpr expr)   = HPrint.ppSqlExpr expr
+ppSql (SelectJoin j)   = ppSelectJoin j
+ppSql (SelectValues v) = ppSelectValues v
+ppSql (SelectBinary v) = ppSelectBinary v
+ppSql (SelectLabel v)  = ppSelectLabel v
+ppSql (SelectExists v) = ppSelectExists v
 
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
@@ -75,13 +75,15 @@ ppSelectLabel l = text "/*" <+> text (defuseComments (Sql.lLabel l)) <+> text "*
                    . ST.replace (ST.pack "*/") (ST.pack " * / ")
                    . ST.pack
 
-ppSelectAntijoin :: Antijoin -> Doc
-ppSelectAntijoin v =
+ppSelectExists :: Exists -> Doc
+ppSelectExists v =
   text "SELECT *"
   $$ text "FROM"
-  $$ ppTable (tableAlias 1 (Sql.antijoinTable v))
-  $$ text "WHERE NOT EXISTS"
-  $$ parens (ppSql (Sql.antijoinCriteria v))
+  $$ ppTable (tableAlias 1 (Sql.existsTable v))
+  $$ case Sql.existsBool v of
+       True -> text "WHERE EXISTS"
+       False -> text "WHERE NOT EXISTS"
+  $$ parens (ppSql (Sql.existsCriteria v))
 
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
@@ -116,7 +118,7 @@ ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
   SelectValues slv      -> parens (ppSelectValues slv)
   SelectBinary slb      -> parens (ppSelectBinary slb)
   SelectLabel sll       -> parens (ppSelectLabel sll)
-  SelectAntijoin saj    -> parens (ppSelectAntijoin saj)
+  SelectExists saj      -> parens (ppSelectExists saj)
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty

@@ -26,7 +26,7 @@ data Select = SelectFrom From
             | SelectValues Values
             | SelectBinary Binary
             | SelectLabel Label
-            | SelectAntijoin Antijoin
+            | SelectExists Exists
             deriving Show
 
 data SelectAttrs =
@@ -74,9 +74,10 @@ data Label = Label {
 
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
-data Antijoin = Antijoin
-  { antijoinTable :: Select
-  , antijoinCriteria :: Select
+data Exists = Exists
+  { existsBool :: Bool
+  , existsTable :: Select
+  , existsCriteria :: Select
   } deriving Show
 
 sqlQueryGenerator :: PQ.PrimQueryFold' V.Void Select
@@ -93,11 +94,11 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.binary    = binary
   , PQ.label     = label
   , PQ.relExpr   = relExpr
-  , PQ.antijoin  = antijoin
+  , PQ.existsf   = exists
   }
 
-antijoin :: Select -> Select -> Select
-antijoin q1 q2 = SelectAntijoin (Antijoin q1 q2)
+exists :: Bool -> Select -> Select -> Select
+exists b q1 q2 = SelectExists (Exists b q1 q2)
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery' V.Void, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
