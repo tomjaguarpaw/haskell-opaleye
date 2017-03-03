@@ -13,7 +13,7 @@ import qualified Data.List.NonEmpty as NEL
 import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
                                           unsafeIfThenElse, unsafeGt)
 import qualified Opaleye.Internal.Column as C
-import           Opaleye.Internal.QueryArr (QueryArr(QueryArr), Query)
+import           Opaleye.Internal.QueryArr (QueryArr(QueryArr), Query, runSimpleQueryArr)
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Operators as O
 import           Opaleye.Internal.Helpers   ((.:))
@@ -36,6 +36,18 @@ the guard method of the MonadPlus class.  You would typically use
 restrict :: QueryArr (Column T.PGBool) ()
 restrict = QueryArr f where
   f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
+
+{-| Add a @WHERE EXSITS@ clause to the current query. -}
+exists :: QueryArr a b -> QueryArr a ()
+exists criteria = QueryArr f where
+  f (a, primQ, t0) = ((), PQ.exists primQ existsQ, t1) where
+    (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
+
+{-| Add a @WHERE EXSITS@ clause to the current query. -}
+notExists :: QueryArr a b -> QueryArr a ()
+notExists criteria = QueryArr f where
+  f (a, primQ, t0) = ((), PQ.notExists primQ existsQ, t1) where
+    (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
 {-| Filter a 'QueryArr' to only those rows where the given condition
 holds.  This is the 'QueryArr' equivalent of 'Prelude.filter' from the
