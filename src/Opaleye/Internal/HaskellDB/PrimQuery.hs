@@ -21,7 +21,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | CompositeExpr     PrimExpr Attribute -- ^ Composite Type Query
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
-                | AggrExpr  AggrOp PrimExpr [OrderExpr]
+                | AggrExpr  AggrDistinct AggrOp PrimExpr [OrderExpr]
                 | ConstExpr Literal
                 | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
                 | ListExpr (NEL.NonEmpty PrimExpr)
@@ -78,6 +78,9 @@ data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrBoolOr | AggrBoolAnd | AggrArr | AggrStringAggr PrimExpr
                 | AggrOther String
                 deriving (Show,Read)
+
+data AggrDistinct = AggrDistinct | AggrAll
+                  deriving (Eq,Show,Read)
 
 data OrderExpr = OrderExpr OrderOp PrimExpr
                deriving (Show,Read)
