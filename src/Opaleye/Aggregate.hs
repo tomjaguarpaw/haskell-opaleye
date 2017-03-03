@@ -86,8 +86,8 @@ aggregateOrdered  :: Ord.Order a -> Aggregator a b -> Query a -> Query b
 aggregateOrdered o agg = aggregate (orderAggregate o agg)
 
 -- | Aggregate only distinct values
-aggregateDistinct :: Aggregator a b -> Aggregator a b
-aggregateDistinct (A.Aggregator (PM.PackMap pm)) =
+distinctAggregator :: Aggregator a b -> Aggregator a b
+distinctAggregator (A.Aggregator (PM.PackMap pm)) =
   A.Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap (\(a,b,c) -> (a,b,HPQ.AggrDistinct)))) c))
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
