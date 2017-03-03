@@ -30,12 +30,14 @@ module Opaleye.Aggregate
 
 import           Control.Applicative (pure)
 import           Data.Profunctor     (lmap)
+import qualified Data.Profunctor as P
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.PackMap as PM
 
 import           Opaleye.QueryArr  (Query)
 import qualified Opaleye.Column    as C
@@ -82,6 +84,11 @@ aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
 aggregateOrdered  :: Ord.Order a -> Aggregator a b -> Query a -> Query b
 aggregateOrdered o agg = aggregate (orderAggregate o agg)
+
+-- | Aggregate only distinct values
+distinctAggregator :: Aggregator a b -> Aggregator a b
+distinctAggregator (A.Aggregator (PM.PackMap pm)) =
+  A.Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap (\(a,b,c) -> (a,b,HPQ.AggrDistinct)))) c))
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
 groupBy :: Aggregator (C.Column a) (C.Column a)
