@@ -73,7 +73,7 @@ ppSqlNulls x = text $ case Sql.sqlOrderNulls x of
 
 ppSqlDistinct :: Sql.SqlDistinct -> Doc
 ppSqlDistinct Sql.SqlDistinct = text "DISTINCT"
-ppSqlDistinct Sql.SqlNotDistinct = mempty
+ppSqlDistinct Sql.SqlNotDistinct = empty
 
 ppAs :: Maybe String -> Doc -> Doc
 ppAs Nothing      expr = expr
