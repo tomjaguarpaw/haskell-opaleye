@@ -11,6 +11,8 @@ module Opaleye.Order ( -- * Order by
                      -- * Limit and offset
                      , limit
                      , offset
+                     -- * Exact ordering
+                     , O.exact
                      -- * Other
                      , PGOrd
                      ) where
