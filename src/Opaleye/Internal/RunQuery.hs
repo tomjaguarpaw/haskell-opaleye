@@ -88,6 +88,13 @@ data QueryRunner columns haskells =
               -- have to put a dummy 0 into the SELECT statement,
               -- since we can't select zero columns.  In that case we
               -- have to make sure we read a single Int.
+              --
+              -- NB this does have to be a function of 'columns'
+              -- because we have a `SumProfunctor` instance.  For some
+              -- values of 'columns' there may be zero columns and for
+              -- other values one or more, for example, 'Maybe (Column
+              -- PGInt4)' has no columns when it is Nothing and one
+              -- column when it is Just.
 
 fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn pgType haskell
 fieldQueryRunnerColumn = fieldParserQueryRunnerColumn fromField
