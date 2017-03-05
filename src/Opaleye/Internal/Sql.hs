@@ -26,6 +26,7 @@ data Select = SelectFrom From
             | SelectValues Values
             | SelectBinary Binary
             | SelectLabel Label
+            | SelectExists Exists
             deriving Show
 
 data SelectAttrs =
@@ -73,6 +74,12 @@ data Label = Label {
 
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
+data Exists = Exists
+  { existsBool :: Bool
+  , existsTable :: Select
+  , existsCriteria :: Select
+  } deriving Show
+
 sqlQueryGenerator :: PQ.PrimQueryFold' V.Void Select
 sqlQueryGenerator = PQ.PrimQueryFold
   { PQ.unit      = unit
@@ -87,7 +94,11 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.binary    = binary
   , PQ.label     = label
   , PQ.relExpr   = relExpr
+  , PQ.existsf   = exists
   }
+
+exists :: Bool -> Select -> Select -> Select
+exists b q1 q2 = SelectExists (Exists b q1 q2)
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery' V.Void, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
@@ -112,7 +123,7 @@ product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
 
-aggregate :: [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))] -> Select -> Select
+aggregate :: [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr))] -> Select -> Select
 aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
                                                (ensureColumns (map attr aggrs))
                                            , tables = [s]
@@ -139,8 +150,8 @@ aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
         aggrOp (_, (x, _)) = x
 
 
-aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr]) -> HPQ.PrimExpr -> HPQ.PrimExpr
-aggrExpr = maybe id (\(op, ord) e -> HPQ.AggrExpr op e ord)
+aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct) -> HPQ.PrimExpr -> HPQ.PrimExpr
+aggrExpr = maybe id (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord)
 
 order :: [HPQ.OrderExpr] -> Select -> Select
 order oes s = SelectFrom $

@@ -58,7 +58,7 @@ module Opaleye.Table (module Opaleye.Table,
                       -- * Other
                       View,
                       Writer,
-                      Table(Table, TableWithSchema),
+                      T.Table(T.Table, T.TableWithSchema),
                       TableProperties) where
 
 import           Opaleye.Internal.Column (Column(Column))

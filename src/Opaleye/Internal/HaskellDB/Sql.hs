@@ -34,6 +34,9 @@ data SqlOrder = SqlOrder { sqlOrderDirection :: SqlOrderDirection
 data SqlRangeBound = Inclusive SqlExpr | Exclusive SqlExpr | PosInfinity | NegInfinity
                    deriving Show
 
+data SqlDistinct = SqlDistinct | SqlNotDistinct
+                 deriving Show
+
 -- | Expressions in SQL statements.
 data SqlExpr = ColumnSqlExpr  SqlColumn
              | CompositeSqlExpr SqlExpr String
@@ -41,7 +44,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | PrefixSqlExpr  String SqlExpr
              | PostfixSqlExpr String SqlExpr
              | FunSqlExpr     String [SqlExpr]
-             | AggrFunSqlExpr String [SqlExpr] [(SqlExpr, SqlOrder)] -- ^ Aggregate functions separate from normal functions.
+             | AggrFunSqlExpr String [SqlExpr] [(SqlExpr, SqlOrder)] SqlDistinct -- ^ Aggregate functions separate from normal functions.
              | ConstSqlExpr   String
              | CaseSqlExpr    (NEL.NonEmpty (SqlExpr,SqlExpr)) SqlExpr
              | ListSqlExpr    (NEL.NonEmpty SqlExpr)

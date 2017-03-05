@@ -43,7 +43,7 @@ data PrimQuery' a = Unit
                   | Empty     a
                   | BaseTable TableIdentifier (Bindings HPQ.PrimExpr)
                   | Product   (NEL.NonEmpty (PrimQuery' a)) [HPQ.PrimExpr]
-                  | Aggregate (Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr))
+                  | Aggregate (Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr))
                               (PrimQuery' a)
                   | Order     [HPQ.OrderExpr] (PrimQuery' a)
                   | Limit     LimitOp (PrimQuery' a)
@@ -53,6 +53,7 @@ data PrimQuery' a = Unit
                               (Bindings HPQ.PrimExpr)
                               (PrimQuery' a)
                               (PrimQuery' a)
+                  | Exists    Bool (PrimQuery' a) (PrimQuery' a)
                   | Values    [Symbol] (NEL.NonEmpty [HPQ.PrimExpr])
                   | Binary    BinOp
                               (Bindings (HPQ.PrimExpr, HPQ.PrimExpr))
@@ -69,7 +70,7 @@ data PrimQueryFold' a p = PrimQueryFold
   , empty     :: a -> p
   , baseTable :: TableIdentifier -> (Bindings HPQ.PrimExpr) -> p
   , product   :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-  , aggregate :: (Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr]), HPQ.PrimExpr)) -> p -> p
+  , aggregate :: (Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)) -> p -> p
   , order     :: [HPQ.OrderExpr] -> p -> p
   , limit     :: LimitOp -> p -> p
   , join      :: JoinType
@@ -79,6 +80,7 @@ data PrimQueryFold' a p = PrimQueryFold
               -> p
               -> p
               -> p
+  , existsf   :: Bool -> p -> p -> p
   , values    :: [Symbol] -> (NEL.NonEmpty [HPQ.PrimExpr]) -> p
   , binary    :: BinOp -> (Bindings (HPQ.PrimExpr, HPQ.PrimExpr)) -> (p, p) -> p
   , label     :: String -> p -> p
@@ -101,6 +103,7 @@ primQueryFoldDefault = PrimQueryFold
   , binary    = Binary
   , label     = Label
   , relExpr   = RelExpr
+  , existsf   = Exists
   }
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
@@ -118,6 +121,7 @@ foldPrimQuery f = fix fold
           Binary binop pes (q1, q2) -> binary    f binop pes (self q1, self q2)
           Label l pq                -> label     f l (self pq)
           RelExpr pe syms           -> relExpr   f pe syms
+          Exists b q1 q2            -> existsf   f b (self q1) (self q2)
         fix g = let x = g x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
@@ -125,6 +129,12 @@ times q q' = Product (q NEL.:| [q']) []
 
 restrict :: HPQ.PrimExpr -> PrimQuery -> PrimQuery
 restrict cond primQ = Product (return primQ) [cond]
+
+exists :: PrimQuery -> PrimQuery -> PrimQuery
+exists a b = Exists True a b
+
+notExists :: PrimQuery -> PrimQuery -> PrimQuery
+notExists a b = Exists False a b
 
 isUnit :: PrimQuery' a -> Bool
 isUnit Unit = True
