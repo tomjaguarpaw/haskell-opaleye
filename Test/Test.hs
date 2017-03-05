@@ -532,6 +532,15 @@ testOrderBySame :: Test
 testOrderBySame = it "" $ queryShouldReturnSortBy (O.desc fst <> O.asc fst)
                                (flip (Ord.comparing fst) <> Ord.comparing fst)
 
+testOrderExact :: Test
+testOrderExact = it "" $ testH (O.orderBy (O.exact cols snd) table1Q) (result `shouldBe`)
+  where cols   = map O.constant [300,200::Int]
+        result = [ (2::Int, 300::Int)
+                 , (1, 200)
+                 , (1, 100)
+                 , (1, 100)
+                 ]
+
 limitOrderShouldMatch :: (Query (Column O.PGInt4, Column O.PGInt4) -> Query (Column O.PGInt4, Column O.PGInt4))
            -> ([(Int, Int)] -> [(Int, Int)]) -> (PGS.Connection -> Expectation)
 limitOrderShouldMatch olQ ol = testH (olQ (orderQ table1Q))
@@ -985,6 +994,7 @@ main = do
         testOrderBy
         testOrderBy2
         testOrderBySame
+        testOrderExact
       describe "count" $ do
         testCountRows0
         testCountRows3
