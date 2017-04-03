@@ -23,7 +23,7 @@ import qualified Data.Time   as Time
 import qualified Data.Aeson as Json
 import qualified Data.Text as T
 
-import qualified System.Environment as Environment
+import           System.Environment (lookupEnv)
 
 import           Control.Applicative ((<$>), (<*>))
 import qualified Control.Applicative as A
@@ -33,17 +33,6 @@ import           Control.Arrow ((&&&), (***), (<<<), (>>>))
 import           GHC.Int (Int64)
 
 import Test.Hspec
--- { Set your test database info here.  Then invoke the 'main'
---   function to run the tests, or just use 'cabal test'.  The test
---   database must already exist and the test user must have
---   permissions to modify it.
-
-connectInfo :: PGS.ConnectInfo
-connectInfo =  PGS.ConnectInfo { PGS.connectHost = "localhost"
-                               , PGS.connectPort = 25433
-                               , PGS.connectUser = "tom"
-                               , PGS.connectPassword = "tom"
-                               , PGS.connectDatabase = "opaleye_test" }
 
 connectInfoTravis :: PGS.ConnectInfo
 connectInfoTravis =  PGS.ConnectInfo { PGS.connectHost = "localhost"
@@ -920,16 +909,10 @@ jsonbTests = [testJsonGetFieldValue  table9Q,testJsonGetFieldText  table9Q,
              testJsonbContainsAny, testJsonbContainsAll
              ]
 
--- Environment.getEnv throws an exception on missing environment variable!
-getEnv :: String -> IO (Maybe String)
-getEnv var = do
-  environment <- Environment.getEnvironment
-  return (lookup var environment)
-
 -- Using an envvar is unpleasant, but it will do for now.
 travis :: IO Bool
 travis = do
-    travis' <- getEnv "TRAVIS"
+    travis' <- lookupEnv "TRAVIS"
 
     return (case travis' of
                Nothing    -> False
@@ -940,9 +923,14 @@ main :: IO ()
 main = do
   travis' <- travis
 
-  let connectInfo' = if travis' then connectInfoTravis else connectInfo
-
-  conn <- PGS.connect connectInfo'
+  conn <- if travis'
+    then PGS.connect connectInfoTravis
+    else do
+      connectString <- lookupEnv "POSTGRES_CONNSTRING"
+      maybe
+        (fail "Set POSTGRES_CONNSTRING environment variable")
+        (PGS.connectPostgreSQL . String.fromString)
+        connectString
 
   dropAndCreateDB conn
 
