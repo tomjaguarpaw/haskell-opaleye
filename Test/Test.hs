@@ -34,15 +34,6 @@ import           GHC.Int (Int64)
 
 import Test.Hspec
 
-connectInfoTravis :: PGS.ConnectInfo
-connectInfoTravis =  PGS.ConnectInfo { PGS.connectHost = "localhost"
-                                     , PGS.connectPort = 5432
-                                     , PGS.connectUser = "postgres"
-                                     , PGS.connectPassword = ""
-                                     , PGS.connectDatabase = "opaleye_test" }
-
--- }
-
 {-
 
 Status
@@ -919,28 +910,13 @@ jsonbTests = [testJsonGetFieldValue  table9Q,testJsonGetFieldText  table9Q,
              testJsonbContainsAny, testJsonbContainsAll
              ]
 
--- Using an envvar is unpleasant, but it will do for now.
-travis :: IO Bool
-travis = do
-    travis' <- lookupEnv "TRAVIS"
-
-    return (case travis' of
-               Nothing    -> False
-               Just "yes" -> True
-               Just _     -> False)
-
 main :: IO ()
 main = do
-  travis' <- travis
-
-  conn <- if travis'
-    then PGS.connect connectInfoTravis
-    else do
-      connectString <- lookupEnv "POSTGRES_CONNSTRING"
-      maybe
-        (fail "Set POSTGRES_CONNSTRING environment variable")
-        (PGS.connectPostgreSQL . String.fromString)
-        connectString
+  connectString <- lookupEnv "POSTGRES_CONNSTRING"
+  conn <- maybe
+    (fail "Set POSTGRES_CONNSTRING environment variable")
+    (PGS.connectPostgreSQL . String.fromString)
+    connectString
 
   dropAndCreateDB conn
 
