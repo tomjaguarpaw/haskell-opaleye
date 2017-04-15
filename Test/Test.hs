@@ -25,7 +25,7 @@ import qualified Data.Text as T
 
 import           System.Environment (lookupEnv)
 
-import           Control.Applicative ((<$>), (<*>))
+import           Control.Applicative ((<$>), (<*>), (<|>))
 import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), (<<<), (>>>))
@@ -33,6 +33,9 @@ import           Control.Arrow ((&&&), (***), (<<<), (>>>))
 import           GHC.Int (Int64)
 
 import Test.Hspec
+
+import           Control.Monad.Trans.Maybe (MaybeT (..))
+import qualified Configuration.Dotenv as Dotenv
 
 {-
 
@@ -912,7 +915,16 @@ jsonbTests = [testJsonGetFieldValue  table9Q,testJsonGetFieldText  table9Q,
 
 main :: IO ()
 main = do
-  connectString <- lookupEnv "POSTGRES_CONNSTRING"
+  let envVarName = "POSTGRES_CONNSTRING"
+  -- Actions to read connection string:
+  let connectStringEnvVar = MaybeT $ lookupEnv envVarName
+  let connectStringDotEnv = do vars <- Dotenv.parseFile ".env"
+                               MaybeT (return (lookup envVarName vars))
+  -- first try with envvar, otherwise read the .env
+  connectString <- runMaybeT $
+      connectStringEnvVar
+      <|> connectStringDotEnv `Dotenv.onMissingFile` MaybeT (return Nothing)
+  -- connect
   conn <- maybe
     (fail "Set POSTGRES_CONNSTRING environment variable")
     (PGS.connectPostgreSQL . String.fromString)
