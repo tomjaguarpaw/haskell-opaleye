@@ -10,6 +10,7 @@ script:
 sudo: required
 
 before_script:
+  - export POSTGRES_CONNSTRING="user='postgres' dbname='opaleye_test'"
   - psql -c 'create database opaleye_test;' -U postgres
 
 addons:
