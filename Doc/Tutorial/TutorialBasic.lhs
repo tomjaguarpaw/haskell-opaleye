@@ -22,7 +22,7 @@
 > import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 > import           Data.Time.Calendar (Day)
 >
-> import           Control.Arrow (returnA, (<<<))
+> import           Control.Arrow (returnA)
 >
 > import qualified Database.PostgreSQL.Simple as PGS
 

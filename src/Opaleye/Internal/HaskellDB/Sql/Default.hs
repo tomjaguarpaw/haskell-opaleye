@@ -125,8 +125,9 @@ defaultSqlExpr gen expr =
       AggrExpr distinct op e ord -> let op' = showAggrOp op
                                         e' = sqlExpr gen e
                                         ord' = toSqlOrder gen <$> ord
-                                        distinct' | distinct == AggrDistinct = SqlDistinct
-                                                  | distinct == AggrAll = SqlNotDistinct
+                                        distinct' = case distinct of
+                                                      AggrDistinct -> SqlDistinct
+                                                      AggrAll      -> SqlNotDistinct
                                         moreAggrFunParams = case op of
                                           AggrStringAggr primE -> [sqlExpr gen primE]
                                           _ -> []
