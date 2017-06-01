@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-duplicate-exports #-}
 -- | Functions for working directly with 'Column's.
 --
 -- Please note that numeric 'Column' types are instances of 'Num', so

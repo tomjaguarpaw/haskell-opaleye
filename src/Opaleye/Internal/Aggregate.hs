@@ -74,7 +74,7 @@ makeAggr = makeAggr' . Just
 
 orderAggregate :: O.Order a -> Aggregator a b -> Aggregator a b
 orderAggregate o (Aggregator (PM.PackMap pm)) =
-  Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap ((\f (a,b,c) -> (a,f b,c)) (const $ O.orderExprs c o)))) c))
+  Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap ((\f' (a,b,c') -> (a,f' b,c')) (const $ O.orderExprs c o)))) c))
 
 runAggregator :: Applicative f => Aggregator a b
               -> ((Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr) -> f HPQ.PrimExpr)
