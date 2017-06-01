@@ -9,7 +9,7 @@
 >                           PGInt4, PGFloat8)
 >
 > import           Data.Profunctor.Product (p4)
-> import           Data.Profunctor.Product.Default (Default, def)
+> import           Data.Profunctor.Product.Default (def)
 > import qualified Opaleye.Internal.Unpackspec as U
 > import qualified Opaleye.PGTypes as P
 > import qualified Opaleye.Constant as C

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-duplicate-exports #-}
 -- | Perform aggregation on 'Query's.  To aggregate a 'Query' you
 -- should construct an 'Aggregator' encoding how you want the
 -- aggregation to proceed, then call 'aggregate' on it.  The
@@ -88,7 +89,7 @@ aggregateOrdered o agg = aggregate (orderAggregate o agg)
 -- | Aggregate only distinct values
 distinctAggregator :: Aggregator a b -> Aggregator a b
 distinctAggregator (A.Aggregator (PM.PackMap pm)) =
-  A.Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap (\(a,b,c) -> (a,b,HPQ.AggrDistinct)))) c))
+  A.Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap (\(a,b,_) -> (a,b,HPQ.AggrDistinct)))) c))
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
 groupBy :: Aggregator (C.Column a) (C.Column a)

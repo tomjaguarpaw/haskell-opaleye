@@ -39,16 +39,9 @@ import           GHC.Int (Int32, Int64)
 
 import           Control.Applicative ((<$>))
 import           Database.PostgreSQL.Simple.FromField
-  (Field, typoid, typeOid, typelem, TypeInfo,
-   ResultError(UnexpectedNull, ConversionFailed, Incompatible),
-   typdelim, typeInfo, returnError, Conversion)
-import           Database.PostgreSQL.Simple.Types (PGArray(PGArray))
-import           Data.Attoparsec.ByteString.Char8 (Parser, parseOnly)
+  (ResultError(UnexpectedNull, Incompatible), typeInfo, returnError)
 import qualified Database.PostgreSQL.Simple.TypeInfo as TI
-import qualified Database.PostgreSQL.Simple.Arrays as Arrays
-import           Database.PostgreSQL.Simple.Arrays (array, fmt)
 import qualified Database.PostgreSQL.Simple.Range as PGSR
-import           Data.String (fromString)
 import           Data.Typeable (Typeable)
 
 -- }

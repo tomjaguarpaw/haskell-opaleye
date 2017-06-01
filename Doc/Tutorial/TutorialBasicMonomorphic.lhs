@@ -17,7 +17,7 @@
 >
 > import qualified Opaleye                 as O
 >
-> import           Control.Applicative     ((<$>), (<*>), Applicative)
+> import           Control.Applicative     ((<$>), (<*>))
 >
 > import qualified Data.Profunctor         as P
 > import           Data.Profunctor.Product (p3)
