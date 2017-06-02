@@ -41,6 +41,7 @@ data SqlDistinct = SqlDistinct | SqlNotDistinct
 data SqlExpr = ColumnSqlExpr  SqlColumn
              | CompositeSqlExpr SqlExpr String
              | BinSqlExpr     String SqlExpr SqlExpr
+             | SubscriptSqlExpr SqlExpr SqlExpr
              | PrefixSqlExpr  String SqlExpr
              | PostfixSqlExpr String SqlExpr
              | FunSqlExpr     String [SqlExpr]

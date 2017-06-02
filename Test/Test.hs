@@ -777,6 +777,16 @@ testFloatArray = it "" $ testH (A.pure $ O.pgArray O.pgDouble doubles) (`shouldB
   where
     doubles = [1 :: Double, 2]
 
+testArrayIndex :: Test
+testArrayIndex = it "correctly indexes an array" $
+  testH (A.pure $ O.pgArray O.pgInt4 [5,6,7] `O.index` O.pgInt4 3)
+        (`shouldBe` ([Just 7] :: [Maybe Int]))
+
+testArrayIndexOOB :: Test
+testArrayIndexOOB = it "returns Nothing when the index is out of bounds" $
+  testH (A.pure $ O.pgArray O.pgInt4 [5,6,7] `O.index` O.pgInt4 8)
+        (`shouldBe` ([Nothing] :: [Maybe Int]))
+
 type JsonTest a = SpecWith (Query (Column a) -> PGS.Connection -> Expectation)
 -- Test opaleye's equivalent of c1->'c'
 testJsonGetFieldValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
@@ -1012,6 +1022,8 @@ main = do
         testArrayLiterals
         testEmptyArray
         testFloatArray
+        testArrayIndex
+        testArrayIndexOOB
       describe "joins" $ do
         testLeftJoin
         testLeftJoinNullable
