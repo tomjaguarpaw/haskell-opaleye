@@ -109,7 +109,9 @@ defaultSqlExpr gen expr =
               (_, ConstExpr _, _) ->
                 (leftE, paren rightE)
               _ -> (paren leftE, paren rightE)
-        in BinSqlExpr (showBinOp op) expL expR
+        in case sqlBinOp op of
+             BinOpInfix opStr -> BinSqlExpr opStr expL expR
+             BinOpSubscript   -> SubscriptSqlExpr expL expR
       UnExpr op e      -> let (op',t) = sqlUnOp op
                               e' = sqlExpr gen e
                            in case t of
@@ -151,46 +153,49 @@ defaultSqlExpr gen expr =
                            bound (PQ.NegInfinity) = Sql.NegInfinity
                         in RangeSqlExpr (bound l) (bound r)
 
-showBinOp :: BinOp -> String
-showBinOp  (:==)        = "="
-showBinOp  (:<)         = "<"
-showBinOp  (:<=)        = "<="
-showBinOp  (:>)         = ">"
-showBinOp  (:>=)        = ">="
-showBinOp  (:<>)        = "<>"
-showBinOp  OpAnd        = "AND"
-showBinOp  OpOr         = "OR"
-showBinOp  OpLike       = "LIKE"
-showBinOp  OpILike      = "ILIKE"
-showBinOp  OpIn         = "IN"
-showBinOp  (OpOther s)  = s
-showBinOp  (:||)        = "||"
-showBinOp  (:+)         = "+"
-showBinOp  (:-)         = "-"
-showBinOp  (:*)         = "*"
-showBinOp  (:/)         = "/"
-showBinOp  OpMod        = "MOD"
-showBinOp  (:~)         = "~"
-showBinOp  (:&)         = "&"
-showBinOp  (:|)         = "|"
-showBinOp  (:^)         = "^"
-showBinOp  (:=)         = "="
-showBinOp  OpAtTimeZone = "AT TIME ZONE"
-showBinOp  (:->)        = "->"
-showBinOp  (:->>)       = "->>"
-showBinOp  (:#>)        = "#>"
-showBinOp  (:#>>)       = "#>>"
-showBinOp  (:@>)        = "@>"
-showBinOp  (:<@)        = "<@"
-showBinOp  (:?)         = "?"
-showBinOp  (:?|)        = "?|"
-showBinOp  (:?&)        = "?&"
-showBinOp  (:&&)        = "&&"
-showBinOp  (:<<)        = "<<"
-showBinOp  (:>>)        = ">>"
-showBinOp  (:&<)        = "&<"
-showBinOp  (:&>)        = "&>"
-showBinOp  (:-|-)       = "-|-"
+data BinOpType = BinOpInfix String | BinOpSubscript
+
+sqlBinOp :: BinOp -> BinOpType
+sqlBinOp  (:==)        = BinOpInfix "="
+sqlBinOp  (:<)         = BinOpInfix "<"
+sqlBinOp  (:<=)        = BinOpInfix "<="
+sqlBinOp  (:>)         = BinOpInfix ">"
+sqlBinOp  (:>=)        = BinOpInfix ">="
+sqlBinOp  (:<>)        = BinOpInfix "<>"
+sqlBinOp  OpAnd        = BinOpInfix "AND"
+sqlBinOp  OpOr         = BinOpInfix "OR"
+sqlBinOp  OpLike       = BinOpInfix "LIKE"
+sqlBinOp  OpILike      = BinOpInfix "ILIKE"
+sqlBinOp  OpIn         = BinOpInfix "IN"
+sqlBinOp  (OpOther s)  = BinOpInfix s
+sqlBinOp  (:||)        = BinOpInfix "||"
+sqlBinOp  (:+)         = BinOpInfix "+"
+sqlBinOp  (:-)         = BinOpInfix "-"
+sqlBinOp  (:*)         = BinOpInfix "*"
+sqlBinOp  (:/)         = BinOpInfix "/"
+sqlBinOp  OpMod        = BinOpInfix "MOD"
+sqlBinOp  (:~)         = BinOpInfix "~"
+sqlBinOp  (:&)         = BinOpInfix "&"
+sqlBinOp  (:|)         = BinOpInfix "|"
+sqlBinOp  (:^)         = BinOpInfix "^"
+sqlBinOp  (:=)         = BinOpInfix "="
+sqlBinOp  OpAtTimeZone = BinOpInfix "AT TIME ZONE"
+sqlBinOp  (:->)        = BinOpInfix "->"
+sqlBinOp  (:->>)       = BinOpInfix "->>"
+sqlBinOp  (:#>)        = BinOpInfix "#>"
+sqlBinOp  (:#>>)       = BinOpInfix "#>>"
+sqlBinOp  (:@>)        = BinOpInfix "@>"
+sqlBinOp  (:<@)        = BinOpInfix "<@"
+sqlBinOp  (:?)         = BinOpInfix "?"
+sqlBinOp  (:?|)        = BinOpInfix "?|"
+sqlBinOp  (:?&)        = BinOpInfix "?&"
+sqlBinOp  (:&&)        = BinOpInfix "&&"
+sqlBinOp  (:<<)        = BinOpInfix "<<"
+sqlBinOp  (:>>)        = BinOpInfix ">>"
+sqlBinOp  (:&<)        = BinOpInfix "&<"
+sqlBinOp  (:&>)        = BinOpInfix "&>"
+sqlBinOp  (:-|-)       = BinOpInfix "-|-"
+sqlBinOp  OpArrayIndex = BinOpSubscript
 
 data UnOpType = UnOpFun | UnOpPrefix | UnOpPostfix
 

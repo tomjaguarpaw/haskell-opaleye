@@ -296,12 +296,7 @@ infix 4 .?&
 (.?&) :: Column T.PGJsonb -> Column (T.PGArray T.PGText) -> Column T.PGBool
 (.?&) = C.binOp (HPQ.:?&)
 
--- * Other operators
-
-timestamptzAtTimeZone :: Column T.PGTimestamptz
-                      -> Column T.PGText
-                      -> Column T.PGTimestamp
-timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
+-- * PGArray Operators
 
 emptyArray :: T.IsSqlType a => Column (T.PGArray a)
 emptyArray = T.pgArray id []
@@ -311,6 +306,16 @@ arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es
 
 singletonArray :: T.IsSqlType a => Column a -> Column (T.PGArray a)
 singletonArray x = arrayPrepend x emptyArray
+
+index :: (C.PGIntegral n) => Column (T.PGArray a) -> Column n -> Column (C.Nullable a)
+index = C.binOp HPQ.OpArrayIndex
+
+-- * Other operators
+
+timestamptzAtTimeZone :: Column T.PGTimestamptz
+                      -> Column T.PGText
+                      -> Column T.PGTimestamp
+timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
 
 -- | Do not use.  Will be deprecated in version 0.6.  Use
 -- 'C.unsafeCast' instead.

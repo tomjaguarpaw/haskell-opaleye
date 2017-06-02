@@ -132,26 +132,27 @@ ppEndBound (NegInfinity) = text "-infinity)'"
 ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =
     case expr of
-      ColumnSqlExpr c     -> ppColumn c
-      CompositeSqlExpr s x -> parens (ppSqlExpr s) <> text "." <> text x
-      ParensSqlExpr e -> parens (ppSqlExpr e)
-      BinSqlExpr op e1 e2 -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2
-      PrefixSqlExpr op e  -> text op <+> ppSqlExpr e
-      PostfixSqlExpr op e -> ppSqlExpr e <+> text op
-      FunSqlExpr f es     -> text f <> parens (commaH ppSqlExpr es)
+      ColumnSqlExpr c        -> ppColumn c
+      CompositeSqlExpr s x   -> parens (ppSqlExpr s) <> text "." <> text x
+      ParensSqlExpr e        -> parens (ppSqlExpr e)
+      SubscriptSqlExpr e1 e2 -> ppSqlExpr e1 <> brackets (ppSqlExpr e2)
+      BinSqlExpr op e1 e2    -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2
+      PrefixSqlExpr op e     -> text op <+> ppSqlExpr e
+      PostfixSqlExpr op e    -> ppSqlExpr e <+> text op
+      FunSqlExpr f es        -> text f <> parens (commaH ppSqlExpr es)
+      ConstSqlExpr c         -> text c
+      ListSqlExpr es         -> parens (commaH ppSqlExpr (NEL.toList es))
+      ParamSqlExpr _ v       -> ppSqlExpr v
+      PlaceHolderSqlExpr     -> text "?"
+      CastSqlExpr typ e      -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)
+      DefaultSqlExpr         -> text "DEFAULT"
+      ArraySqlExpr es        -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
+      RangeSqlExpr start end -> (hcat . punctuate comma) [ppStartBound start, ppEndBound end]
       AggrFunSqlExpr f es ord distinct -> text f <> parens (ppSqlDistinct distinct <+> commaH ppSqlExpr es <+> ppOrderBy ord)
-      ConstSqlExpr c      -> text c
       CaseSqlExpr cs el   -> text "CASE" <+> vcat (toList (fmap ppWhen cs))
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
           where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w
                                <+> text "THEN" <+> ppSqlExpr t
-      ListSqlExpr es      -> parens (commaH ppSqlExpr (NEL.toList es))
-      ParamSqlExpr _ v -> ppSqlExpr v
-      PlaceHolderSqlExpr -> text "?"
-      CastSqlExpr typ e -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)
-      DefaultSqlExpr    -> text "DEFAULT"
-      ArraySqlExpr es -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
-      RangeSqlExpr start end -> (hcat . punctuate comma) [ppStartBound start, ppEndBound end]
 
 commaH :: (a -> Doc) -> [a] -> Doc
 commaH f = hcat . punctuate comma . map f
