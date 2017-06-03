@@ -308,7 +308,7 @@ singletonArray :: T.IsSqlType a => Column a -> Column (T.PGArray a)
 singletonArray x = arrayPrepend x emptyArray
 
 index :: (C.PGIntegral n) => Column (T.PGArray a) -> Column n -> Column (C.Nullable a)
-index = C.binOp HPQ.OpArrayIndex
+index (Column a) (Column b) = Column (HPQ.ArrayIndex a b)
 
 -- * Other operators
 
