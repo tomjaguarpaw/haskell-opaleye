@@ -1,8 +1,11 @@
 -- | Postgres types and functions to create 'Column's of those types.
 -- You may find it more convenient to use "Opaleye.Constant" instead.
 
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE EmptyDataDecls
+  , ScopedTypeVariables
+  , TypeSynonymInstances
+  , FlexibleInstances
+  #-}
 
 module Opaleye.PGTypes (module Opaleye.PGTypes) where
 
@@ -236,7 +239,8 @@ data PGTimestamp
 data PGTimestamptz
 data PGUuid
 data PGCitext
-data PGArray a
+data PGArray_ colType a
+type PGArray = PGArray_ C.NonNullable
 data PGBytea
 data PGJson
 data PGJsonb

@@ -1,4 +1,7 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE MultiParamTypeClasses
+  , TypeSynonymInstances
+  , FlexibleInstances
+  #-}
 
 module Opaleye.Internal.Distinct where
 

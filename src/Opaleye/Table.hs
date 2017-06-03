@@ -61,7 +61,7 @@ module Opaleye.Table (module Opaleye.Table,
                       T.Table(T.Table, T.TableWithSchema),
                       TableProperties) where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column_(Column), Column)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
 import           Opaleye.Internal.Table (View(View), Table, Writer,

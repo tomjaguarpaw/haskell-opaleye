@@ -1,8 +1,12 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses
+  , FlexibleContexts
+  , TypeSynonymInstances
+  , FlexibleInstances
+  #-}
 
 module Opaleye.Internal.Binary where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column_(Column), Column)
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.QueryArr as Q

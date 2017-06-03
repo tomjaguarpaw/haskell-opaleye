@@ -28,7 +28,7 @@ import qualified Opaleye.RunQuery as RQ
 import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column_(Column), Column)
 import           Opaleye.Internal.Helpers ((.:), (.:.), (.::), (.::.))
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Unpackspec as U
