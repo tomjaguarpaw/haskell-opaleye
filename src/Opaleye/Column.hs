@@ -64,3 +64,6 @@ toNullable = unsafeCoerceColumn
 -- provided value coerced to a nullable type.
 maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
 maybeToNullable = maybe null toNullable
+
+joinNullable :: Column (Nullable (Nullable a)) -> Column (Nullable a)
+joinNullable = unsafeCoerceColumn
