@@ -59,7 +59,7 @@ runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
-instance Default Valuesspec (Column a) (Column a) where
+instance Default Valuesspec (Column n a) (Column n a) where
   def = Valuesspec (PM.PackMap (\f () -> fmap Column (f ())))
 
 -- {

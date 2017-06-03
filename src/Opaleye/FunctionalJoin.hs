@@ -16,7 +16,7 @@ import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor.Product         as PP
 
 import qualified Opaleye.Column                  as C
-import           Opaleye.Internal.Column         (Column, Nullable)
+import           Opaleye.Internal.Column         (Column, Nullability(..))
 import qualified Opaleye.Internal.Join           as IJ
 import qualified Opaleye.Internal.Operators      as IO
 import qualified Opaleye.Internal.Unpackspec     as IU
@@ -27,7 +27,7 @@ import           Opaleye.QueryArr                (Query)
 
 joinF :: (columnsL -> columnsR -> columnsResult)
       -- ^ Calculate result columns from input columns
-      -> (columnsL -> columnsR -> Column T.PGBool)
+      -> (columnsL -> columnsR -> Column 'NonNullable T.PGBool)
       -- ^ Condition on which to join
       -> Query columnsL
       -- ^ Left query
@@ -46,7 +46,7 @@ leftJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
           -> (columnsL -> columnsResult)
           -- ^ Calculate result row from input row when there are /no/
           -- rows in the right query satisfying the join condition
-          -> (columnsL -> columnsR -> Column T.PGBool)
+          -> (columnsL -> columnsR -> Column 'NonNullable T.PGBool)
           -- ^ Condition on which to join
           -> Query columnsL
           -- ^ Left query
@@ -64,8 +64,8 @@ leftJoinF f fL cond l r = fmap ret j
 
         ret (lr, (rr, rc)) = O.ifThenElseMany (C.isNull rc) (fL lr) (f lr rr)
 
-        nullmakerBool :: IJ.NullMaker (Column T.PGBool)
-                                      (Column (Nullable T.PGBool))
+        nullmakerBool :: IJ.NullMaker (Column 'NonNullable T.PGBool)
+                                      (Column 'Nullable T.PGBool)
         nullmakerBool = D.def
 
 rightJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
@@ -77,7 +77,7 @@ rightJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
            -> (columnsR -> columnsResult)
            -- ^ Calculate result row from input row when there are /no/
            -- rows in the left query satisfying the join condition
-           -> (columnsL -> columnsR -> Column T.PGBool)
+           -> (columnsL -> columnsR -> Column 'NonNullable T.PGBool)
            -- ^ Condition on which to join
            -> Query columnsL
            -- ^ Left query
@@ -95,8 +95,8 @@ rightJoinF f fR cond l r = fmap ret j
 
         ret ((lr, lc), rr) = O.ifThenElseMany (C.isNull lc) (fR rr) (f lr rr)
 
-        nullmakerBool :: IJ.NullMaker (Column T.PGBool)
-                                      (Column (Nullable T.PGBool))
+        nullmakerBool :: IJ.NullMaker (Column 'NonNullable T.PGBool)
+                                      (Column 'Nullable T.PGBool)
         nullmakerBool = D.def
 
 fullJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
@@ -113,7 +113,7 @@ fullJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
            -- ^ Calculate result row from right input row when there
            -- are /no/ rows in the left query satisfying the join
            -- condition
-          -> (columnsL -> columnsR -> Column T.PGBool)
+          -> (columnsL -> columnsR -> Column 'NonNullable T.PGBool)
           -- ^ Condition on which to join
           -> Query columnsL
           -- ^ Left query
@@ -136,6 +136,6 @@ fullJoinF f fL fR cond l r = fmap ret j
                                         (fL lr)
                                         (f lr rr))
 
-        nullmakerBool :: IJ.NullMaker (Column T.PGBool)
-                                      (Column (Nullable T.PGBool))
+        nullmakerBool :: IJ.NullMaker (Column 'NonNullable T.PGBool)
+                                      (Column 'Nullable T.PGBool)
         nullmakerBool = D.def

@@ -1,4 +1,8 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses
+  , FlexibleContexts
+  , TypeSynonymInstances
+  , FlexibleInstances
+  #-}
 
 module Opaleye.Internal.Binary where
 
@@ -32,7 +36,7 @@ runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> (columns, columns) -> f columns'
 runBinaryspec (Binaryspec b) = PM.traversePM b
 
-binaryspecColumn :: Binaryspec (Column a) (Column a)
+binaryspecColumn :: Binaryspec (Column n a) (Column n a)
 binaryspecColumn = Binaryspec (PM.PackMap (\f (Column e, Column e')
                                            -> fmap Column (f (e, e'))))
 
@@ -49,7 +53,7 @@ sameTypeBinOpHelper binop binaryspec q1 q2 = Q.simpleQueryArr q where
 
           newPrimQuery = PQ.Binary binop pes (primQuery1, primQuery2)
 
-instance Default Binaryspec (Column a) (Column a) where
+instance Default Binaryspec (Column n a) (Column n a) where
   def = binaryspecColumn
 
 -- {

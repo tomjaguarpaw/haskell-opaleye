@@ -34,10 +34,12 @@ import qualified Control.Arrow as Arr
 --
 -- $('Data.Profunctor.Product.TH.makeAdaptorAndInstance' \"pWidget\" ''Widget)
 --
--- widgetTable :: Table (Widget (Maybe (Column PGInt4)) (Column PGText) (Column PGText)
---                              (Column PGInt4) (Column PGFloat8))
---                      (Widget (Column PGText) (Column PGText) (Column PGText)
---                              (Column PGInt4) (Column PGFloat8))
+-- widgetTable :: Table (Widget (Maybe (Column NonNullable PGInt4)) (Column NonNullable PGText)
+--                              (Column NonNullable PGText) (Column NonNullable PGInt4)
+--                              (Column NonNullable PGFloat8))
+--                      (Widget (Column NonNullable PGText) (Column NonNullable PGText)
+--                              (Column NonNullable PGText) (Column NonNullable PGInt4)
+--                              (Column NonNullable PGFloat8))
 -- widgetTable = Table \"widgetTable\"
 --                      (pWidget Widget { wid      = optional \"id\"
 --                                      , color    = required \"color\"
@@ -127,11 +129,11 @@ instance Monoid (Zip a) where
     where mempty' = [] `NEL.cons` mempty'
   Zip xs `mappend` Zip ys = Zip (NEL.zipWith (++) xs ys)
 
-required :: String -> Writer (Column a) (Column a)
+required :: String -> Writer (Column n a) (Column n a)
 required columnName =
   Writer (PM.PackMap (\f columns -> f (fmap unColumn columns, columnName)))
 
-optional :: String -> Writer (Maybe (Column a)) (Column a)
+optional :: String -> Writer (Maybe (Column n a)) (Column n a)
 optional columnName =
   Writer (PM.PackMap (\f columns -> f (fmap maybeUnColumn columns, columnName)))
   where maybeUnColumn Nothing = HPQ.DefaultInsertExpr

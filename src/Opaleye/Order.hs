@@ -32,8 +32,8 @@ import Data.Monoid ((\<\>))
 
 \-- Order by the first column ascending.  When first columns are equal
 \-- order by second column descending.
-example :: 'Query' ('C.Column' 'T.PGInt4', 'C.Column' 'T.PGText')
-        -> 'Query' ('C.Column' 'T.PGInt4', 'C.Column' 'T.PGText')
+example :: 'Query' ('C.Column' 'C.NonNullable' 'T.PGInt4', 'C.Column' 'C.NonNullable' 'T.PGText')
+        -> 'Query' ('C.Column' 'C.NonNullable' 'T.PGInt4', 'C.Column' 'C.NonNullable' 'T.PGText')
 example = 'orderBy' ('asc' fst \<\> 'desc' snd)
 @
 
@@ -44,26 +44,26 @@ orderBy os q =
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear last)
-asc :: PGOrd b => (a -> C.Column b) -> O.Order a
+asc :: PGOrd b => (a -> C.Column n b) -> O.Order a
 asc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                           , HPQ.orderNulls     = HPQ.NullsLast }
 
 -- | Specify an descending ordering by the given expression.
 --   (Any NULLs appear first)
-desc :: PGOrd b => (a -> C.Column b) -> O.Order a
+desc :: PGOrd b => (a -> C.Column n b) -> O.Order a
 desc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                            , HPQ.orderNulls     = HPQ.NullsFirst }
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear first)
-ascNullsFirst :: PGOrd b => (a -> C.Column b) -> O.Order a
+ascNullsFirst :: PGOrd b => (a -> C.Column n b) -> O.Order a
 ascNullsFirst = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                                     , HPQ.orderNulls     = HPQ.NullsFirst }
 
 
 -- | Specify an descending ordering by the given expression.
 --   (Any NULLs appear last)
-descNullsLast :: PGOrd b => (a -> C.Column b) -> O.Order a
+descNullsLast :: PGOrd b => (a -> C.Column n b) -> O.Order a
 descNullsLast = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                                     , HPQ.orderNulls     = HPQ.NullsLast }
 
@@ -102,4 +102,3 @@ instance PGOrd T.PGTimestamptz
 instance PGOrd T.PGTimestamp
 instance PGOrd T.PGCitext
 instance PGOrd T.PGUuid
-instance PGOrd a => PGOrd (C.Nullable a)

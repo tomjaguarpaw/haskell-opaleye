@@ -1,11 +1,12 @@
 > {-# LANGUAGE FlexibleContexts #-}
+> {-# LANGUAGE DataKinds #-}
 >
 > module TutorialAdvanced where
 >
 > import           Prelude hiding (sum)
 >
 > import           Opaleye.QueryArr (Query)
-> import           Opaleye.Column (Column)
+> import           Opaleye.Column (Column, Nullability(..))
 > import           Opaleye.Table (Table(Table), required, queryTable)
 > import           Opaleye.PGTypes (PGText, PGInt4)
 > import qualified Opaleye.Aggregate as A
@@ -32,18 +33,18 @@ this easily in SQL as `MAX(column) - MIN(column)`, Opaleye has the
 advantage of treating `range` as a first-class value able to be passed
 around between functions and manipulated at will.
 
-> range :: Aggregator (Column PGInt4) (Column PGInt4)
+> range :: Aggregator (Column 'NonNullable PGInt4) (Column 'NonNullable PGInt4)
 > range = dimap (\x -> (x, x)) (uncurry (-)) (A.max ***! A.min)
 
 We can test it on a person table which contains rows containing
 people's names along with the age of their children.
 
-> personTable :: Table (Column PGText, Column PGInt4)
->                      (Column PGText, Column PGInt4)
+> personTable :: Table (Column 'NonNullable PGText, Column 'NonNullable PGInt4)
+>                      (Column 'NonNullable PGText, Column 'NonNullable PGInt4)
 > personTable = Table "personTable" (p2 ( required "name"
 >                                       , required "child_age" ))
 
-> rangeOfChildrensAges :: Query (Column PGText, Column PGInt4)
+> rangeOfChildrensAges :: Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4)
 > rangeOfChildrensAges = aggregate (p2 (A.groupBy, range)) (queryTable personTable)
 
 

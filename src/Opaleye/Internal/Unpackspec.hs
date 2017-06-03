@@ -20,13 +20,13 @@ newtype Unpackspec columns columns' =
   -- @columns@.
   --
   -- For example, the 'Default' instance of type 'Unpackspec' @(Column
-  -- a, Column b)@ @(Column a, Column b)@ allows you to manipulate or
-  -- extract the two 'HPQ.PrimExpr's inside a @(Column a, Column b)@.  The
-  -- 'Default' instance of type @Foo (Column a) (Column b) (Column c)@
-  -- will allow you to manipulate or extract the three 'HPQ.PrimExpr's
-  -- contained therein (for a user-defined product type @Foo@, assuming
-  -- the @makeAdaptorAndInstance@ splice from
-  -- @Data.Profunctor.Product.TH@ has been run).
+  -- n a, Column n b)@ @(Column n a, Column n b)@ allows you to
+  -- manipulate or extract the two 'HPQ.PrimExpr's inside a @(Column n
+  -- a, Column n b)@.  The 'Default' instance of type @Foo (Column n a)
+  -- (Column m b) (Column l c)@ will allow you to manipulate or extract
+  -- the three 'HPQ.PrimExpr's contained therein (for a user-defined
+  -- product type @Foo@, assuming the @makeAdaptorAndInstance@ splice
+  -- from @Data.Profunctor.Product.TH@ has been run).
   --
   -- You can create 'Unpackspec's by hand using 'unpackspecColumn' and
   -- the 'Profunctor', 'ProductProfunctor' and 'SumProfunctor'
@@ -36,7 +36,7 @@ newtype Unpackspec columns columns' =
   Unpackspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
 
 -- | Target the single 'HPQ.PrimExpr' inside a 'C.Column'
-unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
+unpackspecColumn :: Unpackspec (C.Column n a) (C.Column n a)
 unpackspecColumn = Unpackspec
                    (PM.PackMap (\f (IC.Column pe) -> fmap IC.Column (f pe)))
 
@@ -52,7 +52,7 @@ collectPEs :: Unpackspec s t -> s -> [HPQ.PrimExpr]
 collectPEs unpackspec = fst . runUnpackspec unpackspec f
   where f pe = ([pe], pe)
 
-instance D.Default Unpackspec (C.Column a) (C.Column a) where
+instance D.Default Unpackspec (C.Column n a) (C.Column n a) where
   def = unpackspecColumn
 
 -- {

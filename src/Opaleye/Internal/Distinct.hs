@@ -1,4 +1,7 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE MultiParamTypeClasses
+  , TypeSynonymInstances
+  , FlexibleInstances
+  #-}
 
 module Opaleye.Internal.Distinct where
 
@@ -22,7 +25,7 @@ distinctExplicit (Distinctspec agg) = aggregate agg
 
 newtype Distinctspec a b = Distinctspec (Aggregator a b)
 
-instance Default Distinctspec (Column a) (Column a) where
+instance Default Distinctspec (Column n a) (Column n a) where
   def = Distinctspec groupBy
 
 -- { Boilerplate instances

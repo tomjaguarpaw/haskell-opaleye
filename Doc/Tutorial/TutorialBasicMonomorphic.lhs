@@ -1,5 +1,6 @@
 > {-# LANGUAGE FlexibleContexts #-}
 > {-# LANGUAGE FlexibleInstances #-}
+> {-# LANGUAGE DataKinds #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE UndecidableInstances #-}
 >
@@ -7,7 +8,7 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye (Column, Nullable,
+> import           Opaleye (Column, Nullability(..),
 >                          Table(Table), required, queryTable,
 >                          Query, (.==),
 >                          aggregate, groupBy,
@@ -62,8 +63,8 @@ columns required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
 manipulation tutorial you can see an example of when they might differ.
 
-> personTable :: Table (Column PGText, Column PGInt4, Column PGText)
->                      (Column PGText, Column PGInt4, Column PGText)
+> personTable :: Table (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+>                      (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
 > personTable = Table "personTable" (p3 ( required "name"
 >                                       , required "age"
 >                                       , required "address" ))
@@ -82,7 +83,7 @@ For this example file we will always use the typeclass versions
 because they are simpler to read and the typeclass magic is
 essentially invisible.)
 
-> personQuery :: Query (Column PGText, Column PGInt4, Column PGText)
+> personQuery :: Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
 > personQuery = queryTable personTable
 
 A `Query` corresponds to an SQL SELECT that we can run.  Here is the
@@ -127,8 +128,8 @@ to be polymorphic in all their fields.  Monomorphic field types will
 mean that you have to define more datatypes and more instances for
 them.
 
-> data BirthdayColumn = BirthdayColumn { bdNameColumn :: Column PGText
->                                      , bdDayColumn  :: Column PGDate }
+> data BirthdayColumn = BirthdayColumn { bdNameColumn :: Column 'NonNullable PGText
+>                                      , bdDayColumn  :: Column 'NonNullable PGDate }
 >
 > data Birthday = Birthday { bdName :: String, bdDay :: Day }
 >
@@ -179,11 +180,11 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data WidgetColumn = WidgetColumn { style    :: Column PGText
->                                  , color    :: Column PGText
->                                  , location :: Column PGText
->                                  , quantity :: Column PGInt4
->                                  , radius   :: Column PGFloat8
+> data WidgetColumn = WidgetColumn { style    :: Column 'NonNullable PGText
+>                                  , color    :: Column 'NonNullable PGText
+>                                  , location :: Column 'NonNullable PGText
+>                                  , quantity :: Column 'NonNullable PGInt4
+>                                  , radius   :: Column 'NonNullable PGFloat8
 >                                  }
 >
 > instance Default Opaleye.Internal.TableMaker.ColumnMaker WidgetColumn WidgetColumn where
@@ -210,8 +211,8 @@ how many (possibly duplicated) locations there are, the total number
 of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
-> aggregateWidgets :: Query (Column PGText, Column PGText, Column PGInt8,
->                            Column PGInt4, Column PGFloat8)
+> aggregateWidgets :: Query (Column 'NonNullable PGText, Column 'NonNullable PGText, Column 'NonNullable PGInt8,
+>                            Column 'NonNullable PGInt4, Column 'NonNullable PGFloat8)
 > aggregateWidgets = aggregate ((,,,,) <$> P.lmap style    groupBy
 >                                      <*> P.lmap color    groupBy
 >                                      <*> P.lmap location count
@@ -273,8 +274,8 @@ nullability.  We introduce the following type synonym for this
 purpose, which is just a notational convenience.
 
 > data BirthdayColumnNullable =
->   BirthdayColumnNullable { bdNameColumnNullable :: Column (Nullable PGText)
->                          , bdDayColumnNullable  :: Column (Nullable PGDate) }
+>   BirthdayColumnNullable { bdNameColumnNullable :: Column 'Nullable PGText
+>                          , bdDayColumnNullable  :: Column 'Nullable PGDate }
 >
 > instance Default O.Unpackspec BirthdayColumnNullable BirthdayColumnNullable where
 >   def = BirthdayColumnNullable <$> P.lmap bdNameColumnNullable D.def
@@ -287,7 +288,7 @@ purpose, which is just a notational convenience.
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
-> personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
+> personBirthdayLeftJoin :: Query ((Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText),
 >                                  BirthdayColumnNullable)
 > personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
 >     where eqName ((name, _, _), birthdayRow) = name .== bdNameColumn birthdayRow

@@ -33,13 +33,16 @@ import qualified Data.Profunctor.Product.Default as D
 -- Example type specialization:
 --
 -- @
--- runQuery :: Query (Column 'Opaleye.PGTypes.PGInt4', Column 'Opaleye.PGTypes.PGText') -> IO [(Int, String)]
+-- runQuery :: Query (Column NonNullable 'Opaleye.PGTypes.PGInt4', Column NonNullable 'Opaleye.PGTypes.PGText')
+--          -> IO [(Int, String)]
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
 --
 -- @
--- runQuery :: Query (Foo (Column 'Opaleye.PGTypes.PGInt4') (Column 'Opaleye.PGTypes.PGText') (Column 'Opaleye.PGTypes.PGBool')
+-- runQuery :: Query (Foo (Column NonNullable 'Opaleye.PGTypes.PGInt4')
+--                        (Column NonNullable 'Opaleye.PGTypes.PGText')
+--                        (Column NonNullable 'Opaleye.PGTypes.PGBool'))
 --          -> IO [Foo Int String Bool]
 -- @
 --
@@ -80,8 +83,8 @@ runQueryFold = runQueryFoldExplicit D.def
 --                          Foo
 --                          queryRunnerColumnDefault
 -- @
-queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
-                  -> IRQ.QueryRunnerColumn a b -> IRQ.QueryRunnerColumn a' b'
+queryRunnerColumn :: (Column n' a' -> Column n a) -> (b -> b')
+                  -> IRQ.QueryRunnerColumn n a b -> IRQ.QueryRunnerColumn n' a' b'
 queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
                                                             (fmapFP haskellF fp)
   where IRQ.QueryRunnerColumn u fp = qrc

@@ -28,7 +28,7 @@ import qualified Opaleye.RunQuery as RQ
 import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column(Column), Nullability(..))
 import           Opaleye.Internal.Helpers ((.:), (.:.), (.::), (.::.))
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Unpackspec as U
@@ -93,7 +93,7 @@ runUpdate :: PGS.Connection
           -- ^ Table to update
           -> (columnsR -> columnsW)
           -- ^ Update function to apply to chosen rows
-          -> (columnsR -> Column PGBool)
+          -> (columnsR -> Column 'NonNullable PGBool)
           -- ^ Predicate function @f@ to choose which rows to update.
           -- 'runUpdate' will update rows for which @f@ returns @TRUE@
           -- and leave unchanged rows for which @f@ returns @FALSE@.
@@ -120,7 +120,7 @@ runUpdateReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                    -- ^ Table to update
                    -> (columnsR -> columnsW)
                    -- ^ Update function to apply to chosen rows
-                   -> (columnsR -> Column PGBool)
+                   -> (columnsR -> Column 'NonNullable PGBool)
                    -- ^ Predicate function @f@ to choose which rows to
                    -- update.  'runUpdate' will update rows for which
                    -- @f@ returns @TRUE@ and leave unchanged rows for
@@ -136,7 +136,7 @@ runDelete :: PGS.Connection
           -- ^
           -> T.Table a columnsR
           -- ^ Table to delete rows from
-          -> (columnsR -> Column PGBool)
+          -> (columnsR -> Column 'NonNullable PGBool)
           -- ^ Predicate function @f@ to choose which rows to delete.
           -- 'runDelete' will delete rows for which @f@ returns @TRUE@
           -- and leave unchanged rows for which @f@ returns @FALSE@.
@@ -189,7 +189,7 @@ runUpdateReturningExplicit :: RQ.QueryRunner columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
                            -> (columnsR -> columnsW)
-                           -> (columnsR -> Column PGBool)
+                           -> (columnsR -> Column 'NonNullable PGBool)
                            -> (columnsR -> columnsReturned)
                            -> IO [haskells]
 runUpdateReturningExplicit qr conn t update cond r =
@@ -251,7 +251,7 @@ arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
 arrangeUpdate :: T.Table columnsW columnsR
-              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
+              -> (columnsR -> columnsW) -> (columnsR -> Column 'NonNullable PGBool)
               -> HSql.SqlUpdate
 arrangeUpdate table update cond =
   SG.sqlUpdate SD.defaultSqlGenerator
@@ -264,13 +264,13 @@ arrangeUpdate table update cond =
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
 arrangeUpdateSql :: T.Table columnsW columnsR
-              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
+              -> (columnsR -> columnsW) -> (columnsR -> Column 'NonNullable PGBool)
               -> String
 arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
 
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
-arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
+arrangeDelete :: T.Table a columnsR -> (columnsR -> Column 'NonNullable PGBool) -> HSql.SqlDelete
 arrangeDelete table cond =
   SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier table)) [condExpr]
   where Column condExpr = cond tableCols
@@ -278,7 +278,7 @@ arrangeDelete table cond =
 
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
-arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
+arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column 'NonNullable PGBool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
 -- | For internal use only.  Do not use.  Will be deprecated in
@@ -310,7 +310,7 @@ arrangeInsertManyReturningSql =
 arrangeUpdateReturning :: U.Unpackspec columnsReturned ignored
                        -> T.Table columnsW columnsR
                        -> (columnsR -> columnsW)
-                       -> (columnsR -> Column PGBool)
+                       -> (columnsR -> Column 'NonNullable PGBool)
                        -> (columnsR -> columnsReturned)
                        -> Sql.Returning HSql.SqlUpdate
 arrangeUpdateReturning unpackspec table updatef cond returningf =
@@ -325,7 +325,7 @@ arrangeUpdateReturning unpackspec table updatef cond returningf =
 arrangeUpdateReturningSql :: U.Unpackspec columnsReturned ignored
                           -> T.Table columnsW columnsR
                           -> (columnsR -> columnsW)
-                          -> (columnsR -> Column PGBool)
+                          -> (columnsR -> Column 'NonNullable PGBool)
                           -> (columnsR -> columnsReturned)
                           -> String
 arrangeUpdateReturningSql =

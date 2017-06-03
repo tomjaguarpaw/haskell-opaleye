@@ -50,7 +50,7 @@ instance Divisible.Decidable Order where
   lose f = C.contramap f (Order Void.absurd)
   choose f (Order o) (Order o') = C.contramap f (Order (either o o'))
 
-order :: HPQ.OrderOp -> (a -> C.Column b) -> Order a
+order :: HPQ.OrderOp -> (a -> C.Column n b) -> Order a
 order op f = Order (fmap (\column -> [(op, IC.unColumn column)]) f)
 
 orderByU :: Order a -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
@@ -75,7 +75,7 @@ offset' n (x, q, t) = (x, PQ.Limit (PQ.OffsetOp n) q, t)
 -- return them (e.g. sorted by primary key). Exactly-ordered results always come
 -- first in a result set. Entries in the input list that are __not__ present in
 -- result of a query are ignored.
-exact :: [IC.Column b] -> (a -> IC.Column b) -> Order a
+exact :: [IC.Column n b] -> (a -> IC.Column n b) -> Order a
 exact xs k = maybe M.mempty go (NL.nonEmpty xs) where
   -- Create an equality AST node, between two columns, essentially
   -- stating "(column = value)" syntactically.

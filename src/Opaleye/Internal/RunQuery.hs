@@ -11,7 +11,7 @@ import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
 import           Opaleye.Column (Column)
-import           Opaleye.Internal.Column (Nullable)
+import           Opaleye.Internal.Column (Nullability(..))
 import qualified Opaleye.Internal.PackMap as PackMap
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
@@ -60,10 +60,10 @@ import           Data.Typeable (Typeable)
 -- be that we can't add nullability to a RowParser, only to a
 -- FieldParser, so we have to have some type that we know contains
 -- just a FieldParser.
-data QueryRunnerColumn pgType haskellType =
-  QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
+data QueryRunnerColumn n pgType haskellType =
+  QueryRunnerColumn (U.Unpackspec (Column n pgType) ()) (FieldParser haskellType)
 
-instance Functor (QueryRunnerColumn u) where
+instance Functor (QueryRunnerColumn n u) where
   fmap f ~(QueryRunnerColumn u fp) = QueryRunnerColumn u ((fmap . fmap . fmap) f fp)
 
 -- | A 'QueryRunner' specifies how to convert Postgres values (@columns@)
@@ -89,18 +89,18 @@ data QueryRunner columns haskells =
               -- PGInt4)' has no columns when it is Nothing and one
               -- column when it is Just.
 
-fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn pgType haskell
+fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn n pgType haskell
 fieldQueryRunnerColumn = fieldParserQueryRunnerColumn fromField
 
-fieldParserQueryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn pgType haskell
+fieldParserQueryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn n pgType haskell
 fieldParserQueryRunnerColumn = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
 
-queryRunner :: QueryRunnerColumn a b -> QueryRunner (Column a) b
+queryRunner :: QueryRunnerColumn n a b -> QueryRunner (Column n a) b
 queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
     where QueryRunnerColumn u fp = qrc
 
-queryRunnerColumnNullable :: QueryRunnerColumn a b
-                          -> QueryRunnerColumn (Nullable a) (Maybe b)
+queryRunnerColumnNullable :: QueryRunnerColumn 'NonNullable a b
+                          -> QueryRunnerColumn 'Nullable a (Maybe b)
 queryRunnerColumnNullable qr =
   QueryRunnerColumn (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
   where QueryRunnerColumn u fp = qr
@@ -110,12 +110,12 @@ queryRunnerColumnNullable qr =
 
 -- { Instances for automatic derivation
 
-instance QueryRunnerColumnDefault a b =>
-         QueryRunnerColumnDefault (Nullable a) (Maybe b) where
+instance QueryRunnerColumnDefault 'NonNullable a b =>
+         QueryRunnerColumnDefault 'Nullable a (Maybe b) where
   queryRunnerColumnDefault = queryRunnerColumnNullable queryRunnerColumnDefault
 
-instance QueryRunnerColumnDefault a b =>
-         D.Default QueryRunner (Column a) b where
+instance QueryRunnerColumnDefault n a b =>
+         D.Default QueryRunner (Column n a) b where
   def = queryRunner queryRunnerColumnDefault
 
 -- }
@@ -144,86 +144,86 @@ instance QueryRunnerColumnDefault a b =>
 -- 3. If you have a more complicated case, but not a 'FromField' instance,
 -- write a 'FieldParser' for your type and use 'fieldParserQueryRunnerColumn'.
 -- You can also add a 'FromField' instance using this.
-class QueryRunnerColumnDefault pgType haskellType where
-  queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
+class QueryRunnerColumnDefault n pgType haskellType where
+  queryRunnerColumnDefault :: QueryRunnerColumn n pgType haskellType
 
-instance QueryRunnerColumnDefault T.PGInt4 Int where
+instance QueryRunnerColumnDefault 'NonNullable T.PGInt4 Int where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGInt4 Int32 where
+instance QueryRunnerColumnDefault 'NonNullable T.PGInt4 Int32 where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGInt8 Int64 where
+instance QueryRunnerColumnDefault 'NonNullable T.PGInt8 Int64 where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGText String where
+instance QueryRunnerColumnDefault 'NonNullable T.PGText String where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGFloat8 Double where
+instance QueryRunnerColumnDefault 'NonNullable T.PGFloat8 Double where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGBool Bool where
+instance QueryRunnerColumnDefault 'NonNullable T.PGBool Bool where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGUuid UUID where
+instance QueryRunnerColumnDefault 'NonNullable T.PGUuid UUID where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGBytea SBS.ByteString where
+instance QueryRunnerColumnDefault 'NonNullable T.PGBytea SBS.ByteString where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGBytea LBS.ByteString where
+instance QueryRunnerColumnDefault 'NonNullable T.PGBytea LBS.ByteString where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGText ST.Text where
+instance QueryRunnerColumnDefault 'NonNullable T.PGText ST.Text where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGText LT.Text where
+instance QueryRunnerColumnDefault 'NonNullable T.PGText LT.Text where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGDate Time.Day where
+instance QueryRunnerColumnDefault 'NonNullable T.PGDate Time.Day where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGTimestamptz Time.UTCTime where
+instance QueryRunnerColumnDefault 'NonNullable T.PGTimestamptz Time.UTCTime where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGTimestamp Time.LocalTime where
+instance QueryRunnerColumnDefault 'NonNullable T.PGTimestamp Time.LocalTime where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGTime Time.TimeOfDay where
+instance QueryRunnerColumnDefault 'NonNullable T.PGTime Time.TimeOfDay where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGCitext (CI.CI ST.Text) where
+instance QueryRunnerColumnDefault 'NonNullable T.PGCitext (CI.CI ST.Text) where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGCitext (CI.CI LT.Text) where
+instance QueryRunnerColumnDefault 'NonNullable T.PGCitext (CI.CI LT.Text) where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGJson String where
+instance QueryRunnerColumnDefault 'NonNullable T.PGJson String where
   queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonFieldParser
 
-instance QueryRunnerColumnDefault T.PGJson Ae.Value where
+instance QueryRunnerColumnDefault 'NonNullable T.PGJson Ae.Value where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
-instance QueryRunnerColumnDefault T.PGJsonb String where
+instance QueryRunnerColumnDefault 'NonNullable T.PGJsonb String where
   queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonbFieldParser
 
-instance QueryRunnerColumnDefault T.PGJsonb Ae.Value where
+instance QueryRunnerColumnDefault 'NonNullable T.PGJsonb Ae.Value where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
-arrayColumn :: Column (T.PGArray a) -> Column a
+arrayColumn :: Column 'NonNullable (T.PGArray n a) -> Column n a
 arrayColumn = C.unsafeCoerceColumn
 
-instance (Typeable b, QueryRunnerColumnDefault a b) =>
-         QueryRunnerColumnDefault (T.PGArray a) [b] where
+instance (Typeable b, QueryRunnerColumnDefault n a b) =>
+         QueryRunnerColumnDefault 'NonNullable (T.PGArray n a) [b] where
   queryRunnerColumnDefault = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
     where QueryRunnerColumn c f = queryRunnerColumnDefault
 
 -- }
 
-instance (Typeable b, FromField b, QueryRunnerColumnDefault a b) =>
-         QueryRunnerColumnDefault (T.PGRange a) (PGSR.PGRange b) where
+instance (Typeable b, FromField b, QueryRunnerColumnDefault n a b) =>
+         QueryRunnerColumnDefault n (T.PGRange a) (PGSR.PGRange b) where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 -- Boilerplate instances

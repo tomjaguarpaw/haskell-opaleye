@@ -1,6 +1,7 @@
 > {-# LANGUAGE Arrows #-}
 > {-# LANGUAGE FlexibleContexts #-}
 > {-# LANGUAGE FlexibleInstances #-}
+> {-# LANGUAGE DataKinds #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE TemplateHaskell #-}
 >
@@ -8,7 +9,7 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye (Column, Nullable, matchNullable, isNull,
+> import           Opaleye (Column, Nullability(..), matchNullable, isNull,
 >                          Table(Table), required, queryTable,
 >                          Query, QueryArr, restrict, (.==), (.<=), (.&&), (.<),
 >                          (.===),
@@ -59,8 +60,8 @@ columns required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
 manipulation tutorial you can see an example of when they might differ.
 
-> personTable :: Table (Column PGText, Column PGInt4, Column PGText)
->                      (Column PGText, Column PGInt4, Column PGText)
+> personTable :: Table (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+>                      (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
 > personTable = Table "personTable" (p3 ( required "name"
 >                                       , required "age"
 >                                       , required "address" ))
@@ -79,7 +80,7 @@ For this example file we will always use the typeclass versions
 because they are simpler to read and the typeclass magic is
 essentially invisible.)
 
-> personQuery :: Query (Column PGText, Column PGInt4, Column PGText)
+> personQuery :: Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
 > personQuery = queryTable personTable
 
 A `Query` corresponds to an SQL SELECT that we can run.  Here is the
@@ -126,7 +127,7 @@ synonyms.  For example:
 
 > data Birthday' a b = Birthday { bdName :: a, bdDay :: b }
 > type Birthday = Birthday' String Day
-> type BirthdayColumn = Birthday' (Column PGText) (Column PGDate)
+> type BirthdayColumn = Birthday' (Column 'NonNullable PGText) (Column 'NonNullable PGDate)
 
 To get user defined types to work with the typeclass magic they must
 have instances defined for them.  The instances are derivable with
@@ -181,7 +182,7 @@ Here we run the `personQuery` passing in () to signify "zero
 arguments".  We pattern match on the results and return only the
 columns we are interested in.
 
-> nameAge :: Query (Column PGText, Column PGInt4)
+> nameAge :: Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4)
 > nameAge = proc () -> do
 >   (name, age, _) <- personQuery -< ()
 >   returnA -< (name, age)
@@ -209,7 +210,7 @@ simple in arrow notation.  Here we take the product of `personQuery`
 and `birthdayQuery`.
 
 > personBirthdayProduct ::
->   Query ((Column PGText, Column PGInt4, Column PGText), BirthdayColumn)
+>   Query ((Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText), BirthdayColumn)
 > personBirthdayProduct = proc () -> do
 >   personRow   <- personQuery -< ()
 >   birthdayRow <- birthdayQuery -< ()
@@ -256,7 +257,7 @@ only those where some condition holds.
 We can restrict `personQuery` to the rows where the person is up to 18
 years old.
 
-> youngPeople :: Query (Column PGText, Column PGInt4, Column PGText)
+> youngPeople :: Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
 > youngPeople = proc () -> do
 >   row@(_, age, _) <- personQuery -< ()
 >   restrict -< age .<= 18
@@ -286,7 +287,7 @@ WHERE age <= 18
 We can use a variety of operators to form more complex restriction
 conditions.
 
-> twentiesAtAddress :: Query (Column PGText, Column PGInt4, Column PGText)
+> twentiesAtAddress :: Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
 > twentiesAtAddress = proc () -> do
 >   row@(_, age, address) <- personQuery -< ()
 >
@@ -327,7 +328,7 @@ A Product followed by a restriction is sometimes called a "join" or
 such.
 
 > personAndBirthday ::
->   Query (Column PGText, Column PGInt4, Column PGText, Column PGDate)
+>   Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText, Column 'NonNullable PGDate)
 > personAndBirthday = proc () -> do
 >   (name, age, address) <- personQuery -< ()
 >   birthday             <- birthdayQuery -< ()
@@ -380,15 +381,15 @@ For example, suppose we have an employee table which records the name
 of each employee and the name of their boss.  If their boss is
 recorded as NULL then that means they have no boss!
 
-> employeeTable :: Table (Column PGText, Column (Nullable PGText))
->                        (Column PGText, Column (Nullable PGText))
+> employeeTable :: Table (Column 'NonNullable PGText, Column 'Nullable PGText)
+>                        (Column 'NonNullable PGText, Column 'Nullable PGText)
 > employeeTable = Table "employeeTable" (p2 ( required "name"
 >                                           , required "boss" ))
 
 We can write a query that returns as string indicating for each
 employee whether they have a boss.
 
-> hasBoss :: Query (Column PGText)
+> hasBoss :: Query (Column 'NonNullable PGText)
 > hasBoss = proc () -> do
 >   (name, nullableBoss) <- queryTable employeeTable -< ()
 >
@@ -419,7 +420,7 @@ status along with the name of their boss, if any.  The combinator
 returns its first argument.  If not it passes the non-NULL value to
 the function that is the second argument.
 
-> bossQuery :: QueryArr (Column PGText, Column (Nullable PGText)) (Column PGText)
+> bossQuery :: QueryArr (Column 'NonNullable PGText, Column 'Nullable PGText) (Column 'NonNullable PGText)
 > bossQuery = proc (name, nullableBoss) -> do
 >   returnA -< matchNullable (name .++ pgString " has no boss")
 >                            (\boss -> pgString "The boss of " .++ name
@@ -474,11 +475,11 @@ columns of type `a` but do not return any columns.  (Note: `Query` is
 just a synonym for `QueryArr ()` which means that it is a `QueryArr`
 that does not read any columns.)
 
-> restrictIsTwenties :: QueryArr (Column PGInt4) ()
+> restrictIsTwenties :: QueryArr (Column 'NonNullable PGInt4) ()
 > restrictIsTwenties = proc age -> do
 >   restrict -< (20 .<= age) .&& (age .< 30)
 >
-> restrictAddressIs1MyStreet :: QueryArr (Column PGText) ()
+> restrictAddressIs1MyStreet :: QueryArr (Column 'NonNullable PGText) ()
 > restrictAddressIs1MyStreet = proc address -> do
 >   restrict -< address .== pgString "1 My Street, My Town"
 
@@ -488,7 +489,7 @@ observation that in Haskell typically values can be "shown", but
 functions cannot be "shown".) Instead we use them to reimplement
 `twentiesAtAddress` in a more neatly-factored way.
 
-> twentiesAtAddress' :: Query (Column PGText, Column PGInt4, Column PGText)
+> twentiesAtAddress' :: Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
 > twentiesAtAddress' = proc () -> do
 >   row@(_, age, address) <- personQuery -< ()
 >
@@ -519,7 +520,7 @@ We can perform a similar transformation for `personAndBirthday` by
 pulling out a `QueryArr` which perform the mapping of a person's name
 to their date of birth by looking up in `birthdayQuery`.
 
-> birthdayOfPerson :: QueryArr (Column PGText) (Column PGDate)
+> birthdayOfPerson :: QueryArr (Column 'NonNullable PGText) (Column 'NonNullable PGDate)
 > birthdayOfPerson = proc name -> do
 >   birthday <- birthdayQuery -< ()
 >
@@ -530,7 +531,7 @@ to their date of birth by looking up in `birthdayQuery`.
 We can then reimplement `personAndBirthday` as follows
 
 > personAndBirthday' ::
->   Query (Column PGText, Column PGInt4, Column PGText, Column PGDate)
+>   Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText, Column 'NonNullable PGDate)
 > personAndBirthday' = proc () -> do
 >   (name, age, address) <- personQuery -< ()
 >   birthday <- birthdayOfPerson -< name
@@ -580,10 +581,10 @@ this information with the following datatype.
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
 
-> widgetTable :: Table (Widget (Column PGText) (Column PGText) (Column PGText)
->                              (Column PGInt4) (Column PGFloat8))
->                      (Widget (Column PGText) (Column PGText) (Column PGText)
->                              (Column PGInt4) (Column PGFloat8))
+> widgetTable :: Table (Widget (Column 'NonNullable PGText) (Column 'NonNullable PGText) (Column 'NonNullable PGText)
+>                              (Column 'NonNullable PGInt4) (Column 'NonNullable PGFloat8))
+>                      (Widget (Column 'NonNullable PGText) (Column 'NonNullable PGText) (Column 'NonNullable PGText)
+>                              (Column 'NonNullable PGInt4) (Column 'NonNullable PGFloat8))
 > widgetTable = Table "widgetTable"
 >                      (pWidget Widget { style    = required "style"
 >                                      , color    = required "color"
@@ -597,8 +598,8 @@ how many (possibly duplicated) locations there are, the total number
 of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
-> aggregateWidgets :: Query (Widget (Column PGText) (Column PGText) (Column PGInt8)
->                                   (Column PGInt4) (Column PGFloat8))
+> aggregateWidgets :: Query (Widget (Column 'NonNullable PGText) (Column 'NonNullable PGText) (Column 'NonNullable PGInt8)
+>                                   (Column 'NonNullable PGInt4) (Column 'NonNullable PGFloat8))
 > aggregateWidgets = aggregate (pWidget Widget { style    = groupBy
 >                                              , color    = groupBy
 >                                              , location = count
@@ -645,7 +646,7 @@ uses of our Template Haskell derived code.  We use the 'pWidget'
 "adaptor" to specify how columns are aggregated.  Note that this is
 yet another example of avoiding a headache by keeping your datatype
 fully polymorphic, because the 'count' aggregator changes a 'Column
-String' into a 'Column Int64'.
+String' into a 'Column NonNullable Int64'.
 
 Outer join
 ==========
@@ -659,13 +660,13 @@ columns we have to make sure the type of the output supports
 nullability.  We introduce the following type synonym for this
 purpose, which is just a notational convenience.
 
-> type ColumnNullableBirthday = Birthday' (Column (Nullable PGText))
->                                         (Column (Nullable PGDate))
+> type ColumnNullableBirthday = Birthday' (Column 'Nullable PGText)
+>                                         (Column 'Nullable PGDate)
 
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
-> personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
+> personBirthdayLeftJoin :: Query ((Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText),
 >                                  ColumnNullableBirthday)
 > personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
 >     where eqName ((name, _, _), birthdayRow) = name .== bdName birthdayRow
@@ -747,9 +748,9 @@ and integer quantity of goods.
 
 We could represent the integer ID in Opaleye as a `PGInt4`
 
-> type BadWarehouseColumn = Warehouse' (Column PGInt4)
->                                      (Column PGText)
->                                      (Column PGInt4)
+> type BadWarehouseColumn = Warehouse' (Column 'NonNullable PGInt4)
+>                                      (Column 'NonNullable PGText)
+>                                      (Column 'NonNullable PGInt4)
 >
 > badWarehouseTable :: Table BadWarehouseColumn BadWarehouseColumn
 > badWarehouseTable = Table "warehouse_table"
@@ -761,7 +762,7 @@ but that would expose us to the following sorts of errors, where we
 can meaninglessly relate the warehouse ID with the quantity of goods
 it holds.
 
-> badComparison :: BadWarehouseColumn -> Column PGBool
+> badComparison :: BadWarehouseColumn -> Column 'NonNullable PGBool
 > badComparison w = wId w .== wNumGoods w
 
 On the other hand we can make a newtype for the warehouse ID
@@ -769,11 +770,11 @@ On the other hand we can make a newtype for the warehouse ID
 > newtype WarehouseId' a = WarehouseId a
 > $(makeAdaptorAndInstance "pWarehouseId" ''WarehouseId')
 >
-> type WarehouseIdColumn = WarehouseId' (Column PGInt4)
+> type WarehouseIdColumn = WarehouseId' (Column 'NonNullable PGInt4)
 >
 > type GoodWarehouseColumn = Warehouse' WarehouseIdColumn
->                                       (Column PGText)
->                                       (Column PGInt4)
+>                                       (Column 'NonNullable PGText)
+>                                       (Column 'NonNullable PGInt4)
 >
 > goodWarehouseTable :: Table GoodWarehouseColumn GoodWarehouseColumn
 > goodWarehouseTable = Table "warehouse_table"
@@ -783,16 +784,16 @@ On the other hand we can make a newtype for the warehouse ID
 
 Now the comparison will not pass the type checker
 
-> -- forbiddenComparison :: GoodWarehouseColumn -> Column PGBool
+> -- forbiddenComparison :: GoodWarehouseColumn -> Column 'NonNullable PGBool
 > -- forbiddenComparison w = wId w .== wNumGoods w
 > --
-> -- => Couldn't match type `WarehouseId' (Column PGInt4)' with `Column PGInt4'
+> -- => Couldn't match type `WarehouseId' (Column 'NonNullable PGInt4)' with `Column 'NonNullable PGInt4'
 
 but we can compare two `WarehouseIdColumn`s.
 
 > permittedComparison :: GoodWarehouseColumn
 >                     -> GoodWarehouseColumn
->                     -> Column PGBool
+>                     -> Column 'NonNullable PGBool
 > permittedComparison w1 w2 = wId w1 .=== wId w2
 
 (Currently we use `.===`, a more polymorphic version of `.==`, but
@@ -818,7 +819,7 @@ For example, for the 'twentiesAtAddress' query `runQuery` would have
 the following type:
 
 > runTwentiesQuery :: PGS.Connection
->                  -> Query (Column PGText, Column PGInt4, Column PGText)
+>                  -> Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
 >                  -> IO [(String, Int, String)]
 > runTwentiesQuery = runQuery
 
@@ -828,14 +829,15 @@ have a table with a nullable column then Nullable columns turn into
 Maybes.  We could run the query `queryTable employeeTable` like this.
 
 > runEmployeesQuery :: PGS.Connection
->                   -> Query (Column PGText, Column (Nullable PGText))
+>                   -> Query (Column 'NonNullable PGText, Column 'Nullable PGText)
 >                   -> IO [(String, Maybe String)]
 > runEmployeesQuery = runQuery
 
 Newtypes are taken care of automatically by the typeclass instance
 that was generated by `makeAdaptorAndInstance`.  A `WarehouseId'
-(Column PGInt4)` becomes a `WarehouseId' Int` when the query is run.
-We could run the query `queryTable goodWarehouseTable` like this.
+(Column 'NonNullable PGInt4)` becomes a `WarehouseId' Int` when the
+query is run.  We could run the query `queryTable goodWarehouseTable`
+like this.
 
 > type WarehouseId = WarehouseId' Int
 > type GoodWarehouse = Warehouse' WarehouseId String Int
