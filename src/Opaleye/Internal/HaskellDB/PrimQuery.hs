@@ -35,6 +35,7 @@ data PrimExpr   = AttrExpr  Symbol
                                     -- needed for insert expressions.
                 | ArrayExpr [PrimExpr] -- ^ ARRAY[..]
                 | RangeExpr BoundExpr BoundExpr
+                | ArrayIndex PrimExpr PrimExpr
                 deriving (Read,Show)
 
 data Literal = NullLit
@@ -60,7 +61,6 @@ data BinOp      = (:==) | (:<) | (:<=) | (:>) | (:>=) | (:<>)
                 | (:->) | (:->>) | (:#>) | (:#>>)
                 | (:@>) | (:<@) | (:?) | (:?|) | (:?&)
                 | (:&&) | (:<<) | (:>>) | (:&<) | (:&>) | (:-|-)
-                | OpArrayIndex
                 deriving (Show,Read)
 
 data UnOp = OpNot
