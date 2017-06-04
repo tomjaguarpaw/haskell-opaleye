@@ -243,32 +243,32 @@ instance PGJsonIndex T.PGText
 -- | Get JSON object field by key.
 infixl 8 .->
 (.->) :: (PGIsJson a, PGJsonIndex k)
-      => NullableColumn a -- ^
-      -> Column k -- ^ key or index
+      => Column' n a -- ^
+      -> Column' m k -- ^ key or index
       -> NullableColumn a
 (.->) = C.binOp (HPQ.:->)
 
 -- | Get JSON object field as text.
 infixl 8 .->>
 (.->>) :: (PGIsJson a, PGJsonIndex k)
-       => NullableColumn a -- ^
-       -> Column k -- ^ key or index
+       => Column' n a -- ^
+       -> Column' m k -- ^ key or index
        -> NullableColumn T.PGText
 (.->>) = C.binOp (HPQ.:->>)
 
 -- | Get JSON object at specified path.
 infixl 8 .#>
 (.#>) :: (PGIsJson a)
-      => NullableColumn a -- ^
-      -> Column (T.PGArray 'NonNullable T.PGText) -- ^ path
+      => Column' n a -- ^
+      -> Column' m (T.PGArray 'NonNullable T.PGText) -- ^ path
       -> NullableColumn a
 (.#>) = C.binOp (HPQ.:#>)
 
 -- | Get JSON object at specified path as text.
 infixl 8 .#>>
 (.#>>) :: (PGIsJson a)
-       => NullableColumn a -- ^
-       -> Column (T.PGArray 'NonNullable T.PGText) -- ^ path
+       => Column' n a -- ^
+       -> Column' m (T.PGArray 'NonNullable T.PGText) -- ^ path
        -> NullableColumn T.PGText
 (.#>>) = C.binOp (HPQ.:#>>)
 
@@ -310,7 +310,7 @@ arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es
 singletonArray :: T.IsSqlType a => Column' n a -> Column (T.PGArray n a)
 singletonArray x = arrayPrepend x emptyArray
 
-index :: (C.PGIntegral i) => Column (T.PGArray 'NonNullable a) -> Column i -> NullableColumn a
+index :: (C.PGIntegral i) => Column' m (T.PGArray n a) -> Column' l i -> NullableColumn a
 index (Column a) (Column b) = Column (HPQ.ArrayIndex a b)
 
 -- * Other operators

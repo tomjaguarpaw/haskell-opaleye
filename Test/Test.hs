@@ -789,7 +789,7 @@ testJsonGetFieldValue
   => Query (Column' n a) -> Test
 testJsonGetFieldValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "c"
+            Arr.returnA -< c1 O..-> O.pgStrictText "c"
         expected :: [Maybe Json.Value]
         expected = [Just $ Json.Number $ fromInteger 21]
 
@@ -797,7 +797,7 @@ testJsonGetFieldValue dataQuery = it "" $ testH q (`shouldBe` expected)
 testJsonGetFieldText :: (O.PGIsJson a) => Query (Column a) -> Test
 testJsonGetFieldText dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "c"
+            Arr.returnA -< c1 O..->> O.pgStrictText "c"
         expected :: [Maybe T.Text]
         expected = [Just "21"]
 
@@ -807,7 +807,7 @@ testJsonGetArrayValue
   => Query (Column' n a) -> Test
 testJsonGetArrayValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "a" O..-> O.pgInt4 2
+            Arr.returnA -< c1 O..-> O.pgStrictText "a" O..-> O.pgInt4 2
         expected :: [Maybe Json.Value]
         expected = [Just $ Json.Number $ fromInteger 30]
 
@@ -815,7 +815,7 @@ testJsonGetArrayValue dataQuery = it "" $ testH q (`shouldBe` expected)
 testJsonGetArrayText :: (O.PGIsJson a) => Query (Column a) -> Test
 testJsonGetArrayText dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "a" O..->> O.pgInt4 2
+            Arr.returnA -< c1 O..-> O.pgStrictText "a" O..->> O.pgInt4 2
         expected :: [Maybe T.Text]
         expected = [Just "30"]
 
@@ -824,7 +824,7 @@ testJsonGetArrayText dataQuery = it "" $ testH q (`shouldBe` expected)
 testJsonGetMissingField :: (O.PGIsJson a) => Query (Column a) -> Test
 testJsonGetMissingField dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "missing"
+            Arr.returnA -< c1 O..->> O.pgStrictText "missing"
         expected :: [Maybe T.Text]
         expected = [Nothing]
 
@@ -833,7 +833,7 @@ testJsonGetPathValue
   :: (O.PGIsJson a, O.QueryRunnerColumnDefault 'NonNullable a Json.Value) => Query (Column' n a) -> Test
 testJsonGetPathValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
-              Arr.returnA -< O.toNullable c1 O..#> O.pgArray O.pgStrictText ["b", "x"]
+              Arr.returnA -< c1 O..#> O.pgArray O.pgStrictText ["b", "x"]
         expected :: [Maybe Json.Value]
         expected = [Just $ Json.Number $ fromInteger 42]
 
@@ -841,7 +841,7 @@ testJsonGetPathValue dataQuery = it "" $ testH q (`shouldBe` expected)
 testJsonGetPathText :: (O.PGIsJson a) => Query (Column a) -> Test
 testJsonGetPathText dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
-              Arr.returnA -< O.toNullable c1 O..#>> O.pgArray O.pgStrictText ["b", "x"]
+              Arr.returnA -< c1 O..#>> O.pgArray O.pgStrictText ["b", "x"]
         expected :: [Maybe T.Text]
         expected = [Just "42"]
 
