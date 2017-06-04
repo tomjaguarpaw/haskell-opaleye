@@ -127,28 +127,28 @@ to be polymorphic in all their fields.  Monomorphic field types will
 mean that you have to define more datatypes and more instances for
 them.
 
-> data BirthdayColumn = BirthdayColumn { bdNameColumn :: Column PGText
->                                      , bdDayColumn  :: Column PGDate }
+> data BirthdayRow = BirthdayRow { bdNameColumn :: Column PGText
+>                                , bdDayColumn  :: Column PGDate }
 >
 > data Birthday = Birthday { bdName :: String, bdDay :: Day }
 >
-> instance Default Unpackspec BirthdayColumn BirthdayColumn where
->   def = BirthdayColumn <$> P.lmap bdNameColumn D.def
->                        <*> P.lmap bdDayColumn  D.def
+> instance Default Unpackspec BirthdayRow BirthdayRow where
+>   def = BirthdayRow <$> P.lmap bdNameColumn D.def
+>                     <*> P.lmap bdDayColumn  D.def
 >
-> instance Default Opaleye.Internal.TableMaker.ColumnMaker BirthdayColumn BirthdayColumn where
->   def = BirthdayColumn <$> P.lmap bdNameColumn D.def
->                        <*> P.lmap bdDayColumn  D.def
+> instance Default Opaleye.Internal.TableMaker.ColumnMaker BirthdayRow BirthdayRow where
+>   def = BirthdayRow <$> P.lmap bdNameColumn D.def
+>                     <*> P.lmap bdDayColumn  D.def
 
 Then we can use 'Table' to make a table on our record type in exactly
 the same way as before.
 
-> birthdayTable :: Table BirthdayColumn BirthdayColumn
+> birthdayTable :: Table BirthdayRow BirthdayRow
 > birthdayTable = Table "birthdayTable"
->                        (BirthdayColumn <$> P.lmap bdNameColumn (required "name")
->                                        <*> P.lmap bdDayColumn  (required "birthday"))
+>                        (BirthdayRow <$> P.lmap bdNameColumn (required "name")
+>                                     <*> P.lmap bdDayColumn  (required "birthday"))
 >
-> birthdayQuery :: Query BirthdayColumn
+> birthdayQuery :: Query BirthdayRow
 > birthdayQuery = queryTable birthdayTable
 
 ghci> printSql birthdayQuery
@@ -179,30 +179,30 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data WidgetColumn = WidgetColumn { style    :: Column PGText
->                                  , color    :: Column PGText
->                                  , location :: Column PGText
->                                  , quantity :: Column PGInt4
->                                  , radius   :: Column PGFloat8
->                                  }
+> data WidgetRow = WidgetRow { style    :: Column PGText
+>                            , color    :: Column PGText
+>                            , location :: Column PGText
+>                            , quantity :: Column PGInt4
+>                            , radius   :: Column PGFloat8
+>                            }
 >
-> instance Default Opaleye.Internal.TableMaker.ColumnMaker WidgetColumn WidgetColumn where
->   def = WidgetColumn <$> P.lmap style    D.def
->                      <*> P.lmap color    D.def
->                      <*> P.lmap location D.def
->                      <*> P.lmap quantity D.def
->                      <*> P.lmap radius   D.def
+> instance Default Opaleye.Internal.TableMaker.ColumnMaker WidgetRow WidgetRow where
+>   def = WidgetRow <$> P.lmap style    D.def
+>                   <*> P.lmap color    D.def
+>                   <*> P.lmap location D.def
+>                   <*> P.lmap quantity D.def
+>                   <*> P.lmap radius   D.def
 
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
 
-> widgetTable :: Table WidgetColumn WidgetColumn
+> widgetTable :: Table WidgetRow WidgetRow
 > widgetTable = Table "widgetTable"
->                      (WidgetColumn <$> P.lmap style    (required "style")
->                                    <*> P.lmap color    (required "color")
->                                    <*> P.lmap location (required "location")
->                                    <*> P.lmap quantity (required "quantity")
->                                    <*> P.lmap radius   (required "radius"))
+>                      (WidgetRow <$> P.lmap style    (required "style")
+>                                 <*> P.lmap color    (required "color")
+>                                 <*> P.lmap location (required "location")
+>                                 <*> P.lmap quantity (required "quantity")
+>                                 <*> P.lmap radius   (required "radius"))
 
 
 Say we want to group by the style and color of widgets, calculating
@@ -272,23 +272,23 @@ columns we have to make sure the type of the output supports
 nullability.  We introduce the following type synonym for this
 purpose, which is just a notational convenience.
 
-> data BirthdayColumnNullable =
->   BirthdayColumnNullable { bdNameColumnNullable :: Column (Nullable PGText)
->                          , bdDayColumnNullable  :: Column (Nullable PGDate) }
+> data BirthdayRowNullable =
+>   BirthdayRowNullable { bdNameColumnNullable :: Column (Nullable PGText)
+>                       , bdDayColumnNullable  :: Column (Nullable PGDate) }
 >
-> instance Default O.Unpackspec BirthdayColumnNullable BirthdayColumnNullable where
->   def = BirthdayColumnNullable <$> P.lmap bdNameColumnNullable D.def
->                                <*> P.lmap bdDayColumnNullable  D.def
+> instance Default O.Unpackspec BirthdayRowNullable BirthdayRowNullable where
+>   def = BirthdayRowNullable <$> P.lmap bdNameColumnNullable D.def
+>                             <*> P.lmap bdDayColumnNullable  D.def
 >
-> instance Default Opaleye.Internal.Join.NullMaker BirthdayColumn BirthdayColumnNullable where
->   def = BirthdayColumnNullable <$> P.lmap bdNameColumn D.def
->                                <*> P.lmap bdDayColumn  D.def
+> instance Default Opaleye.Internal.Join.NullMaker BirthdayRow BirthdayRowNullable where
+>   def = BirthdayRowNullable <$> P.lmap bdNameColumn D.def
+>                             <*> P.lmap bdDayColumn  D.def
 
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
 > personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
->                                  BirthdayColumnNullable)
+>                                  BirthdayRowNullable)
 > personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
 >     where eqName ((name, _, _), birthdayRow) = name .== bdNameColumn birthdayRow
 
@@ -365,12 +365,12 @@ Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
 
-> instance Default O.QueryRunner BirthdayColumn Birthday where
+> instance Default O.QueryRunner BirthdayRow Birthday where
 >   def = Birthday <$> P.lmap bdNameColumn D.def
 >                  <*> P.lmap bdDayColumn  D.def
 >
 > runBirthdayQuery :: PGS.Connection
->                  -> Query BirthdayColumn
+>                  -> Query BirthdayRow
 >                  -> IO [Birthday]
 > runBirthdayQuery = runQuery
 

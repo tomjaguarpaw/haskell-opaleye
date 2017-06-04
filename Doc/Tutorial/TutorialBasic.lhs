@@ -126,7 +126,7 @@ synonyms.  For example:
 
 > data Birthday' a b = Birthday { bdName :: a, bdDay :: b }
 > type Birthday = Birthday' String Day
-> type BirthdayColumn = Birthday' (Column PGText) (Column PGDate)
+> type BirthdayRow = Birthday' (Column PGText) (Column PGDate)
 
 To get user defined types to work with the typeclass magic they must
 have instances defined for them.  The instances are derivable with
@@ -141,12 +141,12 @@ things out by hand here.  If you want to avoid Template Haskell see
 Then we can use 'Table' to make a table on our record type in exactly
 the same way as before.
 
-> birthdayTable :: Table BirthdayColumn BirthdayColumn
+> birthdayTable :: Table BirthdayRow BirthdayRow
 > birthdayTable = Table "birthdayTable"
 >                        (pBirthday Birthday { bdName = required "name"
 >                                            , bdDay  = required "birthday" })
 >
-> birthdayQuery :: Query BirthdayColumn
+> birthdayQuery :: Query BirthdayRow
 > birthdayQuery = queryTable birthdayTable
 
 ghci> printSql birthdayQuery
@@ -209,7 +209,7 @@ simple in arrow notation.  Here we take the product of `personQuery`
 and `birthdayQuery`.
 
 > personBirthdayProduct ::
->   Query ((Column PGText, Column PGInt4, Column PGText), BirthdayColumn)
+>   Query ((Column PGText, Column PGInt4, Column PGText), BirthdayRow)
 > personBirthdayProduct = proc () -> do
 >   personRow   <- personQuery -< ()
 >   birthdayRow <- birthdayQuery -< ()
@@ -659,14 +659,14 @@ columns we have to make sure the type of the output supports
 nullability.  We introduce the following type synonym for this
 purpose, which is just a notational convenience.
 
-> type ColumnNullableBirthday = Birthday' (Column (Nullable PGText))
->                                         (Column (Nullable PGDate))
+> type RowNullableBirthday = Birthday' (Column (Nullable PGText))
+>                                      (Column (Nullable PGDate))
 
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
 > personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
->                                  ColumnNullableBirthday)
+>                                  RowNullableBirthday)
 > personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
 >     where eqName ((name, _, _), birthdayRow) = name .== bdName birthdayRow
 
@@ -747,11 +747,11 @@ and integer quantity of goods.
 
 We could represent the integer ID in Opaleye as a `PGInt4`
 
-> type BadWarehouseColumn = Warehouse' (Column PGInt4)
->                                      (Column PGText)
->                                      (Column PGInt4)
+> type BadWarehouseRow = Warehouse' (Column PGInt4)
+>                                   (Column PGText)
+>                                   (Column PGInt4)
 >
-> badWarehouseTable :: Table BadWarehouseColumn BadWarehouseColumn
+> badWarehouseTable :: Table BadWarehouseRow BadWarehouseRow
 > badWarehouseTable = Table "warehouse_table"
 >         (pWarehouse Warehouse { wId       = required "id"
 >                               , wLocation = required "location"
@@ -761,7 +761,7 @@ but that would expose us to the following sorts of errors, where we
 can meaninglessly relate the warehouse ID with the quantity of goods
 it holds.
 
-> badComparison :: BadWarehouseColumn -> Column PGBool
+> badComparison :: BadWarehouseRow -> Column PGBool
 > badComparison w = wId w .== wNumGoods w
 
 On the other hand we can make a newtype for the warehouse ID
@@ -771,11 +771,11 @@ On the other hand we can make a newtype for the warehouse ID
 >
 > type WarehouseIdColumn = WarehouseId' (Column PGInt4)
 >
-> type GoodWarehouseColumn = Warehouse' WarehouseIdColumn
->                                       (Column PGText)
->                                       (Column PGInt4)
+> type GoodWarehouseRow = Warehouse' WarehouseIdColumn
+>                                    (Column PGText)
+>                                    (Column PGInt4)
 >
-> goodWarehouseTable :: Table GoodWarehouseColumn GoodWarehouseColumn
+> goodWarehouseTable :: Table GoodWarehouseRow GoodWarehouseRow
 > goodWarehouseTable = Table "warehouse_table"
 >         (pWarehouse Warehouse { wId       = pWarehouseId (WarehouseId (required "id"))
 >                               , wLocation = required "location"
@@ -783,15 +783,15 @@ On the other hand we can make a newtype for the warehouse ID
 
 Now the comparison will not pass the type checker
 
-> -- forbiddenComparison :: GoodWarehouseColumn -> Column PGBool
+> -- forbiddenComparison :: GoodWarehouseRow -> Column PGBool
 > -- forbiddenComparison w = wId w .== wNumGoods w
 > --
 > -- => Couldn't match type `WarehouseId' (Column PGInt4)' with `Column PGInt4'
 
-but we can compare two `WarehouseIdColumn`s.
+but we can compare two `WarehouseIdRow`s.
 
-> permittedComparison :: GoodWarehouseColumn
->                     -> GoodWarehouseColumn
+> permittedComparison :: GoodWarehouseRow
+>                     -> GoodWarehouseRow
 >                     -> Column PGBool
 > permittedComparison w1 w2 = wId w1 .=== wId w2
 
@@ -841,7 +841,7 @@ We could run the query `queryTable goodWarehouseTable` like this.
 > type GoodWarehouse = Warehouse' WarehouseId String Int
 >
 > runWarehouseQuery :: PGS.Connection
->                   -> Query GoodWarehouseColumn
+>                   -> Query GoodWarehouseRow
 >                   -> IO [GoodWarehouse]
 > runWarehouseQuery = runQuery
 
