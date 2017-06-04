@@ -2,8 +2,9 @@
 > {-# LANGUAGE DataKinds #-}
 > module DefaultExplanation where
 >
-> import Opaleye (Column, Nullability(..), QueryRunner, Query,
->                 PGInt4, PGBool, PGText, PGFloat4)
+> import Opaleye ( Column, NullableColumn, Column', QueryRunner
+>                , Query, PGInt4, PGBool, PGText, PGFloat4
+>                )
 > import qualified Opaleye as O
 > import qualified Opaleye.Internal.Binary as Internal.Binary
 > import Opaleye.Internal.Binary (Binaryspec)
@@ -34,34 +35,34 @@ and how it is used with the `unionAll` operation.  The version of
 > unionAllExplicit = O.unionAllExplicit
 
 What is the `Binaryspec` used for here?  Let's take a simple case
-where we want to union two queries of type `Query (Column NonNullable
-PGInt4, Column NonNullable PGText)`
+where we want to union two queries of type `Query (Column
+PGInt4, Column PGText)`
 
-> myQuery1 :: Query (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+> myQuery1 :: Query (Column PGInt4, Column PGText)
 > myQuery1 = undefined -- We won't actually need specific implementations here
 >
-> myQuery2 :: Query (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+> myQuery2 :: Query (Column PGInt4, Column PGText)
 > myQuery2 = undefined
 
 That means we will be using unionAll at the type
 
-> unionAllExplicit' :: Binaryspec (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
->                                 (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
->                   -> Query (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
->                   -> Query (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
->                   -> Query (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+> unionAllExplicit' :: Binaryspec (Column PGInt4, Column PGText)
+>                                 (Column PGInt4, Column PGText)
+>                   -> Query (Column PGInt4, Column PGText)
+>                   -> Query (Column PGInt4, Column PGText)
+>                   -> Query (Column PGInt4, Column PGText)
 > unionAllExplicit' = unionAllExplicit
 
 Since every `Column` is actually just a string containing an SQL
-expression, `(Column 'NonNullable PGInt4, Column 'NonNullable PGText)`
+expression, `(Column PGInt4, Column PGText)`
 is a pair of expressions.  When we generate the SQL we need to take
 the two pairs of expressions, generate new unique names that refer to
 them and produce these new unique names in another value of type
-`(Column 'NonNullable PGInt4, Column 'NonNullable PGText)`.  This is
+`(Column PGInt4, Column PGText)`.  This is
 exactly what a value of type
 
-    Binaryspec (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
-               (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+    Binaryspec (Column PGInt4, Column PGText)
+               (Column PGInt4, Column PGText)
 
 allows us to do.
 
@@ -69,26 +70,26 @@ So the next question is, how do we get our hands on a value of that
 type?  Well, we have `binaryspecColumn` which is a value that allows
 us to access the column name within a single column.
 
-> binaryspecColumn :: Binaryspec (Column n a) (Column n a)
+> binaryspecColumn :: Binaryspec (Column' n a) (Column' n a)
 > binaryspecColumn = Internal.Binary.binaryspecColumn
 
 `Binaryspec` is a `ProductProfunctor` so we can combine two of them to
 work on a pair.
 
-> binaryspecColumn2 :: Binaryspec (Column n a, Column m b) (Column n a, Column m b)
+> binaryspecColumn2 :: Binaryspec (Column' n a, Column' m b) (Column' n a, Column' m b)
 > binaryspecColumn2 = binaryspecColumn ***! binaryspecColumn
 
 Then we can use `binaryspecColumn2` in `unionAllExplicit`.
 
-> theUnionAll :: Query (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+> theUnionAll :: Query (Column PGInt4, Column PGText)
 > theUnionAll = unionAllExplicit binaryspecColumn2 myQuery1 myQuery2
 
 Now suppose that we wanted to take a union of two queries with columns
 in a tuple of size four.  We can make a suitable `Binaryspec` like
 this:
 
-> binaryspecColumn4 :: Binaryspec (Column j a, Column k b, Column m c, Column n d)
->                                 (Column j a, Column k b, Column m c, Column n d)
+> binaryspecColumn4 :: Binaryspec (Column' j a, Column' k b, Column' m c, Column' n d)
+>                                 (Column' j a, Column' k b, Column' m c, Column' n d)
 > binaryspecColumn4 = p4 (binaryspecColumn, binaryspecColumn,
 >                         binaryspecColumn, binaryspecColumn)
 
@@ -104,17 +105,17 @@ deduced.  This is where the `Default` typeclass comes in.
 
 `Opaleye.Internal.Binary` contains the `Default` instance
 
-    instance Default Binaryspec (Column m a) (Column n a) where
+    instance Default Binaryspec (Column' m a) (Column' n a) where
       def = binaryspecColumn
 
 That means that we know the "default" way of getting a
 
-    Binaryspec (Column m a) (Column n a)
+    Binaryspec (Column' m a) (Column' n a)
 
 However, if we have a default way of getting one of these, we also
 have a default way of getting a
 
-    Binaryspec (Column m a, Column n b) (Column m a, Column n b)
+    Binaryspec (Column' m a, Column' n b) (Column' m a, Column' n b)
 
 just by using the `ProductProfunctor` product operation `(***!)`.  And
 in the general case for a product type `T` with n type parameters we
@@ -136,7 +137,7 @@ provide it.  This is exactly what `Opaleye.Binary.unionAll` does.
 >           => Query a -> Query a -> Query b
 > unionAll = O.unionAllExplicit def
 >
-> theUnionAll' :: Query (Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+> theUnionAll' :: Query (Column PGInt4, Column PGText)
 > theUnionAll' = unionAll myQuery1 myQuery2
 
 In the long run this prevents writing a huge amount of boilerplate code.
@@ -154,28 +155,28 @@ this is `runQuery`
 
 Basic values of `QueryRunner` will have the following types
 
-> intRunner :: QueryRunner (Column 'NonNullable PGInt4) Int
+> intRunner :: QueryRunner (Column PGInt4) Int
 > intRunner = undefined -- The implementation is not important here
 >
-> doubleRunner :: QueryRunner (Column 'NonNullable PGFloat4) Double
+> doubleRunner :: QueryRunner (Column PGFloat4) Double
 > doubleRunner = undefined
 >
-> stringRunner :: QueryRunner (Column 'NonNullable PGText) String
+> stringRunner :: QueryRunner (Column PGText) String
 > stringRunner = undefined
 >
-> boolRunner :: QueryRunner (Column 'NonNullable PGBool) Bool
+> boolRunner :: QueryRunner (Column PGBool) Bool
 > boolRunner = undefined
 
 Furthermore we will have basic ways of running queries which return
 `Nullable` values, for example
 
-> nullableIntRunner :: QueryRunner (Column 'Nullable PGInt4) (Maybe Int)
+> nullableIntRunner :: QueryRunner (NullableColumn PGInt4) (Maybe Int)
 > nullableIntRunner = undefined
 
 If I have a very simple query with a single column of `PGInt4` then I can
 run it using the `intRunner`.
 
-> myQuery3 :: Query (Column 'NonNullable PGInt4)
+> myQuery3 :: Query (Column PGInt4)
 > myQuery3 = undefined -- The implementation is not important
 >
 > runTheQuery :: SQL.Connection -> IO [Int]
@@ -184,13 +185,13 @@ run it using the `intRunner`.
 If my query has several columns of different types I need to build up
 a larger `QueryRunner`.
 
-> myQuery4 :: Query ( Column 'NonNullable PGInt4, Column 'NonNullable PGText
->                   , Column 'NonNullable PGBool, Column 'Nullable PGInt4
+> myQuery4 :: Query ( Column PGInt4, Column PGText
+>                   , Column PGBool, NullableColumn PGInt4
 >                   )
 > myQuery4 = undefined
 >
 > largerQueryRunner :: QueryRunner
->       (Column 'NonNullable PGInt4, Column 'NonNullable PGText, Column 'NonNullable PGBool, Column 'Nullable PGInt4)
+>       (Column PGInt4, Column PGText, Column PGBool, NullableColumn PGInt4)
 >       (Int, String, Bool, Maybe Int)
 > largerQueryRunner = p4 (intRunner, stringRunner, boolRunner, nullableIntRunner)
 >
@@ -202,16 +203,16 @@ redundant!  Like the `Binaryspec` it can be automatically deduced.
 `Karamaan.Opaleye.RunQuery` already gives us `Default` instances for
 the following types (plus many others, of course!).
 
-* `QueryRunner (Column 'NonNullable PGInt4) Int`
-* `QueryRunner (Column 'NonNullable PGText) String`
-* `QueryRunner (Column 'NonNullable Bool) Bool`
-* `QueryRunner (Column 'Nullable Int) (Maybe Int)`
+* `QueryRunner (Column PGInt4) Int`
+* `QueryRunner (Column PGText) String`
+* `QueryRunner (Column Bool) Bool`
+* `QueryRunner (NullableColumn Int) (Maybe Int)`
 
 Then the `Default` typeclass machinery automatically deduces the
 correct value of the type we want.
 
 > largerQueryRunner' :: QueryRunner
->       (Column 'NonNullable PGInt4, Column 'NonNullable PGText, Column 'NonNullable PGBool, Column 'Nullable PGInt4)
+>       (Column PGInt4, Column PGText, Column PGBool, NullableColumn PGInt4)
 >       (Int, String, Bool, Maybe Int)
 > largerQueryRunner' = def
 

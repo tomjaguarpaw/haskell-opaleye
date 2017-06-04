@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.Values where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column'(Column))
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -59,7 +59,7 @@ runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
-instance Default Valuesspec (Column n a) (Column n a) where
+instance Default Valuesspec (Column' n a) (Column' n a) where
   def = Valuesspec (PM.PackMap (\f () -> fmap Column (f ())))
 
 -- {

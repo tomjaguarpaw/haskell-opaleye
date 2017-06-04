@@ -12,7 +12,7 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye (Column, Nullability(..),
+> import           Opaleye (Column', Column, NullableColumn,
 >                          Table(Table), required, queryTable,
 >                          Query, (.==), aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runQuery,
@@ -63,8 +63,8 @@ columns required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
 manipulation tutorial you can see an example of when they might differ.
 
-> personTable :: Table (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
->                      (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+> personTable :: Table (Column PGText, Column PGInt4, Column PGText)
+>                      (Column PGText, Column PGInt4, Column PGText)
 > personTable = Table "personTable" (p3 ( required "name"
 >                                       , required "age"
 >                                       , required "address" ))
@@ -83,7 +83,7 @@ For this example file we will always use the typeclass versions
 because they are simpler to read and the typeclass magic is
 essentially invisible.)
 
-> personQuery :: Query (Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText)
+> personQuery :: Query (Column PGText, Column PGInt4, Column PGText)
 > personQuery = queryTable personTable
 
 A `Query` corresponds to an SQL SELECT that we can run.  Here is the
@@ -144,14 +144,14 @@ compatible with Opaleye!
 > 
 > type instance Field H h o NN = h
 > type instance Field H h o N  = Maybe h
-> type instance Field O h o NN = Column 'NonNullable o
-> type instance Field O h o N  = Column 'Nullable o
+> type instance Field O h o NN = Column o
+> type instance Field O h o N  = NullableColumn o
 >
 > type instance TableField H     h o n b   = Field H h o n
 > type instance TableField O     h o n b   = Field O h o n
 > type instance TableField W     h o n Req = Field O h o n
 > type instance TableField W     h o n Opt = Maybe (Field O h o n)
-> type instance TableField Nulls h o n b   = Column 'Nullable o
+> type instance TableField Nulls h o n b   = NullableColumn o
 >
 > -- Cryptic remark: If we were willing to only support 7.8 and up we
 > -- could even have a symbol field containing the table name and use
@@ -163,10 +163,10 @@ compatible with Opaleye!
 > class Tableable a b | a -> b where
 >   tableField :: String -> O.TableProperties a b
 >
-> instance Tableable (Column n a) (Column n a) where
+> instance Tableable (Column' n a) (Column' n a) where
 >   tableField = required
 >
-> instance Tableable (Maybe (Column n a)) (Column n a) where
+> instance Tableable (Maybe (Column' n a)) (Column' n a) where
 >   tableField = O.optional
 >
 > -- }
@@ -259,8 +259,8 @@ how many (possibly duplicated) locations there are, the total number
 of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
-> aggregateWidgets :: Query (Column 'NonNullable PGText, Column 'NonNullable PGText, Column 'NonNullable PGInt8,
->                            Column 'NonNullable PGInt4, Column 'NonNullable PGFloat8)
+> aggregateWidgets :: Query (Column PGText, Column PGText, Column PGInt8,
+>                            Column PGInt4, Column PGFloat8)
 > aggregateWidgets = aggregate ((,,,,) <$> P.lmap style    groupBy
 >                                      <*> P.lmap color    groupBy
 >                                      <*> P.lmap location count
@@ -324,7 +324,7 @@ purpose, which is just a notational convenience.
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
-> personBirthdayLeftJoin :: Query ((Column 'NonNullable PGText, Column 'NonNullable PGInt4, Column 'NonNullable PGText),
+> personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
 >                                  Birthday Nulls)
 > personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
 >     where eqName ((name, _, _), birthdayRow) = name .== bdName birthdayRow

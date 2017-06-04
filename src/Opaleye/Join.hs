@@ -29,7 +29,7 @@ import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Join as J
 import qualified Opaleye.Internal.PrimQuery as PQ
 import           Opaleye.QueryArr (Query)
-import           Opaleye.Internal.Column (Column, Nullability(..))
+import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.PGTypes as T
 
 import qualified Data.Profunctor.Product.Default as D
@@ -41,7 +41,7 @@ leftJoin  :: (D.Default U.Unpackspec columnsL columnsL,
               D.Default J.NullMaker columnsR nullableColumnsR)
           => Query columnsL  -- ^ Left query
           -> Query columnsR  -- ^ Right query
-          -> ((columnsL, columnsR) -> Column 'NonNullable T.PGBool) -- ^ Condition on which to join
+          -> ((columnsL, columnsR) -> Column T.PGBool) -- ^ Condition on which to join
           -> Query (columnsL, nullableColumnsR) -- ^ Left join
 leftJoin = leftJoinExplicit D.def D.def D.def
 
@@ -50,7 +50,7 @@ rightJoin  :: (D.Default U.Unpackspec columnsL columnsL,
                D.Default J.NullMaker columnsL nullableColumnsL)
            => Query columnsL -- ^ Left query
            -> Query columnsR -- ^ Right query
-           -> ((columnsL, columnsR) -> Column 'NonNullable T.PGBool) -- ^ Condition on which to join
+           -> ((columnsL, columnsR) -> Column T.PGBool) -- ^ Condition on which to join
            -> Query (nullableColumnsL, columnsR) -- ^ Right join
 rightJoin = rightJoinExplicit D.def D.def D.def
 
@@ -61,7 +61,7 @@ fullJoin  :: (D.Default U.Unpackspec columnsL columnsL,
               D.Default J.NullMaker columnsR nullableColumnsR)
           => Query columnsL -- ^ Left query
           -> Query columnsR -- ^ Right query
-          -> ((columnsL, columnsR) -> Column 'NonNullable T.PGBool) -- ^ Condition on which to join
+          -> ((columnsL, columnsR) -> Column T.PGBool) -- ^ Condition on which to join
           -> Query (nullableColumnsL, nullableColumnsR) -- ^ Full outer join
 fullJoin = fullJoinExplicit D.def D.def D.def D.def
 
@@ -71,7 +71,7 @@ leftJoinExplicit :: U.Unpackspec columnsL columnsL
                  -> U.Unpackspec columnsR columnsR
                  -> J.NullMaker columnsR nullableColumnsR
                  -> Query columnsL -> Query columnsR
-                 -> ((columnsL, columnsR) -> Column 'NonNullable T.PGBool)
+                 -> ((columnsL, columnsR) -> Column T.PGBool)
                  -> Query (columnsL, nullableColumnsR)
 leftJoinExplicit uA uB nullmaker =
   J.joinExplicit uA uB id (J.toNullable nullmaker) PQ.LeftJoin
@@ -80,7 +80,7 @@ rightJoinExplicit :: U.Unpackspec columnsL columnsL
                   -> U.Unpackspec columnsR columnsR
                   -> J.NullMaker columnsL nullableColumnsL
                   -> Query columnsL -> Query columnsR
-                  -> ((columnsL, columnsR) -> Column 'NonNullable T.PGBool)
+                  -> ((columnsL, columnsR) -> Column T.PGBool)
                   -> Query (nullableColumnsL, columnsR)
 rightJoinExplicit uA uB nullmaker =
   J.joinExplicit uA uB (J.toNullable nullmaker) id PQ.RightJoin
@@ -91,7 +91,7 @@ fullJoinExplicit :: U.Unpackspec columnsL columnsL
                  -> J.NullMaker columnsL nullableColumnsL
                  -> J.NullMaker columnsR nullableColumnsR
                  -> Query columnsL -> Query columnsR
-                 -> ((columnsL, columnsR) -> Column 'NonNullable T.PGBool)
+                 -> ((columnsL, columnsR) -> Column T.PGBool)
                  -> Query (nullableColumnsL, nullableColumnsR)
 fullJoinExplicit uA uB nullmakerA nullmakerB =
   J.joinExplicit uA uB (J.toNullable nullmakerA) (J.toNullable nullmakerB) PQ.FullJoin

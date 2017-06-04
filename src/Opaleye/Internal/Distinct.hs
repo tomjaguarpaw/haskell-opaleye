@@ -6,7 +6,7 @@
 module Opaleye.Internal.Distinct where
 
 import           Opaleye.QueryArr (Query)
-import           Opaleye.Column (Column)
+import           Opaleye.Column (Column')
 import           Opaleye.Aggregate (Aggregator, groupBy, aggregate)
 
 import           Control.Applicative (Applicative, pure, (<*>))
@@ -25,7 +25,7 @@ distinctExplicit (Distinctspec agg) = aggregate agg
 
 newtype Distinctspec a b = Distinctspec (Aggregator a b)
 
-instance Default Distinctspec (Column n a) (Column n a) where
+instance Default Distinctspec (Column' n a) (Column' n a) where
   def = Distinctspec groupBy
 
 -- { Boilerplate instances

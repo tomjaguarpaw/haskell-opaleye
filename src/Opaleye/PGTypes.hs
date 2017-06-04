@@ -7,7 +7,7 @@
 
 module Opaleye.PGTypes (module Opaleye.PGTypes) where
 
-import           Opaleye.Internal.Column (Column, Nullability(..))
+import           Opaleye.Internal.Column (Column, Column', Nullability(..))
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.PGTypes as IPT
 
@@ -51,72 +51,72 @@ instance C.PGString PGCitext where
 
 -- * Creating SQL values
 
-pgString :: String -> Column 'NonNullable PGText
+pgString :: String -> Column PGText
 pgString = IPT.literalColumn . HPQ.StringLit
 
-pgLazyByteString :: LByteString.ByteString -> Column 'NonNullable PGBytea
+pgLazyByteString :: LByteString.ByteString -> Column PGBytea
 pgLazyByteString = IPT.literalColumn . HPQ.ByteStringLit . LByteString.toStrict
 
-pgStrictByteString :: SByteString.ByteString -> Column 'NonNullable PGBytea
+pgStrictByteString :: SByteString.ByteString -> Column PGBytea
 pgStrictByteString = IPT.literalColumn . HPQ.ByteStringLit
 
-pgStrictText :: SText.Text -> Column 'NonNullable PGText
+pgStrictText :: SText.Text -> Column PGText
 pgStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack
 
-pgLazyText :: LText.Text -> Column 'NonNullable PGText
+pgLazyText :: LText.Text -> Column PGText
 pgLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack
 
-pgInt4 :: Int -> Column 'NonNullable PGInt4
+pgInt4 :: Int -> Column PGInt4
 pgInt4 = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
 
-pgInt8 :: Int64 -> Column 'NonNullable PGInt8
+pgInt8 :: Int64 -> Column PGInt8
 pgInt8 = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
 
-pgDouble :: Double -> Column 'NonNullable PGFloat8
+pgDouble :: Double -> Column PGFloat8
 pgDouble = IPT.literalColumn . HPQ.DoubleLit
 
-pgBool :: Bool -> Column 'NonNullable PGBool
+pgBool :: Bool -> Column PGBool
 pgBool = IPT.literalColumn . HPQ.BoolLit
 
-pgUUID :: UUID.UUID -> Column 'NonNullable PGUuid
+pgUUID :: UUID.UUID -> Column PGUuid
 pgUUID = C.unsafeCoerceColumn . pgString . UUID.toString
 
-pgDay :: Time.Day -> Column 'NonNullable PGDate
+pgDay :: Time.Day -> Column PGDate
 pgDay = IPT.unsafePgFormatTime "date" "'%F'"
 
-pgUTCTime :: Time.UTCTime -> Column 'NonNullable PGTimestamptz
+pgUTCTime :: Time.UTCTime -> Column PGTimestamptz
 pgUTCTime = IPT.unsafePgFormatTime "timestamptz" "'%FT%T%QZ'"
 
-pgLocalTime :: Time.LocalTime -> Column 'NonNullable PGTimestamp
+pgLocalTime :: Time.LocalTime -> Column PGTimestamp
 pgLocalTime = IPT.unsafePgFormatTime "timestamp" "'%FT%T%Q'"
 
-pgTimeOfDay :: Time.TimeOfDay -> Column 'NonNullable PGTime
+pgTimeOfDay :: Time.TimeOfDay -> Column PGTime
 pgTimeOfDay = IPT.unsafePgFormatTime "time" "'%T%Q'"
 
 -- "We recommend not using the type time with time zone"
 -- http://www.postgresql.org/docs/8.3/static/datatype-datetime.html
 
 
-pgCiStrictText :: CI.CI SText.Text -> Column 'NonNullable PGCitext
+pgCiStrictText :: CI.CI SText.Text -> Column PGCitext
 pgCiStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack . CI.original
 
-pgCiLazyText :: CI.CI LText.Text -> Column 'NonNullable PGCitext
+pgCiLazyText :: CI.CI LText.Text -> Column PGCitext
 pgCiLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack . CI.original
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
 -- The json data type was introduced in PostgreSQL version 9.2
 -- JSON values must be SQL string quoted
-pgJSON :: String -> Column 'NonNullable PGJson
+pgJSON :: String -> Column PGJson
 pgJSON = IPT.castToType "json" . HSD.quote
 
-pgStrictJSON :: SByteString.ByteString -> Column 'NonNullable PGJson
+pgStrictJSON :: SByteString.ByteString -> Column PGJson
 pgStrictJSON = pgJSON . IPT.strictDecodeUtf8
 
-pgLazyJSON :: LByteString.ByteString -> Column 'NonNullable PGJson
+pgLazyJSON :: LByteString.ByteString -> Column PGJson
 pgLazyJSON = pgJSON . IPT.lazyDecodeUtf8
 
-pgValueJSON :: Ae.ToJSON a => a -> Column 'NonNullable PGJson
+pgValueJSON :: Ae.ToJSON a => a -> Column PGJson
 pgValueJSON = pgLazyJSON . Ae.encode
 
 -- The jsonb data type was introduced in PostgreSQL version 9.4
@@ -124,19 +124,19 @@ pgValueJSON = pgLazyJSON . Ae.encode
 --
 -- TODO: We need to add literal JSON and JSONB types so we can say
 -- `castToTypeTyped JSONB` rather than `castToType "jsonb"`.
-pgJSONB :: String -> Column 'NonNullable PGJsonb
+pgJSONB :: String -> Column PGJsonb
 pgJSONB = IPT.castToType "jsonb" . HSD.quote
 
-pgStrictJSONB :: SByteString.ByteString -> Column 'NonNullable PGJsonb
+pgStrictJSONB :: SByteString.ByteString -> Column PGJsonb
 pgStrictJSONB = pgJSONB . IPT.strictDecodeUtf8
 
-pgLazyJSONB :: LByteString.ByteString -> Column 'NonNullable PGJsonb
+pgLazyJSONB :: LByteString.ByteString -> Column PGJsonb
 pgLazyJSONB = pgJSONB . IPT.lazyDecodeUtf8
 
-pgValueJSONB :: Ae.ToJSON a => a -> Column 'NonNullable PGJsonb
+pgValueJSONB :: Ae.ToJSON a => a -> Column PGJsonb
 pgValueJSONB = pgLazyJSONB . Ae.encode
 
-pgArray :: forall n a b. IsSqlType b => (a -> C.Column n b) -> [a] -> C.Column 'NonNullable (PGArray n b)
+pgArray :: forall n a b. IsSqlType b => (a -> C.Column' n b) -> [a] -> C.Column (PGArray n b)
 pgArray pgEl xs = C.unsafeCast arrayTy $
   C.Column (HPQ.ArrayExpr (map oneEl xs))
   where
@@ -144,7 +144,7 @@ pgArray pgEl xs = C.unsafeCast arrayTy $
     arrayTy = showSqlType ([] :: [PGArray n b])
 
 pgRange :: forall n a b. IsRangeType b
-        => (a -> C.Column n b) -> R.RangeBound a -> R.RangeBound a -> C.Column n (PGRange b)
+        => (a -> C.Column' n b) -> R.RangeBound a -> R.RangeBound a -> C.Column' n (PGRange b)
 pgRange pgEl start end = C.Column (HPQ.CastExpr (showRangeType ([] :: [b])) $ HPQ.RangeExpr (oneEl start) (oneEl end))
   where oneEl (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
         oneEl (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
@@ -244,13 +244,13 @@ data PGRange a
 
 -- * Deprecated functions
 
-literalColumn :: HPQ.Literal -> Column n a
+literalColumn :: HPQ.Literal -> Column' n a
 literalColumn = IPT.literalColumn
 {-# WARNING literalColumn
     "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be deprecated in version 0.6"
   #-}
 
-unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column n c
+unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column' n c
 unsafePgFormatTime = IPT.unsafePgFormatTime
 {-# WARNING unsafePgFormatTime
     "'unsafePgFormatTime' has been moved to Opaleye.Internal.PGTypes and will be deprecated in version 0.6"

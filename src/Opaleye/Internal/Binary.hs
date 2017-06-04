@@ -6,7 +6,7 @@
 
 module Opaleye.Internal.Binary where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column'(Column))
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.QueryArr as Q
@@ -36,7 +36,7 @@ runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> (columns, columns) -> f columns'
 runBinaryspec (Binaryspec b) = PM.traversePM b
 
-binaryspecColumn :: Binaryspec (Column n a) (Column n a)
+binaryspecColumn :: Binaryspec (Column' n a) (Column' n a)
 binaryspecColumn = Binaryspec (PM.PackMap (\f (Column e, Column e')
                                            -> fmap Column (f (e, e'))))
 
@@ -53,7 +53,7 @@ sameTypeBinOpHelper binop binaryspec q1 q2 = Q.simpleQueryArr q where
 
           newPrimQuery = PQ.Binary binop pes (primQuery1, primQuery2)
 
-instance Default Binaryspec (Column n a) (Column n a) where
+instance Default Binaryspec (Column' n a) (Column' n a) where
   def = binaryspecColumn
 
 -- {

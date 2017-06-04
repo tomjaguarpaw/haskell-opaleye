@@ -35,7 +35,6 @@ import qualified Data.Profunctor as P
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
-import           Opaleye.Internal.Column (Nullability(..))
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
@@ -93,46 +92,46 @@ distinctAggregator (A.Aggregator (PM.PackMap pm)) =
   A.Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap (\(a,b,_) -> (a,b,HPQ.AggrDistinct)))) c))
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
-groupBy :: Aggregator (C.Column n a) (C.Column n a)
+groupBy :: Aggregator (C.Column' n a) (C.Column' n a)
 groupBy = A.makeAggr' Nothing
 
 -- | Sum all rows in a group.
-sum :: Aggregator (C.Column n a) (C.Column n a)
+sum :: Aggregator (C.Column' n a) (C.Column' n a)
 sum = A.makeAggr HPQ.AggrSum
 
 -- | Count the number of non-null rows in a group.
-count :: Aggregator (C.Column n a) (C.Column 'NonNullable T.PGInt8)
+count :: Aggregator (C.Column' n a) (C.Column T.PGInt8)
 count = A.makeAggr HPQ.AggrCount
 
 -- | Count the number of rows in a group.  This 'Aggregator' is named
 -- @countStar@ after SQL's @COUNT(*)@ aggregation function.
-countStar :: Aggregator a (C.Column 'NonNullable T.PGInt8)
-countStar = lmap (const (0 :: C.Column 'NonNullable T.PGInt4)) count
+countStar :: Aggregator a (C.Column T.PGInt8)
+countStar = lmap (const (0 :: C.Column T.PGInt4)) count
 
 -- | Average of a group
-avg :: Aggregator (C.Column 'NonNullable T.PGFloat8) (C.Column 'NonNullable T.PGFloat8)
+avg :: Aggregator (C.Column T.PGFloat8) (C.Column T.PGFloat8)
 avg = A.makeAggr HPQ.AggrAvg
 
 -- | Maximum of a group
-max :: Ord.PGOrd a => Aggregator (C.Column n a) (C.Column n a)
+max :: Ord.PGOrd a => Aggregator (C.Column' n a) (C.Column' n a)
 max = A.makeAggr HPQ.AggrMax
 
 -- | Maximum of a group
-min :: Ord.PGOrd a => Aggregator (C.Column n a) (C.Column n a)
+min :: Ord.PGOrd a => Aggregator (C.Column' n a) (C.Column' n a)
 min = A.makeAggr HPQ.AggrMin
 
-boolOr :: Aggregator (C.Column 'NonNullable T.PGBool) (C.Column 'NonNullable T.PGBool)
+boolOr :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)
 boolOr = A.makeAggr HPQ.AggrBoolOr
 
-boolAnd :: Aggregator (C.Column 'NonNullable T.PGBool) (C.Column 'NonNullable T.PGBool)
+boolAnd :: Aggregator (C.Column T.PGBool) (C.Column T.PGBool)
 boolAnd = A.makeAggr HPQ.AggrBoolAnd
 
-arrayAgg :: Aggregator (C.Column n a) (C.Column 'NonNullable (T.PGArray n a))
+arrayAgg :: Aggregator (C.Column' n a) (C.Column (T.PGArray n a))
 arrayAgg = A.makeAggr HPQ.AggrArr
 
 stringAgg
-  :: C.Column 'NonNullable T.PGText
-  -> Aggregator (C.Column 'NonNullable T.PGText) (C.Column 'NonNullable T.PGText)
+  :: C.Column T.PGText
+  -> Aggregator (C.Column T.PGText) (C.Column T.PGText)
 stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 
 -- | Count the number of rows in a query.  This is different from
@@ -145,14 +144,14 @@ stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 -- changing the AST though, so I'm not too keen.
 --
 -- See https://github.com/tomjaguarpaw/haskell-opaleye/issues/162
-countRows :: Query a -> Query (C.Column 'NonNullable T.PGInt8)
+countRows :: Query a -> Query (C.Column T.PGInt8)
 countRows = fmap (C.fromNullable 0)
             . fmap snd
             . (\q -> J.leftJoin (pure ())
                                 (aggregate count q)
                                 (const (T.pgBool True)))
-            . fmap (const (0 :: C.Column 'NonNullable T.PGInt4))
+            . fmap (const (0 :: C.Column T.PGInt4))
             --- ^^ The count aggregator requires an input of type
-            -- 'Column n a' rather than 'a' (I'm not sure if there's a
+            -- 'Column' n a' rather than 'a' (I'm not sure if there's a
             -- good reason for this).  To deal with that restriction
             -- we just map a dummy integer value over it.

@@ -13,7 +13,7 @@ import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.FromRow as FR
 import qualified Data.String as String
 
-import           Opaleye.Column (Column)
+import           Opaleye.Column (Column')
 import qualified Opaleye.Sql as S
 import           Opaleye.QueryArr (Query)
 import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
@@ -33,16 +33,16 @@ import qualified Data.Profunctor.Product.Default as D
 -- Example type specialization:
 --
 -- @
--- runQuery :: Query (Column NonNullable 'Opaleye.PGTypes.PGInt4', Column NonNullable 'Opaleye.PGTypes.PGText')
+-- runQuery :: Query (Column 'Opaleye.PGTypes.PGInt4', Column 'Opaleye.PGTypes.PGText')
 --          -> IO [(Int, String)]
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
 --
 -- @
--- runQuery :: Query (Foo (Column NonNullable 'Opaleye.PGTypes.PGInt4')
---                        (Column NonNullable 'Opaleye.PGTypes.PGText')
---                        (Column NonNullable 'Opaleye.PGTypes.PGBool'))
+-- runQuery :: Query (Foo (Column 'Opaleye.PGTypes.PGInt4')
+--                        (Column 'Opaleye.PGTypes.PGText')
+--                        (Column 'Opaleye.PGTypes.PGBool'))
 --          -> IO [Foo Int String Bool]
 -- @
 --
@@ -83,7 +83,7 @@ runQueryFold = runQueryFoldExplicit D.def
 --                          Foo
 --                          queryRunnerColumnDefault
 -- @
-queryRunnerColumn :: (Column n' a' -> Column n a) -> (b -> b')
+queryRunnerColumn :: (Column' n' a' -> Column' n a) -> (b -> b')
                   -> IRQ.QueryRunnerColumn n a b -> IRQ.QueryRunnerColumn n' a' b'
 queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
                                                             (fmapFP haskellF fp)

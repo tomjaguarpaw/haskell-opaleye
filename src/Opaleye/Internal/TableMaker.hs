@@ -35,20 +35,20 @@ runColumnMaker :: Applicative f
 runColumnMaker (ColumnMaker f) = PM.traversePM f
 
 -- There's surely a way of simplifying this implementation
-tableColumn :: ViewColumnMaker String (C.Column n a)
+tableColumn :: ViewColumnMaker String (C.Column' n a)
 tableColumn = ViewColumnMaker
               (PM.PackMap (\f s -> fmap (const (mkColumn s)) (f ())))
   where mkColumn = IC.Column . HPQ.BaseTableAttrExpr
 
-column :: ColumnMaker (C.Column n a) (C.Column n a)
+column :: ColumnMaker (C.Column' n a) (C.Column' n a)
 column = ColumnMaker
          (PM.PackMap (\f (IC.Column s)
                       -> fmap IC.Column (f s)))
 
-instance Default ViewColumnMaker String (C.Column n a) where
+instance Default ViewColumnMaker String (C.Column' n a) where
   def = tableColumn
 
-instance Default ColumnMaker (C.Column n a) (C.Column n a) where
+instance Default ColumnMaker (C.Column' n a) (C.Column' n a) where
   def = column
 
 -- {

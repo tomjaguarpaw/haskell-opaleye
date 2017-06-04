@@ -10,7 +10,7 @@ import           Database.PostgreSQL.Simple.FromField
 import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
-import           Opaleye.Column (Column)
+import           Opaleye.Column (Column, Column')
 import           Opaleye.Internal.Column (Nullability(..))
 import qualified Opaleye.Internal.PackMap as PackMap
 import qualified Opaleye.Column as C
@@ -61,7 +61,7 @@ import           Data.Typeable (Typeable)
 -- FieldParser, so we have to have some type that we know contains
 -- just a FieldParser.
 data QueryRunnerColumn n pgType haskellType =
-  QueryRunnerColumn (U.Unpackspec (Column n pgType) ()) (FieldParser haskellType)
+  QueryRunnerColumn (U.Unpackspec (Column' n pgType) ()) (FieldParser haskellType)
 
 instance Functor (QueryRunnerColumn n u) where
   fmap f ~(QueryRunnerColumn u fp) = QueryRunnerColumn u ((fmap . fmap . fmap) f fp)
@@ -95,7 +95,7 @@ fieldQueryRunnerColumn = fieldParserQueryRunnerColumn fromField
 fieldParserQueryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn n pgType haskell
 fieldParserQueryRunnerColumn = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
 
-queryRunner :: QueryRunnerColumn n a b -> QueryRunner (Column n a) b
+queryRunner :: QueryRunnerColumn n a b -> QueryRunner (Column' n a) b
 queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
     where QueryRunnerColumn u fp = qrc
 
@@ -115,7 +115,7 @@ instance QueryRunnerColumnDefault 'NonNullable a b =>
   queryRunnerColumnDefault = queryRunnerColumnNullable queryRunnerColumnDefault
 
 instance QueryRunnerColumnDefault n a b =>
-         D.Default QueryRunner (Column n a) b where
+         D.Default QueryRunner (Column' n a) b where
   def = queryRunner queryRunnerColumnDefault
 
 -- }
@@ -212,7 +212,7 @@ instance QueryRunnerColumnDefault 'NonNullable T.PGJsonb Ae.Value where
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
-arrayColumn :: Column 'NonNullable (T.PGArray n a) -> Column n a
+arrayColumn :: Column (T.PGArray n a) -> Column' n a
 arrayColumn = C.unsafeCoerceColumn
 
 instance (Typeable b, QueryRunnerColumnDefault n a b) =>

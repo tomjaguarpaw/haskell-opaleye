@@ -1,6 +1,6 @@
 module Opaleye.Internal.PGTypes where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column'(Column))
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Text as SText
@@ -12,14 +12,14 @@ import qualified Data.ByteString.Lazy as LByteString
 import qualified Data.Time as Time
 import qualified Data.Time.Locale.Compat as Locale
 
-unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column n c
+unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column' n c
 unsafePgFormatTime typeName formatString = castToType typeName . format
   where format = Time.formatTime Locale.defaultTimeLocale formatString
 
-literalColumn :: HPQ.Literal -> Column n a
+literalColumn :: HPQ.Literal -> Column' n a
 literalColumn = Column . HPQ.ConstExpr
 
-castToType :: HPQ.Name -> String -> Column a c
+castToType :: HPQ.Name -> String -> Column' a c
 castToType typeName =
     Column . HPQ.CastExpr typeName . HPQ.ConstExpr . HPQ.OtherLit
 

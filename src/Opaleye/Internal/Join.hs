@@ -6,7 +6,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PackMap             as PM
 import qualified Opaleye.Internal.Tag                 as T
 import qualified Opaleye.Internal.Unpackspec          as U
-import           Opaleye.Internal.Column (Column(Column), Nullability(..))
+import           Opaleye.Internal.Column (Column'(Column), Column, NullableColumn)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.PGTypes as T
@@ -23,10 +23,10 @@ newtype NullMaker a b = NullMaker (a -> b)
 toNullable :: NullMaker a b -> a -> b
 toNullable (NullMaker f) = f
 
-instance D.Default NullMaker (Column 'NonNullable a) (Column 'Nullable a) where
+instance D.Default NullMaker (Column a) (NullableColumn a) where
   def = NullMaker C.toNullable
 
-instance D.Default NullMaker (Column 'Nullable a) (Column 'Nullable a) where
+instance D.Default NullMaker (NullableColumn a) (NullableColumn a) where
   def = NullMaker id
 
 joinExplicit :: U.Unpackspec columnsA columnsA
@@ -35,7 +35,7 @@ joinExplicit :: U.Unpackspec columnsA columnsA
              -> (columnsB -> returnedColumnsB)
              -> PQ.JoinType
              -> Q.Query columnsA -> Q.Query columnsB
-             -> ((columnsA, columnsB) -> Column 'NonNullable T.PGBool)
+             -> ((columnsA, columnsB) -> Column T.PGBool)
              -> Q.Query (returnedColumnsA, returnedColumnsB)
 joinExplicit uA uB returnColumnsA returnColumnsB joinType
              qA qB cond = Q.simpleQueryArr q where

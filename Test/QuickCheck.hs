@@ -20,15 +20,13 @@ import qualified Data.Set as Set
 import qualified Data.Maybe as Maybe
 import qualified Control.Arrow as Arrow
 
-type ColumnNN = O.Column 'O.NonNullable
-
 twoIntTable :: String
-            -> O.Table (ColumnNN O.PGInt4, ColumnNN O.PGInt4)
-                       (ColumnNN O.PGInt4, ColumnNN O.PGInt4)
+            -> O.Table (O.Column O.PGInt4, O.Column O.PGInt4)
+                       (O.Column O.PGInt4, O.Column O.PGInt4)
 twoIntTable n = O.Table n (PP.p2 (O.required "column1", O.required "column2"))
 
-table1 :: O.Table (ColumnNN O.PGInt4, ColumnNN O.PGInt4)
-                  (ColumnNN O.PGInt4, ColumnNN O.PGInt4)
+table1 :: O.Table (O.Column O.PGInt4, O.Column O.PGInt4)
+                  (O.Column O.PGInt4, O.Column O.PGInt4)
 table1 = twoIntTable "table1"
 
 data QueryDenotation a =
@@ -37,7 +35,7 @@ data QueryDenotation a =
 onList :: ([a] -> [b]) -> QueryDenotation a -> QueryDenotation b
 onList f = QueryDenotation . (fmap . fmap) f . unQueryDenotation
 
-type Columns = [Either (ColumnNN O.PGInt4) (ColumnNN O.PGBool)]
+type Columns = [Either (O.Column O.PGInt4) (O.Column O.PGBool)]
 type Haskells = [Either Int Bool]
 
 columnsOfHaskells :: Haskells -> Columns

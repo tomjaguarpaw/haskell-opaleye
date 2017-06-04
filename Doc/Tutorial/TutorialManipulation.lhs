@@ -3,7 +3,7 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye (Column, Nullability(..), Table(Table),
+> import           Opaleye (Column, Table(Table),
 >                           required, optional, (.==), (.<),
 >                           arrangeDeleteSql, arrangeInsertManySql,
 >                           arrangeUpdateSql, arrangeInsertManyReturningSql,
@@ -33,15 +33,15 @@ specify it when writing to the table.  The database will automatically
 fill in a value for us.
 
 > table :: Table
->     (Maybe (Column 'NonNullable PGInt4), Column 'NonNullable PGFloat8, Column 'NonNullable PGFloat8, Column 'NonNullable P.PGText)
->     (Column 'NonNullable PGInt4, Column 'NonNullable PGFloat8, Column 'NonNullable PGFloat8, Column 'NonNullable P.PGText)
+>     (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8, Column P.PGText)
+>     (Column PGInt4, Column PGFloat8, Column PGFloat8, Column P.PGText)
 > table = Table "tablename" (p4 ( optional "id"
 >                               , required "x"
 >                               , required "y"
 >                               , required "s" ))
 
 To perform a delete we provide an expression from our read type to
-`Column 'NonNullable Bool`.  All rows for which the expression is true are deleted.
+`Column Bool`.  All rows for which the expression is true are deleted.
 
 > delete :: String
 > delete = arrangeDeleteSql table (\(_, x, y, _) -> x .< y)
@@ -55,7 +55,7 @@ To insert we provide a row with the write type.  Optional columns can
 be omitted by providing `Nothing` instead.  Numeric SQL types have a
 Haskell `Num` instance so we can write them using numeric literals.
 Values of other types should be created using the functions in the
-`Opaleye.PGTypes` module, for example `pgString` to create a `Column 'NonNullable
+`Opaleye.PGTypes` module, for example `pgString` to create a `Column
 P.PGText` from a `String`.
 
 > insertNothing :: String
@@ -108,7 +108,7 @@ VALUES (1,
 
 An update takes an update function from the read type to the write
 type, and a condition given by a function from the read type to
-`Column 'NonNullable Bool`.  All rows that satisfy the condition are updated
+`Column Bool`.  All rows that satisfy the condition are updated
 according to the update function.
 
 > update :: String
@@ -133,7 +133,7 @@ Opaleye supports it also.
 >   arrangeInsertManyReturningSql def' table (return (Nothing, 4, 5, P.pgString "Bye"))
 >                                            (\(id_, _, _, _) -> id_)
 >   -- TODO: vv This is too messy
->   where def' :: U.Unpackspec (Column 'NonNullable a) (Column 'NonNullable a)
+>   where def' :: U.Unpackspec (Column a) (Column a)
 >         def' = def
 
 ghci> putStrLn insertReturning
