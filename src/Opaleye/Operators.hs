@@ -10,7 +10,7 @@ import qualified Control.Arrow as A
 import qualified Data.Foldable as F
 import qualified Data.List.NonEmpty as NEL
 
-import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
+import           Opaleye.Internal.Column (Column_(Column), Column, unsafeCase_,
                                           unsafeIfThenElse, unsafeGt)
 import qualified Opaleye.Internal.Column as C
 import           Opaleye.Internal.QueryArr (QueryArr(QueryArr), Query, runSimpleQueryArr)

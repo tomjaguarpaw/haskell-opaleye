@@ -1,4 +1,9 @@
+{-# LANGUAGE TypeSynonymInstances
+  , FlexibleInstances
+  #-}
+
 module Opaleye.Internal.Column where
+
 
 import Data.String
 
@@ -10,12 +15,14 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 --
 -- Do not use the 'Show' instance of 'Column'.  It will be deprecated
 -- in version 0.6.
-newtype Column pgType = Column HPQ.PrimExpr deriving Show
+newtype Column_ colType pgType = Column HPQ.PrimExpr deriving Show
+type Column = Column_ NonNullable
 
 -- | Only used within a 'Column', to indicate that it can be @NULL@.
 -- For example, a 'Column' ('Nullable' @PGText@) can be @NULL@ but a
 -- 'Column' @PGText@ cannot.
 data Nullable a = Nullable
+data NonNullable
 
 unColumn :: Column a -> HPQ.PrimExpr
 unColumn (Column e) = e

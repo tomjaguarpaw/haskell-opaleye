@@ -6,7 +6,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PackMap             as PM
 import qualified Opaleye.Internal.Tag                 as T
 import qualified Opaleye.Internal.Unpackspec          as U
-import           Opaleye.Internal.Column (Column(Column), Nullable)
+import           Opaleye.Internal.Column (Column_(Column), Column, Nullable)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.PGTypes as T

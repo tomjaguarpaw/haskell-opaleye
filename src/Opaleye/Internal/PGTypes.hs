@@ -1,6 +1,6 @@
 module Opaleye.Internal.PGTypes where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column_(Column), Column)
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Text as SText
