@@ -926,8 +926,8 @@ main = do
   let connectString = connectStringEnvVar <|> connectStringDotEnv
 
   conn <- maybe
-    (fail ("Set POSTGRES_CONNSTRING environment variable\n"
-           ++ "For example POSTGRES_CONNSTRING='user=tom dbname=opaleye_test "
+    (fail ("Set " ++ envVarName ++ " environment variable\n"
+           ++ "For example " ++ envVarName ++ "='user=tom dbname=opaleye_test "
            ++ "host=localhost port=25433 password=tom'"))
     (PGS.connectPostgreSQL . String.fromString)
     connectString
