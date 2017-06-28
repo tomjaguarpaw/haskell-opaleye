@@ -146,8 +146,8 @@ pgRange :: forall a b. IsRangeType b => (a -> C.Column b) -> R.RangeBound a -> R
 pgRange pgEl start end = C.Column (HPQ.CastExpr (showRangeType ([] :: [b])) $ HPQ.RangeExpr (oneEl start) (oneEl end))
   where oneEl (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
         oneEl (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
-        oneEl (R.NegInfinity) = HPQ.NegInfinity
-        oneEl (R.PosInfinity) = HPQ.PosInfinity
+        oneEl R.NegInfinity   = HPQ.NegInfinity
+        oneEl R.PosInfinity   = HPQ.PosInfinity
 
 class IsSqlType pgType where
   -- | 'showSqlType' will be deprecated in version 0.6.  Use

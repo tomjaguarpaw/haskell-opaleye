@@ -599,11 +599,11 @@ how to do this.
 
 > aggregateWidgets :: Query (Widget (Column PGText) (Column PGText) (Column PGInt8)
 >                                   (Column PGInt4) (Column PGFloat8))
-> aggregateWidgets = aggregate (pWidget (Widget { style    = groupBy
->                                               , color    = groupBy
->                                               , location = count
->                                               , quantity = sum
->                                               , radius   = avg }))
+> aggregateWidgets = aggregate (pWidget Widget { style    = groupBy
+>                                              , color    = groupBy
+>                                              , location = count
+>                                              , quantity = sum
+>                                              , radius   = avg })
 >                              (queryTable widgetTable)
 
 The generated SQL is

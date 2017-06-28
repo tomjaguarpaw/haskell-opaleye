@@ -243,7 +243,7 @@ compareSortedBy o conn one two = do
   one' <- unQueryDenotation one conn
   two' <- unQueryDenotation two conn
   return ((sort one' == sort two')
-          && (isSortedBy o one'))
+          && isSortedBy o one')
 
 -- }
 
@@ -255,12 +255,12 @@ columns conn (ArbitraryColumns c) =
                      (pure c)
 
 fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitraryQuery -> IO Bool
-fmap' conn f (ArbitraryQuery q) = do
+fmap' conn f (ArbitraryQuery q) =
   compareNoSort conn (denotation' (fmap (unArbitraryGarble f) q))
                      (onList (fmap (unArbitraryGarble f)) (denotation' q))
 
 apply :: PGS.Connection -> ArbitraryQuery -> ArbitraryQuery -> IO Bool
-apply conn (ArbitraryQuery q1) (ArbitraryQuery q2) = do
+apply conn (ArbitraryQuery q1) (ArbitraryQuery q2) =
   compare' conn (denotation2 ((,) <$> q1 <*> q2))
                 ((,) <$> denotation' q1 <*> denotation' q2)
 
@@ -299,19 +299,19 @@ limit conn (ArbitraryPositiveInt l) (ArbitraryQuery q) o = do
           && condBool)
 
 offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitraryQuery -> IO Bool
-offset conn (ArbitraryPositiveInt l) (ArbitraryQuery q) = do
+offset conn (ArbitraryPositiveInt l) (ArbitraryQuery q) =
   compareNoSort conn (denotation' (O.offset l q))
                      (onList (drop l) (denotation' q))
 
 order :: PGS.Connection -> ArbitraryOrder -> ArbitraryQuery -> IO Bool
-order conn o (ArbitraryQuery q) = do
+order conn o (ArbitraryQuery q) =
   compareSortedBy (arbitraryOrdering o)
                   conn
                   (denotation' (O.orderBy (arbitraryOrder o) q))
                   (denotation' q)
 
 distinct :: PGS.Connection -> ArbitraryQuery -> IO Bool
-distinct conn (ArbitraryQuery q) = do
+distinct conn (ArbitraryQuery q) =
   compare' conn (denotation' (O.distinctExplicit eitherPP q))
                 (onList nub (denotation' q))
 
@@ -319,12 +319,12 @@ distinct conn (ArbitraryQuery q) = do
 -- consequences to do with the order of the returned rows and so
 -- restrict had to start being compared sorted.
 restrict :: PGS.Connection -> ArbitraryQuery -> IO Bool
-restrict conn (ArbitraryQuery q) = do
+restrict conn (ArbitraryQuery q) =
   compare' conn (denotation' (restrictFirstBool Arrow.<<< q))
                 (onList restrictFirstBoolList (denotation' q))
 
 values :: PGS.Connection -> ArbitraryColumnsList -> IO Bool
-values conn (ArbitraryColumnsList l) = do
+values conn (ArbitraryColumnsList l) =
   compareNoSort conn (denotation' (fmap columnsList (O.values (fmap O.constant l))))
                      (pureList (fmap columnsList l))
 

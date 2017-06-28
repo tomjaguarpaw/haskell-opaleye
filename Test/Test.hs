@@ -239,7 +239,7 @@ dropAndCreateTable columnType (t, cols) = String.fromString drop_
   where drop_ = "DROP TABLE IF EXISTS \"public\".\"" ++ t ++ "\";"
                 ++ "CREATE TABLE \"public\".\"" ++ t ++ "\""
                 ++ " (" ++ commas cols ++ ");"
-        integer c = ("\"" ++ c ++ "\"" ++ " " ++ columnType)
+        integer c = "\"" ++ c ++ "\"" ++ " " ++ columnType
         commas = L.intercalate "," . map integer
 
 dropAndCreateTableInt :: (String, [String]) -> PGS.Query
@@ -255,7 +255,7 @@ dropAndCreateTableSerial (t, cols) = String.fromString drop_
   where drop_ = "DROP TABLE IF EXISTS \"public\".\"" ++ t ++ "\";"
                 ++ "CREATE TABLE \"public\".\"" ++ t ++ "\""
                 ++ " (" ++ commas cols ++ ");"
-        integer c = ("\"" ++ c ++ "\"" ++ " SERIAL")
+        integer c = "\"" ++ c ++ "\"" ++ " SERIAL"
         commas = L.intercalate "," . map integer
 
 dropAndCreateTableJson :: (String, [String]) -> PGS.Query
@@ -318,7 +318,7 @@ queryShouldReturnSorted :: (D.Default O.QueryRunner wires haskells, Show haskell
          -> [haskells]
          -> PGS.Connection
          -> Expectation
-queryShouldReturnSorted q expected conn = testH q (\res -> L.sort res `shouldBe` L.sort expected) conn
+queryShouldReturnSorted q expected = testH q (\res -> L.sort res `shouldBe` L.sort expected)
 
 testSelect :: Test
 testSelect = it "selects" $ table1Q `queryShouldReturnSorted` table1data
@@ -812,7 +812,7 @@ testJsonGetMissingField dataQuery = it "" $ testH q (`shouldBe` expected)
         expected = [Nothing]
 
 -- Test opaleye's equivalent of c1#>'{b,x}'
-testJsonGetPathValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => (Query (Column a)) -> Test
+testJsonGetPathValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
 testJsonGetPathValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
               Arr.returnA -< O.toNullable c1 O..#> O.pgArray O.pgStrictText ["b", "x"]

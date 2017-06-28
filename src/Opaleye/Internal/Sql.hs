@@ -141,10 +141,10 @@ aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
 
         groupBy' :: [(symbol, (Maybe aggrOp, HPQ.PrimExpr))]
                  -> NEL.NonEmpty HSql.SqlExpr
-        groupBy' = (handleEmpty
-                    . map sqlExpr
-                    . map expr
-                    . filter (M.isNothing . aggrOp))
+        groupBy' = handleEmpty
+                   . map sqlExpr
+                   . map expr
+                   . filter (M.isNothing . aggrOp)
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
         expr (_, (_, e)) = e
         aggrOp (_, (x, _)) = x
