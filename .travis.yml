@@ -2,7 +2,7 @@ env:
  - GHCVER=7.6.3  TRAVIS=yes
  - GHCVER=7.8.4  TRAVIS=yes
  - GHCVER=7.10.3 TRAVIS=yes
- - GHCVER=8.0.1  TRAVIS=yes
+ - GHCVER=8.0.2  TRAVIS=yes
  - GHCVER=head   TRAVIS=yes
 script:
  - wget https://raw.github.com/tomjaguarpaw/neil/master/travis.sh -O - --no-check-certificate --quiet | sh
