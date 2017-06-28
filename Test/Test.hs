@@ -34,7 +34,6 @@ import           GHC.Int (Int64)
 
 import Test.Hspec
 
-import           Control.Monad.Trans.Maybe (MaybeT (..))
 import qualified Configuration.Dotenv as Dotenv
 
 {-
@@ -916,15 +915,16 @@ jsonbTests = [testJsonGetFieldValue  table9Q,testJsonGetFieldText  table9Q,
 main :: IO ()
 main = do
   let envVarName = "POSTGRES_CONNSTRING"
-  -- Actions to read connection string:
-  let connectStringEnvVar = MaybeT $ lookupEnv envVarName
-  let connectStringDotEnv = do vars <- Dotenv.parseFile ".env"
-                               MaybeT (return (lookup envVarName vars))
-  -- first try with envvar, otherwise read the .env
-  connectString <- runMaybeT $
-      connectStringEnvVar
-      <|> connectStringDotEnv `Dotenv.onMissingFile` MaybeT (return Nothing)
-  -- connect
+
+  connectStringEnvVar <- lookupEnv envVarName
+
+  connectStringDotEnv <- do vars <- Dotenv.parseFile ".env"
+                            return (lookup envVarName vars)
+                         `Dotenv.onMissingFile`
+                         return Nothing
+
+  let connectString = connectStringEnvVar <|> connectStringDotEnv
+
   conn <- maybe
     (fail "Set POSTGRES_CONNSTRING environment variable")
     (PGS.connectPostgreSQL . String.fromString)
