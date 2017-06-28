@@ -68,23 +68,23 @@ type PrimQueryFold = PrimQueryFold' ()
 data PrimQueryFold' a p = PrimQueryFold
   { unit      :: p
   , empty     :: a -> p
-  , baseTable :: TableIdentifier -> (Bindings HPQ.PrimExpr) -> p
+  , baseTable :: TableIdentifier -> Bindings HPQ.PrimExpr -> p
   , product   :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-  , aggregate :: (Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)) -> p -> p
+  , aggregate :: Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr) -> p -> p
   , order     :: [HPQ.OrderExpr] -> p -> p
   , limit     :: LimitOp -> p -> p
   , join      :: JoinType
               -> HPQ.PrimExpr
-              -> (Bindings HPQ.PrimExpr)
-              -> (Bindings HPQ.PrimExpr)
+              -> Bindings HPQ.PrimExpr
+              -> Bindings HPQ.PrimExpr
               -> p
               -> p
               -> p
   , existsf   :: Bool -> p -> p -> p
-  , values    :: [Symbol] -> (NEL.NonEmpty [HPQ.PrimExpr]) -> p
-  , binary    :: BinOp -> (Bindings (HPQ.PrimExpr, HPQ.PrimExpr)) -> (p, p) -> p
+  , values    :: [Symbol] -> NEL.NonEmpty [HPQ.PrimExpr] -> p
+  , binary    :: BinOp -> Bindings (HPQ.PrimExpr, HPQ.PrimExpr) -> (p, p) -> p
   , label     :: String -> p -> p
-  , relExpr   :: HPQ.PrimExpr -> (Bindings HPQ.PrimExpr) -> p
+  , relExpr   :: HPQ.PrimExpr -> Bindings HPQ.PrimExpr -> p
     -- ^ A relation-valued expression
   }
 
@@ -131,10 +131,10 @@ restrict :: HPQ.PrimExpr -> PrimQuery -> PrimQuery
 restrict cond primQ = Product (return primQ) [cond]
 
 exists :: PrimQuery -> PrimQuery -> PrimQuery
-exists a b = Exists True a b
+exists = Exists True
 
 notExists :: PrimQuery -> PrimQuery -> PrimQuery
-notExists a b = Exists False a b
+notExists = Exists False
 
 isUnit :: PrimQuery' a -> Bool
 isUnit Unit = True

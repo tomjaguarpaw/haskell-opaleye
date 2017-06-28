@@ -57,7 +57,7 @@ leftJoinF f fL cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.pgBool True))
         j  = J.leftJoinExplicit D.def
                                 D.def
-                                (PP.p2 ((IJ.NullMaker id), nullmakerBool))
+                                (PP.p2 (IJ.NullMaker id, nullmakerBool))
                                 l
                                 (a1 r)
                                 (\(l', (r', _)) -> cond l' r')
@@ -88,7 +88,7 @@ rightJoinF f fR cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.pgBool True))
         j  = J.rightJoinExplicit D.def
                                  D.def
-                                 (PP.p2 ((IJ.NullMaker id), nullmakerBool))
+                                 (PP.p2 (IJ.NullMaker id, nullmakerBool))
                                  (a1 l)
                                  r
                                  (\((l', _), r') -> cond l' r')
@@ -124,8 +124,8 @@ fullJoinF f fL fR cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.pgBool True))
         j  = J.fullJoinExplicit D.def
                                 D.def
-                                (PP.p2 ((IJ.NullMaker id), nullmakerBool))
-                                (PP.p2 ((IJ.NullMaker id), nullmakerBool))
+                                (PP.p2 (IJ.NullMaker id, nullmakerBool))
+                                (PP.p2 (IJ.NullMaker id, nullmakerBool))
                                 (a1 l)
                                 (a1 r)
                                 (\((l', _), (r', _)) -> cond l' r')

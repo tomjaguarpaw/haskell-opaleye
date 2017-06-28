@@ -48,7 +48,7 @@ ppGroupBy :: [SqlExpr] -> Doc
 ppGroupBy es = text "GROUP BY" <+> ppGroupAttrs es
   where
     ppGroupAttrs :: [SqlExpr] -> Doc
-    ppGroupAttrs cs = commaV (ppSqlExpr . deliteral) cs
+    ppGroupAttrs = commaV (ppSqlExpr . deliteral)
 
 ppOrderBy :: [(SqlExpr,SqlOrder)] -> Doc
 ppOrderBy [] = empty
@@ -98,7 +98,7 @@ ppInsert :: SqlInsert -> Doc
 ppInsert (SqlInsert table names values)
     = text "INSERT INTO" <+> ppTable table
       <+> parens (commaV ppColumn names)
-      $$ text "VALUES" <+> commaV (\v -> parens (commaV ppSqlExpr v))
+      $$ text "VALUES" <+> commaV (parens . commaV ppSqlExpr)
                                   (NEL.toList values)
 
 -- If we wanted to make the SQL slightly more readable this would be
@@ -120,14 +120,14 @@ ppTable st = case sqlTableSchemaName st of
 ppStartBound :: SqlRangeBound -> Doc
 ppStartBound (Inclusive a) = text "'[" <> ppSqlExpr a
 ppStartBound (Exclusive a) = text "'(" <> ppSqlExpr a
-ppStartBound (PosInfinity) = text "'(infinity"
-ppStartBound (NegInfinity) = text "'(-infinity"
+ppStartBound PosInfinity   = text "'(infinity"
+ppStartBound NegInfinity   = text "'(-infinity"
 
 ppEndBound :: SqlRangeBound -> Doc
 ppEndBound (Inclusive a) = ppSqlExpr a <> text "]'"
 ppEndBound (Exclusive a) = ppSqlExpr a <> text ")'"
-ppEndBound (PosInfinity) = text "infinity)'"
-ppEndBound (NegInfinity) = text "-infinity)'"
+ppEndBound PosInfinity   = text "infinity)'"
+ppEndBound NegInfinity   = text "-infinity)'"
 
 ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =

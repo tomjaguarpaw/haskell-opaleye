@@ -45,7 +45,7 @@ toSqlOrder gen (OrderExpr o e) =
 
 
 toSqlColumn :: Attribute -> SqlColumn
-toSqlColumn attr = SqlColumn attr
+toSqlColumn = SqlColumn
 
 toSqlAssoc :: SqlGenerator -> Assoc -> [(SqlColumn,SqlExpr)]
 toSqlAssoc gen = map (\(attr,expr) -> (toSqlColumn attr, sqlExpr gen expr))
@@ -147,8 +147,8 @@ defaultSqlExpr gen expr =
       RangeExpr l r -> let bound :: PQ.BoundExpr -> Sql.SqlRangeBound
                            bound (PQ.Inclusive a) = Sql.Inclusive (sqlExpr gen a)
                            bound (PQ.Exclusive a) = Sql.Exclusive (sqlExpr gen a)
-                           bound (PQ.PosInfinity) = Sql.PosInfinity
-                           bound (PQ.NegInfinity) = Sql.NegInfinity
+                           bound PQ.PosInfinity   = Sql.PosInfinity
+                           bound PQ.NegInfinity   = Sql.NegInfinity
                         in RangeSqlExpr (bound l) (bound r)
       ArrayIndex e1 e2 -> SubscriptSqlExpr (ParensSqlExpr $ sqlExpr gen e1) (ParensSqlExpr $ sqlExpr gen e2)
 
@@ -243,7 +243,7 @@ defaultSqlLiteral _ l =
 
 
 defaultSqlQuote :: SqlGenerator -> String -> String
-defaultSqlQuote _ s = quote s
+defaultSqlQuote _ = quote
 
 -- | Quote a string and escape characters that need escaping
 --   We use Postgres "escape strings", i.e. strings prefixed
