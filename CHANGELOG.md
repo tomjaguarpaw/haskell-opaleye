@@ -1,3 +1,8 @@
+## 0.5.3.1
+
+* `distinctAggregator`, `joinNullable`, `exists`, `notExists`,
+  `index`, `timestamptzAtTimeZone`
+
 ## 0.5.3.0
 
 * Added support for range types
