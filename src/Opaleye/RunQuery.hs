@@ -1,15 +1,18 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Opaleye.RunQuery (module Opaleye.RunQuery,
-                         QueryRunner,
                          -- * Datatypes
+                         IRQ.Cursor,
+                         QueryRunner,
                          IRQ.QueryRunnerColumn,
                          IRQ.QueryRunnerColumnDefault (..),
                          -- * Creating now 'QueryRunnerColumn's
                          IRQ.fieldQueryRunnerColumn,
                          IRQ.fieldParserQueryRunnerColumn) where
 
+import           Control.Applicative (pure, (<$>))
 import qualified Database.PostgreSQL.Simple as PGS
+import qualified Database.PostgreSQL.Simple.Cursor  as PGSC
 import qualified Database.PostgreSQL.Simple.FromRow as FR
 import qualified Data.String as String
 
@@ -107,6 +110,50 @@ runQueryFoldExplicit qr conn q z f = case sql of
   Nothing   -> return z
   Just sql' -> PGS.foldWith_ parser conn sql' z f
   where (sql, parser) = prepareQuery qr q
+
+-- * Cursor interface
+
+-- | Declare a temporary cursor. The cursor is given a unique name for the given
+-- connection.
+--
+-- Returns 'Nothing' when the query returns zero rows.
+declareCursor
+    :: D.Default QueryRunner columns haskells
+    => PGS.Connection
+    -> Query columns
+    -> IO (IRQ.Cursor haskells)
+declareCursor = declareCursorExplicit D.def
+
+-- | Like 'declareCursor' but takes a 'QueryRunner' explicitly.
+declareCursorExplicit
+    :: QueryRunner columns haskells
+    -> PGS.Connection
+    -> Query columns
+    -> IO (IRQ.Cursor haskells)
+declareCursorExplicit qr conn q =
+    case mbQuery of
+      Nothing    -> pure IRQ.EmptyCursor
+      Just query -> IRQ.Cursor rowParser <$> PGSC.declareCursor conn query
+  where
+    (mbQuery, rowParser) = prepareQuery qr q
+
+-- | Close the given cursor.
+closeCursor :: IRQ.Cursor columns -> IO ()
+closeCursor IRQ.EmptyCursor       = pure ()
+closeCursor (IRQ.Cursor _ cursor) = PGSC.closeCursor cursor
+
+-- | Fold over a chunk of rows, calling the supplied fold-like function on each
+-- row as it is received. In case the cursor is exhausted, a 'Left' value is
+-- returned, otherwise a 'Right' value is returned.
+foldForward
+    :: IRQ.Cursor haskells
+    -> Int
+    -> (a -> haskells -> IO a)
+    -> a
+    -> IO (Either a a)
+foldForward IRQ.EmptyCursor              _chunkSize _f z = pure $ Left z
+foldForward (IRQ.Cursor rowParser cursor) chunkSize  f z =
+    PGSC.foldForwardWithParser cursor rowParser chunkSize f z
 
 -- * Deprecated functions
 
