@@ -4,6 +4,7 @@ module Opaleye.Internal.RunQuery where
 
 import           Control.Applicative (Applicative, pure, (*>), (<*>), liftA2)
 
+import qualified Database.PostgreSQL.Simple.Cursor  as PGSC (Cursor)
 import           Database.PostgreSQL.Simple.Internal (RowParser)
 import           Database.PostgreSQL.Simple.FromField
   (FieldParser, FromField, fromField, pgArrayFieldParser)
@@ -287,3 +288,6 @@ prepareRowParser (QueryRunner _ rowParser nonZeroColumns) cols =
      -- SELECT statement, since we can't select zero
      -- columns.  In that case we have to make sure we
      -- read a single Int.
+
+-- | Cursor within a transaction.
+data Cursor haskells = EmptyCursor | Cursor (RowParser haskells) PGSC.Cursor
