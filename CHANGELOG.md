@@ -1,3 +1,7 @@
+## 0.5.4.0
+
+* Added cursor interface (`Cursor` and friends)
+
 ## 0.5.3.1
 
 * `distinctAggregator`, `joinNullable`, `exists`, `notExists`,
