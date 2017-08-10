@@ -89,6 +89,21 @@ queryTable :: D.Default TM.ColumnMaker columns columns =>
               Table a columns -> Q.Query columns
 queryTable = queryTableExplicit D.def
 
+-- | For tables in the @\"public\"@ schema,
+table :: String
+      -- ^^ Table name
+      -> TableProperties writerColumns viewColumns
+      -> Table writerColumns viewColumns
+table = T.Table
+
+tableWithSchema :: String
+                -- ^^ Schema name
+                -> String
+                -- ^^ Table name
+                -> TableProperties writerColumns viewColumns
+                -> Table writerColumns viewColumns
+tableWithSchema = T.TableWithSchema
+
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
 required :: String -> TableProperties (Column a) (Column a)
