@@ -43,7 +43,7 @@ restrictExists criteria = QueryArr f where
   f (a, primQ, t0) = ((), PQ.exists primQ existsQ, t1) where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
-{-| Add a @WHERE EXISTS@ clause to the current query. -}
+{-| Add a @WHERE NOT EXISTS@ clause to the current query. -}
 restrictNotExists :: QueryArr a b -> QueryArr a ()
 restrictNotExists criteria = QueryArr f where
   f (a, primQ, t0) = ((), PQ.notExists primQ existsQ, t1) where
