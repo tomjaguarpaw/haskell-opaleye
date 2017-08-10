@@ -6,7 +6,7 @@ module Opaleye.RunQuery (module Opaleye.RunQuery,
                          QueryRunner,
                          IRQ.QueryRunnerColumn,
                          IRQ.QueryRunnerColumnDefault (..),
-                         -- * Creating now 'QueryRunnerColumn's
+                         -- * Creating new 'QueryRunnerColumn's
                          IRQ.fieldQueryRunnerColumn,
                          IRQ.fieldParserQueryRunnerColumn) where
 
