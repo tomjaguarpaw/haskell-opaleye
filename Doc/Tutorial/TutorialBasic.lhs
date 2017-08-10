@@ -9,7 +9,7 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye (Column, Nullable, matchNullable, isNull,
->                          Table(Table), required, queryTable,
+>                          Table, table, required, queryTable,
 >                          Query, QueryArr, restrict, (.==), (.<=), (.&&), (.<),
 >                          (.===),
 >                          (.++), ifThenElse, pgString, aggregate, groupBy,
@@ -61,13 +61,13 @@ manipulation tutorial you can see an example of when they might differ.
 
 > personTable :: Table (Column PGText, Column PGInt4, Column PGText)
 >                      (Column PGText, Column PGInt4, Column PGText)
-> personTable = Table "personTable" (p3 ( required "name"
+> personTable = table "personTable" (p3 ( required "name"
 >                                       , required "age"
 >                                       , required "address" ))
 
 By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
-could have used the `TableWithSchema` constructor instead of `Table`.
+could have used the `tableWithSchema` function instead of `table`.
 
 To query a table we use `queryTable`.
 
@@ -138,11 +138,11 @@ You don't have to use Template Haskell, but it just saves us writing
 things out by hand here.  If you want to avoid Template Haskell see
 [Data.Profunctor.Product.TH](https://hackage.haskell.org/package/product-profunctors-0.6.3.1/docs/Data-Profunctor-Product-TH.html).
 
-Then we can use 'Table' to make a table on our record type in exactly
+Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
 > birthdayTable :: Table BirthdayColumn BirthdayColumn
-> birthdayTable = Table "birthdayTable"
+> birthdayTable = table "birthdayTable"
 >                        (pBirthday Birthday { bdName = required "name"
 >                                            , bdDay  = required "birthday" })
 >
@@ -382,7 +382,7 @@ recorded as NULL then that means they have no boss!
 
 > employeeTable :: Table (Column PGText, Column (Nullable PGText))
 >                        (Column PGText, Column (Nullable PGText))
-> employeeTable = Table "employeeTable" (p2 ( required "name"
+> employeeTable = table "employeeTable" (p2 ( required "name"
 >                                           , required "boss" ))
 
 We can write a query that returns as string indicating for each
@@ -584,7 +584,7 @@ strings, but in practice they might have been a different data type.
 >                              (Column PGInt4) (Column PGFloat8))
 >                      (Widget (Column PGText) (Column PGText) (Column PGText)
 >                              (Column PGInt4) (Column PGFloat8))
-> widgetTable = Table "widgetTable"
+> widgetTable = table "widgetTable"
 >                      (pWidget Widget { style    = required "style"
 >                                      , color    = required "color"
 >                                      , location = required "location"
@@ -752,7 +752,7 @@ We could represent the integer ID in Opaleye as a `PGInt4`
 >                                      (Column PGInt4)
 >
 > badWarehouseTable :: Table BadWarehouseColumn BadWarehouseColumn
-> badWarehouseTable = Table "warehouse_table"
+> badWarehouseTable = table "warehouse_table"
 >         (pWarehouse Warehouse { wId       = required "id"
 >                               , wLocation = required "location"
 >                               , wNumGoods = required "num_goods" })
@@ -776,7 +776,7 @@ On the other hand we can make a newtype for the warehouse ID
 >                                       (Column PGInt4)
 >
 > goodWarehouseTable :: Table GoodWarehouseColumn GoodWarehouseColumn
-> goodWarehouseTable = Table "warehouse_table"
+> goodWarehouseTable = table "warehouse_table"
 >         (pWarehouse Warehouse { wId       = pWarehouseId (WarehouseId (required "id"))
 >                               , wLocation = required "location"
 >                               , wNumGoods = required "num_goods" })

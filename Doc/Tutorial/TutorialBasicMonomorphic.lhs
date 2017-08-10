@@ -8,7 +8,7 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye (Column, Nullable,
->                          Table(Table), required, queryTable,
+>                          Table, table, required, queryTable,
 >                          Query, (.==),
 >                          aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runQuery,
@@ -64,13 +64,13 @@ manipulation tutorial you can see an example of when they might differ.
 
 > personTable :: Table (Column PGText, Column PGInt4, Column PGText)
 >                      (Column PGText, Column PGInt4, Column PGText)
-> personTable = Table "personTable" (p3 ( required "name"
+> personTable = table "personTable" (p3 ( required "name"
 >                                       , required "age"
 >                                       , required "address" ))
 
 By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
-could have used the `TableWithSchema` constructor instead of `Table`.
+could have used the `tableWithSchema` constructor instead of `table`.
 
 To query a table we use `queryTable`.
 
@@ -140,11 +140,11 @@ them.
 >   def = BirthdayColumn <$> P.lmap bdNameColumn D.def
 >                        <*> P.lmap bdDayColumn  D.def
 
-Then we can use 'Table' to make a table on our record type in exactly
+Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
 > birthdayTable :: Table BirthdayColumn BirthdayColumn
-> birthdayTable = Table "birthdayTable"
+> birthdayTable = table "birthdayTable"
 >                        (BirthdayColumn <$> P.lmap bdNameColumn (required "name")
 >                                        <*> P.lmap bdDayColumn  (required "birthday"))
 >
@@ -197,7 +197,7 @@ For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
 
 > widgetTable :: Table WidgetColumn WidgetColumn
-> widgetTable = Table "widgetTable"
+> widgetTable = table "widgetTable"
 >                      (WidgetColumn <$> P.lmap style    (required "style")
 >                                    <*> P.lmap color    (required "color")
 >                                    <*> P.lmap location (required "location")
