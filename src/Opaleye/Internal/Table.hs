@@ -52,6 +52,8 @@ data Table writerColumns viewColumns
     -- ^ Schema name (@\"public\"@ by default in PostgreSQL), table name,
     --   table properties.
 
+-- | The constructors of Table are internal only and will be
+-- deprecated in version 0.6.
 tableIdentifier :: Table writerColumns viewColumns -> PQ.TableIdentifier
 tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
 tableIdentifier (TableWithSchema s t _) = PQ.TableIdentifier (Just s) t
@@ -64,7 +66,12 @@ data TableProperties writerColumns viewColumns = TableProperties
    { tablePropertiesWriter :: Writer writerColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
 
+-- | Internal only.  Do not use.  'View' will be deprecated in version
+-- 0.6.
 data View columns = View columns
+
+-- | Internal only.  Do not use.  'Writer' will be deprecated in
+-- version 0.6.
 
 -- There's no reason the second parameter should exist except that we
 -- use ProductProfunctors more than ProductContravariants so it makes
