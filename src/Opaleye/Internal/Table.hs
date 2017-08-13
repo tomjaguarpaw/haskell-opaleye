@@ -47,10 +47,9 @@ import qualified Control.Arrow as Arr
 -- @
 data Table writerColumns viewColumns
   = Table String (TableProperties writerColumns viewColumns)
-    -- ^ Uses the default schema name (@\"public\"@).
+    -- ^ For unqualified table names
   | TableWithSchema String String (TableProperties writerColumns viewColumns)
-    -- ^ Schema name (@\"public\"@ by default in PostgreSQL), table name,
-    --   table properties.
+    -- ^ Schema name, table name, table properties.
 
 -- | The constructors of Table are internal only and will be
 -- deprecated in version 0.6.
