@@ -89,7 +89,7 @@ queryTable :: D.Default TM.ColumnMaker columns columns =>
               Table a columns -> Q.Query columns
 queryTable = queryTableExplicit D.def
 
--- | For tables in the @\"public\"@ schema,
+-- | For tables with unqualified names
 table :: String
       -- ^^ Table name
       -> TableProperties writerColumns viewColumns
