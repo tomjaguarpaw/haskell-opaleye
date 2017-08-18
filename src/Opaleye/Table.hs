@@ -28,7 +28,7 @@
  @toNullable :: Column a -> Column (Nullable a)@, or with @null ::
  Column (Nullable a)@.
 
- An optional non-nullable @PGInt4@ is created with optional and gives
+ An optional non-nullable @PGInt4@ is created with 'optional' and gives
  rise to a
 
  @
@@ -40,7 +40,7 @@
  omitted from the query and the default value will be used. Otherwise
  you have to provide a @Just@ containing a @Column PGInt4@.
 
- An optional nullable @PGInt4@ is created with optional and gives
+ An optional nullable @PGInt4@ is created with 'optional' and gives
  rise to a
 
  @
