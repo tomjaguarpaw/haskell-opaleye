@@ -44,7 +44,7 @@
  rise to a
 
  @
- TableProperties (Maybe (Column (Nullable PGInt4))) (Column PGInt4)
+ TableProperties (Maybe (Column (Nullable PGInt4))) (Column (Nullable PGInt4))
  @
 
  When you insert or update into this column you must give it a @Maybe
