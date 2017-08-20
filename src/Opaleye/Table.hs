@@ -122,6 +122,6 @@ optional columnName = T.TableProperties
 
 queryTableExplicit :: TM.ColumnMaker tablecolumns columns ->
                      Table a tablecolumns -> Q.Query columns
-queryTableExplicit cm table = Q.simpleQueryArr f where
+queryTableExplicit cm table' = Q.simpleQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
-    (retwires, primQ) = T.queryTable cm table t0
+    (retwires, primQ) = T.queryTable cm table' t0
