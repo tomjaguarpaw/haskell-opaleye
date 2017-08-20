@@ -9,9 +9,10 @@ import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.QueryArr as QA
-import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Table as Table
+import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
+import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.PGTypes as T
 
 import           Data.Profunctor (Profunctor, dimap, lmap, rmap)
@@ -55,11 +56,11 @@ instance D.Default IfPP (Column a) (Column a) where
 data RelExprMaker a b =
   forall c. RelExprMaker {
       relExprVCM :: TM.ViewColumnMaker a c
-    , relExprCM  :: TM.ColumnMaker c b
+    , relExprCM  :: U.Unpackspec c b
     }
 
 relExprColumn :: RelExprMaker String (Column a)
-relExprColumn = RelExprMaker TM.tableColumn TM.column
+relExprColumn = RelExprMaker TM.tableColumn U.unpackspecColumn
 
 instance D.Default RelExprMaker String (Column a) where
   def = relExprColumn

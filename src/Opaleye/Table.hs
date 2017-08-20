@@ -66,8 +66,8 @@ import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
 import           Opaleye.Internal.Table (View(View), Table, Writer,
                                          TableProperties)
-import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
+import qualified Opaleye.Internal.Unpackspec as U
 
 import qualified Data.Profunctor.Product.Default as D
 
@@ -85,7 +85,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 -- @
 -- queryTable :: Table w (Foo (Column a) (Column b) (Column c)) -> Query (Foo (Column a) (Column b) (Column c))
 -- @
-queryTable :: D.Default TM.ColumnMaker columns columns =>
+queryTable :: D.Default U.Unpackspec columns columns =>
               Table a columns -> Q.Query columns
 queryTable = queryTableExplicit D.def
 
@@ -120,7 +120,7 @@ optional columnName = T.TableProperties
 
 -- * Explicit versions
 
-queryTableExplicit :: TM.ColumnMaker tablecolumns columns ->
+queryTableExplicit :: U.Unpackspec tablecolumns columns ->
                      Table a tablecolumns -> Q.Query columns
 queryTableExplicit cm table' = Q.simpleQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
