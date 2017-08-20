@@ -4,8 +4,8 @@
 module Opaleye.Internal.Table where
 
 import           Opaleye.Internal.Column (Column, unColumn)
-import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
+import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 
@@ -85,7 +85,7 @@ newtype Writer columns dummy =
   Writer (forall f. Functor f =>
           PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
 
-queryTable :: TM.ColumnMaker viewColumns columns
+queryTable :: U.Unpackspec viewColumns columns
             -> Table writerColumns viewColumns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
@@ -95,11 +95,11 @@ queryTable cm table tag = (primExprs, primQ) where
   primQ :: PQ.PrimQuery
   primQ = PQ.BaseTable (tableIdentifier table) projcols
 
-runColumnMaker :: TM.ColumnMaker tablecolumns columns
+runColumnMaker :: U.Unpackspec tablecolumns columns
                   -> Tag.Tag
                   -> tablecolumns
                   -> (columns, [(HPQ.Symbol, HPQ.PrimExpr)])
-runColumnMaker cm tag tableCols = PM.run (TM.runColumnMaker cm f tableCols) where
+runColumnMaker cm tag tableCols = PM.run (U.runUnpackspec cm f tableCols) where
   f = PM.extractAttrPE mkName tag
   -- The non-AttrExpr PrimExprs are not created by 'makeView' or a
   -- 'ViewColumnMaker' so could only arise from an fmap (if we

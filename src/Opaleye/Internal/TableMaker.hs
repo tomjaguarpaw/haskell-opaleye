@@ -5,7 +5,6 @@ module Opaleye.Internal.TableMaker where
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.PackMap as PM
-import qualified Opaleye.Internal.Unpackspec as U
 
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
@@ -22,26 +21,15 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 newtype ViewColumnMaker strings columns =
   ViewColumnMaker (PM.PackMap () () strings columns)
 
-type ColumnMaker = U.Unpackspec
-
 runViewColumnMaker :: ViewColumnMaker strings tablecolumns ->
                        strings -> tablecolumns
 runViewColumnMaker (ViewColumnMaker f) = PM.overPM f id
-
-runColumnMaker :: Applicative f
-                  => ColumnMaker tablecolumns columns
-                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
-                  -> tablecolumns -> f columns
-runColumnMaker = U.runUnpackspec
 
 -- There's surely a way of simplifying this implementation
 tableColumn :: ViewColumnMaker String (C.Column a)
 tableColumn = ViewColumnMaker
               (PM.PackMap (\f s -> fmap (const (mkColumn s)) (f ())))
   where mkColumn = IC.Column . HPQ.BaseTableAttrExpr
-
-column :: ColumnMaker (C.Column a) (C.Column a)
-column = U.unpackspecColumn
 
 instance Default ViewColumnMaker String (C.Column a) where
   def = tableColumn
