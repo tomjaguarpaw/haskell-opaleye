@@ -26,6 +26,9 @@ extractBinaryFields = PM.extractAttr "binary"
 
 data Pair a = Pair a a deriving Functor
 
+unPair :: Pair a -> (a, a)
+unPair (Pair x y) = (x, y)
+
 newtype Binaryspec columns columns' =
   Binaryspec (PM.PackMapColumn Pair I.Identity columns columns')
 
@@ -34,7 +37,7 @@ runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> (columns, columns) -> f columns'
 runBinaryspec (Binaryspec (PM.PackMapColumn b)) g =
   fmap I.runIdentity
-  . PM.traversePM b (fmap I.Identity . g . (\(Pair x y) -> (x, y)))
+  . PM.traversePM b (fmap I.Identity . g . unPair)
   . uncurry Pair
 
 binaryspecColumn :: Binaryspec (Column a) (Column a)
