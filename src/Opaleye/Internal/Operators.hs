@@ -57,18 +57,19 @@ eqExplicit eqpp x y =
   (PMC.Pair x y)
 
 
-newtype IfPP a b = IfPP (Column T.PGBool -> a -> a -> b)
+type IfPP = EqPP
 
 ifExplict :: IfPP columns columns'
           -> Column T.PGBool
           -> columns
           -> columns
           -> columns'
-ifExplict (IfPP f) = f
-
-instance D.Default IfPP (Column a) (Column a) where
-  def = IfPP C.unsafeIfThenElse
-
+ifExplict eqpp b x y =
+  PMC.runPMC id id eqpp
+             (\(PMC.Pair x' y') b'
+               -> C.unColumn (C.unsafeIfThenElse b' (C.Column x') (C.Column y')))
+             (PMC.Pair x y)
+             b
 
 -- This seems to be the only place we use ViewColumnMaker now.
 data RelExprMaker a b =
@@ -120,13 +121,5 @@ instance ProductProfunctor RelExprMaker where
                                     h vcmf vcmg cmf cmg
     where h vcmg vcmf cmg cmf = RelExprMaker (vcmg ***! vcmf)
                                              (cmg  ***! cmf)
-
-instance Profunctor IfPP where
-  dimap f g (IfPP h) = IfPP (\b a a' -> g (h b (f a) (f a')))
-
-instance ProductProfunctor IfPP where
-  empty = IfPP (\_ () () -> ())
-  IfPP f ***! IfPP f' = IfPP (\b a a1 ->
-                               (f b (fst a) (fst a1), f' b (snd a) (snd a1)))
 
 -- }
