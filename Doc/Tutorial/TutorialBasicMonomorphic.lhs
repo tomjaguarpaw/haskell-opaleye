@@ -16,7 +16,7 @@
 >
 > import qualified Opaleye                 as O
 >
-> import           Control.Applicative     ((<$>), (<*>))
+> import           Control.Applicative     (Applicative, (<$>), (<*>))
 >
 > import qualified Data.Profunctor         as P
 > import           Data.Profunctor.Product (p3)
@@ -131,13 +131,19 @@ them.
 >
 > data Birthday = Birthday { bdName :: String, bdDay :: Day }
 >
+> birthdayColumnDef ::
+>   (Applicative (p BirthdayColumn),
+>    P.Profunctor p, Default p (Column PGText) (Column PGText),
+>    Default p (Column PGDate) (Column PGDate)) =>
+>   p BirthdayColumn BirthdayColumn
+> birthdayColumnDef = BirthdayColumn <$> P.lmap bdNameColumn D.def
+>                                    <*> P.lmap bdDayColumn  D.def
+>
 > instance Default Unpackspec BirthdayColumn BirthdayColumn where
->   def = BirthdayColumn <$> P.lmap bdNameColumn D.def
->                        <*> P.lmap bdDayColumn  D.def
+>   def = birthdayColumnDef
 >
 > instance Default Opaleye.Internal.TableMaker.ColumnMaker BirthdayColumn BirthdayColumn where
->   def = BirthdayColumn <$> P.lmap bdNameColumn D.def
->                        <*> P.lmap bdDayColumn  D.def
+>   def = birthdayColumnDef
 
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
