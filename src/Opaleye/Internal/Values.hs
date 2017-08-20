@@ -60,7 +60,7 @@ runValuesspec :: Applicative f => Valuesspec columns columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
 instance Default Valuesspec (Column a) (Column a) where
-  def = Valuesspec (PM.PackMap (\f () -> fmap Column (f ())))
+  def = Valuesspec (PM.iso id Column)
 
 -- {
 

@@ -114,6 +114,11 @@ eitherFunction :: Functor f
                -> f (Either b b')
 eitherFunction f g = fmap (either (fmap Left) (fmap Right)) (f PP.+++! g)
 
+-- | Like 'Control.Lens.Iso.iso'.  In practice it won't actually be
+-- used as an isomorphism, but it seems to be appropriate anyway.
+iso :: (s -> a) -> (b -> t) -> PackMap a b s t
+iso h g = PackMap (dimap h (fmap g))
+
 -- {
 
 -- Boilerplate instance definitions.  There's no choice here apart

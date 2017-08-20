@@ -135,13 +135,12 @@ instance Monoid (Zip a) where
 
 required :: String -> Writer (Column a) (Column a)
 required columnName =
-  Writer (PM.PackMap (\f columns -> f (fmap unColumn columns, columnName)))
+  Writer (PM.iso (flip (,) columnName . fmap unColumn) id)
 
 optional :: String -> Writer (Maybe (Column a)) (Column a)
 optional columnName =
-  Writer (PM.PackMap (\f columns -> f (fmap maybeUnColumn columns, columnName)))
-  where maybeUnColumn Nothing = HPQ.DefaultInsertExpr
-        maybeUnColumn (Just column) = unColumn column
+  Writer (PM.iso (flip (,) columnName . fmap maybeUnColumn) id)
+  where maybeUnColumn = maybe HPQ.DefaultInsertExpr unColumn
 
 -- {
 
