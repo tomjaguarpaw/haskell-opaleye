@@ -4,9 +4,9 @@
 
 module Opaleye.Internal.Operators where
 
+import qualified Opaleye.Internal.Binary as B
 import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.Internal.Column as C
-import qualified Opaleye.Internal.PackMapColumn as PMC
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.QueryArr as QA
@@ -43,18 +43,17 @@ instance M.Monoid PGBoolAnd where
   mempty = PGBoolAnd (T.pgBool True)
   mappend = (<>)
 
-type EqPP = PMC.PackMapColumn PMC.Pair
+type EqPP = B.Binaryspec
 
 eqExplicit :: EqPP columns a -> columns -> columns -> Column T.PGBool
-eqExplicit eqpp x y =
-  (unPGBoolAnd
+eqExplicit eqpp =
+  curry (unPGBoolAnd
   . Constant.getConstant
-  . PMC.runPMC id id eqpp
-               (\(PMC.Pair a b)
+  . B.runBinaryspec eqpp
+               (\(a, b)
                 -> Constant.Constant
                    (PGBoolAnd
                     (C.unsafeEq (C.Column a) (C.Column b)))))
-  (PMC.Pair x y)
 
 
 type IfPP = EqPP
@@ -65,11 +64,11 @@ ifExplict :: IfPP columns columns'
           -> columns
           -> columns'
 ifExplict eqpp b x y =
-  PMC.runPMC id id eqpp
-             (\(PMC.Pair x' y') b'
-               -> C.unColumn (C.unsafeIfThenElse b' (C.Column x') (C.Column y')))
-             (PMC.Pair x y)
-             b
+  curry (B.runBinaryspec eqpp
+             (\(x', y') b' -> C.unColumn
+                              (C.unsafeIfThenElse b'
+                               (C.Column x') (C.Column y'))))
+             x y b
 
 -- This seems to be the only place we use ViewColumnMaker now.
 data RelExprMaker a b =
