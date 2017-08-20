@@ -1,5 +1,4 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
-{-# LANGUAGE DeriveFunctor #-}
 
 module Opaleye.Internal.Binary where
 
@@ -19,20 +18,12 @@ extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
                              HPQ.PrimExpr
 extractBinaryFields = PM.extractAttr "binary"
 
-data Pair a = Pair a a deriving Functor
-
-unPair :: Pair a -> (a, a)
-unPair (Pair x y) = (x, y)
-
-type Binaryspec = PMC.PackMapColumn Pair
-
-binaryspecColumn :: Binaryspec (Column a) (Column a)
-binaryspecColumn = Binaryspec PM.pmColumn
+type Binaryspec = PMC.PackMapColumn PMC.Pair
 
 runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> ((HPQ.PrimExpr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
                  -> (columns, columns) -> f columns'
-runBinaryspec b' = PMC.runPMC (uncurry Pair) unPair b'
+runBinaryspec b' = PMC.runPMC (uncurry PMC.Pair) PMC.unPair b'
 
 binaryspecColumn :: Binaryspec (Column a) (Column a)
 binaryspecColumn = PMC.pmColumn

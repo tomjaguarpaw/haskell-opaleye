@@ -6,6 +6,7 @@ module Opaleye.Internal.Operators where
 
 import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.Internal.Column as C
+import qualified Opaleye.Internal.PackMapColumn as PMC
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.QueryArr as QA
@@ -15,9 +16,12 @@ import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.PGTypes as T
 
+import qualified Data.Monoid as M
+import           Data.Monoid ((<>))
 import           Data.Profunctor (Profunctor, dimap, lmap, rmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
+import           Data.Semigroup (Semigroup, (<>))
 
 infix 4 .==
 (.==) :: forall columns. D.Default EqPP columns columns
@@ -30,13 +34,22 @@ infixr 3 .&&
 (.&&) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
 (.&&) = C.binOp HPQ.OpAnd
 
-newtype EqPP a b = EqPP (a -> a -> Column T.PGBool)
+newtype PGBoolAnd = PGBoolAnd { unPGBoolAnd :: Column T.PGBool }
+
+instance Semigroup PGBoolAnd where
+  PGBoolAnd x <> PGBoolAnd y = PGBoolAnd (x .&& y)
+
+instance M.Monoid PGBoolAnd where
+  mempty = PGBoolAnd (T.pgBool True)
+  mappend = (<>)
+
+newtype EqPP a b = EqPP (PMC.Pair a -> PGBoolAnd)
 
 eqExplicit :: EqPP columns a -> columns -> columns -> Column T.PGBool
-eqExplicit (EqPP f) = f
+eqExplicit (EqPP f) x y = unPGBoolAnd (f (PMC.Pair x y))
 
 instance D.Default EqPP (Column a) (Column a) where
-  def = EqPP C.unsafeEq
+  def = EqPP (\(PMC.Pair x y) -> PGBoolAnd (C.unsafeEq x y))
 
 
 newtype IfPP a b = IfPP (Column T.PGBool -> a -> a -> b)
@@ -93,12 +106,13 @@ relationValuedExpr = relationValuedExprExplicit D.def
 -- { Boilerplate instances
 
 instance Profunctor EqPP where
-  dimap f _ (EqPP h) = EqPP (\a a' -> h (f a) (f a'))
+  dimap f _ (EqPP h) = EqPP (\(PMC.Pair a a') -> h (PMC.Pair (f a) (f a')))
 
 instance ProductProfunctor EqPP where
-  empty = EqPP (\() () -> T.pgBool True)
-  EqPP f ***! EqPP f' = EqPP (\a a' ->
-                               f (fst a) (fst a') .&& f' (snd a) (snd a'))
+  empty = EqPP (\(PMC.Pair () ()) -> M.mempty)
+  EqPP f ***! EqPP f' = EqPP (\(PMC.Pair a a') ->
+                               f (PMC.Pair (fst a) (fst a'))
+                               <> f' (PMC.Pair (snd a) (snd a')))
 
 instance Profunctor RelExprMaker where
   dimap f g (RelExprMaker a b) = RelExprMaker (lmap f a) (rmap g b)

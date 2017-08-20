@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -33,6 +34,11 @@ runPMC f g (PackMapColumn b) h = traversePM b (h . g) . f
 instance Functor f
          => D.Default (PackMapColumn f) (IC.Column a) (IC.Column a) where
   def = pmColumn
+
+data Pair a = Pair a a deriving Functor
+
+unPair :: Pair a -> (a, a)
+unPair (Pair x y) = (x, y)
 
 -- {
 
