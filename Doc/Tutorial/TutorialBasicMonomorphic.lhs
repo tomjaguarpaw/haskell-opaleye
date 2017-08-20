@@ -133,7 +133,8 @@ them.
 >
 > birthdayColumnDef ::
 >   (Applicative (p BirthdayColumn),
->    P.Profunctor p, Default p (Column PGText) (Column PGText),
+>    P.Profunctor p,
+>    Default p (Column PGText) (Column PGText),
 >    Default p (Column PGDate) (Column PGDate)) =>
 >   p BirthdayColumn BirthdayColumn
 > birthdayColumnDef = BirthdayColumn <$> P.lmap bdNameColumn D.def
