@@ -126,6 +126,15 @@ newtype PackMapColumn f s t =
 pmColumn :: Functor f => PackMapColumn f (IC.Column s) (IC.Column t)
 pmColumn = PackMapColumn (iso (fmap IC.unColumn) IC.Column)
 
+runPMC :: Applicative f
+       => (a -> g columns)
+       -> (g HPQ.PrimExpr -> b)
+       -> PackMapColumn g columns columns'
+       -> (b -> f HPQ.PrimExpr)
+       -> a
+       -> f columns'
+runPMC f g (PackMapColumn b) h = traversePM b (h . g) . f
+
 -- {
 
 -- Boilerplate instance definitions.  There's no choice here apart

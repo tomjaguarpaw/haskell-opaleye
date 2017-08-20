@@ -34,8 +34,7 @@ newtype Binaryspec columns columns' =
 runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> ((HPQ.PrimExpr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
                  -> (columns, columns) -> f columns'
-runBinaryspec (Binaryspec (PM.PackMapColumn b)) g =
-  PM.traversePM b (g . unPair) . uncurry Pair
+runBinaryspec (Binaryspec b') = PM.runPMC (uncurry Pair) unPair b'
 
 binaryspecColumn :: Binaryspec (Column a) (Column a)
 binaryspecColumn = Binaryspec PM.pmColumn

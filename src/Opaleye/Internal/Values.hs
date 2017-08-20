@@ -60,10 +60,7 @@ newtype Valuesspec columns columns' =
 
 runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
-runValuesspec (Valuesspec (PM.PackMapColumn v)) f =
-  (PM.traversePM v (f . const ())
-  . const Unit)
-  ()
+runValuesspec (Valuesspec v) f = PM.runPMC (const Unit) (const ()) v f ()
 
 instance Default Valuesspec (Column a) (Column a) where
   def = Valuesspec PM.pmColumn
