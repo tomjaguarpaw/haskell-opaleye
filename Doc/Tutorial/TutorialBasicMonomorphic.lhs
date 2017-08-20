@@ -149,9 +149,10 @@ Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
 > birthdayTable :: Table BirthdayColumn BirthdayColumn
-> birthdayTable = table "birthdayTable"
->                        (BirthdayColumn <$> P.lmap bdNameColumn (required "name")
->                                        <*> P.lmap bdDayColumn  (required "birthday"))
+> birthdayTable =
+>   table "birthdayTable"
+>   (BirthdayColumn <$> P.lmap bdNameColumn (required "name")
+>                   <*> P.lmap bdDayColumn  (required "birthday"))
 >
 > birthdayQuery :: Query BirthdayColumn
 > birthdayQuery = queryTable birthdayTable
@@ -298,7 +299,8 @@ join condition.
 > personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
 >                                  BirthdayColumnNullable)
 > personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
->     where eqName ((name, _, _), birthdayRow) = name .== bdNameColumn birthdayRow
+>     where eqName ((name, _, _), birthdayRow) =
+>             name .== bdNameColumn birthdayRow
 
 The generated SQL is
 
