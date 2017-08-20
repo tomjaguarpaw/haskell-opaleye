@@ -1,8 +1,9 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module Opaleye.Internal.Binary where
 
-import           Opaleye.Internal.Column (Column(Column), unColumn)
+import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.QueryArr as Q
@@ -10,31 +11,34 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+import qualified Data.Functor.Identity as I
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
 
 import           Control.Applicative (Applicative, pure, (<*>))
-import           Control.Arrow ((***))
 
 extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
                     -> PM.PM [(HPQ.Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
                              HPQ.PrimExpr
 extractBinaryFields = PM.extractAttr "binary"
 
+data Pair a = Pair a a deriving Functor
+
 newtype Binaryspec columns columns' =
-  Binaryspec (PM.PackMap (HPQ.PrimExpr, HPQ.PrimExpr) HPQ.PrimExpr
-                         (columns, columns) columns')
+  Binaryspec (PM.PackMapColumn Pair I.Identity columns columns')
 
 runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> ((HPQ.PrimExpr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
                  -> (columns, columns) -> f columns'
-runBinaryspec (Binaryspec b) = PM.traversePM b
+runBinaryspec (Binaryspec (PM.PackMapColumn b)) g =
+  fmap I.runIdentity
+  . PM.traversePM b (fmap I.Identity . g . (\(Pair x y) -> (x, y)))
+  . uncurry Pair
 
 binaryspecColumn :: Binaryspec (Column a) (Column a)
-binaryspecColumn = Binaryspec (PM.iso (mapBoth unColumn) Column)
-  where mapBoth f (s, t) = (f s, f t)
+binaryspecColumn = Binaryspec PM.pmColumn
 
 sameTypeBinOpHelper :: PQ.BinOp -> Binaryspec columns columns'
                     -> Q.Query columns -> Q.Query columns -> Q.Query columns'
@@ -64,7 +68,7 @@ instance Applicative (Binaryspec a) where
   Binaryspec f <*> Binaryspec x = Binaryspec (f <*> x)
 
 instance Profunctor Binaryspec where
-  dimap f g (Binaryspec b) = Binaryspec (dimap (f *** f) g b)
+  dimap f g (Binaryspec b) = Binaryspec (dimap f g b)
 
 instance ProductProfunctor Binaryspec where
   empty = PP.defaultEmpty

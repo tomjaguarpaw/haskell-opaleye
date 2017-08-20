@@ -3,10 +3,10 @@
 module Opaleye.Internal.Unpackspec where
 
 import qualified Opaleye.Internal.PackMap as PM
-import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Column as C
 
 import           Control.Applicative (Applicative, pure, (<*>))
+import           Data.Functor.Identity (Identity(Identity), runIdentity)
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
@@ -33,18 +33,21 @@ newtype Unpackspec columns columns' =
   -- the 'D.Default' instance.  If you really need to you can create
   -- 'Unpackspec's by hand using 'unpackspecColumn' and the
   -- 'Profunctor', 'ProductProfunctor' and 'SumProfunctor' operations.
-  Unpackspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
+  Unpackspec (PM.PackMapColumn Identity Identity columns columns')
 
 -- | Target the single 'HPQ.PrimExpr' inside a 'C.Column'
 unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
-unpackspecColumn = Unpackspec (PM.iso IC.unColumn IC.Column)
+unpackspecColumn = Unpackspec PM.pmColumn
 
 -- | Modify all the targeted 'HPQ.PrimExpr's
 runUnpackspec :: Applicative f
                  => Unpackspec columns b
                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                  -> columns -> f b
-runUnpackspec (Unpackspec f) = PM.traversePM f
+runUnpackspec (Unpackspec (PM.PackMapColumn f)) g =
+  fmap runIdentity
+  . PM.traversePM f (fmap Identity . g . runIdentity)
+  . Identity
 
 -- | Extract all the targeted 'HPQ.PrimExpr's
 collectPEs :: Unpackspec s t -> s -> [HPQ.PrimExpr]

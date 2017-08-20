@@ -1,7 +1,9 @@
 {-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Opaleye.Internal.PackMap where
 
+import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.Tag as T
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
@@ -118,6 +120,13 @@ eitherFunction f g = rmap (either (fmap Left) (fmap Right)) (f PP.+++! g)
 iso :: (s -> a) -> (b -> t) -> PackMap a b s t
 iso h g = PackMap (dimap h (fmap g))
 
+newtype PackMapColumn f g s t =
+  PackMapColumn (PackMap (f HPQ.PrimExpr) (g HPQ.PrimExpr) (f s) (g t))
+
+pmColumn :: (Functor f, Functor g)
+         => PackMapColumn f g (IC.Column s) (IC.Column t)
+pmColumn = PackMapColumn (iso (fmap IC.unColumn) (fmap IC.Column))
+
 -- {
 
 -- Boilerplate instance definitions.  There's no choice here apart
@@ -139,5 +148,28 @@ instance ProductProfunctor (PackMap a b) where
 
 instance PP.SumProfunctor (PackMap a b) where
   PackMap f +++! PackMap g = PackMap (\x -> eitherFunction (f x) (g x))
+
+instance Functor b => Functor (PackMapColumn a b s) where
+  fmap f (PackMapColumn g) = PackMapColumn ((fmap . fmap) f g)
+
+instance Applicative b => Applicative (PackMapColumn a b s) where
+  pure x = PackMapColumn (pure (pure x))
+  PackMapColumn f <*> PackMapColumn x = PackMapColumn (liftA2 (<*>) f x)
+
+instance (Functor a, Functor b) => Profunctor (PackMapColumn a b) where
+  dimap f g (PackMapColumn q) = PackMapColumn (dimap (fmap f) (fmap g) q)
+
+instance (Functor a, Applicative b)
+         => ProductProfunctor (PackMapColumn a b) where
+  empty = PP.defaultEmpty
+  (***!) = PP.defaultProfunctorProduct
+
+instance Functor b
+         => PP.SumProfunctor (PackMapColumn I.Identity b) where
+  PackMapColumn f +++! PackMapColumn g =
+    PackMapColumn (dimap (either (Left . I.Identity) (Right . I.Identity)
+                          . I.runIdentity)
+                         (either (fmap Left) (fmap Right))
+                         (f PP.+++! g))
 
 -- }

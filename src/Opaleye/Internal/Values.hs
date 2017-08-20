@@ -1,16 +1,18 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module Opaleye.Internal.Values where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+import qualified Data.Functor.Identity as I
 import qualified Data.List.NonEmpty as NEL
-import           Data.Profunctor (Profunctor, dimap, rmap)
+import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
@@ -52,15 +54,18 @@ extractValuesField :: T.Tag -> primExpr
                    -> PM.PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractValuesField = PM.extractAttr "values"
 
+data Unit a = Unit deriving Functor
+
 newtype Valuesspec columns columns' =
-  Valuesspec (PM.PackMap () HPQ.PrimExpr () columns')
+  Valuesspec (PM.PackMapColumn Unit I.Identity columns columns')
 
 runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
-runValuesspec (Valuesspec v) f = PM.traversePM v f ()
+runValuesspec (Valuesspec (PM.PackMapColumn v)) f =
+  fmap I.runIdentity (PM.traversePM v (fmap I.Identity . f . const ()) Unit)
 
 instance Default Valuesspec (Column a) (Column a) where
-  def = Valuesspec (PM.iso id Column)
+  def = Valuesspec PM.pmColumn
 
 -- {
 
@@ -74,7 +79,7 @@ instance Applicative (Valuesspec a) where
   Valuesspec f <*> Valuesspec x = Valuesspec (f <*> x)
 
 instance Profunctor Valuesspec where
-  dimap _ g (Valuesspec q) = Valuesspec (rmap g q)
+  dimap f g (Valuesspec q) = Valuesspec (dimap f g q)
 
 instance ProductProfunctor Valuesspec where
   empty = PP.defaultEmpty
