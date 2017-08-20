@@ -1,6 +1,7 @@
 > {-# LANGUAGE FlexibleContexts #-}
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
+> {-# LANGUAGE UndecidableInstances #-}
 >
 > module TutorialBasicMonomorphic where
 >
@@ -15,8 +16,6 @@
 >                          showSqlForPostgres, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
-> import qualified Opaleye                 as O
->
 > import           Control.Applicative     (Applicative, (<$>), (<*>))
 >
 > import qualified Data.Profunctor         as P
@@ -24,7 +23,6 @@
 > import           Data.Profunctor.Product.Default (Default)
 > import qualified Data.Profunctor.Product.Default as D
 > import           Data.Time.Calendar (Day)
-> import qualified Opaleye.Internal.Join
 >
 > import qualified Database.PostgreSQL.Simple as PGS
 
@@ -137,17 +135,13 @@ them.
 >
 > data Birthday = Birthday { bdName :: String, bdDay :: Day }
 >
-> birthdayFieldDef ::
->   (Applicative (p BirthdayField),
->    P.Profunctor p,
->    Default p (Field SqlText) (Field SqlText),
->    Default p (Field SqlDate) (Field SqlDate)) =>
->   p BirthdayField BirthdayField
-> birthdayFieldDef = BirthdayField <$> P.lmap bdNameField D.def
->                                    <*> P.lmap bdDayField  D.def
->
-> instance Default Unpackspec BirthdayField BirthdayField where
->   def = birthdayFieldDef
+> instance (Applicative (p BirthdayField),
+>           P.Profunctor p,
+>           Default p (Field SqlText) (Field SqlText),
+>           Default p (Field SqlDate) (Field SqlDate))
+>          => Default p BirthdayField BirthdayField where
+>   def = BirthdayField <$> P.lmap bdNameField D.def
+>                        <*> P.lmap bdDayField  D.def
 
 Naturally this is all derivable using `Generic` or Template Haskell,
 but no one's bothered to implement that yet.  Would you like to?
@@ -199,7 +193,12 @@ this information with the following datatype.
 >                                  , radius   :: Field SqlFloat8
 >                                  }
 >
-> instance Default Unpackspec WidgetField WidgetField where
+> instance (Applicative (p WidgetField),
+>           P.Profunctor p,
+>           Default p (Field SqlText) (Field SqlText),
+>           Default p (Field SqlInt4) (Field SqlInt4),
+>           Default p (Field SqlFloat8) (Field SqlFloat8))
+>          => Default p WidgetField WidgetField where
 >   def = WidgetField <$> P.lmap style    D.def
 >                      <*> P.lmap color    D.def
 >                      <*> P.lmap location D.def
@@ -289,11 +288,19 @@ purpose, which is just a notational convenience.
 >   BirthdayFieldNullable { bdNameFieldNullable :: FieldNullable SqlText
 >                          , bdDayFieldNullable  :: FieldNullable SqlDate }
 >
-> instance Default O.Unpackspec BirthdayFieldNullable BirthdayFieldNullable where
+> instance (Applicative (p BirthdayFieldNullable),
+>           P.Profunctor p,
+>           Default p (FieldNullable SqlText) (FieldNullable SqlText),
+>           Default p (FieldNullable SqlDate) (FieldNullable SqlDate))
+>          => Default p BirthdayFieldNullable BirthdayFieldNullable where
 >   def = BirthdayFieldNullable <$> P.lmap bdNameFieldNullable D.def
 >                                <*> P.lmap bdDayFieldNullable  D.def
 >
-> instance Default Opaleye.Internal.Join.NullMaker BirthdayField BirthdayFieldNullable where
+> instance (Applicative (p BirthdayField),
+>           P.Profunctor p,
+>           Default p (Field SqlText) (FieldNullable SqlText),
+>           Default p (Field SqlDate) (FieldNullable SqlDate))
+>          => Default p BirthdayField BirthdayFieldNullable where
 >   def = BirthdayFieldNullable <$> P.lmap bdNameField D.def
 >                                <*> P.lmap bdDayField  D.def
 
@@ -382,7 +389,11 @@ Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
 
-> instance Default O.FromFields BirthdayField Birthday where
+> instance (Applicative (p BirthdayField),
+>           P.Profunctor p,
+>           Default p (Field SqlText) String,
+>           Default p (Field SqlDate) Day)
+>          => Default p BirthdayField Birthday where
 >   def = Birthday <$> P.lmap bdNameField D.def
 >                  <*> P.lmap bdDayField  D.def
 >
