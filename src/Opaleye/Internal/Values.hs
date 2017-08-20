@@ -7,6 +7,7 @@ import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.PackMapColumn as PMC
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.List.NonEmpty as NEL
@@ -50,8 +51,8 @@ extractValuesField = PM.extractAttr "values"
 
 data Unit a = Unit deriving Functor
 
-type Valuesspec = PM.PackMapColumn Unit
+type Valuesspec = PMC.PackMapColumn Unit
 
 runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
-runValuesspec v f = PM.runPMC (const Unit) (const ()) v f ()
+runValuesspec v f = PMC.runPMC (const Unit) (const ()) v f ()

@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.Unpackspec where
 
-import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.PackMapColumn as PM
 import qualified Opaleye.Column as C
 
 import           Control.Applicative (Applicative)

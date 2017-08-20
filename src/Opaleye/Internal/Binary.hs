@@ -6,6 +6,7 @@ module Opaleye.Internal.Binary where
 import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.PackMapColumn as PMC
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.PrimQuery as PQ
 
@@ -23,7 +24,7 @@ data Pair a = Pair a a deriving Functor
 unPair :: Pair a -> (a, a)
 unPair (Pair x y) = (x, y)
 
-type Binaryspec = PM.PackMapColumn Pair
+type Binaryspec = PMC.PackMapColumn Pair
 
 binaryspecColumn :: Binaryspec (Column a) (Column a)
 binaryspecColumn = Binaryspec PM.pmColumn
@@ -31,7 +32,7 @@ binaryspecColumn = Binaryspec PM.pmColumn
 runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> ((HPQ.PrimExpr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
                  -> (columns, columns) -> f columns'
-runBinaryspec b' = PM.runPMC (uncurry Pair) unPair b'
+runBinaryspec b' = PMC.runPMC (uncurry Pair) unPair b'
 
 binaryspecColumn :: Binaryspec (Column a) (Column a)
 binaryspecColumn = PMC.pmColumn

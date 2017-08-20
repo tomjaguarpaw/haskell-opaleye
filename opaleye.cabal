@@ -83,6 +83,7 @@ library
                    Opaleye.Internal.Operators,
                    Opaleye.Internal.Optimize,
                    Opaleye.Internal.PackMap,
+                   Opaleye.Internal.PackMapColumn,
                    Opaleye.Internal.PGTypes,
                    Opaleye.Internal.PrimQuery,
                    Opaleye.Internal.Print,
