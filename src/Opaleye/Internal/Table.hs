@@ -180,4 +180,8 @@ instance Functor (Table a) where
   fmap f (Table t tp) = Table t (fmap f tp)
   fmap f (TableWithSchema s t tp) = TableWithSchema s t (fmap f tp)
 
+instance Profunctor Table where
+  dimap f g (Table t tp) = Table t (dimap f g tp)
+  dimap f g (TableWithSchema s t tp) = TableWithSchema s t (dimap f g tp)
+
 -- }
