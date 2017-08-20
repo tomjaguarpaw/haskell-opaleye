@@ -41,9 +41,7 @@ tableColumn = ViewColumnMaker
   where mkColumn = IC.Column . HPQ.BaseTableAttrExpr
 
 column :: ColumnMaker (C.Column a) (C.Column a)
-column = ColumnMaker
-         (PM.PackMap (\f (IC.Column s)
-                      -> fmap IC.Column (f s)))
+column = ColumnMaker (PM.iso IC.unColumn IC.Column)
 
 instance Default ViewColumnMaker String (C.Column a) where
   def = tableColumn

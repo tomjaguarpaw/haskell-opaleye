@@ -37,8 +37,7 @@ newtype Unpackspec columns columns' =
 
 -- | Target the single 'HPQ.PrimExpr' inside a 'C.Column'
 unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
-unpackspecColumn = Unpackspec
-                   (PM.PackMap (\f (IC.Column pe) -> fmap IC.Column (f pe)))
+unpackspecColumn = Unpackspec (PM.iso IC.unColumn IC.Column)
 
 -- | Modify all the targeted 'HPQ.PrimExpr's
 runUnpackspec :: Applicative f
