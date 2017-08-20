@@ -1,5 +1,6 @@
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Opaleye.Internal.PackMap where
 
@@ -13,6 +14,7 @@ import qualified Control.Monad.Trans.State as State
 import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
+import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Functor.Identity as I
 
 -- This is rather like a Control.Lens.Traversal with the type
@@ -134,6 +136,10 @@ runPMC :: Applicative f
        -> a
        -> f columns'
 runPMC f g (PackMapColumn b) h = traversePM b (h . g) . f
+
+instance Functor f
+         => D.Default (PackMapColumn f) (IC.Column a) (IC.Column a) where
+  def = pmColumn
 
 -- {
 

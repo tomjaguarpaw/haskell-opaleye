@@ -3,7 +3,6 @@
 
 module Opaleye.Internal.Values where
 
-import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -11,12 +10,8 @@ import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.List.NonEmpty as NEL
-import           Data.Profunctor (Profunctor, dimap)
-import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
-import qualified Data.Profunctor.Product as PP
-import           Data.Profunctor.Product.Default (Default, def)
 
-import           Control.Applicative (Applicative, pure, (<*>))
+import           Control.Applicative (Applicative)
 
 -- FIXME: We don't currently handle the case of zero columns.  Need to
 -- emit a dummy column and data.
@@ -55,32 +50,8 @@ extractValuesField = PM.extractAttr "values"
 
 data Unit a = Unit deriving Functor
 
-newtype Valuesspec columns columns' =
-  Valuesspec (PM.PackMapColumn Unit columns columns')
+type Valuesspec = PM.PackMapColumn Unit
 
 runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
-runValuesspec (Valuesspec v) f = PM.runPMC (const Unit) (const ()) v f ()
-
-instance Default Valuesspec (Column a) (Column a) where
-  def = Valuesspec PM.pmColumn
-
--- {
-
--- Boilerplate instance definitions.  Theoretically, these are derivable.
-
-instance Functor (Valuesspec a) where
-  fmap f (Valuesspec g) = Valuesspec (fmap f g)
-
-instance Applicative (Valuesspec a) where
-  pure = Valuesspec . pure
-  Valuesspec f <*> Valuesspec x = Valuesspec (f <*> x)
-
-instance Profunctor Valuesspec where
-  dimap f g (Valuesspec q) = Valuesspec (dimap f g q)
-
-instance ProductProfunctor Valuesspec where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
-
--- }
+runValuesspec v f = PM.runPMC (const Unit) (const ()) v f ()
