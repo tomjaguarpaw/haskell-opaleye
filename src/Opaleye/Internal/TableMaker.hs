@@ -22,8 +22,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 newtype ViewColumnMaker strings columns =
   ViewColumnMaker (PM.PackMap () () strings columns)
 
-newtype ColumnMaker columns columns' =
-  ColumnMaker (U.Unpackspec columns columns')
+type ColumnMaker = U.Unpackspec
 
 runViewColumnMaker :: ViewColumnMaker strings tablecolumns ->
                        strings -> tablecolumns
@@ -33,7 +32,7 @@ runColumnMaker :: Applicative f
                   => ColumnMaker tablecolumns columns
                   -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                   -> tablecolumns -> f columns
-runColumnMaker (ColumnMaker u) = U.runUnpackspec u
+runColumnMaker = U.runUnpackspec
 
 -- There's surely a way of simplifying this implementation
 tableColumn :: ViewColumnMaker String (C.Column a)
@@ -42,13 +41,10 @@ tableColumn = ViewColumnMaker
   where mkColumn = IC.Column . HPQ.BaseTableAttrExpr
 
 column :: ColumnMaker (C.Column a) (C.Column a)
-column = ColumnMaker U.unpackspecColumn
+column = U.unpackspecColumn
 
 instance Default ViewColumnMaker String (C.Column a) where
   def = tableColumn
-
-instance Default ColumnMaker (C.Column a) (C.Column a) where
-  def = column
 
 -- {
 
@@ -65,20 +61,6 @@ instance Profunctor ViewColumnMaker where
   dimap f g (ViewColumnMaker q) = ViewColumnMaker (dimap f g q)
 
 instance ProductProfunctor ViewColumnMaker where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
-
-instance Functor (ColumnMaker a) where
-  fmap f (ColumnMaker g) = ColumnMaker (fmap f g)
-
-instance Applicative (ColumnMaker a) where
-  pure = ColumnMaker . pure
-  ColumnMaker f <*> ColumnMaker x = ColumnMaker (f <*> x)
-
-instance Profunctor ColumnMaker where
-  dimap f g (ColumnMaker q) = ColumnMaker (dimap f g q)
-
-instance ProductProfunctor ColumnMaker where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 

@@ -23,7 +23,6 @@
 > import           Data.Profunctor.Product.Default (Default)
 > import qualified Data.Profunctor.Product.Default as D
 > import           Data.Time.Calendar (Day)
-> import qualified Opaleye.Internal.TableMaker
 > import qualified Opaleye.Internal.Join
 >
 > import qualified Database.PostgreSQL.Simple as PGS
@@ -142,9 +141,6 @@ them.
 >
 > instance Default Unpackspec BirthdayColumn BirthdayColumn where
 >   def = birthdayColumnDef
->
-> instance Default Opaleye.Internal.TableMaker.ColumnMaker BirthdayColumn BirthdayColumn where
->   def = birthdayColumnDef
 
 Naturally this is all derivable using `Generic` or Template Haskell,
 but no one's bothered to implement that yet.  Would you like to?
@@ -195,7 +191,7 @@ this information with the following datatype.
 >                                  , radius   :: Column PGFloat8
 >                                  }
 >
-> instance Default Opaleye.Internal.TableMaker.ColumnMaker WidgetColumn WidgetColumn where
+> instance Default Unpackspec WidgetColumn WidgetColumn where
 >   def = WidgetColumn <$> P.lmap style    D.def
 >                      <*> P.lmap color    D.def
 >                      <*> P.lmap location D.def
