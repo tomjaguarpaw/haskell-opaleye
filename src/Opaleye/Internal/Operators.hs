@@ -17,7 +17,7 @@ import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.PGTypes as T
 
 import qualified Data.Monoid as M
-import           Data.Monoid ((<>))
+import qualified Data.Functor.Constant as Constant
 import           Data.Profunctor (Profunctor, dimap, lmap, rmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
@@ -43,13 +43,18 @@ instance M.Monoid PGBoolAnd where
   mempty = PGBoolAnd (T.pgBool True)
   mappend = (<>)
 
-newtype EqPP a b = EqPP (PMC.Pair a -> PGBoolAnd)
+type EqPP = PMC.PackMapColumn PMC.Pair
 
 eqExplicit :: EqPP columns a -> columns -> columns -> Column T.PGBool
-eqExplicit (EqPP f) x y = unPGBoolAnd (f (PMC.Pair x y))
-
-instance D.Default EqPP (Column a) (Column a) where
-  def = EqPP (\(PMC.Pair x y) -> PGBoolAnd (C.unsafeEq x y))
+eqExplicit eqpp x y =
+  (unPGBoolAnd
+  . Constant.getConstant
+  . PMC.runPMC id id eqpp
+               (\(PMC.Pair a b)
+                -> Constant.Constant
+                   (PGBoolAnd
+                    (C.unsafeEq (C.Column a) (C.Column b)))))
+  (PMC.Pair x y)
 
 
 newtype IfPP a b = IfPP (Column T.PGBool -> a -> a -> b)
@@ -104,15 +109,6 @@ relationValuedExpr :: D.Default RelExprMaker strings columns
 relationValuedExpr = relationValuedExprExplicit D.def
 
 -- { Boilerplate instances
-
-instance Profunctor EqPP where
-  dimap f _ (EqPP h) = EqPP (\(PMC.Pair a a') -> h (PMC.Pair (f a) (f a')))
-
-instance ProductProfunctor EqPP where
-  empty = EqPP (\(PMC.Pair () ()) -> M.mempty)
-  EqPP f ***! EqPP f' = EqPP (\(PMC.Pair a a') ->
-                               f (PMC.Pair (fst a) (fst a'))
-                               <> f' (PMC.Pair (snd a) (snd a')))
 
 instance Profunctor RelExprMaker where
   dimap f g (RelExprMaker a b) = RelExprMaker (lmap f a) (rmap g b)
