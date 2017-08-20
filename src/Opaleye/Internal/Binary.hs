@@ -11,7 +11,6 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-import qualified Data.Functor.Identity as I
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
@@ -30,15 +29,13 @@ unPair :: Pair a -> (a, a)
 unPair (Pair x y) = (x, y)
 
 newtype Binaryspec columns columns' =
-  Binaryspec (PM.PackMapColumn Pair I.Identity columns columns')
+  Binaryspec (PM.PackMapColumn Pair columns columns')
 
 runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> ((HPQ.PrimExpr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
                  -> (columns, columns) -> f columns'
 runBinaryspec (Binaryspec (PM.PackMapColumn b)) g =
-  fmap I.runIdentity
-  . PM.traversePM b (fmap I.Identity . g . unPair)
-  . uncurry Pair
+  PM.traversePM b (g . unPair) . uncurry Pair
 
 binaryspecColumn :: Binaryspec (Column a) (Column a)
 binaryspecColumn = Binaryspec PM.pmColumn

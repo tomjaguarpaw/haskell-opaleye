@@ -33,7 +33,7 @@ newtype Unpackspec columns columns' =
   -- the 'D.Default' instance.  If you really need to you can create
   -- 'Unpackspec's by hand using 'unpackspecColumn' and the
   -- 'Profunctor', 'ProductProfunctor' and 'SumProfunctor' operations.
-  Unpackspec (PM.PackMapColumn Identity Identity columns columns')
+  Unpackspec (PM.PackMapColumn Identity columns columns')
 
 -- | Target the single 'HPQ.PrimExpr' inside a 'C.Column'
 unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
@@ -45,9 +45,7 @@ runUnpackspec :: Applicative f
                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                  -> columns -> f b
 runUnpackspec (Unpackspec (PM.PackMapColumn f)) g =
-  fmap runIdentity
-  . PM.traversePM f (fmap Identity . g . runIdentity)
-  . Identity
+  PM.traversePM f (g . runIdentity) . Identity
 
 -- | Extract all the targeted 'HPQ.PrimExpr's
 collectPEs :: Unpackspec s t -> s -> [HPQ.PrimExpr]

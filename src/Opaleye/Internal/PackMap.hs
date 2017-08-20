@@ -10,7 +10,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Monad.Trans.State as State
-import           Data.Profunctor (Profunctor, dimap, rmap)
+import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Functor.Identity as I
@@ -120,12 +120,11 @@ eitherFunction f g = rmap (either (fmap Left) (fmap Right)) (f PP.+++! g)
 iso :: (s -> a) -> (b -> t) -> PackMap a b s t
 iso h g = PackMap (dimap h (fmap g))
 
-newtype PackMapColumn f g s t =
-  PackMapColumn (PackMap (f HPQ.PrimExpr) (g HPQ.PrimExpr) (f s) (g t))
+newtype PackMapColumn f s t =
+  PackMapColumn (PackMap (f HPQ.PrimExpr) HPQ.PrimExpr (f s) t)
 
-pmColumn :: (Functor f, Functor g)
-         => PackMapColumn f g (IC.Column s) (IC.Column t)
-pmColumn = PackMapColumn (iso (fmap IC.unColumn) (fmap IC.Column))
+pmColumn :: Functor f => PackMapColumn f (IC.Column s) (IC.Column t)
+pmColumn = PackMapColumn (iso (fmap IC.unColumn) IC.Column)
 
 -- {
 
@@ -149,27 +148,24 @@ instance ProductProfunctor (PackMap a b) where
 instance PP.SumProfunctor (PackMap a b) where
   PackMap f +++! PackMap g = PackMap (\x -> eitherFunction (f x) (g x))
 
-instance Functor b => Functor (PackMapColumn a b s) where
-  fmap f (PackMapColumn g) = PackMapColumn ((fmap . fmap) f g)
+instance Functor (PackMapColumn f s) where
+  fmap f (PackMapColumn g) = PackMapColumn (fmap f g)
 
-instance Applicative b => Applicative (PackMapColumn a b s) where
-  pure x = PackMapColumn (pure (pure x))
-  PackMapColumn f <*> PackMapColumn x = PackMapColumn (liftA2 (<*>) f x)
+instance Applicative (PackMapColumn f s) where
+  pure x = PackMapColumn (pure x)
+  PackMapColumn f <*> PackMapColumn x = PackMapColumn ((<*>) f x)
 
-instance (Functor a, Functor b) => Profunctor (PackMapColumn a b) where
-  dimap f g (PackMapColumn q) = PackMapColumn (dimap (fmap f) (fmap g) q)
+instance Functor f => Profunctor (PackMapColumn f) where
+  dimap f g (PackMapColumn q) = PackMapColumn (dimap (fmap f) g q)
 
-instance (Functor a, Applicative b)
-         => ProductProfunctor (PackMapColumn a b) where
+instance Functor f => ProductProfunctor (PackMapColumn f) where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 
-instance Functor b
-         => PP.SumProfunctor (PackMapColumn I.Identity b) where
+instance PP.SumProfunctor (PackMapColumn I.Identity) where
   PackMapColumn f +++! PackMapColumn g =
-    PackMapColumn (dimap (either (Left . I.Identity) (Right . I.Identity)
-                          . I.runIdentity)
-                         (either (fmap Left) (fmap Right))
-                         (f PP.+++! g))
+    PackMapColumn (lmap (either (Left . I.Identity) (Right . I.Identity)
+                        . I.runIdentity)
+                        (f PP.+++! g))
 
 -- }

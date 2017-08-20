@@ -10,7 +10,6 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-import qualified Data.Functor.Identity as I
 import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
@@ -57,13 +56,12 @@ extractValuesField = PM.extractAttr "values"
 data Unit a = Unit deriving Functor
 
 newtype Valuesspec columns columns' =
-  Valuesspec (PM.PackMapColumn Unit I.Identity columns columns')
+  Valuesspec (PM.PackMapColumn Unit columns columns')
 
 runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec (PM.PackMapColumn v)) f =
-  (fmap I.runIdentity
-  . PM.traversePM v (fmap I.Identity . f . const ())
+  (PM.traversePM v (f . const ())
   . const Unit)
   ()
 
