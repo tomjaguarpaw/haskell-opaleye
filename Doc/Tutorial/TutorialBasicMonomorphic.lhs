@@ -146,6 +146,9 @@ them.
 > instance Default Opaleye.Internal.TableMaker.ColumnMaker BirthdayColumn BirthdayColumn where
 >   def = birthdayColumnDef
 
+Naturally this is all derivable using `Generic` or Template Haskell,
+but no one's bothered to implement that yet.  Would you like to?
+
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
@@ -290,6 +293,9 @@ purpose, which is just a notational convenience.
 >   def = BirthdayColumnNullable <$> P.lmap bdNameColumn D.def
 >                                <*> P.lmap bdDayColumn  D.def
 
+Again, this is all derivable using `Generic` or Template Haskell, if
+someone would take the time to implement it.
+
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
@@ -379,6 +385,9 @@ minimize the number of confusing error messages!
 >                  -> Query BirthdayColumn
 >                  -> IO [Birthday]
 > runBirthdayQuery = runQuery
+
+Again, this is derivable using `Generic` or Template Haskell, if
+someone would take the time to implement it.
 
 Conclusion
 ==========
