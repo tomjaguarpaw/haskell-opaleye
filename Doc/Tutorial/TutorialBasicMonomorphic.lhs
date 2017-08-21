@@ -12,8 +12,10 @@
 >                          Select, (.==),
 >                          aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runSelect,
->                          showSqlForPostgres, Unpackspec,
+>                          showSqlForPostgres,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
+>
+> import qualified Opaleye.Internal.PackMapColumn as PMC
 >
 > import qualified Opaleye                 as O
 >
@@ -146,7 +148,8 @@ them.
 > birthdayFieldDef = BirthdayField <$> P.lmap bdNameField D.def
 >                                    <*> P.lmap bdDayField  D.def
 >
-> instance Default Unpackspec BirthdayField BirthdayField where
+> instance Functor f
+>   => Default (PMC.PackMapColumn f) BirthdayField BirthdayField where
 >   def = birthdayFieldDef
 
 Naturally this is all derivable using `Generic` or Template Haskell,
@@ -199,12 +202,13 @@ this information with the following datatype.
 >                                  , radius   :: Field SqlFloat8
 >                                  }
 >
-> instance Default Unpackspec WidgetField WidgetField where
+> instance Functor f
+>   => Default (PMC.PackMapColumn f) WidgetField WidgetField where
 >   def = WidgetField <$> P.lmap style    D.def
->                      <*> P.lmap color    D.def
->                      <*> P.lmap location D.def
->                      <*> P.lmap quantity D.def
->                      <*> P.lmap radius   D.def
+>                     <*> P.lmap color    D.def
+>                     <*> P.lmap location D.def
+>                     <*> P.lmap quantity D.def
+>                     <*> P.lmap radius   D.def
 
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
@@ -289,9 +293,10 @@ purpose, which is just a notational convenience.
 >   BirthdayFieldNullable { bdNameFieldNullable :: FieldNullable SqlText
 >                          , bdDayFieldNullable  :: FieldNullable SqlDate }
 >
-> instance Default O.Unpackspec BirthdayFieldNullable BirthdayFieldNullable where
+> instance Functor f
+>   => Default (PMC.PackMapColumn f) BirthdayFieldNullable BirthdayFieldNullable where
 >   def = BirthdayFieldNullable <$> P.lmap bdNameFieldNullable D.def
->                                <*> P.lmap bdDayFieldNullable  D.def
+>                               <*> P.lmap bdDayFieldNullable  D.def
 >
 > instance Default Opaleye.Internal.Join.NullMaker BirthdayField BirthdayFieldNullable where
 >   def = BirthdayFieldNullable <$> P.lmap bdNameField D.def
@@ -404,5 +409,5 @@ Utilities
 
 This is a little utility function to help with printing generated SQL.
 
-> printSql :: Default Unpackspec a a => Select a -> IO ()
+> printSql :: Default O.Unpackspec a a => Select a -> IO ()
 > printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres
