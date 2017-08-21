@@ -1,4 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
+
 
 {- |
 
@@ -107,6 +110,15 @@ tableWithSchema :: String
                 -> TableColumns writerColumns viewColumns
                 -> Table writerColumns viewColumns
 tableWithSchema = T.TableWithSchema
+
+class TableColumn a b | a -> b where
+    tableColumn :: String -> TableProperties a b
+
+instance TableColumn (Column a) (Column a) where
+    tableColumn = required
+
+instance TableColumn (Maybe (Column a)) (Column a) where
+    tableColumn = optional
 
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
