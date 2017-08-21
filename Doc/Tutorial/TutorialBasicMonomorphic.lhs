@@ -8,6 +8,7 @@
 >
 > import           Opaleye (Column, Nullable,
 >                          Table, table, required, queryTable,
+>                          tableColumn,
 >                          Query, (.==),
 >                          aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runQuery,
@@ -65,6 +66,12 @@ manipulation tutorial you can see an example of when they might differ.
 > personTable = table "personTable" (p3 ( required "name"
 >                                       , required "age"
 >                                       , required "address" ))
+
+> personTable' :: Table (Column PGText, Column PGInt4, Column PGText)
+>                       (Column PGText, Column PGInt4, Column PGText)
+> personTable' = table "personTable" (p3 ( tableColumn "name"
+>                                        , tableColumn "age"
+>                                        , tableColumn "address" ))
 
 By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
