@@ -58,6 +58,14 @@ instance Functor f => ProductProfunctor (PackMapColumn f) where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 
+-- This can be done for any `f` which is a Decisive functor
+--
+-- https://web.archive.org/web/20150925214139/http://sneezy.cs.nott.ac.uk/fplunch/weblog/?p=69
+--
+-- but I don't think we have Decisive functors on Hackage.  I'll leave
+-- implementing the general version until the necessity increases.
+--
+-- https://www.reddit.com/r/haskell/comments/6v1imc/name_for_splittable_functors/dlx6ijq/
 instance PP.SumProfunctor (PackMapColumn I.Identity) where
   PackMapColumn f +++! PackMapColumn g =
     PackMapColumn (lmap (either (Left . I.Identity) (Right . I.Identity)
