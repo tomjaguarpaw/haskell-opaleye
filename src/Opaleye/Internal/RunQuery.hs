@@ -76,9 +76,9 @@ instance Functor (QueryRunnerColumn u) where
 --   for you by the 'D.Default' 'QueryRunner' instance.
 --
 -- 'QueryRunner' @columns@ @haskells@ corresponds to
--- postgresql-simple's 'RowParser' @haskells@.  'Default QueryRunner
--- columns haskells' corresponds to postgresql-simple's @FromRow@
--- @haskells@.
+-- postgresql-simple's 'RowParser' @haskells@.  'Default'
+-- 'QueryRunner' @columns@ @haskells@ corresponds to
+-- postgresql-simple's @FromRow@ @haskells@.
 data QueryRunner columns haskells =
   QueryRunner (U.Unpackspec columns ())
               (columns -> RowParser haskells)
