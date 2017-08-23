@@ -9,7 +9,7 @@
  'required' and gives rise to a
 
  @
- TableProperties (Column PGInt4) (Column PGInt4)
+ TableColumns (Column PGInt4) (Column PGInt4)
  @
 
  The leftmost argument is the type of writes. When you insert or
@@ -20,7 +20,7 @@
  to a
 
  @
- TableProperties (Column (Nullable PGInt4)) (Column (Nullable PGInt4))
+ TableColumns (Column (Nullable PGInt4)) (Column (Nullable PGInt4))
  @
 
  When you insert or update into this column you must give it a @Column
@@ -32,7 +32,7 @@
  rise to a
 
  @
- TableProperties (Maybe (Column PGInt4)) (Column PGInt4)
+ TableColumns (Maybe (Column PGInt4)) (Column PGInt4)
  @
 
  When you insert or update into this column you must give it a @Maybe
@@ -44,7 +44,7 @@
  rise to a
 
  @
- TableProperties (Maybe (Column (Nullable PGInt4))) (Column (Nullable PGInt4))
+ TableColumns (Maybe (Column (Nullable PGInt4))) (Column (Nullable PGInt4))
  @
 
  When you insert or update into this column you must give it a @Maybe
@@ -59,13 +59,13 @@ module Opaleye.Table (module Opaleye.Table,
                       View,
                       Writer,
                       T.Table(T.Table, T.TableWithSchema),
-                      TableProperties) where
+                      TableColumns) where
 
 import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
 import           Opaleye.Internal.Table (View(View), Table, Writer,
-                                         TableProperties)
+                                         TableColumns)
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 
@@ -92,7 +92,7 @@ queryTable = queryTableExplicit D.def
 -- | For tables with unqualified names
 table :: String
       -- ^^ Table name
-      -> TableProperties writerColumns viewColumns
+      -> TableColumns writerColumns viewColumns
       -> Table writerColumns viewColumns
 table = T.Table
 
@@ -100,20 +100,20 @@ tableWithSchema :: String
                 -- ^^ Schema name
                 -> String
                 -- ^^ Table name
-                -> TableProperties writerColumns viewColumns
+                -> TableColumns writerColumns viewColumns
                 -> Table writerColumns viewColumns
 tableWithSchema = T.TableWithSchema
 
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
-required :: String -> TableProperties (Column a) (Column a)
+required :: String -> TableColumns (Column a) (Column a)
 required columnName = T.TableProperties
   (T.required columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 -- | 'optional' is for columns that you can omit on writes, such as
 --  columns which have defaults or which are SERIAL.
-optional :: String -> TableProperties (Maybe (Column a)) (Column a)
+optional :: String -> TableColumns (Maybe (Column a)) (Column a)
 optional columnName = T.TableProperties
   (T.optional columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))

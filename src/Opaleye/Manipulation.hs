@@ -177,7 +177,7 @@ runInsertManyReturningExplicit qr conn t columns r =
                         (arrangeInsertManyReturningSql u t columns' r))
   where IRQ.QueryRunner u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
-        TI.Table _ (TI.TableProperties _ (TI.View v)) = t
+        TI.View v = TI.tableColumnsView (TI.tableColumns t)
         -- This method of getting hold of the return type feels a bit
         -- suspect.  I haven't checked it for validity.
 
@@ -197,7 +197,7 @@ runUpdateReturningExplicit qr conn t update cond r =
                  (fromString (arrangeUpdateReturningSql u t update cond r))
   where IRQ.QueryRunner u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
-        TI.Table _ (TI.TableProperties _ (TI.View v)) = t
+        TI.View v = TI.tableColumnsView (TI.tableColumns t)
 
 -- * Deprecated versions
 
