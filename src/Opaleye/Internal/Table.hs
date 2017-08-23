@@ -39,11 +39,11 @@ import qualified Control.Arrow as Arr
 --                      (Widget (Column PGText) (Column PGText) (Column PGText)
 --                              (Column PGInt4) (Column PGFloat8))
 -- widgetTable = Table \"widgetTable\"
---                      (pWidget Widget { wid      = optional \"id\"
---                                      , color    = required \"color\"
---                                      , location = required \"location\"
---                                      , quantity = required \"quantity\"
---                                      , radius   = required \"radius\" })
+--                      (pWidget Widget { wid      = tableColumn \"id\"
+--                                      , color    = tableColumn \"color\"
+--                                      , location = tableColumn \"location\"
+--                                      , quantity = tableColumn \"quantity\"
+--                                      , radius   = tableColumn \"radius\" })
 -- @
 --
 -- The constructors of Table are internal only and will be
