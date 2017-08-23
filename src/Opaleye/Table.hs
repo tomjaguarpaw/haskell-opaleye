@@ -66,19 +66,21 @@ module Opaleye.Table (module Opaleye.Table,
                       View,
                       Writer,
                       T.Table(T.Table, T.TableWithSchema),
-                      TableColumns) where
+                      TableProperties,
+                      T.optional,
+                      T.required,
+                      T.tableColumn) where
 
-import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
-import           Opaleye.Internal.Table (View(View), Table, Writer,
-                                         TableColumns)
+import           Opaleye.Internal.Table (View, Table, Writer,
+                                         TableColumns,
+                                         TableProperties)
+
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 
 import qualified Data.Profunctor.Product.Default as D
-
-import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 -- | Example type specialization:
 --
@@ -110,29 +112,6 @@ tableWithSchema :: String
                 -> TableColumns writerColumns viewColumns
                 -> Table writerColumns viewColumns
 tableWithSchema = T.TableWithSchema
-
-class TableColumn a b | a -> b where
-    tableColumn :: String -> TableProperties a b
-
-instance TableColumn (Column a) (Column a) where
-    tableColumn = required
-
-instance TableColumn (Maybe (Column a)) (Column a) where
-    tableColumn = optional
-
--- | 'required' is for columns which are not 'optional'.  You must
--- provide them on writes.
-required :: String -> TableColumns (Column a) (Column a)
-required columnName = T.TableProperties
-  (T.required columnName)
-  (View (Column (HPQ.BaseTableAttrExpr columnName)))
-
--- | 'optional' is for columns that you can omit on writes, such as
---  columns which have defaults or which are SERIAL.
-optional :: String -> TableColumns (Maybe (Column a)) (Column a)
-optional columnName = T.TableProperties
-  (T.optional columnName)
-  (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 -- * Explicit versions
 
