@@ -126,12 +126,12 @@ class TableColumn a b | a -> b where
     -- | Create either a 'required' or 'optional' column depending on
     -- the write type.  It's generally more convenient to use this
     -- than 'required' or 'optional'.
-    tableColumn :: String -> TableColumns a b
+    tableColumn :: String -> TableColumns a (Column b)
 
-instance TableColumn (Column a) (Column a) where
+instance TableColumn (Column a) a where
     tableColumn = required
 
-instance TableColumn (Maybe (Column a)) (Column a) where
+instance TableColumn (Maybe (Column a)) a where
     tableColumn = optional
 
 queryTable :: U.Unpackspec viewColumns columns
