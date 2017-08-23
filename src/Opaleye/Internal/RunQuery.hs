@@ -36,7 +36,7 @@ import qualified Data.String as String
 import           Data.UUID (UUID)
 import           GHC.Int (Int32, Int64)
 
--- { Only needed for annoying postgresql-simple patch below
+-- { Only needed for postgresql-simple FieldParsers
 
 import           Control.Applicative ((<$>))
 import           Database.PostgreSQL.Simple.FromField
