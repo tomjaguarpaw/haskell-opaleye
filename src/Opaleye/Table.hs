@@ -61,15 +61,23 @@
 
 -}
 
-module Opaleye.Table (module Opaleye.Table,
+module Opaleye.Table (-- * Creating tables
+                      table,
+                      tableWithSchema,
+                      T.Table,
+                      T.tableColumn,
+                      T.optional,
+                      T.required,
+                      -- * Querying tables
+                      queryTable,
                       -- * Other
+                      TableColumns,
+                      -- * Deprecated
                       View,
                       Writer,
                       T.Table(T.Table, T.TableWithSchema),
-                      TableColumns,
-                      T.optional,
-                      T.required,
-                      T.tableColumn) where
+                      -- * Module reexport
+                      module Opaleye.Table) where
 
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
@@ -84,32 +92,35 @@ import qualified Data.Profunctor.Product.Default as D
 -- | Example type specialization:
 --
 -- @
--- queryTable :: Table w (Column a, Column b) -> Query (Column a, Column b)
+-- queryTable :: Table w (Column a, Column b)
+--            -> Query (Column a, Column b)
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- queryTable :: Table w (Foo (Column a) (Column b) (Column c)) -> Query (Foo (Column a) (Column b) (Column c))
+-- queryTable :: Table w (Foo (Column a) (Column b) (Column c))
+--            -> Query (Foo (Column a) (Column b) (Column c))
 -- @
 queryTable :: D.Default U.Unpackspec columns columns =>
               Table a columns -> Q.Query columns
 queryTable = queryTableExplicit D.def
 
--- | For tables with unqualified names
+-- | Create a table with unqualified names.
 table :: String
-      -- ^^ Table name
-      -> TableColumns writerColumns viewColumns
-      -> Table writerColumns viewColumns
+      -- ^ Table name
+      -> TableColumns writeColumns viewColumns
+      -> Table writeColumns viewColumns
 table = T.Table
 
+-- | Create a table.
 tableWithSchema :: String
-                -- ^^ Schema name
+                -- ^ Schema name
                 -> String
-                -- ^^ Table name
-                -> TableColumns writerColumns viewColumns
-                -> Table writerColumns viewColumns
+                -- ^ Table name
+                -> TableColumns writeColumns viewColumns
+                -> Table writeColumns viewColumns
 tableWithSchema = T.TableWithSchema
 
 -- * Explicit versions
