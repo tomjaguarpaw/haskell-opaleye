@@ -7,7 +7,7 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye (Column, Nullable,
->                          Table, table, required, queryTable,
+>                          Table, table, queryTable,
 >                          tableColumn,
 >                          Query, (.==),
 >                          aggregate, groupBy,
@@ -63,9 +63,9 @@ manipulation tutorial you can see an example of when they might differ.
 
 > personTable :: Table (Column PGText, Column PGInt4, Column PGText)
 >                      (Column PGText, Column PGInt4, Column PGText)
-> personTable = table "personTable" (p3 ( required "name"
->                                       , required "age"
->                                       , required "address" ))
+> personTable = table "personTable" (p3 ( tableColumn "name"
+>                                       , tableColumn "age"
+>                                       , tableColumn "address" ))
 
 > personTable' :: Table (Column PGText, Column PGInt4, Column PGText)
 >                       (Column PGText, Column PGInt4, Column PGText)
@@ -158,8 +158,8 @@ the same way as before.
 > birthdayTable :: Table BirthdayColumn BirthdayColumn
 > birthdayTable =
 >   table "birthdayTable"
->   (BirthdayColumn <$> P.lmap bdNameColumn (required "name")
->                   <*> P.lmap bdDayColumn  (required "birthday"))
+>   (BirthdayColumn <$> P.lmap bdNameColumn (tableColumn "name")
+>                   <*> P.lmap bdDayColumn  (tableColumn "birthday"))
 >
 > birthdayQuery :: Query BirthdayColumn
 > birthdayQuery = queryTable birthdayTable
@@ -211,11 +211,11 @@ strings, but in practice they might have been a different data type.
 
 > widgetTable :: Table WidgetColumn WidgetColumn
 > widgetTable = table "widgetTable"
->                      (WidgetColumn <$> P.lmap style    (required "style")
->                                    <*> P.lmap color    (required "color")
->                                    <*> P.lmap location (required "location")
->                                    <*> P.lmap quantity (required "quantity")
->                                    <*> P.lmap radius   (required "radius"))
+>                      (WidgetColumn <$> P.lmap style    (tableColumn "style")
+>                                    <*> P.lmap color    (tableColumn "color")
+>                                    <*> P.lmap location (tableColumn "location")
+>                                    <*> P.lmap quantity (tableColumn "quantity")
+>                                    <*> P.lmap radius   (tableColumn "radius"))
 
 
 Say we want to group by the style and color of widgets, calculating

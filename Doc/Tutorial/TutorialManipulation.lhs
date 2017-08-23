@@ -3,7 +3,7 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye (Column, Table, table,
->                           required, optional, (.==), (.<),
+>                           tableColumn, (.==), (.<),
 >                           arrangeDeleteSql, arrangeInsertManySql,
 >                           arrangeUpdateSql, arrangeInsertManyReturningSql,
 >                           PGInt4, PGFloat8)
@@ -25,19 +25,19 @@ our manipulation on.  It will have three columns: an integer-valued
 "id" column (assumed to be an auto-incrementing field) and two
 double-valued required fields.  The `Table` type constructor has two
 type arguments.  The first one is the type of writes to the table, and
-the second is the type of reads from the table.  Notice that the "id"
-column was defined as optional (for writes) so in the type of writes
-it is wrapped in a Maybe.  That means we don't necessarily need to
+the second is the type of reads from the table.  The "id"
+column is defined as optional (for writes) because its write type is
+`Maybe (Column PGInt4)`.  That means we don't necessarily need to
 specify it when writing to the table.  The database will automatically
 fill in a value for us.
 
 > myTable :: Table
 >     (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8, Column P.PGText)
 >     (Column PGInt4, Column PGFloat8, Column PGFloat8, Column P.PGText)
-> myTable = table "tablename" (p4 ( optional "id"
->                                 , required "x"
->                                 , required "y"
->                                 , required "s" ))
+> myTable = table "tablename" (p4 ( tableColumn "id"
+>                                 , tableColumn "x"
+>                                 , tableColumn "y"
+>                                 , tableColumn "s" ))
 
 To perform a delete we provide an expression from our read type to
 `Column Bool`.  All rows for which the expression is true are deleted.
