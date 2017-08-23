@@ -65,21 +65,21 @@ tableColumns (TableWithSchema _ _ p) = p
 tableProperties :: Table writerColumns viewColumns -> TableColumns writerColumns viewColumns
 tableProperties = tableColumns
 
--- | Use 'TableColumns' instead. 'TableProperties' will be deprecated
+-- | Use 'TableColumns' instead. 'TableColumns' will be deprecated
 -- in version 0.6.
 data TableProperties writerColumns viewColumns = TableProperties
    { tablePropertiesWriter :: Writer writerColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
 
--- | The new name for 'TableProperties' which will replace
+-- | The new name for 'TableColumns' which will replace
 -- 'TableColumn' in version 0.6.
 type TableColumns = TableProperties
 
-tableColumnsWriter :: TableProperties writerColumns viewColumns
+tableColumnsWriter :: TableColumns writerColumns viewColumns
                    -> Writer writerColumns viewColumns
 tableColumnsWriter = tablePropertiesWriter
 
-tableColumnsView :: TableProperties writerColumns viewColumns
+tableColumnsView :: TableColumns writerColumns viewColumns
                  -> View viewColumns
 tableColumnsView = tablePropertiesView
 
