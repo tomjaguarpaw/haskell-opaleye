@@ -276,6 +276,10 @@ jsonbFieldParser = jsonFieldTypeParser (String.fromString "jsonb")
 
 -- typenames, not type Oids are used in order to avoid creating
 -- a dependency on 'Database.PostgreSQL.LibPQ'
+--
+-- Eventually we want to move this to postgresql-simple
+--
+--     https://github.com/tomjaguarpaw/haskell-opaleye/issues/329
 jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
 jsonFieldTypeParser jsonTypeName field mData = do
     ti <- typeInfo field
