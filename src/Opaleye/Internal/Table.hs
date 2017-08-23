@@ -108,20 +108,20 @@ newtype Writer columns dummy =
 
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
-required :: String -> TableProperties (Column a) (Column a)
+required :: String -> TableColumns (Column a) (Column a)
 required columnName = TableProperties
   (requiredW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 -- | 'optional' is for columns that you can omit on writes, such as
 --  columns which have defaults or which are SERIAL.
-optional :: String -> TableProperties (Maybe (Column a)) (Column a)
+optional :: String -> TableColumns (Maybe (Column a)) (Column a)
 optional columnName = TableProperties
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 class TableColumn a b | a -> b where
-    tableColumn :: String -> TableProperties a b
+    tableColumn :: String -> TableColumns a b
 
 instance TableColumn (Column a) (Column a) where
     tableColumn = required
@@ -134,7 +134,7 @@ queryTable :: U.Unpackspec viewColumns columns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
 queryTable cm table tag = (primExprs, primQ) where
-  View tableCols = tableColumnsView (tableProperties table)
+  View tableCols = tableColumnsView (tableColumns table)
   (primExprs, projcols) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
   primQ = PQ.BaseTable (tableIdentifier table) projcols
