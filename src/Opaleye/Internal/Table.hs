@@ -46,9 +46,9 @@ import qualified Control.Arrow as Arr
 --                                      , radius   = required \"radius\" })
 -- @
 data Table writerColumns viewColumns
-  = Table String (TableProperties writerColumns viewColumns)
+  = Table String (TableColumns writerColumns viewColumns)
     -- ^ For unqualified table names
-  | TableWithSchema String String (TableProperties writerColumns viewColumns)
+  | TableWithSchema String String (TableColumns writerColumns viewColumns)
     -- ^ Schema name, table name, table properties.
 
 -- | The constructors of Table are internal only and will be
@@ -57,13 +57,31 @@ tableIdentifier :: Table writerColumns viewColumns -> PQ.TableIdentifier
 tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
 tableIdentifier (TableWithSchema s t _) = PQ.TableIdentifier (Just s) t
 
-tableProperties :: Table writerColumns viewColumns -> TableProperties writerColumns viewColumns
-tableProperties (Table _ p) = p
-tableProperties (TableWithSchema _ _ p) = p
+tableColumns :: Table writerColumns viewColumns -> TableColumns writerColumns viewColumns
+tableColumns (Table _ p) = p
+tableColumns (TableWithSchema _ _ p) = p
 
+-- | Use 'tableColumns' instead.  Will be deprecated soon.
+tableProperties :: Table writerColumns viewColumns -> TableColumns writerColumns viewColumns
+tableProperties = tableColumns
+
+-- | Use 'TableColumns' instead. 'TableProperties' will be deprecated
+-- in version 0.6.
 data TableProperties writerColumns viewColumns = TableProperties
    { tablePropertiesWriter :: Writer writerColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
+
+-- | The new name for 'TableProperties' which will replace
+-- 'TableColumn' in version 0.6.
+type TableColumns = TableProperties
+
+tableColumnsWriter :: TableProperties writerColumns viewColumns
+                   -> Writer writerColumns viewColumns
+tableColumnsWriter = tablePropertiesWriter
+
+tableColumnsView :: TableProperties writerColumns viewColumns
+                 -> View viewColumns
+tableColumnsView = tablePropertiesView
 
 -- | Internal only.  Do not use.  'View' will be deprecated in version
 -- 0.6.
@@ -90,7 +108,7 @@ queryTable :: U.Unpackspec viewColumns columns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
 queryTable cm table tag = (primExprs, primQ) where
-  View tableCols = tablePropertiesView (tableProperties table)
+  View tableCols = tableColumnsView (tableProperties table)
   (primExprs, projcols) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
   primQ = PQ.BaseTable (tableIdentifier table) projcols

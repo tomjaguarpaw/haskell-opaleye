@@ -237,7 +237,7 @@ arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
 -- version 0.6.
 arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
 arrangeInsertMany table columns = insert
-  where writer = TI.tablePropertiesWriter (TI.tableProperties table)
+  where writer = TI.tableColumnsWriter (TI.tableColumns table)
         (columnExprs, columnNames) = TI.runWriter' writer columns
         insert = SG.sqlInsert SD.defaultSqlGenerator
                       (PQ.tiToSqlTable (TI.tableIdentifier table))
@@ -257,7 +257,7 @@ arrangeUpdate table update cond =
   SG.sqlUpdate SD.defaultSqlGenerator
                (PQ.tiToSqlTable (TI.tableIdentifier table))
                [condExpr] (update' tableCols)
-  where TI.TableProperties writer (TI.View tableCols) = TI.tableProperties table
+  where TI.TableProperties writer (TI.View tableCols) = TI.tableColumns table
         update' = map (\(x, y) -> (y, x)) . TI.runWriter writer . update
         Column condExpr = cond tableCols
 
@@ -274,7 +274,7 @@ arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDe
 arrangeDelete table cond =
   SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier table)) [condExpr]
   where Column condExpr = cond tableCols
-        TI.View tableCols = TI.tablePropertiesView (TI.tableProperties table)
+        TI.View tableCols = TI.tableColumnsView (TI.tableColumns table)
 
 -- | For internal use only.  Do not use.  Will be deprecated in
 -- version 0.6.
@@ -291,7 +291,7 @@ arrangeInsertManyReturning :: U.Unpackspec columnsReturned ignored
 arrangeInsertManyReturning unpackspec table columns returningf =
   Sql.Returning insert returningSEs
   where insert = arrangeInsertMany table columns
-        TI.View columnsR = TI.tablePropertiesView (TI.tableProperties table)
+        TI.View columnsR = TI.tableColumnsView (TI.tableColumns table)
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
@@ -316,7 +316,7 @@ arrangeUpdateReturning :: U.Unpackspec columnsReturned ignored
 arrangeUpdateReturning unpackspec table updatef cond returningf =
   Sql.Returning update returningSEs
   where update = arrangeUpdate table updatef cond
-        TI.View columnsR = TI.tablePropertiesView (TI.tableProperties table)
+        TI.View columnsR = TI.tableColumnsView (TI.tableColumns table)
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
