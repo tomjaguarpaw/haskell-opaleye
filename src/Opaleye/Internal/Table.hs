@@ -40,7 +40,7 @@ import qualified Control.Arrow as Arr
 --                              (Column PGInt4) (Column PGFloat8))
 --                      (Widget (Column PGText) (Column PGText) (Column PGText)
 --                              (Column PGInt4) (Column PGFloat8))
--- widgetTable = Table \"widgetTable\"
+-- widgetTable = table \"widgetTable\"
 --                      (pWidget Widget { wid      = tableColumn \"id\"
 --                                      , color    = tableColumn \"color\"
 --                                      , location = tableColumn \"location\"
@@ -52,37 +52,39 @@ import qualified Control.Arrow as Arr
 -- deprecated in version 0.7.
 data Table writerColumns viewColumns
   = Table String (TableColumns writerColumns viewColumns)
-    -- ^ For unqualified table names
+    -- ^ For unqualified table names. Do not use the constructor.  It
+    -- is internal and will be deprecated in version 0.7.
   | TableWithSchema String String (TableColumns writerColumns viewColumns)
-    -- ^ Schema name, table name, table properties.
+    -- ^ Schema name, table name, table properties.  Do not use the
+    -- constructor.  It is internal and will be deprecated in version 0.7.
 
-tableIdentifier :: Table writerColumns viewColumns -> PQ.TableIdentifier
+tableIdentifier :: Table writeColumns viewColumns -> PQ.TableIdentifier
 tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
 tableIdentifier (TableWithSchema s t _) = PQ.TableIdentifier (Just s) t
 
-tableColumns :: Table writerColumns viewColumns -> TableColumns writerColumns viewColumns
+tableColumns :: Table writeColumns viewColumns -> TableColumns writeColumns viewColumns
 tableColumns (Table _ p) = p
 tableColumns (TableWithSchema _ _ p) = p
 
 -- | Use 'tableColumns' instead.  Will be deprecated soon.
-tableProperties :: Table writerColumns viewColumns -> TableColumns writerColumns viewColumns
+tableProperties :: Table writeColumns viewColumns -> TableColumns writeColumns viewColumns
 tableProperties = tableColumns
 
 -- | Use 'TableColumns' instead. 'TableColumns' will be removed in
 -- version 0.7.
-data TableProperties writerColumns viewColumns = TableProperties
-   { tablePropertiesWriter :: Writer writerColumns viewColumns
+data TableProperties writeColumns viewColumns = TableProperties
+   { tablePropertiesWriter :: Writer writeColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
 
 -- | The new name for 'TableColumns' which will replace
 -- 'TableColumn' in version 0.7.
 type TableColumns = TableProperties
 
-tableColumnsWriter :: TableColumns writerColumns viewColumns
-                   -> Writer writerColumns viewColumns
+tableColumnsWriter :: TableColumns writeColumns viewColumns
+                   -> Writer writeColumns viewColumns
 tableColumnsWriter = tablePropertiesWriter
 
-tableColumnsView :: TableColumns writerColumns viewColumns
+tableColumnsView :: TableColumns writeColumns viewColumns
                  -> View viewColumns
 tableColumnsView = tablePropertiesView
 
@@ -121,6 +123,9 @@ optional columnName = TableProperties
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 class TableColumn a b | a -> b where
+    -- | Create either a 'required' or 'optional' column depending on
+    -- the write type.  It's generally more convenient to use this
+    -- than 'required' or 'optional'.
     tableColumn :: String -> TableColumns a b
 
 instance TableColumn (Column a) (Column a) where
@@ -130,7 +135,7 @@ instance TableColumn (Maybe (Column a)) (Column a) where
     tableColumn = optional
 
 queryTable :: U.Unpackspec viewColumns columns
-            -> Table writerColumns viewColumns
+            -> Table writeColumns viewColumns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
 queryTable cm table tag = (primExprs, primQ) where
