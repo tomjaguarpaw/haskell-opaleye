@@ -35,6 +35,8 @@
  TableColumns (Maybe (Column PGInt4)) (Column PGInt4)
  @
 
+ Optional columns are those that can be omitted on writes, such as
+ those that have @DEFAULT@s or those that are @SERIAL@.
  When you insert or update into this column you must give it a @Maybe
  (Column PGInt4)@. If you provide @Nothing@ then the column will be
  omitted from the query and the default value will be used. Otherwise
@@ -47,6 +49,8 @@
  TableColumns (Maybe (Column (Nullable PGInt4))) (Column (Nullable PGInt4))
  @
 
+ Optional columns are those that can be omitted on writes, such as
+ those that have @DEFAULT@s or those that are @SERIAL@.
  When you insert or update into this column you must give it a @Maybe
  (Column (Nullable PGInt4))@. If you provide @Nothing@ then the default
  value will be used. Otherwise you have to provide a @Just@ containing
