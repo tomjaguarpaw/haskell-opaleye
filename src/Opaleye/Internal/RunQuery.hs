@@ -53,8 +53,8 @@ import           Data.Typeable (Typeable)
 -- 'T.PGText' 'String' encodes how to turn a 'T.PGText' result from the
 -- database into a Haskell 'String'.
 --
--- 'QueryRunnerColumn' @pgType@ @haskellType@ corresponds to
--- postgresql-simple's 'FieldParser' @haskellType@.
+-- \"'QueryRunnerColumn' @pgType@ @haskellType@\" corresponds to
+-- postgresql-simple's \"'FieldParser' @haskellType@\".
 
 -- This is *not* a Product Profunctor because it is the only way I
 -- know of to get the instance generation to work for non-Nullable and
@@ -75,10 +75,10 @@ instance Functor (QueryRunnerColumn u) where
 --   to create on of these or handle one directly.  It will be provided
 --   for you by the 'D.Default' 'QueryRunner' instance.
 --
--- 'QueryRunner' @columns@ @haskells@ corresponds to
--- postgresql-simple's 'RowParser' @haskells@.  'Default'
--- 'QueryRunner' @columns@ @haskells@ corresponds to
--- postgresql-simple's @FromRow@ @haskells@.
+-- \"'QueryRunner' @columns@ @haskells@\" corresponds to
+-- postgresql-simple's \"'RowParser' @haskells@\".  \"'Default'
+-- 'QueryRunner' @columns@ @haskells@\" corresponds to
+-- postgresql-simple's \"@FromRow@ @haskells@\".
 data QueryRunner columns haskells =
   QueryRunner (U.Unpackspec columns ())
               (columns -> RowParser haskells)
@@ -136,8 +136,8 @@ instance QueryRunnerColumnDefault a b =>
 -- the default way to turn a @pgType@ result from the database into a
 -- Haskell value of type @haskellType@.
 --
--- 'QueryRunnerColumnDefault' @pgType@ @haskellType@ corresponds to
--- postgresql-simple's 'FromField' @haskellType@.
+-- \"'QueryRunnerColumnDefault' @pgType@ @haskellType@\" corresponds
+-- to postgresql-simple's \"'FromField' @haskellType@\".
 --
 -- Creating an instance of 'QueryRunnerColumnDefault' for your own types is
 -- necessary for retrieving those types from the database.
