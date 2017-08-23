@@ -12,6 +12,9 @@
 
   * `unsafeCoerce`
 
+* Added `TableColumn` and `tableColumn` which selects `optional` or
+  `required` based on write type.
+
 * Added `TableColumns` as synonym for `TableProperties`.
   `TableProperties` will be removed in version 0.6
 
