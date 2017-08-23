@@ -17,7 +17,6 @@
 >                          count, avg, sum, leftJoin, runQuery,
 >                          showSqlForPostgres, Unpackspec,
 >                          PGInt4, PGInt8, PGText, PGDate, PGFloat8)
-> import qualified Opaleye as O
 >
 > import           Control.Applicative     ((<$>), (<*>), Applicative)
 >
@@ -156,20 +155,6 @@ compatible with Opaleye!
 > -- could even have a symbol field containing the table name and use
 > -- https://hackage.haskell.org/package/base-4.8.2.0/docs/GHC-TypeLits.html#v:symbolVal
 > 
->
-> -- { If you use Tableable you don't even have to specify required or optional
->      
-> class Tableable a b | a -> b where
->   tableField :: String -> O.TableProperties a b
->
-> instance Tableable (Column a) (Column a) where
->   tableField = required
->
-> instance Tableable (Maybe (Column a)) (Column a) where
->   tableField = O.optional
->
-> -- }
->
 > data Birthday f = Birthday { bdName :: TableField f String PGText NN Req
 >                            , bdDay  :: TableField f Day    PGDate NN Req
 >                            }
