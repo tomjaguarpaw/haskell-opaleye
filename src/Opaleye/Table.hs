@@ -66,7 +66,7 @@ module Opaleye.Table (module Opaleye.Table,
                       View,
                       Writer,
                       T.Table(T.Table, T.TableWithSchema),
-                      TableProperties,
+                      TableColumns,
                       T.optional,
                       T.required,
                       T.tableColumn) where
@@ -74,8 +74,7 @@ module Opaleye.Table (module Opaleye.Table,
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
 import           Opaleye.Internal.Table (View, Table, Writer,
-                                         TableColumns,
-                                         TableProperties)
+                                         TableColumns)
 
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
