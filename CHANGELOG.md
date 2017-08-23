@@ -1,3 +1,20 @@
+* Added `TableColumns` as synonym for `TableProperties`.
+  `TableProperties` will be removed in version 0.6
+
+* Added `table` as synonym for `Table`.  `Table` will be deprecated in
+  version 0.6.
+
+* Added `tableWithSchema` as synonym for `TableWithSchema`.  `Table`
+  will be deprecated in version 0.6.
+
+* Replaced `ColumnMaker` with `Unpackspec`, which is identical to it.
+
+* Added `Profunctor` instance for `Table`
+
+* Added `restrictExists` and `restrictNotExists` as synonyms for
+  `exists` and `notExists`.  The latter will be deprecated in version
+  0.6.
+
 ## 0.5.4.0
 
 * Added cursor interface (`Cursor` and friends)
