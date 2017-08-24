@@ -45,14 +45,15 @@ import qualified Control.Arrow as Arr
 --                                      , quantity = required \"quantity\"
 --                                      , radius   = required \"radius\" })
 -- @
+--
+-- The constructors of Table are internal only and will be
+-- deprecated in version 0.7.
 data Table writerColumns viewColumns
   = Table String (TableColumns writerColumns viewColumns)
     -- ^ For unqualified table names
   | TableWithSchema String String (TableColumns writerColumns viewColumns)
     -- ^ Schema name, table name, table properties.
 
--- | The constructors of Table are internal only and will be
--- deprecated in version 0.7.
 tableIdentifier :: Table writerColumns viewColumns -> PQ.TableIdentifier
 tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
 tableIdentifier (TableWithSchema s t _) = PQ.TableIdentifier (Just s) t
