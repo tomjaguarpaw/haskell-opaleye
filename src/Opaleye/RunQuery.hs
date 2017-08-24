@@ -157,8 +157,7 @@ foldForward (IRQ.Cursor rowParser cursor) chunkSize  f z =
 
 -- * Deprecated functions
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED prepareQuery "Will be removed in version 0.7" #-}
 prepareQuery :: QueryRunner columns haskells -> Query columns -> (Maybe PGS.Query, FR.RowParser haskells)
 prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
   where sql :: Maybe PGS.Query

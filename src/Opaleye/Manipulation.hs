@@ -202,9 +202,10 @@ runUpdateReturningExplicit qr conn t update cond r =
 -- * Deprecated versions
 
 -- | Returns the number of rows inserted
---
--- This will be deprecated in version 0.6.  Use 'runInsertMany'
--- instead.
+
+{-# DEPRECATED runInsert
+    "'runInsert' will be removed in version 0.7. \
+    \Use 'runInsertMany' instead." #-}
 runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
@@ -212,9 +213,10 @@ runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertReturning@.
---
--- This will be deprecated in version 0.6.  Use
--- 'runInsertManyReturning' instead.
+
+{-# DEPRECATED runInsertReturning
+    "'runInsertReturning' will be removed in version 0.7. \
+    \Use 'runInsertManyReturning' instead." #-}
 runInsertReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                    => PGS.Connection
                    -> T.Table columnsW columnsR
@@ -223,18 +225,21 @@ runInsertReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                    -> IO [haskells]
 runInsertReturning = runInsertReturningExplicit D.def
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeInsert
+    "You probably want 'runInsertMany' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert t c = arrangeInsertMany t (return c)
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeInsertSql
+    "You probably want 'runInsertMany' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeInsertMany
+    "You probably want 'runInsertMany' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
 arrangeInsertMany table columns = insert
   where writer = TI.tableColumnsWriter (TI.tableColumns table)
@@ -243,13 +248,15 @@ arrangeInsertMany table columns = insert
                       (PQ.tiToSqlTable (TI.tableIdentifier table))
                       columnNames columnExprs
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeInsertManySql
+    "You probably want 'runInsertMany' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
 arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeUpdate
+    "You probably want 'runUpdate' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
               -> HSql.SqlUpdate
@@ -261,28 +268,32 @@ arrangeUpdate table update cond =
         update' = map (\(x, y) -> (y, x)) . TI.runWriter writer . update
         Column condExpr = cond tableCols
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeUpdateSql
+    "You probably want 'runUpdate' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeUpdateSql :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
               -> String
 arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeDelete
+    "You probably want 'runDelete' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
 arrangeDelete table cond =
   SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier table)) [condExpr]
   where Column condExpr = cond tableCols
         TI.View tableCols = TI.tableColumnsView (TI.tableColumns table)
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeDeleteSql
+    "You probably want 'runDelete' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeInsertManyReturning
+    "You probably want 'runInsertMany' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeInsertManyReturning :: U.Unpackspec columnsReturned ignored
                            -> T.Table columnsW columnsR
                            -> NEL.NonEmpty columnsW
@@ -295,8 +306,9 @@ arrangeInsertManyReturning unpackspec table columns returningf =
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeInsertManyReturningSql
+    "You probably want 'runInsertManyReturning' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeInsertManyReturningSql :: U.Unpackspec columnsReturned ignored
                               -> T.Table columnsW columnsR
                               -> NEL.NonEmpty columnsW
@@ -305,8 +317,9 @@ arrangeInsertManyReturningSql :: U.Unpackspec columnsReturned ignored
 arrangeInsertManyReturningSql =
   show . Print.ppInsertReturning .:: arrangeInsertManyReturning
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeUpdateReturning
+    "You probably want 'runUpdateReturning' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeUpdateReturning :: U.Unpackspec columnsReturned ignored
                        -> T.Table columnsW columnsR
                        -> (columnsR -> columnsW)
@@ -320,8 +333,9 @@ arrangeUpdateReturning unpackspec table updatef cond returningf =
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED arrangeUpdateReturningSql
+    "You probably want 'runUpdateReturning' instead. \
+    \Will be removed in version 0.7." #-}
 arrangeUpdateReturningSql :: U.Unpackspec columnsReturned ignored
                           -> T.Table columnsW columnsR
                           -> (columnsR -> columnsW)

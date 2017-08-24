@@ -149,9 +149,10 @@ pgRange pgEl start end = C.Column (HPQ.CastExpr (showRangeType ([] :: [b])) $ HP
         oneEl R.NegInfinity   = HPQ.NegInfinity
         oneEl R.PosInfinity   = HPQ.PosInfinity
 
+{-# DEPRECATED showPGType
+    "Use 'showSqlType' instead. 'showSqlType' will be deprecated \
+    \in version 0.7." #-}
 class IsSqlType pgType where
-  -- | 'showSqlType' will be deprecated in version 0.6.  Use
-  -- 'showSqlType' instead.
   showPGType :: proxy pgType -> String
   showPGType  = showSqlType
 
@@ -246,12 +247,12 @@ data PGRange a
 
 literalColumn :: HPQ.Literal -> Column a
 literalColumn = IPT.literalColumn
-{-# WARNING literalColumn
-    "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be deprecated in version 0.6"
+{-# DEPRECATED literalColumn
+    "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be removed in version 0.7."
   #-}
 
 unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
 unsafePgFormatTime = IPT.unsafePgFormatTime
-{-# WARNING unsafePgFormatTime
-    "'unsafePgFormatTime' has been moved to Opaleye.Internal.PGTypes and will be deprecated in version 0.6"
+{-# DEPRECATED unsafePgFormatTime
+    "'unsafePgFormatTime' has been moved to Opaleye.Internal.PGTypes and will be removed in version 0.7."
   #-}

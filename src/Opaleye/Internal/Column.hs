@@ -8,8 +8,8 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 -- @PGInt4@ is an @int4@ column and a 'Column' @PGText@ is a @text@
 -- column.
 --
--- Do not use the 'Show' instance of 'Column'.  It will be deprecated
--- in version 0.6.
+-- Do not use the 'Show' instance of 'Column'.  It is considered
+-- deprecated and will be removed in version 0.7.
 newtype Column pgType = Column HPQ.PrimExpr deriving Show
 
 -- | Only used within a 'Column', to indicate that it can be @NULL@.
@@ -19,10 +19,6 @@ data Nullable a = Nullable
 
 unColumn :: Column a -> HPQ.PrimExpr
 unColumn (Column e) = e
-
-{-# DEPRECATED unsafeCoerce "Will be removed in version 0.6.  Use unsafeCoerceColumn instead." #-}
-unsafeCoerce :: Column a -> Column b
-unsafeCoerce = unsafeCoerceColumn
 
 -- | Treat a 'Column' as though it were of a different type.  If such
 -- a treatment is not valid then Postgres may fail with an error at
