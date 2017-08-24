@@ -1,3 +1,17 @@
+* Deprecated
+
+  * `Show` instance of `Column a`
+  * `Manipulation.arrange...`
+  * `showPGType`
+  * `literalColumn`
+  * `unsafePgFormatTime`
+  * `prepareQuery`
+  * `formatAndShowSQL`
+
+* Removed
+
+  * `unsafeCoerce`
+
 * Added `TableColumns` as synonym for `TableProperties`.
   `TableProperties` will be removed in version 0.6
 
