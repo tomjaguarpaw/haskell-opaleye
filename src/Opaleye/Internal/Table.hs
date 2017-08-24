@@ -52,7 +52,7 @@ data Table writerColumns viewColumns
     -- ^ Schema name, table name, table properties.
 
 -- | The constructors of Table are internal only and will be
--- deprecated in version 0.6.
+-- deprecated in version 0.7.
 tableIdentifier :: Table writerColumns viewColumns -> PQ.TableIdentifier
 tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
 tableIdentifier (TableWithSchema s t _) = PQ.TableIdentifier (Just s) t
@@ -66,13 +66,13 @@ tableProperties :: Table writerColumns viewColumns -> TableColumns writerColumns
 tableProperties = tableColumns
 
 -- | Use 'TableColumns' instead. 'TableColumns' will be removed in
--- version 0.6.
+-- version 0.7.
 data TableProperties writerColumns viewColumns = TableProperties
    { tablePropertiesWriter :: Writer writerColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
 
 -- | The new name for 'TableColumns' which will replace
--- 'TableColumn' in version 0.6.
+-- 'TableColumn' in version 0.7.
 type TableColumns = TableProperties
 
 tableColumnsWriter :: TableColumns writerColumns viewColumns
@@ -84,11 +84,11 @@ tableColumnsView :: TableColumns writerColumns viewColumns
 tableColumnsView = tablePropertiesView
 
 -- | Internal only.  Do not use.  'View' will be deprecated in version
--- 0.6.
+-- 0.7.
 data View columns = View columns
 
 -- | Internal only.  Do not use.  'Writer' will be deprecated in
--- version 0.6.
+-- version 0.7.
 
 -- There's no reason the second parameter should exist except that we
 -- use ProductProfunctors more than ProductContravariants so it makes

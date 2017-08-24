@@ -77,8 +77,9 @@ showSqlForPostgresExplicit = showSqlExplicit
 showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
 showSqlForPostgresUnoptExplicit = showSqlUnoptExplicit
 
--- | For internal use only.  Do not use.  Will be deprecated in
--- version 0.6.
+{-# DEPRECATED formatAndShowSQL
+    "You probably want 'showSqlExplicit' or 'showSqlUnoptExplicit' instead. \
+    \Will be removed in version 0.7." #-}
 formatAndShowSQL :: ([HPQ.PrimExpr], PQ.PrimQuery' a, T.Tag) -> Maybe String
 formatAndShowSQL = fmap (show . Pr.ppSql . Sql.sql) . traverse2Of3 Op.removeEmpty
   where -- Just a lens

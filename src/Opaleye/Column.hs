@@ -16,13 +16,12 @@ module Opaleye.Column (-- * 'Column'
                        maybeToNullable,
                        -- * Unsafe operations
                        unsafeCast,
-                       unsafeCoerce,
                        unsafeCoerceColumn,
                        unsafeCompositeField,
                        -- * Entire module
                        module Opaleye.Column)  where
 
-import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerce, unsafeCoerceColumn,
+import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerceColumn,
                                           unsafeCast, unsafeCompositeField)
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
