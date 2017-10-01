@@ -1,6 +1,4 @@
 {-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Opaleye.Internal.PackMap where
 
