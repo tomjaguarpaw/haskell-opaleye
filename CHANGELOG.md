@@ -16,7 +16,7 @@
   `required` based on write type.
 
 * Added `TableColumns` as synonym for `TableProperties`.
-  `TableProperties` will be removed in version 0.6
+  `TableProperties` will be deprecated in version 0.7.
 
 * Added `table` as synonym for `Table`.  `Table` will be deprecated in
   version 0.7.
