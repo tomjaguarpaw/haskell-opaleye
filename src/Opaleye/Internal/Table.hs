@@ -70,8 +70,8 @@ tableColumns (TableWithSchema _ _ p) = p
 tableProperties :: Table writeColumns viewColumns -> TableColumns writeColumns viewColumns
 tableProperties = tableColumns
 
--- | Use 'TableColumns' instead. 'TableColumns' will be removed in
--- version 0.7.
+-- | Use 'TableColumns' instead. 'TableProperties' will be deprecated
+-- in version 0.7.
 data TableProperties writeColumns viewColumns = TableProperties
    { tablePropertiesWriter :: Writer writeColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
