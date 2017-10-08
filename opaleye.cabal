@@ -18,7 +18,7 @@ extra-doc-files: README.md
                  CHANGELOG.md
                  *.md
                  Doc/*.md
-tested-with:     GHC==8.0.2, GHC==7.10.3, GHC==7.8.4, GHC==7.6.3
+tested-with:     GHC==8.0.2, GHC==7.10.3, GHC==7.8.4
 
 source-repository head
   type:     git
@@ -116,7 +116,8 @@ test-suite test
     transformers,
     hspec,
     hspec-discover,
-    opaleye
+    opaleye,
+    postgres-embedded >= 0.1.7 && < 0.2
   ghc-options: -Wall
 
 test-suite tutorial

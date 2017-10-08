@@ -31,6 +31,7 @@ import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), (<<<), (>>>))
 
 import           GHC.Int (Int64)
+import           Database.PostgreSQL.Embedded
 
 import Test.Hspec
 
@@ -914,23 +915,13 @@ jsonbTests = [testJsonGetFieldValue  table9Q,testJsonGetFieldText  table9Q,
 
 main :: IO ()
 main = do
-  let envVarName = "POSTGRES_CONNSTRING"
+  let sConfig = StartupConfig True (Version "9.6.5-1")
+  let dConfig = DBConfig 46782 "postgres"
+  rc <- startPostgres sConfig dConfig
 
-  connectStringEnvVar <- lookupEnv envVarName
+  let connectString = "host=127.0.0.1 user=postgres dbname=postgres port=46782"
 
-  connectStringDotEnv <- do vars <- Dotenv.parseFile ".env"
-                            return (lookup envVarName vars)
-                         `Dotenv.onMissingFile`
-                         return Nothing
-
-  let connectString = connectStringEnvVar <|> connectStringDotEnv
-
-  conn <- maybe
-    (fail ("Set " ++ envVarName ++ " environment variable\n"
-           ++ "For example " ++ envVarName ++ "='user=tom dbname=opaleye_test "
-           ++ "host=localhost port=25433 password=tom'"))
-    (PGS.connectPostgreSQL . String.fromString)
-    connectString
+  conn <- (PGS.connectPostgreSQL . String.fromString) connectString
 
   dropAndCreateDB conn
 
@@ -1032,3 +1023,4 @@ main = do
         testRangeRightExtension
         testRangeLeftExtension
         testRangeAdjacency
+  stopPostgres rc

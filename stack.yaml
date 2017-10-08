@@ -3,5 +3,7 @@ packages:
 - '.'
 - opaleye-sqlite/
 extra-deps:
-- postgresql-simple-0.5.1.1
+- postgresql-simple-0.5.3.0
 - aeson-1.1.0.0
+- shell-conduit-4.6.1
+- postgres-embedded-0.1.7

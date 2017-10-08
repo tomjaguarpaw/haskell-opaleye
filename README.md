@@ -65,15 +65,6 @@ Opaleye are doing something wrong.  In such a case please file a bug.
 The interface of `Internal` modules does not follow the PVP and may
 break between minor releases, so be careful.
 
-# Running tests
-
-You must have running PostgreSQL server to run tests. Specify the database
-by setting the `POSTGRES_CONNSTRING` environment variable:
-
-```
-POSTGRES_CONNSTRING="user=tom dbname=opaleye_test" stack test
-```
-
 # Commercial support
 
 Commercial support for Opaleye is provided by [Purely
