@@ -126,7 +126,8 @@ test-suite test
     transformers,
     hspec,
     hspec-discover,
-    opaleye
+    opaleye,
+    postgres-embedded >= 0.1.7 && < 0.2
   ghc-options: -Wall
 
 test-suite tutorial
