@@ -100,6 +100,9 @@ instance D.Default Constant Time.UTCTime (Column T.PGTimestamptz) where
 instance D.Default Constant Time.LocalTime (Column T.PGTimestamp) where
   def = Constant T.pgLocalTime
 
+instance D.Default Constant Time.ZonedTime (Column T.PGTimestamptz) where
+  def = Constant T.pgZonedTime
+
 instance D.Default Constant Time.TimeOfDay (Column T.PGTime) where
   def = Constant T.pgTimeOfDay
 
