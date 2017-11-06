@@ -201,6 +201,9 @@ instance QueryRunnerColumnDefault T.PGTimestamptz Time.UTCTime where
 instance QueryRunnerColumnDefault T.PGTimestamp Time.LocalTime where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
+instance QueryRunnerColumnDefault T.PGTimestamptz Time.ZonedTime where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
+
 instance QueryRunnerColumnDefault T.PGTime Time.TimeOfDay where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
