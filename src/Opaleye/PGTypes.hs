@@ -89,6 +89,9 @@ pgUTCTime = IPT.unsafePgFormatTime "timestamptz" "'%FT%T%QZ'"
 pgLocalTime :: Time.LocalTime -> Column PGTimestamp
 pgLocalTime = IPT.unsafePgFormatTime "timestamp" "'%FT%T%Q'"
 
+pgZonedTime :: Time.ZonedTime -> Column PGTimestamptz
+pgZonedTime = IPT.unsafePgFormatTime "timestamptz" "'%FT%T%Q%z'"
+
 pgTimeOfDay :: Time.TimeOfDay -> Column PGTime
 pgTimeOfDay = IPT.unsafePgFormatTime "time" "'%T%Q'"
 
