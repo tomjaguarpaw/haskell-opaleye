@@ -1,7 +1,1 @@
-resolver: lts-7.19
-packages:
-- '.'
-- opaleye-sqlite/
-extra-deps:
-- postgresql-simple-0.5.1.1
-- aeson-1.1.0.0
+resolver: lts-9.12
