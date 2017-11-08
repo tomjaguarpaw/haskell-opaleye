@@ -5,8 +5,7 @@
 
 module Main where
 
-import qualified Configuration.Dotenv             as Dotenv
-import           Control.Applicative              ((<$>), (<*>), (<|>))
+import           Control.Applicative              ((<$>), (<*>))
 import qualified Control.Applicative              as A
 import           Control.Arrow                    ((&&&), (***), (<<<), (>>>))
 import qualified Control.Arrow                    as Arr
@@ -33,7 +32,7 @@ import           Opaleye.Internal.MaybeFields     as OM
 import           Opaleye.Internal.Locking         as OL
 import qualified Connection
 import qualified QuickCheck
-import           System.Environment               (lookupEnv)
+import           TestConnection
 import           Test.Hspec
 import qualified TypeFamilies                     ()
 
@@ -1193,24 +1192,7 @@ testForUpdate = do
 
 main :: IO ()
 main = do
-  let envVarName = "POSTGRES_CONNSTRING"
-
-  connectStringEnvVar <- lookupEnv envVarName
-
-  connectStringDotEnv <- do vars <- Dotenv.parseFile ".env"
-                            return (lookup envVarName vars)
-                         `Dotenv.onMissingFile`
-                         return Nothing
-
-  let mconnectString = connectStringEnvVar <|> connectStringDotEnv
-
-  connectString <- maybe
-    (fail ("Set " ++ envVarName ++ " environment variable\n"
-           ++ "For example " ++ envVarName ++ "='user=tom dbname=opaleye_test "
-           ++ "host=localhost port=25433 password=tom'"))
-    (pure . String.fromString)
-    mconnectString
-
+  connectString <- getTestDbConnectString
   conn <- PGS.connectPostgreSQL connectString
 
   dropAndCreateDB conn
