@@ -155,4 +155,6 @@ test-suite benchmark
                , opaleye
                , criterion
                , dotenv
+               , deepseq
+               , text
   ghc-options: -Wall
