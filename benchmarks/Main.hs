@@ -11,6 +11,7 @@ import Opaleye.Internal.RunQuery as OR
 import Criterion.Main
 import TestConnection
 import qualified Database.PostgreSQL.Simple as PGS
+import qualified Database.PostgreSQL.Simple.Types as PGT
 import qualified Database.PostgreSQL.Simple.FromRow as FR
 import Data.Functor
 import Data.String
@@ -54,8 +55,8 @@ main = do
 
 
 
-instance NFData PGS.Query where
-  rnf q = rnf $ show q
+instance NFData PGT.Query where
+  rnf PGT.Query{PGT.fromQuery=q} = rnf q
 
 instance NFData (FR.RowParser a) where
   rnf _ = ()
