@@ -5,6 +5,7 @@ import System.Environment
 import qualified Configuration.Dotenv as Dotenv
 import qualified Data.String as String
 import Control.Applicative ((<|>))
+import Prelude
 
 getTestDbConnectString = do
   let envVarName = "POSTGRES_CONNSTRING"
