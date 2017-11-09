@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE Arrows #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE TypeApplications #-}
 
 
 module Main where
@@ -22,23 +23,32 @@ import Control.Arrow
 import qualified Data.Profunctor.Product.Default as D
 import Data.Text
 import Control.DeepSeq
+import Control.Lens
+import Prelude hiding (id)
+import qualified Prelude(id)
+import Data.Proxy
 
 truncateTable :: PGS.Connection -> String -> IO ()
 truncateTable conn tname = void $ PGS.execute_ conn (fromString $ "TRUNCATE TABLE " ++ tname)
 
-type NarrowTableRowType  = ( Column PGInt4
-                           , Column PGText
-                           , Column PGText
-                           , Column PGText
-                           , Column PGText)
-narrowTable :: O.Table NarrowTableRowType NarrowTableRowType
+type NarrowTablePG  = ( Column PGInt4
+                      , Column PGText
+                      , Column PGText
+                      , Column PGText
+                      , Column PGText)
+type NarrowTable  = ( Int
+                    , Text
+                    , Text
+                    , Text
+                    , Text)
+narrowTable :: O.Table NarrowTablePG NarrowTablePG
 narrowTable = Table "narrow_table" $ PP.p5 ( O.required "id"
                                            , O.required "col1"
                                            , O.required "col2"
                                            , O.required "col3"
                                            , O.required "col4")
 
-narrowTableQ :: Query NarrowTableRowType
+narrowTableQ :: Query NarrowTablePG
 narrowTableQ = queryTable narrowTable
 
 main :: IO ()
@@ -47,8 +57,9 @@ main = do
   defaultMain
     [ bgroup "pepareQuery"
       [ bgroup "narrowTable"
-        [ bench "findByPkCompleteRow" $ nf findByPk narrowTableQ
-        , bench "findByPkSelect3" $ nf findByPkSelect3 narrowTableQ
+        [ bench "findByPkSelect1" $ nf (filterAndSelect (Proxy :: Proxy Int) narrowTable pkFilter) (\r -> r ^. _1)
+        , bench "findByPkSelect3" $ nf (filterAndSelect (Proxy :: Proxy (Int, Text, Text)) narrowTable pkFilter) (\r -> (r ^. _1, r ^. _2, r ^. _3))
+        , bench "findByPkCompleteRow" $ nf (filterAndSelect (Proxy :: Proxy NarrowTable) narrowTable pkFilter) Prelude.id
         ]
       ]
     ]
@@ -61,25 +72,19 @@ instance NFData PGT.Query where
 instance NFData (FR.RowParser a) where
   rnf _ = ()
 
--- findByPk :: D.Default QueryRunner cols haskells
---          => Query cols
---          -> (Maybe PGS.Query, FR.RowParser haskells)
-findByPk :: Query NarrowTableRowType
-         -> (Maybe PGS.Query, FR.RowParser (Int, Text, Text, Text, Text))
-findByPk q = OR.prepareQuery D.def pkQuery
-  where
-    pkQuery = proc () -> do
-      r <- q -< ()
-      let (id_, _, _, _, _) = r
-      restrict -< id_ .== (pgInt4 1)
-      returnA -< r
+pkFilter :: Field1 r r (Column PGInt4) (Column PGInt4) => r -> Column PGBool
+pkFilter r = (r ^. _1) .== (pgInt4 1)
 
-findByPkSelect3 :: Query NarrowTableRowType
-         -> (Maybe PGS.Query, FR.RowParser (Int, Text, Text))
-findByPkSelect3 q = OR.prepareQuery D.def pkQuery
+filterAndSelect :: ( D.Default QueryRunner cols haskells
+                   , (D.Default Unpackspec pgr pgr))
+                => Proxy haskells
+                -> Table pgw pgr
+                -> (pgr -> Column PGBool)
+                -> (pgr -> cols)
+                -> (Maybe PGS.Query, FR.RowParser haskells)
+filterAndSelect _ tbl filterFn selectorFn = OR.prepareQuery D.def pkQuery
   where
     pkQuery = proc () -> do
-      r <- q -< ()
-      let (id_, col1_, col2_, _, _) = r
-      restrict -< id_ .== (pgInt4 1)
-      returnA -< (id_, col1_, col2_)
+      r <- queryTable tbl -< ()
+      restrict -< (filterFn r)
+      returnA -< (selectorFn r)
