@@ -185,4 +185,6 @@ test-suite benchmark
                , deepseq
                , text
                , lens
+               , interpolatedstring-perl6
+               , random
   ghc-options: -Wall
