@@ -110,7 +110,7 @@ main = do
                            , ( "narrowQueryLefttJoin/Select1"
                              , nfIO $ runQueryS conn $ prepareQueryQ (Proxy :: Proxy Int) narrowTableLeftJoin (\r -> (r ^._1._1) .== (pgInt4 1)) (\r -> r ^. _1._1)
                              , nfIO $ queryWrapper_  (Proxy :: Proxy (PGT.Only Int)) conn ([qc|SELECT narrow_table.id FROM narrow_table LEFT OUTER JOIN narrow_table2 ON narrow_table.id=narrow_table2.id WHERE narrow_table.id=1|]))
-                           , ( "narrowQueryLefttJoin/Select1"
+                           , ( "narrowQueryLefttJoin/CompleteRow"
                              , nfIO $ runQueryS conn $ prepareQueryQ (Proxy :: Proxy (NarrowTable, NarrowTableMaybe)) narrowTableLeftJoin (\r -> (r ^._1._1) .== (pgInt4 1)) Prelude.id
                              , nfIO $ queryWrapper_ (Proxy :: Proxy (NarrowTable, NarrowTableMaybe)) conn ([qc|SELECT * FROM narrow_table LEFT OUTER JOIN narrow_table2 ON narrow_table.id=narrow_table2.id WHERE narrow_table.id=1|]))
                            ]
