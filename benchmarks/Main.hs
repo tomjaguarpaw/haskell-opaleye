@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -32,6 +33,7 @@ import Text.InterpolatedString.Perl6 (qc)
 import Data.List as DL
 import Criterion.Types
 import qualified System.Random as R
+import Data.Int
 
 truncateTable :: PGS.Connection -> String -> IO ()
 truncateTable conn tname = void $ PGS.execute_ conn ([qc|TRUNCATE TABLE {tname}|])
@@ -101,25 +103,40 @@ main = do
 
   -- nestedFilter <- forM [1..5] (const pkRangeFilter)
 
+  [(minId :: Int, maxId :: Int)] <- PGS.query_ conn "SELECT min(id), max(id) from narrow_table"
+
   let runQueryBenchmarks = [ ( "narrowTable/findBySelect1"
-                             , nfIO $ runQueryS conn $ prepareQueryT (Proxy :: Proxy Int) narrowTable pkFilter (\r -> r ^. _1)
-                             , nfIO $ queryWrapper_ (Proxy :: Proxy (PGT.Only Int)) conn ([qc|SELECT id FROM narrow_table WHERE id=1|]))
+                             , nfIO $ runQueryS conn =<< prepareQueryT (Proxy :: Proxy Int) narrowTable (\r -> r ^. _1) (pkFilter minId maxId)
+                             , nfIO $ queryWrapper_ (Proxy :: Proxy (PGT.Only Int)) conn =<< (findByPkHand "id" minId maxId))
                            , ( "narrowTable/findByPkCompleteRow"
-                             , nfIO $ runQueryS conn $ prepareQueryT (Proxy :: Proxy NarrowTable) narrowTable pkFilter Prelude.id
-                             , nfIO $ queryWrapper_ (Proxy :: Proxy NarrowTable) conn ([qc|SELECT * FROM narrow_table WHERE id=1|]))
+                             , nfIO $ runQueryS conn =<< prepareQueryT (Proxy :: Proxy NarrowTable) narrowTable Prelude.id (pkFilter minId maxId)
+                             , nfIO $ queryWrapper_ (Proxy :: Proxy NarrowTable) conn =<< (findByPkHand "*" minId maxId))
                            , ( "narrowQueryLefttJoin/Select1"
                              , nfIO $ runQueryS conn $ prepareQueryQ (Proxy :: Proxy Int) narrowTableLeftJoin (\r -> (r ^._1._1) .== (pgInt4 1)) (\r -> r ^. _1._1)
                              , nfIO $ queryWrapper_  (Proxy :: Proxy (PGT.Only Int)) conn ([qc|SELECT narrow_table.id FROM narrow_table LEFT OUTER JOIN narrow_table2 ON narrow_table.id=narrow_table2.id WHERE narrow_table.id=1|]))
                            , ( "narrowQueryLefttJoin/CompleteRow"
                              , nfIO $ runQueryS conn $ prepareQueryQ (Proxy :: Proxy (NarrowTable, NarrowTableMaybe)) narrowTableLeftJoin (\r -> (r ^._1._1) .== (pgInt4 1)) Prelude.id
                              , nfIO $ queryWrapper_ (Proxy :: Proxy (NarrowTable, NarrowTableMaybe)) conn ([qc|SELECT * FROM narrow_table LEFT OUTER JOIN narrow_table2 ON narrow_table.id=narrow_table2.id WHERE narrow_table.id=1|]))
+                           , ( "narrowQueryLefttJoin3/CompleteRow"
+                             , nfIO $ runQueryS conn $ prepareQueryQ (Proxy :: Proxy ((NarrowTable, NarrowTableMaybe), NarrowTableMaybe))
+                               narrowTableLeftJoin3 (\r -> (r ^. _1._1._1) .== (pgInt4 1)) Prelude.id
+                             , nfIO $ queryWrapper_ (Proxy :: Proxy (NarrowTable, NarrowTableMaybe, NarrowTableMaybe)) conn ([qc|SELECT * FROM narrow_table n1 LEFT OUTER JOIN narrow_table2 n2 ON n1.id=n2.id LEFT JOIN narrow_table2 n3 ON n1.id=n3.id WHERE n1.id=1|]))
+                           , ( "narrowQueryLefttJoinF/CompleteRow"
+                             , nfIO $ runQueryS conn $ prepareQueryQ (Proxy :: Proxy (NarrowTable, NarrowTable)) narrowTableLeftJoinF (\r -> (r ^._1._1) .== (pgInt4 1)) Prelude.id
+                             , nfIO $ queryWrapper_ (Proxy :: Proxy (NarrowTable, NarrowTableMaybe)) conn narrowTableLeftJoinFHand)
+                           , ( "narrowQuery/Limit-Offset/CompleteRow"
+                             , nfIO (runQueryS conn =<< limitOffsetQ minId maxId)
+                             , nfIO $ queryWrapper_ (Proxy :: Proxy NarrowTable) conn =<< limitOffsetQHand minId maxId)
+                           , ( "narrowQuery/groupBy/CompleteRow"
+                             , nfIO (runQueryS conn =<< groupByQ minId maxId)
+                             , nfIO $ queryWrapper_ (Proxy :: Proxy (Int, Int, Int64)) conn =<< groupByQHand minId maxId)
                            ]
 
   defaultMain
    [
     bgroup "runQuery" $ (flip DL.map) runQueryBenchmarks $ \(bname, opaleyeQuery, handQuery) -> bgroup bname
                                                                                                 [ bench "opaleye" opaleyeQuery
-                                                                                                , bench "handwritten" opaleyeQuery
+                                                                                                , bench "handwritten" handQuery
                                                                                                 ]
     ]
 
@@ -177,6 +194,9 @@ instance ( NFData a1
 instance {-# OVERLAPS #-} FR.FromRow (NarrowTable, NarrowTableMaybe) where
   fromRow = (,) <$> FR.fromRow <*> FR.fromRow
 
+instance {-# OVERLAPS #-} FR.FromRow (NarrowTable, NarrowTableMaybe, NarrowTableMaybe) where
+  fromRow = (,,) <$> FR.fromRow <*> FR.fromRow <*> FR.fromRow
+
 nestQuery :: [cols -> Column PGBool]
           -> Query cols
           -> Query cols
@@ -186,8 +206,13 @@ nestQuery (predicate:predicates) q = nestQuery predicates $ proc () -> do
   restrict -< (predicate r)
   returnA -< r
 
-pkFilter :: Field1 r r (Column PGInt4) (Column PGInt4) => r -> Column PGBool
-pkFilter r = (r ^. _1) .== (pgInt4 1)
+pkFilter :: Field1 r r (Column PGInt4) (Column PGInt4)
+         => Int
+         -> Int
+         -> IO (r -> Column PGBool)
+pkFilter minId maxId = do
+  pk <- R.randomRIO (minId, maxId)
+  pure $ \r -> (r ^. _1) .== (pgInt4 pk)
 
 pkRangeFilter :: Field1 r r (Column PGInt4) (Column PGInt4)
               => IO (r -> Column PGBool)
@@ -219,13 +244,15 @@ queryBuilderQ q filterFn selectorFn = proc () -> do
 
 
 prepareQueryT :: ( D.Default QueryRunner cols haskells
-                     , (D.Default Unpackspec pgr pgr))
-                  => Proxy haskells
-                  -> Table pgw pgr
-                  -> (pgr -> Column PGBool)
-                  -> (pgr -> cols)
-                  -> (Maybe PGS.Query, FR.RowParser haskells)
-prepareQueryT _ tbl filterFn selectorFn = OR.prepareQuery D.def $ queryBuilderT tbl filterFn selectorFn
+                 , (D.Default Unpackspec pgr pgr))
+              => Proxy haskells
+              -> Table pgw pgr
+              -> (pgr -> cols)
+              -> IO (pgr -> Column PGBool)
+              -> IO (Maybe PGS.Query, FR.RowParser haskells)
+prepareQueryT _ tbl selectorFn filterFnIO = do
+  filterFn <- filterFnIO
+  pure $ OR.prepareQuery D.def $ queryBuilderT tbl filterFn selectorFn
 
 runQueryS :: PGS.Connection
           -> (Maybe PGS.Query, FR.RowParser haskells)
@@ -249,9 +276,73 @@ narrowTableLeftJoin = O.leftJoin
   narrowTable2Q
   (\(r1, r2) -> (r1 ^. _1) .== (r2 ^. _1))
 
+narrowTableLeftJoin3 :: Query ((NarrowTablePG, NarrowTablePGNullable), NarrowTablePGNullable)
+narrowTableLeftJoin3 = O.leftJoin
+  narrowTableLeftJoin
+  narrowTable2Q
+  (\ ((a1, _), b1) -> (a1 ^. _1) .== (b1 ^. _1))
+
+narrowTableLeftJoinF :: Query (NarrowTablePG, NarrowTablePG)
+narrowTableLeftJoinF = O.leftJoinF
+  (\r1 r2 -> (r1, r2))
+  (\r1 -> (r1, (pgInt4 0, pgStrictText "not found", pgStrictText "not found", pgStrictText "not found", pgStrictText "not found")))
+  (\r1 r2 -> (r1 ^. _1) .== (r2 ^. _1))
+  narrowTableQ
+  narrowTable2Q
+
+narrowTableLeftJoinFHand = ([qc|
+SELECT
+    n1.*
+  , coalesce(n2.id, 0)
+  , coalesce(n2.col1, 'not found')
+  , coalesce(n2.col2, 'not found')
+  , coalesce(n2.col3, 'not found')
+  , coalesce(n2.col4, 'not found')
+  FROM narrow_table n1
+  LEFT OUTER JOIN narrow_table2 n2 ON n1.id=n2.id
+  WHERE n1.id=1
+|])
+
+limitOffsetQ :: Int -> Int -> IO (Maybe PGS.Query, FR.RowParser NarrowTable)
+limitOffsetQ minId maxId = do
+  let mean = (minId + maxId) `div` 2
+  o <- R.randomRIO (0, maxId - minId)
+  pure $ OR.prepareQuery D.def $ O.limit 10 $  O.offset o $ proc () -> do
+    r <- narrowTableQ -< ()
+    restrict -< ((r ^. _1) .> (pgInt4 mean))
+    returnA -< r
+
+limitOffsetQHand :: Int -> Int -> IO PGS.Query
+limitOffsetQHand minId maxId = do
+  let mean = (minId + maxId) `div` 2
+  o <- R.randomRIO (0, maxId - minId)
+  pure ([qc|SELECT * from narrow_table WHERE id>{mean} limit 10 offset {o}|])
+
 queryWrapper_ :: (FR.FromRow a)
               => Proxy a
               -> PGS.Connection
               -> PGS.Query
               -> IO [a]
 queryWrapper_ _ conn q = PGS.query_ conn q
+
+findByPkHand :: String -> Int -> Int -> IO PGS.Query
+findByPkHand cols minId maxId = do
+  pk <- R.randomRIO (minId, maxId)
+  pure $ ([qc|SELECT {cols} FROM narrow_table WHERE id={pk}|])
+
+
+groupByQ :: Int -> Int -> IO (Maybe PGS.Query, FR.RowParser (Int, Int, Int64))
+groupByQ minId maxId = do
+  let mean = (minId + maxId) `div` 2
+  o <- R.randomRIO (minId, maxId)
+  pure $ OR.prepareQuery D.def $ limit 500 $ offset o $ O.aggregate (PP.p3 (O.groupBy, O.max, O.countStar)) $ proc () -> do
+    r <- narrowTableQ -< ()
+    restrict -< ((r ^. _1) .> (pgInt4 mean))
+    -- returnA -< ((r ^. _1) `O.rem_` (pgInt4 o), r ^. _1, r ^. _1)
+    returnA -< (r ^. _1, r ^. _1, r ^. _1)
+
+groupByQHand :: Int -> Int -> IO PGS.Query
+groupByQHand minId maxId = do
+  let mean = (minId + maxId) `div` 2
+  o :: Int <- R.randomRIO (minId, maxId)
+  pure $ ([qc|SELECT id, max(id), count(*) FROM narrow_table WHERE id>{mean} GROUP BY 1 LIMIT 500 OFFSET {o}|])
