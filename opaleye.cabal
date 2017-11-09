@@ -184,4 +184,5 @@ test-suite benchmark
                , dotenv
                , deepseq
                , text
+               , lens
   ghc-options: -Wall
