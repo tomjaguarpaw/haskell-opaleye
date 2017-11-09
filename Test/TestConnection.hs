@@ -4,7 +4,7 @@ import qualified Database.PostgreSQL.Simple as PGS
 import System.Environment
 import qualified Configuration.Dotenv as Dotenv
 import qualified Data.String as String
-import Control.Applicative ((<|>))
+import Control.Applicative ((<|>), pure)
 import Prelude
 
 getTestDbConnection :: IO PGS.Connection
