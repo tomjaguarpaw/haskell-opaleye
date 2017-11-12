@@ -49,7 +49,8 @@ matchNullable replacement f x = C.unsafeIfThenElse (isNull x) replacement
 -- | If the @Column (Nullable a)@ is NULL then return the provided
 -- @Column a@ otherwise return the underlying @Column a@.
 --
--- The Opaleye equivalent of 'Data.Maybe.fromMaybe'.
+-- The Opaleye equivalent of 'Data.Maybe.fromMaybe' and very similar
+-- to PostgreSQL's @COALESCE@.
 fromNullable :: Column a -> Column (Nullable a) -> Column a
 fromNullable = flip matchNullable id
 
