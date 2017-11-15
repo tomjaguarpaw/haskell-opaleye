@@ -785,6 +785,14 @@ testJsonGetFieldText dataQuery = it "" $ testH q (`shouldBe` expected)
             Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "c"
         expected :: [Maybe T.Text]
         expected = [Just "21"]
+      
+-- Special Test for Github Issue #350 
+testRestrictWithJsonOp :: (O.PGIsJson a) => Query (Column a) -> Test
+testRestrictWithJsonOp dataQuery = it "restricts the rows returned by checking equality with a value extracted using JSON operator" $ testH query (`shouldBe` table8data)
+  where query = dataQuery >>> proc col1 -> do
+          t <- table8Q -< ()
+          O.restrict -< (O.toNullable col1 O..->> O.pgStrictText "c") .== O.toNullable (O.pgStrictText "21")
+          Arr.returnA -< t
 
 -- Test opaleye's equivalent of c1->'a'->2
 testJsonGetArrayValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
@@ -1015,6 +1023,7 @@ main = do
         testJsonGetArrayText    table8Q
         testJsonGetPathValue    table8Q
         testJsonGetPathText     table8Q
+        testRestrictWithJsonOp  table8Q
       describe "uncat" $ do
         testKeywordColNames
         testInsertSerial
