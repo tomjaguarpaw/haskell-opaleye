@@ -115,7 +115,7 @@ defaultSqlExpr gen expr =
                            in case t of
                                 UnOpFun     -> FunSqlExpr op' [e']
                                 UnOpPrefix  -> PrefixSqlExpr op' (ParensSqlExpr e')
-                                UnOpPostfix -> PostfixSqlExpr op' e'
+                                UnOpPostfix -> PostfixSqlExpr op' (ParensSqlExpr e')
       -- TODO: The current arrangement whereby the delimeter parameter
       -- of string_agg is in the AggrStringAggr constructor, but the
       -- parameter being aggregated is not, seems unsatisfactory
