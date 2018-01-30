@@ -145,7 +145,7 @@ test-suite tutorial
     base >= 4 && < 5,
     postgresql-simple,
     profunctors,
-    product-profunctors >= 0.6,
+    product-profunctors >= 0.9,
     time,
     opaleye
   ghc-options: -Wall

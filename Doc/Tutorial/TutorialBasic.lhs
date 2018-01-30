@@ -1,12 +1,15 @@
 > {-# LANGUAGE Arrows #-}
+> {-# LANGUAGE ConstraintKinds #-}
+> {-# LANGUAGE DeriveGeneric #-}
 > {-# LANGUAGE FlexibleContexts #-}
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
-> {-# LANGUAGE TemplateHaskell #-}
+> {-# LANGUAGE UndecidableInstances #-}
 >
 > module TutorialBasic where
 >
 > import           Prelude hiding (sum)
+> import           GHC.Generics (Generic)
 >
 > import           Opaleye (Field, FieldNullable, matchNullable, isNull,
 >                          Table, table, tableField, selectTable,
@@ -17,9 +20,9 @@
 >                          showSqlForPostgres, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8, SqlBool)
 >
-> import           Data.Profunctor.Product (p2, p3)
-> import           Data.Profunctor.Product.Default (Default)
-> import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
+> import           Data.Profunctor.Product.Adaptor (genericAdaptor, Unzippable)
+> import           Data.Profunctor.Product.Default (Default, DefaultConstraints)
+>
 > import           Data.Time.Calendar (Day)
 >
 > import           Control.Arrow (returnA)
@@ -47,10 +50,9 @@ simple.  You specify the types of the columns, the name of the table
 and the names of the columns in the underlying database, and whether
 the columns are required or optional.
 
-(Note: This simple syntax is supported by an extra combinator that
-describes the shape of the container that you are storing the columns
-in.  In the first example we are using a tuple of size 3 and the
-combinator is called `p3`.  We'll see examples of others later.)
+(Note: This simple syntax is supported by an extra combinator called
+'genericAdaptor' that describes the shape of the container that you
+are storing the columns in.)
 
 The `Table` type constructor has two arguments.  The first one tells
 us what columns we can write to the table and the second what columns
@@ -61,9 +63,9 @@ manipulation tutorial you can see an example of when they might differ.
 
 > personTable :: Table (Field SqlText, Field SqlInt4, Field SqlText)
 >                      (Field SqlText, Field SqlInt4, Field SqlText)
-> personTable = table "personTable" (p3 ( tableField "name"
->                                       , tableField "age"
->                                       , tableField "address" ))
+> personTable = table "personTable" (genericAdaptor ( tableField "name"
+>                                                   , tableField "age"
+>                                                   , tableField "address" ))
 
 By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
@@ -125,26 +127,27 @@ in particular places, as you almost always will, you can use type
 synonyms.  For example:
 
 > data Birthday' a b = Birthday { bdName :: a, bdDay :: b }
+>    deriving Generic
+>
+> instance Unzippable Birthday'
+>
+> instance DefaultConstraints p (Birthday' a b) (Birthday' a' b')
+>     => Default p (Birthday' a b) (Birthday' a' b')
+>
 > type Birthday = Birthday' String Day
 > type BirthdayField = Birthday' (Field SqlText) (Field SqlDate)
 
 To get user defined types to work with the typeclass magic they must
 have instances defined for them.  The instances are derivable with
-Template Haskell.
-
-> $(makeAdaptorAndInstance "pBirthday" ''Birthday')
-
-You don't have to use Template Haskell, but it just saves us writing
-things out by hand here.  If you want to avoid Template Haskell see
-[Data.Profunctor.Product.TH](https://hackage.haskell.org/package/product-profunctors/docs/Data-Profunctor-Product-TH.html).
+Generics.
 
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
 > birthdayTable :: Table BirthdayField BirthdayField
 > birthdayTable = table "birthdayTable"
->                        (pBirthday Birthday { bdName = tableField "name"
->                                            , bdDay  = tableField "birthday" })
+>                        (genericAdaptor Birthday { bdName = tableField "name"
+>                                                 , bdDay  = tableField "birthday" })
 >
 > birthdaySelect :: Select BirthdayField
 > birthdaySelect = selectTable birthdayTable
@@ -382,8 +385,8 @@ recorded as NULL then that means they have no boss!
 
 > employeeTable :: Table (Field SqlText, FieldNullable SqlText)
 >                        (Field SqlText, FieldNullable SqlText)
-> employeeTable = table "employeeTable" (p2 ( tableField "name"
->                                           , tableField "boss" ))
+> employeeTable = table "employeeTable" (genericAdaptor ( tableField "name"
+>                                                       , tableField "boss" ))
 
 We can write a query that returns as string indicating for each
 employee whether they have a boss.
@@ -574,8 +577,12 @@ this information with the following datatype.
 >                                , location :: c
 >                                , quantity :: d
 >                                , radius   :: e }
+>     deriving Generic
 >
-> $(makeAdaptorAndInstance "pWidget" ''Widget)
+> instance Unzippable Widget
+>
+> instance DefaultConstraints p (Widget a b c d e) (Widget a b c d e)
+>     => Default p (Widget a b c d e) (Widget a b c d e)
 
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
@@ -585,11 +592,11 @@ strings, but in practice they might have been a different data type.
 >                      (Widget (Field SqlText) (Field SqlText) (Field SqlText)
 >                              (Field SqlInt4) (Field SqlFloat8))
 > widgetTable = table "widgetTable"
->                      (pWidget Widget { style    = tableField "style"
->                                      , color    = tableField "color"
->                                      , location = tableField "location"
->                                      , quantity = tableField "quantity"
->                                      , radius   = tableField "radius" })
+>                      (genericAdaptor Widget { style    = tableField "style"
+>                                             , color    = tableField "color"
+>                                             , location = tableField "location"
+>                                             , quantity = tableField "quantity"
+>                                             , radius   = tableField "radius" })
 
 
 Say we want to group by the style and color of widgets, calculating
@@ -599,11 +606,11 @@ how to do this.
 
 > aggregateWidgets :: Select (Widget (Field SqlText) (Field SqlText) (Field SqlInt8)
 >                                   (Field SqlInt4) (Field SqlFloat8))
-> aggregateWidgets = aggregate (pWidget Widget { style    = groupBy
->                                              , color    = groupBy
->                                              , location = count
->                                              , quantity = sum
->                                              , radius   = avg })
+> aggregateWidgets = aggregate (genericAdaptor Widget { style    = groupBy
+>                                                     , color    = groupBy
+>                                                     , location = count
+>                                                     , quantity = sum
+>                                                     , radius   = avg })
 >                              (selectTable widgetTable)
 
 The generated SQL is
@@ -742,8 +749,12 @@ and integer quantity of goods.
 > data Warehouse' a b c = Warehouse { wId       :: a
 >                                   , wLocation :: b
 >                                   , wNumGoods :: c }
+>    deriving Generic
 >
-> $(makeAdaptorAndInstance "pWarehouse" ''Warehouse')
+> instance Unzippable Warehouse'
+>
+> instance DefaultConstraints p (Warehouse' a b c) (Warehouse' a' b' c')
+>     => Default p (Warehouse' a b c) (Warehouse' a' b' c')
 
 We could represent the integer ID in Opaleye as a `SqlInt4`
 
@@ -753,9 +764,9 @@ We could represent the integer ID in Opaleye as a `SqlInt4`
 >
 > badWarehouseTable :: Table BadWarehouseField BadWarehouseField
 > badWarehouseTable = table "warehouse_table"
->         (pWarehouse Warehouse { wId       = tableField "id"
->                               , wLocation = tableField "location"
->                               , wNumGoods = tableField "num_goods" })
+>         (genericAdaptor Warehouse { wId       = tableField "id"
+>                                   , wLocation = tableField "location"
+>                                   , wNumGoods = tableField "num_goods" })
 
 but that would expose us to the following sorts of errors, where we
 can meaninglessly relate the warehouse ID with the quantity of goods
@@ -766,8 +777,11 @@ it holds.
 
 On the other hand we can make a newtype for the warehouse ID
 
-> newtype WarehouseId' a = WarehouseId a
-> $(makeAdaptorAndInstance "pWarehouseId" ''WarehouseId')
+> newtype WarehouseId' a = WarehouseId a deriving Generic
+> instance Unzippable WarehouseId'
+>
+> instance DefaultConstraints p (WarehouseId' a) (WarehouseId' a')
+>     => Default p (WarehouseId' a) (WarehouseId' a')
 >
 > type WarehouseIdField = WarehouseId' (Field SqlInt4)
 >
@@ -777,9 +791,9 @@ On the other hand we can make a newtype for the warehouse ID
 >
 > goodWarehouseTable :: Table GoodWarehouseField GoodWarehouseField
 > goodWarehouseTable = table "warehouse_table"
->         (pWarehouse Warehouse { wId       = pWarehouseId (WarehouseId (tableField "id"))
->                               , wLocation = tableField "location"
->                               , wNumGoods = tableField "num_goods" })
+>         (genericAdaptor Warehouse { wId       = genericAdaptor (WarehouseId (tableField "id"))
+>                                   , wLocation = tableField "location"
+>                                   , wNumGoods = tableField "num_goods" })
 
 Now the comparison will not pass the type checker
 
