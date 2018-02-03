@@ -6,7 +6,7 @@
 
 module Opaleye.PGTypes (module Opaleye.PGTypes) where
 
-import           Opaleye.Internal.Column (Column)
+import           Opaleye.Internal.Column (Column, unsafeCoerceColumn)
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.PGTypes as IPT
 
@@ -22,7 +22,7 @@ import qualified Data.ByteString.Lazy as LByteString
 import qualified Data.Time as Time
 import qualified Data.UUID as UUID
 
-import           Data.Int (Int64)
+import           Data.Int (Int8, Int16, Int32, Int64)
 
 import qualified Database.PostgreSQL.Simple.Range as R
 
@@ -38,6 +38,16 @@ instance C.PGNum PGInt8 where
 instance C.PGFractional PGFloat8 where
   pgFromRational = pgDouble . fromRational
 
+instance C.PGNum Int where pgFromInteger    = unsafeCoerceColumn . pgInt4 . fromIntegral
+instance C.PGNum Int8 where pgFromInteger   = unsafeCoerceColumn . pgInt4 . fromIntegral
+instance C.PGNum Int16 where pgFromInteger  = unsafeCoerceColumn . pgInt4 . fromIntegral
+instance C.PGNum Int32 where pgFromInteger  = unsafeCoerceColumn . pgInt4 . fromIntegral
+instance C.PGNum Double where pgFromInteger = unsafeCoerceColumn . pgInt4 . fromIntegral
+instance C.PGNum Float where pgFromInteger  = unsafeCoerceColumn . pgDouble . realToFrac
+
+instance C.PGFractional Float
+instance C.PGFractional Double
+
 instance C.PGIntegral PGInt2
 instance C.PGIntegral PGInt4
 instance C.PGIntegral PGInt8
@@ -47,6 +57,12 @@ instance C.PGString PGText where
 
 instance C.PGString PGCitext where
   pgFromString = pgCiLazyText . CI.mk . LText.pack
+
+instance C.PGString SText.Text where
+  pgFromString = unsafeCoerceColumn . pgString
+
+instance C.PGString LText.Text where
+  pgFromString = unsafeCoerceColumn . pgString
 
 -- * Creating SQL values
 
