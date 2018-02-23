@@ -74,13 +74,13 @@ Limit the results of the given query to the given maximum number of
 items.
 
 /WARNING:/ If you're planning on using limit/offset together please use
-'offset' /before/ you use 'limit'. eg:
+'offset' /before/ you use 'limit', e.g.:
 
 @
-limit 10 $ offset 50 yourQuery
+limit 10 (offset 50 yourQuery)
 @
 
-This is because of how Opaleye nests queries while applying each operator.
+This is because Opaleye applies OFFSET and LIMIT to the query separately.
 The result of the query given above is the following, which will return
 10 rows after skipping the first 50 (probably what you want).
 
@@ -103,8 +103,8 @@ limit n a = Q.simpleQueryArr (O.limit' n . Q.runSimpleQueryArr a)
 Offset the results of the given query by the given amount, skipping
 that many result rows.
 
-/WARNING:/ Please read the documentation of 'limit' before using
-this function.
+/WARNING:/ Please read the documentation of 'limit' before combining
+'offset' with 'limit'.
 -}
 offset :: Int -> Query a -> Query a
 offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)

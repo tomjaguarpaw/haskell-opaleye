@@ -153,7 +153,7 @@ pgRange pgEl start end = C.Column (HPQ.CastExpr (showRangeType ([] :: [b])) $ HP
         oneEl R.PosInfinity   = HPQ.PosInfinity
 
 {-# DEPRECATED showPGType
-    "Use 'showSqlType' instead. 'showSqlType' will be deprecated \
+    "Use 'showSqlType' instead. 'showPGType' will be removed \
     \in version 0.7." #-}
 class IsSqlType pgType where
   showPGType :: proxy pgType -> String

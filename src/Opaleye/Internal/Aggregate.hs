@@ -25,7 +25,7 @@ types by using the operations in "Data.Profunctor.Product".
 An 'Aggregator' corresponds closely to a 'Control.Foldl.Fold' from the
 @foldl@ package.  Whereas an 'Aggregator' @a@ @b@ takes each group of
 type @a@ to a single row of type @b@, a 'Control.Foldl.Fold' @a@ @b@
-takes a list of @a@ and returns a single row of type @b@.
+takes a list of @a@ and returns a single value of type @b@.
 -}
 newtype Aggregator a b = Aggregator
                          (PM.PackMap (Maybe (HPQ.AggrOp, [HPQ.OrderExpr],HPQ.AggrDistinct), HPQ.PrimExpr)

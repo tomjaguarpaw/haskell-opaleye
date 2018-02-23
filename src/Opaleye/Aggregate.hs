@@ -53,7 +53,7 @@ import qualified Opaleye.Join      as J
 
 {-|
 Given a 'Query' producing rows of type @a@ and an 'Aggregator' accepting rows of
-type @a@, apply the aggregator to the results of the query.
+type @a@, apply the aggregator to the query.
 
 If you simply want to count the number of rows in a query you might
 find the 'countRows' function more convenient.

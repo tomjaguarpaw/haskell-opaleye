@@ -71,9 +71,9 @@ offset' n (x, q, t) = (x, PQ.Limit (PQ.OffsetOp n) q, t)
 -- of input columns. Note that this list does not have to contain an entry for
 -- every result in your query: you may exactly order only a subset of results,
 -- if you wish. Rows that are not ordered according to the input list are
--- returned __after__ the ordered results, in the usual order the database would
+-- returned /after/ the ordered results, in the usual order the database would
 -- return them (e.g. sorted by primary key). Exactly-ordered results always come
--- first in a result set. Entries in the input list that are __not__ present in
+-- first in a result set. Entries in the input list that are /not/ present in
 -- result of a query are ignored.
 exact :: [IC.Column b] -> (a -> IC.Column b) -> Order a
 exact xs k = maybe M.mempty go (NL.nonEmpty xs) where
