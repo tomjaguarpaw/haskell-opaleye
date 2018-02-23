@@ -4,7 +4,7 @@
 
 -- | Inserts, updates and deletes
 --
--- Please note that you currently you can only INSERT or UPDATE with
+-- Please note that Opaleye currently only supports INSERT or UPDATE with
 -- constant values, not the result of SELECTS.  That is, you can
 -- generate SQL of the form
 --
