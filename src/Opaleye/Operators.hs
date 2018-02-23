@@ -352,6 +352,6 @@ infix 4 .-|-
 exists :: QueryArr a b -> QueryArr a ()
 exists = restrictExists
 
--- | Identical to 'restrictNoExists'.  Will be deprecated in version 0.7.
+-- | Identical to 'restrictNotExists'.  Will be deprecated in version 0.7.
 notExists :: QueryArr a b -> QueryArr a ()
 notExists = restrictNotExists
