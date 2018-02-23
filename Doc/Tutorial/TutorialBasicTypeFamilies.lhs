@@ -6,25 +6,33 @@
 > {-# LANGUAGE TypeFamilies #-}
 > {-# LANGUAGE EmptyDataDecls #-}
 > {-# LANGUAGE FunctionalDependencies #-}
+> {-# LANGUAGE NoMonomorphismRestriction #-}
+> {-# LANGUAGE DataKinds #-}
+> {-# LANGUAGE TypeOperators #-}
 >
 > module TutorialBasicTypeFamilies where
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye (Column, Nullable,
+> import           Opaleye (Column,
 >                          Table, table, tableColumn, queryTable,
 >                          Query, (.==), aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runQuery,
 >                          showSqlForPostgres, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
-> import           Control.Applicative     ((<$>), (<*>), Applicative)
+> import qualified Opaleye              as O
+> import qualified Opaleye.Map          as M
+> import           Opaleye.TypeFamilies (O, H, NN, Req, Nulls, W,
+>                                        TableField, IMap, F,
+>                                        (:<$>), (:<*>))
 >
 > import qualified Data.Profunctor         as P
 > import qualified Data.Profunctor.Product as PP
 > import           Data.Profunctor.Product (p3)
 > import           Data.Profunctor.Product.Default (Default)
 > import qualified Data.Profunctor.Product.Default as D
+>
 > import           Data.Time.Calendar (Day)
 >
 > import qualified Database.PostgreSQL.Simple as PGS
@@ -47,8 +55,7 @@ features may be added later according to demand.
 
 A table is defined with the `table` function.  The syntax is
 simple.  You specify the types of the columns, the name of the table
-and the names of the columns in the underlying database, and whether
-the columns are required or optional.
+and the names of the columns in the underlying database.
 
 (Note: This simple syntax is supported by an extra combinator that
 describes the shape of the container that you are storing the columns
@@ -57,10 +64,8 @@ combinator is called `p3`.  We'll see examples of others later.)
 
 The `Table` type constructor has two arguments.  The first one tells
 us what columns we can write to the table and the second what columns
-we can read from the table.  In this document we will always make all
-columns required, so the write and read types will be the same.  All
-`Table` types will have the same type argument repeated twice.  In the
-manipulation tutorial you can see an example of when they might differ.
+we can read from the table.  In this case all columns are required, so
+the write and read types will be the same.
 
 > personTable :: Table (Column SqlText, Column SqlInt4, Column SqlText)
 >                      (Column SqlText, Column SqlInt4, Column SqlText)
@@ -126,32 +131,6 @@ to be polymorphic in all their fields.  In fact there's a nice scheme
 using type families that reduces boiler plate and has always been
 compatible with Opaleye!
 
-> type family Field      f a b n
-> type family TableField f a b n req
->
-> data H
-> data O
-> data Nulls
-> data W
->
-> data NN
-> data N
->
-> data Req
-> data Opt
-> 
-> type instance Field H h o NN = h
-> type instance Field H h o N  = Maybe h
-> type instance Field O h o NN = Column o
-> type instance Field O h o N  = Column (Nullable o)
-> type instance Field Nulls h o n = Column (Nullable o)
->
-> type instance TableField H     h o n b   = Field H h o n
-> type instance TableField O     h o n b   = Field O h o n
-> type instance TableField W     h o n Req = Field O h o n
-> type instance TableField W     h o n Opt = Maybe (Field O h o n)
-> type instance TableField Nulls h o n b   = Field Nulls h o n
->
 > -- Cryptic remark: If we were willing to only support 7.8 and up we
 > -- could even have a symbol field containing the table name and use
 > -- https://hackage.haskell.org/package/base-4.8.2.0/docs/GHC-TypeLits.html#v:symbolVal
@@ -159,21 +138,35 @@ compatible with Opaleye!
 > data Birthday f = Birthday { bdName :: TableField f String SqlText NN Req
 >                            , bdDay  :: TableField f Day    SqlDate NN Req
 >                            }
->
+
+This instance, adaptor and type family are fully derivable by Template
+Haskell or generics but I haven't got round to writing that yet.
+Please volunteer to do that if you can.
+
 > instance ( PP.ProductProfunctor p
->          , Default p (TableField a String SqlText NN Req) (TableField b String SqlText NN Req)
->          , Default p (TableField a Day    SqlDate NN Req) (TableField b Day    SqlDate NN Req)) =>
+>          , Default p (TableField a String SqlText NN Req)
+>                      (TableField b String SqlText NN Req)
+>          , Default p (TableField a Day    SqlDate NN Req)
+>                      (TableField b Day    SqlDate NN Req)) =>
 >   Default p (Birthday a) (Birthday b) where
->   def = Birthday PP.***$ P.lmap bdName D.def
->                  PP.**** P.lmap bdDay  D.def
+>   def = pBirthday (Birthday D.def D.def)
+>
+> pBirthday :: PP.ProductProfunctor p
+>           => Birthday (p :<$> a :<*> b)
+>           -> p (Birthday a) (Birthday b)
+> pBirthday (Birthday a b) = Birthday PP.***$ P.lmap bdName a
+>                                     PP.**** P.lmap bdDay b
+>
+> type instance M.Map g (Birthday (F f)) = Birthday (F (IMap g f))
 
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
 > birthdayTable :: Table (Birthday W) (Birthday O)
-> birthdayTable = table "birthdayTable"
->                        (Birthday <$> P.lmap bdName (tableColumn "name")
->                                  <*> P.lmap bdDay  (tableColumn "birthday"))
+> birthdayTable = table "birthdayTable" $ pBirthday $ Birthday {
+>     bdName = tableColumn "name"
+>   , bdDay  = tableColumn "birthday"
+> }
 >
 > birthdayQuery :: Query (Birthday O)
 > birthdayQuery = queryTable birthdayTable
@@ -206,35 +199,48 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data Widget f = Widget { style    :: Field f String SqlText   NN
->                        , color    :: Field f String SqlText   NN
->                        , location :: Field f String SqlText   NN
->                        , quantity :: Field f Int    SqlInt4   NN
->                        , radius   :: Field f Double SqlFloat8 NN
+> data Widget f = Widget { style    :: TableField f String SqlText   NN Req
+>                        , color    :: TableField f String SqlText   NN Req
+>                        , location :: TableField f String SqlText   NN Req
+>                        , quantity :: TableField f Int    SqlInt4   NN Req
+>                        , radius   :: TableField f Double SqlFloat8 NN Req
 >                        }
->
+
+This instance, adaptor and type family are fully derivable but no
+one's implemented the Template Haskell or generics to do that yet.
+
 > instance ( PP.ProductProfunctor p
->          , Default p (Field a String SqlText NN)   (Field b String SqlText NN)
->          , Default p (Field a Int    SqlInt4 NN)   (Field b Int    SqlInt4 NN)
->          , Default p (Field a Double SqlFloat8 NN) (Field b Double SqlFloat8 NN)) =>
+>          , Default p (TableField a String SqlText NN Req)
+>                      (TableField b String SqlText NN Req)
+>          , Default p (TableField a Int    SqlInt4 NN Req)
+>                      (TableField b Int    SqlInt4 NN Req)
+>          , Default p (TableField a Double SqlFloat8 NN Req)
+>                      (TableField b Double SqlFloat8 NN Req)) =>
 >   Default p (Widget a) (Widget b) where
->   def = Widget PP.***$ P.lmap style    D.def
->                PP.**** P.lmap color    D.def
->                PP.**** P.lmap location D.def
->                PP.**** P.lmap quantity D.def
->                PP.**** P.lmap radius   D.def
+>   def = pWidget (Widget D.def D.def D.def D.def D.def)
+>
+> pWidget :: PP.ProductProfunctor p
+>         => Widget (p :<$> a :<*> b)
+>         -> p (Widget a) (Widget b)
+> pWidget (Widget a b c d e) = Widget PP.***$ P.lmap style a
+>                                     PP.**** P.lmap color b
+>                                     PP.**** P.lmap location c
+>                                     PP.**** P.lmap quantity d
+>                                     PP.**** P.lmap radius e
+>
+> type instance M.Map g (Widget (F f)) = Widget (F (IMap g f))
 
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
 
-> widgetTable :: Table (Widget O) (Widget O)
-> widgetTable = table "widgetTable"
->                      (Widget <$> P.lmap style    (tableColumn "style")
->                              <*> P.lmap color    (tableColumn "color")
->                              <*> P.lmap location (tableColumn "location")
->                              <*> P.lmap quantity (tableColumn "quantity")
->                              <*> P.lmap radius   (tableColumn "radius"))
-
+> widgetTable :: Table (Widget W) (Widget O)
+> widgetTable = table "widgetTable" $ pWidget $ Widget {
+>     style    = tableColumn "style"
+>   , color    = tableColumn "color"
+>   , location = tableColumn "location"
+>   , quantity = tableColumn "quantity"
+>   , radius   = tableColumn "radius"
+> }
 
 Say we want to group by the style and color of widgets, calculating
 how many (possibly duplicated) locations there are, the total number
@@ -286,25 +292,14 @@ GROUP BY style, color
 
 Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
-"adaptor" to specify how columns are aggregated.  Note that this is
-yet another example of avoiding a headache by keeping your datatype
-fully polymorphic, because the 'count' aggregator changes a 'Column
-String' into a 'Column Int64'.
+"adaptor" to specify how columns are aggregated.
 
 Outer join
 ==========
 
-Opaleye supports left joins.  (Full outer joins and right joins are
-left to be added as a simple starter project for a new Opaleye
-contributer!)
-
-Because left joins can change non-nullable columns into nullable
-columns we have to make sure the type of the output supports
-nullability.  We introduce the following type synonym for this
-purpose, which is just a notational convenience.
-
-A left join is expressed by specifying the two tables to join and the
-join condition.
+Opaleye supports outer joins (i.e. left joins, right joins and full
+outer joins).  An outer join is expressed by specifying the two tables
+to join and the join condition.
 
 > personBirthdayLeftJoin :: Query ((Column SqlText, Column SqlInt4, Column SqlText),
 >                                  Birthday Nulls)
@@ -356,17 +351,16 @@ FROM (SELECT name as name0,
       FROM birthdayTable) as T1
 ON name0 = name1
 
+Types of joins are inferrable in new versions of Opaleye.  Here is a
+(rather silly) example.
 
-A comment about type signatures
--------------------------------
-
-We mentioned that Opaleye uses typeclass magic behind the scenes to
-avoid boilerplate.  One consequence of this is that the compiler
-cannot infer types in some cases. Use of `leftJoin` is one of those
-cases.  You will generally need to provide a type signature yourself.
-If you see the compiler complain that it cannot determine a `Default`
-instance then specify more types.
-
+> typeInferred =
+>     O.fullJoinInferrable (O.fullJoinInferrable
+>                     birthdayQuery
+>                     (queryTable widgetTable)
+>                     (const (O.pgBool True)))
+>                birthdayQuery
+>                (const (O.pgBool True))
 
 Running queries on Postgres
 ===========================

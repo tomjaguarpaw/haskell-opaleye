@@ -22,6 +22,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Opaleye.Join where
 
@@ -29,8 +30,12 @@ import qualified Opaleye.Field               as F
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Join as J
 import qualified Opaleye.Internal.PrimQuery as PQ
+import qualified Opaleye.Map as Map
 import qualified Opaleye.Select   as S
 import qualified Opaleye.SqlTypes as T
+import qualified Opaleye.PGTypes  as T
+import           Opaleye.QueryArr (Query)
+import           Opaleye.Column (Column)
 
 import qualified Data.Profunctor.Product.Default as D
 
@@ -112,3 +117,48 @@ fullJoinExplicit :: U.Unpackspec fieldsL fieldsL
                  -> S.Select (nullableFieldsL, nullableFieldsR)
 fullJoinExplicit uA uB nullmakerA nullmakerB =
   J.joinExplicit uA uB (J.toNullable nullmakerA) (J.toNullable nullmakerB) PQ.FullJoin
+
+leftJoinInferrable :: (D.Default U.Unpackspec columnsL columnsL,
+                       D.Default U.Unpackspec columnsR columnsR,
+                       D.Default J.NullMaker columnsR nullableColumnsR,
+                       Map.Map J.Nulled columnsR ~ nullableColumnsR)
+                   => Query columnsL
+                   -- ^ Left query
+                   -> Query columnsR
+                   -- ^ Right query
+                   -> ((columnsL, columnsR) -> Column T.PGBool)
+                   -- ^ Condition on which to join
+                   -> Query (columnsL, nullableColumnsR)
+                   -- ^ Left join
+leftJoinInferrable = leftJoin
+
+rightJoinInferrable :: (D.Default U.Unpackspec columnsL columnsL,
+                        D.Default U.Unpackspec columnsR columnsR,
+                        D.Default J.NullMaker columnsL nullableColumnsL,
+                        Map.Map J.Nulled columnsL ~ nullableColumnsL)
+                    => Query columnsL
+                    -- ^ Left query
+                    -> Query columnsR
+                    -- ^ Right query
+                    -> ((columnsL, columnsR) -> Column T.PGBool)
+                    -- ^ Condition on which to join
+                    -> Query (nullableColumnsL, columnsR)
+                    -- ^ Right join
+rightJoinInferrable = rightJoin
+
+
+fullJoinInferrable  :: (D.Default U.Unpackspec columnsL columnsL,
+                        D.Default U.Unpackspec columnsR columnsR,
+                        D.Default J.NullMaker columnsL nullableColumnsL,
+                        D.Default J.NullMaker columnsR nullableColumnsR,
+                        Map.Map J.Nulled columnsL ~ nullableColumnsL,
+                        Map.Map J.Nulled columnsR ~ nullableColumnsR)
+                    => Query columnsL
+                    -- ^ Left query
+                    -> Query columnsR
+                    -- ^ Right query
+                    -> ((columnsL, columnsR) -> Column T.PGBool)
+                    -- ^ Condition on which to join
+                    -> Query (nullableColumnsL, nullableColumnsR)
+                    -- ^ Full outer join
+fullJoinInferrable = fullJoin

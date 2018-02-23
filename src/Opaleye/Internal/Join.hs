@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Opaleye.Internal.Join where
 
@@ -11,6 +12,8 @@ import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.PGTypes as T
 import qualified Opaleye.Column as C
+import qualified Opaleye.Map     as Map
+import qualified Opaleye.Internal.TypeFamilies as TF
 
 import qualified Control.Applicative as A
 
@@ -107,3 +110,32 @@ instance PP.ProductProfunctor NullMaker where
   (***!) = PP.defaultProfunctorProduct
 
 --
+
+data Nulled
+
+type instance TF.IMap Nulled TF.OT     = TF.NullsT
+type instance TF.IMap Nulled TF.NullsT = TF.NullsT
+
+-- It's quite unfortunate that we have to write these out by hand
+-- until we probably do nullability as a distinction between
+--
+-- Column (Nullable a)
+-- Column (NonNullable a)
+
+type instance Map.Map Nulled (Column (Nullable a)) = Column (Nullable a)
+
+type instance Map.Map Nulled (Column T.PGInt4) = Column (Nullable T.PGInt4)
+type instance Map.Map Nulled (Column T.PGInt8) = Column (Nullable T.PGInt8)
+type instance Map.Map Nulled (Column T.PGText) = Column (Nullable T.PGText)
+type instance Map.Map Nulled (Column T.PGFloat8) = Column (Nullable T.PGFloat8)
+type instance Map.Map Nulled (Column T.PGBool) = Column (Nullable T.PGBool)
+type instance Map.Map Nulled (Column T.PGUuid) = Column (Nullable T.PGUuid)
+type instance Map.Map Nulled (Column T.PGBytea) = Column (Nullable T.PGBytea)
+type instance Map.Map Nulled (Column T.PGText) = Column (Nullable T.PGText)
+type instance Map.Map Nulled (Column T.PGDate) = Column (Nullable T.PGDate)
+type instance Map.Map Nulled (Column T.PGTimestamp) = Column (Nullable T.PGTimestamp)
+type instance Map.Map Nulled (Column T.PGTimestamptz) = Column (Nullable T.PGTimestamptz)
+type instance Map.Map Nulled (Column T.PGTime) = Column (Nullable T.PGTime)
+type instance Map.Map Nulled (Column T.PGCitext) = Column (Nullable T.PGCitext)
+type instance Map.Map Nulled (Column T.PGJson) = Column (Nullable T.PGJson)
+type instance Map.Map Nulled (Column T.PGJsonb) = Column (Nullable T.PGJsonb)

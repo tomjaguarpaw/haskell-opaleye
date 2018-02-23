@@ -24,7 +24,6 @@ import qualified Opaleye.Internal.QueryArr as Q
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
-import qualified Data.Profunctor.Product.Map     as Map
 
 -- * Running 'S.Select's
 

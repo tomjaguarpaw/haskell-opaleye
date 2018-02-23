@@ -6,6 +6,7 @@
 module Main where
 
 import qualified QuickCheck
+import qualified TypeFamilies ()
 
 import           Opaleye (Column, Nullable, Query, QueryArr, (.==), (.>))
 import qualified Opaleye as O
