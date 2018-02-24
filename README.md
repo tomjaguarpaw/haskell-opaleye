@@ -98,8 +98,8 @@ Conny Andersson, Martin Andersson, Mary Bergman, Victor Blomqvist,
 Bjorn Bringert, Anders Hockersten, Torbjorn Martin, Jeremy Shaw and
 Justin Bailey.
 
-The following individuals and organisations have made helpful
-contributions:
+The following individuals and organisations made helpful contributions
+which were important in helping to get the project off the ground.
 
 * Silk (Erik Hesselink, Adam Bergmark)
 * Karamaan (Christopher Lewis)
@@ -109,4 +109,6 @@ contributions:
 * Travis Staton
 
 Joseph Abrahamson, Alfredo Di Napoli and Mietek Bak performed useful
-reviews of early versions which helped improve the codebase.
+reviews of early versions which helped improve the codebase.  Since
+then there have been helpful contributions from many others.  Thanks
+to them all for their help.
