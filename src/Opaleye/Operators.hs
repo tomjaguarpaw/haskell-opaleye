@@ -30,9 +30,16 @@ import qualified Data.Profunctor.Product.Default as D
 
 -- * Restriction operators
 
-{-| Restrict query results to a particular condition.  Corresponds to
-the guard method of the MonadPlus class.  You would typically use
-'restrict' if you want to use 'A.Arrow' notation.  -}
+{-| Keep only the rows of a query satisfying a given condition, using
+an SQL @WHERE@ clause.
+
+You would typically use 'restrict' if you want to write your query
+using 'A.Arrow' notation.  If you want to use a "point free" style
+then 'keepWhen' will suit you better.
+
+(If you are familiar with 'Control.Monad.MonadPlus' or
+'Control.Applicative.Alternative' it may help you to know that
+'restrict' corresponds to the 'Control.Monad.guard' function.) -}
 restrict :: QueryArr (Column T.PGBool) ()
 restrict = QueryArr f where
   f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
@@ -49,10 +56,16 @@ restrictNotExists criteria = QueryArr f where
   f (a, primQ, t0) = ((), PQ.notExists primQ existsQ, t1) where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
-{-| Filter a 'QueryArr' to only those rows where the given condition
-holds.  This is the 'QueryArr' equivalent of 'Prelude.filter' from the
-'Prelude'.  You would typically use 'keepWhen' if you want to use a
-\"point free\" style.-}
+{-| Keep only the rows of a query satisfying a given condition, using
+an SQL @WHERE@ clause.
+
+You would typically use 'keepWhen' if you want to write
+your query using a "point free" style.  If you want to use 'A.Arrow'
+notation then 'restrict' will suit you better.
+
+This is the 'QueryArr' equivalent of 'Prelude.filter' from the
+'Prelude'.
+-}
 keepWhen :: (a -> Column T.PGBool) -> QueryArr a a
 keepWhen p = proc a -> do
   restrict  -< p a
@@ -102,16 +115,20 @@ infix 4 .>=
 
 -- * Numerical operators
 
+-- | Integral division, named after 'Prelude.quot'.  It maps to the
+-- @/@ operator in Postgres.
 quot_ :: C.PGIntegral a => Column a -> Column a -> Column a
 quot_ = C.binOp (HPQ.:/)
 
--- | The remainder of division named after 'Prelude.rem'.
--- It maps to 'MOD' ('%') in Postgres, confusingly described as "modulo (remainder)".
+-- | The remainder of integral division, named after 'Prelude.rem'.
+-- It maps to 'MOD' ('%') in Postgres, confusingly described as
+-- "modulo (remainder)".
 rem_ :: C.PGIntegral a => Column a -> Column a -> Column a
 rem_ = C.binOp HPQ.OpMod
 
 -- * Conditional operators
 
+-- | Select the first case for which the condition is true.
 case_ :: [(Column T.PGBool, Column a)] -> Column a -> Column a
 case_ = unsafeCase_
 
@@ -221,7 +238,6 @@ inQuery c q = qj'
 -- * JSON operators
 
 -- | Class of Postgres types that represent json values.
---
 -- Used to overload functions and operators that work on both 'T.PGJson' and 'T.PGJsonb'.
 --
 -- Warning: making additional instances of this class can lead to broken code!
@@ -296,7 +312,7 @@ infix 4 .?&
 (.?&) :: Column T.PGJsonb -> Column (T.PGArray T.PGText) -> Column T.PGBool
 (.?&) = C.binOp (HPQ.:?&)
 
--- * PGArray Operators
+-- * PGArray operators
 
 emptyArray :: T.IsSqlType a => Column (T.PGArray a)
 emptyArray = T.pgArray id []
@@ -310,18 +326,7 @@ singletonArray x = arrayPrepend x emptyArray
 index :: (C.PGIntegral n) => Column (T.PGArray a) -> Column n -> Column (C.Nullable a)
 index (Column a) (Column b) = Column (HPQ.ArrayIndex a b)
 
--- * Other operators
-
-timestamptzAtTimeZone :: Column T.PGTimestamptz
-                      -> Column T.PGText
-                      -> Column T.PGTimestamp
-timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
-
-{-# DEPRECATED doubleOfInt
-    "Use 'C.unsafeCast' instead. \
-    \Will be removed in version 0.7." #-}
-doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
-doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
+-- * Range operators
 
 overlap :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
 overlap = C.binOp (HPQ.:&&)
@@ -346,7 +351,20 @@ infix 4 .-|-
 (.-|-) :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
 (.-|-) = C.binOp (HPQ.:-|-)
 
+-- * Other operators
+
+timestamptzAtTimeZone :: Column T.PGTimestamptz
+                      -> Column T.PGText
+                      -> Column T.PGTimestamp
+timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
+
 -- * Deprecated
+
+{-# DEPRECATED doubleOfInt
+    "Use 'C.unsafeCast' instead. \
+    \Will be removed in version 0.7." #-}
+doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
+doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
 
 -- | Identical to 'restrictExists'.  Will be deprecated in version 0.7.
 exists :: QueryArr a b -> QueryArr a ()
