@@ -62,6 +62,12 @@ instance Arr.Arrow QueryArr where
     where g ((b, d), primQ, t0) = ((c, d), primQ', t1)
             where (c, primQ', t1) = runQueryArr f (b, primQ, t0)
 
+instance Arr.ArrowChoice QueryArr where
+  left f = QueryArr g
+    where g (e, primQ, t0) = case e of
+            Left a -> first3 Left (runQueryArr f (a, primQ, t0))
+            Right b -> (Right b, primQ, t0)
+
 instance Functor (QueryArr a) where
   fmap f = (arr f <<<)
 
