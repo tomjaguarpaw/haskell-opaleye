@@ -122,11 +122,12 @@ optional columnName = TableProperties
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
-class TableColumn a b | a -> b where
-    -- | Create either a 'required' or 'optional' column depending on
+class TableColumn writeType sqlType | a -> sqlType where
+    -- | Infer either a 'required' or 'optional' column depending on
     -- the write type.  It's generally more convenient to use this
-    -- than 'required' or 'optional'.
-    tableColumn :: String -> TableColumns a (Column b)
+    -- than 'required' or 'optional' but you do have to provide a type
+    -- signature instead.
+    tableColumn :: String -> TableColumns writeType (Column sqlType)
 
 instance TableColumn (Column a) a where
     tableColumn = required
