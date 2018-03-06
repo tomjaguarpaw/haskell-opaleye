@@ -136,7 +136,9 @@ defaultSqlExpr gen expr =
       CaseExpr cs e    -> let cs' = [(sqlExpr gen c, sqlExpr gen x)| (c,x) <- cs]
                               e'  = sqlExpr gen e
                           in case NEL.nonEmpty cs' of
-                            Just nel -> CaseSqlExpr nel e'
+                            Just nel
+                                | all ((== e') . snd) cs' -> e'
+                                | otherwise -> CaseSqlExpr nel e'
                             Nothing  -> e'
       ListExpr es      -> ListSqlExpr (fmap (sqlExpr gen) es)
       ParamExpr n _    -> ParamSqlExpr n PlaceHolderSqlExpr

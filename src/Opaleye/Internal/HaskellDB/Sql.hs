@@ -14,28 +14,28 @@ import qualified Data.List.NonEmpty as NEL
 data SqlTable = SqlTable
   { sqlTableSchemaName :: Maybe String
   , sqlTableName       :: String
-  } deriving Show
+  } deriving (Eq,Show)
 
-newtype SqlColumn = SqlColumn String deriving Show
+newtype SqlColumn = SqlColumn String deriving (Eq,Show)
 
 -- | A valid SQL name for a parameter.
 type SqlName = String
 
 data SqlOrderNulls = SqlNullsFirst | SqlNullsLast
-                   deriving Show
+                   deriving (Eq,Show)
 
 data SqlOrderDirection = SqlAsc | SqlDesc
-                       deriving Show
+                       deriving (Eq,Show)
 
 data SqlOrder = SqlOrder { sqlOrderDirection :: SqlOrderDirection
                          , sqlOrderNulls     :: SqlOrderNulls }
-  deriving Show
+  deriving (Eq,Show)
 
 data SqlRangeBound = Inclusive SqlExpr | Exclusive SqlExpr | PosInfinity | NegInfinity
-                   deriving Show
+                   deriving (Eq,Show)
 
 data SqlDistinct = SqlDistinct | SqlNotDistinct
-                 deriving Show
+                 deriving (Eq,Show)
 
 -- | Expressions in SQL statements.
 data SqlExpr = ColumnSqlExpr  SqlColumn
@@ -56,7 +56,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | DefaultSqlExpr
              | ArraySqlExpr [SqlExpr]
              | RangeSqlExpr SqlRangeBound SqlRangeBound
-  deriving Show
+  deriving (Eq,Show)
 
 -- | Data type for SQL UPDATE statements.
 data SqlUpdate  = SqlUpdate SqlTable [(SqlColumn,SqlExpr)] [SqlExpr]
