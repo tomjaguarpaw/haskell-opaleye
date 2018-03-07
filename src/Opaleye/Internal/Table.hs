@@ -122,7 +122,7 @@ optional columnName = TableProperties
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
-class TableColumn writeType sqlType | a -> sqlType where
+class TableColumn writeType sqlType | writeType -> sqlType where
     -- | Infer either a 'required' or 'optional' column depending on
     -- the write type.  It's generally more convenient to use this
     -- than 'required' or 'optional' but you do have to provide a type
