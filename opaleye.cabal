@@ -67,6 +67,7 @@ library
                    Opaleye.Select,
                    Opaleye.Sql,
                    Opaleye.SqlTypes,
+                   Opaleye.SqlType,
                    Opaleye.Table,
                    Opaleye.ToFields,
                    Opaleye.TypeFamilies,

@@ -25,6 +25,7 @@ import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlUpdate(..), SqlTable(..), SqlRangeBound(..),
                                OnConflict(..))
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
+import qualified Opaleye.SqlType                as SqlType
 
 import Data.List (intersperse)
 import qualified Data.List.NonEmpty as NEL
@@ -128,12 +129,13 @@ ppTable st = case sqlTableSchemaName st of
 
 data InclusiveExclusive = Inclusive' | Exclusive'
 
-ppRange :: String -> SqlRangeBound -> SqlRangeBound -> Doc
+ppRange :: SqlType.SqlType -> SqlRangeBound -> SqlRangeBound -> Doc
 ppRange t start end =
-  ppSqlExpr (FunSqlExpr t [ startValue
-                          , endValue
-                          , ConstSqlExpr boundTypeSymbol
-                          ])
+  ppSqlExpr (FunSqlExpr (show (ppSqlType t))
+                        [ startValue
+                        , endValue
+                        , ConstSqlExpr boundTypeSymbol
+                        ])
 
   where value_boundTypeT = \case
           Inclusive a -> (Inclusive', a)
@@ -169,7 +171,7 @@ ppSqlExpr expr =
       ListSqlExpr es         -> parens (commaH ppSqlExpr (NEL.toList es))
       ParamSqlExpr _ v       -> ppSqlExpr v
       PlaceHolderSqlExpr     -> text "?"
-      CastSqlExpr typ e      -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)
+      CastSqlExpr typ e      -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> ppSqlType typ)
       DefaultSqlExpr         -> text "DEFAULT"
       ArraySqlExpr es        -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
       RangeSqlExpr t s e     -> ppRange t s e
@@ -178,6 +180,14 @@ ppSqlExpr expr =
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
           where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w
                                <+> text "THEN" <+> ppSqlExpr t
+
+ppSqlType :: SqlType.SqlType -> Doc
+-- We might like to use 'doubleQuotes (text typename)', but it seems
+-- fraught:
+--
+--    https://dba.stackexchange.com/questions/240635/why-cant-i-double-quote-built-in-type-names-in-postgres
+ppSqlType (SqlType.SqlBaseType typename) = text typename
+ppSqlType (SqlType.SqlArray type_) = ppSqlType type_ <> text "[]"
 
 commaH :: (a -> Doc) -> [a] -> Doc
 commaH f = hcat . punctuate comma . map f

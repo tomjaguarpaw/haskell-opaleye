@@ -6,6 +6,7 @@ module Opaleye.Internal.HaskellDB.Sql where
 
 
 import qualified Data.List.NonEmpty as NEL
+import qualified Opaleye.SqlType    as SqlType
 
 -----------------------------------------------------------
 -- * SQL data type
@@ -52,10 +53,10 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | ParamSqlExpr (Maybe SqlName) SqlExpr
              | PlaceHolderSqlExpr
              | ParensSqlExpr SqlExpr
-             | CastSqlExpr String SqlExpr
+             | CastSqlExpr SqlType.SqlType SqlExpr
              | DefaultSqlExpr
              | ArraySqlExpr [SqlExpr]
-             | RangeSqlExpr String SqlRangeBound SqlRangeBound
+             | RangeSqlExpr SqlType.SqlType SqlRangeBound SqlRangeBound
   deriving Show
 
 -- | Data type for SQL UPDATE statements.

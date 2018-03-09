@@ -5,6 +5,7 @@ module Opaleye.Internal.Column where
 import Data.String
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.SqlType                      as SqlType
 
 -- | A column of a @Query@, of type @pgType@.  For example 'Column'
 -- @PGInt4@ is an @int4@ column and a 'Column' @PGText@ is a @text@
@@ -34,11 +35,19 @@ unColumn (Column e) = e
 unsafeCoerceColumn :: Column a -> Column b
 unsafeCoerceColumn (Column e) = Column e
 
+-- | Use 'unsafeCastType' instead.  'unsafeCast' will be deprecated in
+-- 0.8.
+unsafeCast :: String -> Column a -> Column b
+unsafeCast = mapColumn . HPQ.CastExpr . SqlType.SqlBaseType
+  where
+    mapColumn :: (HPQ.PrimExpr -> HPQ.PrimExpr) -> Column c -> Column a
+    mapColumn primExpr c = Column (primExpr (unColumn c))
+
 -- | Cast a column to any other type. Implements Postgres's @::@ or
 -- @CAST( ... AS ... )@ operations.  This is safe for some
 -- conversions, such as uuid to text.
-unsafeCast :: String -> Column a -> Column b
-unsafeCast = mapColumn . HPQ.CastExpr
+unsafeCastType :: SqlType.SqlType -> Column a -> Column b
+unsafeCastType = mapColumn . HPQ.CastExpr
   where
     mapColumn :: (HPQ.PrimExpr -> HPQ.PrimExpr) -> Column c -> Column a
     mapColumn primExpr c = Column (primExpr (unColumn c))

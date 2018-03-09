@@ -22,6 +22,7 @@ import qualified Opaleye.Internal.Operators as O
 import           Opaleye.Internal.Helpers   ((.:))
 import qualified Opaleye.Order as Ord
 import qualified Opaleye.Select   as S
+import qualified Opaleye.SqlType  as SqlType
 import qualified Opaleye.SqlTypes as T
 
 import qualified Opaleye.Column   as Column
@@ -400,10 +401,10 @@ timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
 -- * Deprecated
 
 {-# DEPRECATED doubleOfInt
-    "Use 'C.unsafeCast' instead. \
+    "Use 'C.unsafeCastType' instead. \
     \Will be removed in version 0.7." #-}
 doubleOfInt :: F.Field T.SqlInt4 -> F.Field T.SqlFloat8
-doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
+doubleOfInt = C.unsafeCastType (SqlType.SqlBaseType "float8")
 
 -- | Identical to 'restrictExists'.  Will be deprecated in version 0.7.
 exists :: QueryArr a b -> QueryArr a ()
