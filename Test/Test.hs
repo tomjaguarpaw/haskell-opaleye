@@ -882,7 +882,7 @@ testRangeDateOverlap :: Test
 testRangeDateOverlap = it "generates time overlap" $ \conn -> do
     now <- Time.getCurrentTime
     let later     = Time.addUTCTime 10 now
-        range1     = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Inclusive later)
+        range1     = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Exclusive later)
         range2     = O.pgRange O.pgUTCTime R.NegInfinity R.PosInfinity
         rangeNow   = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Inclusive now)
         qOverlap r = A.pure $ r `O.overlap` rangeNow
