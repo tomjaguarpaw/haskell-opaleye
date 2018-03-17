@@ -55,7 +55,6 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | CastSqlExpr String SqlExpr
              | DefaultSqlExpr
              | ArraySqlExpr [SqlExpr]
-             | RangeSqlExpr SqlRangeBound SqlRangeBound
   deriving Show
 
 -- | Data type for SQL UPDATE statements.
