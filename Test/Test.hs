@@ -886,8 +886,6 @@ testRangeDateOverlap = it "generates time overlap" $ \conn -> do
         range2     = O.pgRange O.pgUTCTime R.NegInfinity R.PosInfinity
         rangeNow   = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Inclusive now)
         qOverlap r = A.pure $ r `O.overlap` rangeNow
-    traverse putStrLn . O.showSqlForPostgres $ proc () -> Arr.returnA -< range1
-    traverse putStrLn . O.showSqlForPostgres $ proc () -> Arr.returnA -< range2
     testH (qOverlap range1) (`shouldBe` [True]) conn
     testH (qOverlap range2) (`shouldBe` [True]) conn
 
