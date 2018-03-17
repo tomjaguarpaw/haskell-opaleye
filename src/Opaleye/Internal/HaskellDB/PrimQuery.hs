@@ -10,7 +10,7 @@ import qualified Data.List.NonEmpty as NEL
 
 type TableName  = String
 type Attribute  = String
-type Name = String
+type Name       = String
 type Scheme     = [Attribute]
 type Assoc      = [(Attribute,PrimExpr)]
 
@@ -34,7 +34,8 @@ data PrimExpr   = AttrExpr  Symbol
                                     -- here.  Perhaps a special type is
                                     -- needed for insert expressions.
                 | ArrayExpr [PrimExpr] -- ^ ARRAY[..]
-                | RangeExpr BoundExpr BoundExpr
+                | BoundExpr BoundExpr
+                | RangeFormExpr BoundForm BoundForm
                 | ArrayIndex PrimExpr PrimExpr
                 deriving (Read,Show)
 
@@ -97,4 +98,7 @@ data OrderOp = OrderOp { orderDirection :: OrderDirection
                deriving (Show,Read)
 
 data BoundExpr = Inclusive PrimExpr | Exclusive PrimExpr | PosInfinity | NegInfinity
+                 deriving (Show,Read)
+
+data BoundForm = Closed | Open
                  deriving (Show,Read)

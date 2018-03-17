@@ -146,11 +146,21 @@ pgArray pgEl xs = C.unsafeCast arrayTy $
     arrayTy = showSqlType ([] :: [PGArray b])
 
 pgRange :: forall a b. IsRangeType b => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a -> C.Column (PGRange b)
-pgRange pgEl start end = C.Column (HPQ.CastExpr (showRangeType ([] :: [b])) $ HPQ.RangeExpr (oneEl start) (oneEl end))
-  where oneEl (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
-        oneEl (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
-        oneEl R.NegInfinity   = HPQ.NegInfinity
-        oneEl R.PosInfinity   = HPQ.PosInfinity
+pgRange pgEl start end = C.Column . HPQ.FunExpr (showRangeType ([] :: [b])) $
+    [ HPQ.BoundExpr $ boundVal start
+    , HPQ.BoundExpr $ boundVal end
+    , HPQ.RangeFormExpr (boundType start) (boundType end) ]
+    where
+        boundVal (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
+        boundVal (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
+        boundVal R.NegInfinity   = HPQ.NegInfinity
+        boundVal R.PosInfinity   = HPQ.PosInfinity
+
+        boundType (R.Inclusive _) = HPQ.Closed
+        boundType (R.Exclusive _) = HPQ.Open
+        boundType R.NegInfinity   = HPQ.Open
+        boundType R.PosInfinity   = HPQ.Open
+
 
 {-# DEPRECATED showPGType
     "Use 'showSqlType' instead. 'showPGType' will be removed \
