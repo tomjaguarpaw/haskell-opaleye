@@ -151,8 +151,8 @@ pgRange pgEl start end = C.Column . HPQ.FunExpr (showRangeType ([] :: [b])) $
     , HPQ.BoundExpr $ boundVal end
     , HPQ.RangeFormExpr (boundType start) (boundType end) ]
     where
-        boundVal (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
-        boundVal (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
+        boundVal (R.Inclusive a) = HPQ.Bounded . C.unColumn $ pgEl a
+        boundVal (R.Exclusive a) = HPQ.Bounded . C.unColumn $ pgEl a
         boundVal R.NegInfinity   = HPQ.NegInfinity
         boundVal R.PosInfinity   = HPQ.PosInfinity
 
