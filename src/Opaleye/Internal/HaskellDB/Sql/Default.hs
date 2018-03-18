@@ -145,7 +145,7 @@ defaultSqlExpr gen expr =
       DefaultInsertExpr -> DefaultSqlExpr
       ArrayExpr es -> ArraySqlExpr (map (sqlExpr gen) es)
       BoundExpr b -> case b of
-          (PQ.Bounded x) -> defaultSqlExpr gen x
+          PQ.Bounded x   -> defaultSqlExpr gen x
           PQ.PosInfinity -> ConstSqlExpr "'infinity'"
           PQ.NegInfinity -> ConstSqlExpr "'-infinity'"
       RangeFormExpr start end -> ConstSqlExpr $ showRangeForm start end
