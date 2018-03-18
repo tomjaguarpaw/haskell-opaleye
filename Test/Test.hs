@@ -785,7 +785,7 @@ testJsonGetFieldText dataQuery = it "" $ testH q (`shouldBe` expected)
             Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "c"
         expected :: [Maybe T.Text]
         expected = [Just "21"]
-      
+
 -- Special Test for Github Issue #350 : https://github.com/tomjaguarpaw/haskell-opaleye/issues/350
 testRestrictWithJsonOp :: (O.PGIsJson a) => Query (Column a) -> Test
 testRestrictWithJsonOp dataQuery = it "restricts the rows returned by checking equality with a value extracted using JSON operator" $ testH query (`shouldBe` table8data)
@@ -877,6 +877,17 @@ testRangeOverlap = it "generates overlap" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 3 7) `O.overlap` (range 4 12)
+
+testRangeDateOverlap :: Test
+testRangeDateOverlap = it "generates time overlap" $ \conn -> do
+    now <- Time.getCurrentTime
+    let later     = Time.addUTCTime 10 now
+        range1     = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Exclusive later)
+        range2     = O.pgRange O.pgUTCTime R.NegInfinity R.PosInfinity
+        rangeNow   = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Inclusive now)
+        qOverlap r = A.pure $ r `O.overlap` rangeNow
+    testH (qOverlap range1) (`shouldBe` [True]) conn
+    testH (qOverlap range2) (`shouldBe` [True]) conn
 
 testRangeLeftOf :: Test
 testRangeLeftOf = it "generates 'left of'" $ testH q (`shouldBe` [True])
@@ -1036,6 +1047,7 @@ main = do
         testUpdate
       describe "range" $ do
         testRangeOverlap
+        testRangeDateOverlap
         testRangeLeftOf
         testRangeRightOf
         testRangeRightExtension

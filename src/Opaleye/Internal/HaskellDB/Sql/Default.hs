@@ -144,12 +144,11 @@ defaultSqlExpr gen expr =
       CastExpr typ e1 -> CastSqlExpr typ (sqlExpr gen e1)
       DefaultInsertExpr -> DefaultSqlExpr
       ArrayExpr es -> ArraySqlExpr (map (sqlExpr gen) es)
-      RangeExpr l r -> let bound :: PQ.BoundExpr -> Sql.SqlRangeBound
-                           bound (PQ.Inclusive a) = Sql.Inclusive (sqlExpr gen a)
-                           bound (PQ.Exclusive a) = Sql.Exclusive (sqlExpr gen a)
-                           bound PQ.PosInfinity   = Sql.PosInfinity
-                           bound PQ.NegInfinity   = Sql.NegInfinity
-                        in RangeSqlExpr (bound l) (bound r)
+      BoundExpr b -> case b of
+          PQ.Bounded x   -> defaultSqlExpr gen x
+          PQ.PosInfinity -> ConstSqlExpr "'infinity'"
+          PQ.NegInfinity -> ConstSqlExpr "'-infinity'"
+      RangeFormExpr start end -> ConstSqlExpr $ showRangeForm start end
       ArrayIndex e1 e2 -> SubscriptSqlExpr (ParensSqlExpr $ sqlExpr gen e1) (ParensSqlExpr $ sqlExpr gen e2)
 
 showBinOp :: BinOp -> String
@@ -267,3 +266,10 @@ escape c = [c]
 -- | Quote binary literals using Postgresql's hex format.
 binQuote :: ByteString -> String
 binQuote s = "E'\\\\x" ++ BS8.unpack (Base16.encode s) ++ "'"
+
+
+showRangeForm :: BoundForm -> BoundForm -> String
+showRangeForm Open   Open   = "'()'"
+showRangeForm Open   Closed = "'(]'"
+showRangeForm Closed Open   = "'[)'"
+showRangeForm Closed Closed = "'[]'"
