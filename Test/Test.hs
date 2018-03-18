@@ -878,6 +878,18 @@ testRangeOverlap = it "generates overlap" $ testH q (`shouldBe` [True])
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 3 7) `O.overlap` (range 4 12)
 
+testRangeDateOverlap :: Test
+testRangeDateOverlap = it "generates time overlap" $ \conn -> do
+    let date       = Time.fromGregorian 2015 1 1
+        now        = Time.UTCTime date (Time.secondsToDiffTime 3600)
+        later      = Time.addUTCTime 10 now
+        range1     = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Exclusive later)
+        range2     = O.pgRange O.pgUTCTime R.NegInfinity R.PosInfinity
+        rangeNow   = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Inclusive now)
+        qOverlap r = A.pure $ r `O.overlap` rangeNow
+    testH (qOverlap range1) (`shouldBe` [True]) conn
+    testH (qOverlap range2) (`shouldBe` [True]) conn
+
 testRangeLeftOf :: Test
 testRangeLeftOf = it "generates 'left of'" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
@@ -1036,6 +1048,7 @@ main = do
         testUpdate
       describe "range" $ do
         testRangeOverlap
+        testRangeDateOverlap
         testRangeLeftOf
         testRangeRightOf
         testRangeRightExtension

@@ -2,6 +2,8 @@
 --                HWT Group (c) 2003, haskelldb-users@lists.sourceforge.net
 -- License     :  BSD-style
 
+{-# LANGUAGE LambdaCase #-}
+
 module Opaleye.Internal.HaskellDB.Sql.Print (
                                      deliteral,
                                      ppUpdate,
@@ -117,17 +119,33 @@ ppTable st = case sqlTableSchemaName st of
   where
     tname = doubleQuotes (text (sqlTableName st))
 
-ppStartBound :: SqlRangeBound -> Doc
-ppStartBound (Inclusive a) = text "'[" <> ppSqlExpr a
-ppStartBound (Exclusive a) = text "'(" <> ppSqlExpr a
-ppStartBound PosInfinity   = text "'(infinity"
-ppStartBound NegInfinity   = text "'(-infinity"
+data InclusiveExclusive = Inclusive' | Exclusive'
 
-ppEndBound :: SqlRangeBound -> Doc
-ppEndBound (Inclusive a) = ppSqlExpr a <> text "]'"
-ppEndBound (Exclusive a) = ppSqlExpr a <> text ")'"
-ppEndBound PosInfinity   = text "infinity)'"
-ppEndBound NegInfinity   = text "-infinity)'"
+ppRange :: String -> SqlRangeBound -> SqlRangeBound -> Doc
+ppRange t start end =
+  ppSqlExpr (FunSqlExpr t [ startValue
+                          , endValue
+                          , ConstSqlExpr boundTypeSymbol
+                          ])
+
+  where value_boundTypeT = \case
+          Inclusive a -> (Inclusive', a)
+          Exclusive a -> (Exclusive', a)
+          PosInfinity -> (Exclusive', ConstSqlExpr "'infinity'")
+          NegInfinity -> (Exclusive', ConstSqlExpr "'-infinity'")
+
+        (startType, startValue) = value_boundTypeT start
+        (endType,   endValue)   = value_boundTypeT end
+
+        startTypeSymbol = case startType of
+          Inclusive' -> "["
+          Exclusive' -> "("
+
+        endTypeSymbol = case endType of
+          Inclusive' -> "]"
+          Exclusive' -> ")"
+
+        boundTypeSymbol = "'" ++ startTypeSymbol ++ endTypeSymbol ++ "'"
 
 ppSqlExpr :: SqlExpr -> Doc
 ppSqlExpr expr =
@@ -147,7 +165,7 @@ ppSqlExpr expr =
       CastSqlExpr typ e      -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)
       DefaultSqlExpr         -> text "DEFAULT"
       ArraySqlExpr es        -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
-      RangeSqlExpr start end -> (hcat . punctuate comma) [ppStartBound start, ppEndBound end]
+      RangeSqlExpr t s e     -> ppRange t s e
       AggrFunSqlExpr f es ord distinct -> text f <> parens (ppSqlDistinct distinct <+> commaH ppSqlExpr es <+> ppOrderBy ord)
       CaseSqlExpr cs el   -> text "CASE" <+> vcat (toList (fmap ppWhen cs))
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"

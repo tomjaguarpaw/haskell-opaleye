@@ -34,7 +34,7 @@ data PrimExpr   = AttrExpr  Symbol
                                     -- here.  Perhaps a special type is
                                     -- needed for insert expressions.
                 | ArrayExpr [PrimExpr] -- ^ ARRAY[..]
-                | RangeExpr BoundExpr BoundExpr
+                | RangeExpr String BoundExpr BoundExpr
                 | ArrayIndex PrimExpr PrimExpr
                 deriving (Read,Show)
 

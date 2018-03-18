@@ -144,12 +144,12 @@ defaultSqlExpr gen expr =
       CastExpr typ e1 -> CastSqlExpr typ (sqlExpr gen e1)
       DefaultInsertExpr -> DefaultSqlExpr
       ArrayExpr es -> ArraySqlExpr (map (sqlExpr gen) es)
-      RangeExpr l r -> let bound :: PQ.BoundExpr -> Sql.SqlRangeBound
-                           bound (PQ.Inclusive a) = Sql.Inclusive (sqlExpr gen a)
-                           bound (PQ.Exclusive a) = Sql.Exclusive (sqlExpr gen a)
-                           bound PQ.PosInfinity   = Sql.PosInfinity
-                           bound PQ.NegInfinity   = Sql.NegInfinity
-                        in RangeSqlExpr (bound l) (bound r)
+      RangeExpr t l r -> let bound :: PQ.BoundExpr -> Sql.SqlRangeBound
+                             bound (PQ.Inclusive a) = Sql.Inclusive (sqlExpr gen a)
+                             bound (PQ.Exclusive a) = Sql.Exclusive (sqlExpr gen a)
+                             bound PQ.PosInfinity   = Sql.PosInfinity
+                             bound PQ.NegInfinity   = Sql.NegInfinity
+                        in RangeSqlExpr t (bound l) (bound r)
       ArrayIndex e1 e2 -> SubscriptSqlExpr (ParensSqlExpr $ sqlExpr gen e1) (ParensSqlExpr $ sqlExpr gen e2)
 
 showBinOp :: BinOp -> String
