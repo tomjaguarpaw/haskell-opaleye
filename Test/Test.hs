@@ -785,7 +785,7 @@ testJsonGetFieldText dataQuery = it "" $ testH q (`shouldBe` expected)
             Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "c"
         expected :: [Maybe T.Text]
         expected = [Just "21"]
-      
+
 -- Special Test for Github Issue #350 : https://github.com/tomjaguarpaw/haskell-opaleye/issues/350
 testRestrictWithJsonOp :: (O.PGIsJson a) => Query (Column a) -> Test
 testRestrictWithJsonOp dataQuery = it "restricts the rows returned by checking equality with a value extracted using JSON operator" $ testH query (`shouldBe` table8data)
