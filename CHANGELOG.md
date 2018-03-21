@@ -1,3 +1,9 @@
+## 0.6.1.0
+
+* Added `ZonedTime` to `PGTimestamptz` mappings
+
+* `ArrowChoice` instance for `QueryArr`
+
 ## 0.6.0.0
 
 * Added `runUpdateEasy`
