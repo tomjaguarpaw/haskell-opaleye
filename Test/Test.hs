@@ -889,6 +889,8 @@ testRangeDateOverlap = it "generates time overlap" $ \conn -> do
         qOverlap r = A.pure $ r `O.overlap` rangeNow
     testH (qOverlap range1) (`shouldBe` [True]) conn
     testH (qOverlap range2) (`shouldBe` [True]) conn
+    testH (A.pure $ O.pgUTCTime now   `O.liesWithin` range1) (`shouldBe` [True]) conn
+    testH (A.pure $ O.pgUTCTime later `O.liesWithin` range1) (`shouldBe` [False]) conn
 
 testRangeLeftOf :: Test
 testRangeLeftOf = it "generates 'left of'" $ testH q (`shouldBe` [True])
