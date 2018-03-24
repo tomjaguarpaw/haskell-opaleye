@@ -331,6 +331,9 @@ index (Column a) (Column b) = Column (HPQ.ArrayIndex a b)
 overlap :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
 overlap = C.binOp (HPQ.:&&)
 
+liesWithin :: T.IsRangeType a => Column a -> Column (T.PGRange a) -> Column T.PGBool
+liesWithin = C.binOp (HPQ.:<@)
+
 infix 4 .<<
 (.<<) :: Column (T.PGRange a) -> Column (T.PGRange a) -> Column T.PGBool
 (.<<) = C.binOp (HPQ.:<<)
