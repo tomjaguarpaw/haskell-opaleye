@@ -69,6 +69,7 @@ defaultSqlInsert :: SqlGenerator
                  -> SqlTable
                  -> [Attribute]
                  -> NEL.NonEmpty [PrimExpr]
+                 -> Maybe OnConflict
                  -> SqlInsert
 defaultSqlInsert gen tbl attrs exprs =
   SqlInsert tbl (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)

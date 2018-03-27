@@ -1,3 +1,6 @@
+* Added `runInsertManyOnConflictDoNothing` and
+  `runInsertManyReturningOnConflictDoNothing`
+
 * Added `leftJoinA`
 
 ## 0.6.1.0

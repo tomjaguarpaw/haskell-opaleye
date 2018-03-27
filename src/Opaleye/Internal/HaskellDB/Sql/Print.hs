@@ -21,7 +21,8 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
 
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
-                               SqlUpdate(..), SqlTable(..), SqlRangeBound(..))
+                               SqlUpdate(..), SqlTable(..), SqlRangeBound(..),
+                               OnConflict(..))
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 
 import Data.List (intersperse)
@@ -96,12 +97,17 @@ ppDelete (SqlDelete table criteria) =
     text "DELETE FROM" <+> ppTable table $$ ppWhere criteria
 
 
+ppConflictStatement :: Maybe OnConflict -> Doc
+ppConflictStatement Nothing = text ""
+ppConflictStatement (Just DoNothing) = text "ON CONFLICT DO NOTHING"
+
 ppInsert :: SqlInsert -> Doc
-ppInsert (SqlInsert table names values)
+ppInsert (SqlInsert table names values onConflict)
     = text "INSERT INTO" <+> ppTable table
       <+> parens (commaV ppColumn names)
       $$ text "VALUES" <+> commaV (parens . commaV ppSqlExpr)
                                   (NEL.toList values)
+      <+> ppConflictStatement onConflict
 
 -- If we wanted to make the SQL slightly more readable this would be
 -- one easy place to do it.  Currently we wrap all column references
