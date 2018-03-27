@@ -52,6 +52,24 @@ import qualified Data.List.NonEmpty as NEL
 
 -- * Manipulation functions
 
+-- | Insert rows into a tabler using the given query generator, which
+-- | will potentially generate upserts as opposed to inserts.
+-- Generally it's a good idea to use @runInsertMany@ or @runInsertManyIgnoreConflicts@ instead.
+runInsertManyGenerator :: SG.SqlGenerator
+                       -- ^ Generator to use
+                       -> PGS.Connection
+                       -- ^
+                       -> T.Table columns columns'
+                       -- ^ Table to insert into
+                       -> [columns]
+                       -- ^ Rows to insert
+                       -> IO Int64
+runInsertManyGenerator generator conn table columns = case NEL.nonEmpty columns of
+    Nothing       -> return 0
+    Just columns' -> (PGS.execute_ conn . fromString .: (arrangeInsertManyGeneratorSql generator)) table columns'
+
+
+
 -- | Insert rows into a table
 runInsertMany :: PGS.Connection
               -- ^
@@ -61,14 +79,18 @@ runInsertMany :: PGS.Connection
               -- ^ Rows to insert
               -> IO Int64
               -- ^ Number of rows inserted
-runInsertMany conn table columns = case NEL.nonEmpty columns of
-  -- Inserting the empty list is just the same as returning 0
-  Nothing       -> return 0
-  Just columns' -> (PGS.execute_ conn . fromString .: arrangeInsertManySql) table columns'
+runInsertMany = runInsertManyGenerator SD.defaultSqlGenerator
+
+
+runInsertManyIgnoreConflicts :: PGS.Connection
+                             -> T.Table columns columns'
+                             -> [columns]
+                             -> IO Int64
+runInsertManyIgnoreConflicts = runInsertManyGenerator SD.defaultSqlGenerator
 
 -- | Insert rows into a table and return a function of the inserted rows
 --
--- @runInsertManyReturning@'s use of the 'D.Default' typeclass means that the
+-- @runInsertManyReturning@'s use of the 'D.Default' typeclaarrangeInsertManyss means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertManyReturning@.
@@ -257,27 +279,38 @@ arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert t c = arrangeInsertMany t (return c)
 
 {-# DEPRECATED arrangeInsertSql
-    "You probably want 'runInsertMany' instead. \
+    "You probably want 'runInsertMany' instead. arrangeInsertMany\
     \Will be removed in version 0.7." #-}
 arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
+
+
+arrangeInsertManyGenerator :: SG.SqlGenerator -> T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
+arrangeInsertManyGenerator generator table columns = insert
+  where writer = TI.tableColumnsWriter (TI.tableColumns table)
+        (columnExprs, columnNames) = TI.runWriter' writer columns
+        insert = SG.sqlInsert generator
+                      (PQ.tiToSqlTable (TI.tableIdentifier table))
+                      columnNames columnExprs
+
+arrangeInsertManyIgnoreConflicts :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
+arrangeInsertManyIgnoreConflicts = arrangeInsertManyGenerator SD.ignoreConflictsSqlGenerator
 
 {-# DEPRECATED arrangeInsertMany
     "You probably want 'runInsertMany' instead. \
     \Will be removed in version 0.7." #-}
 arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
-arrangeInsertMany table columns = insert
-  where writer = TI.tableColumnsWriter (TI.tableColumns table)
-        (columnExprs, columnNames) = TI.runWriter' writer columns
-        insert = SG.sqlInsert SD.defaultSqlGenerator
-                      (PQ.tiToSqlTable (TI.tableIdentifier table))
-                      columnNames columnExprs
+arrangeInsertMany = arrangeInsertManyGenerator SD.defaultSqlGenerator
+
+arrangeInsertManyGeneratorSql :: SG.SqlGenerator -> T.Table columns a -> NEL.NonEmpty columns -> String
+arrangeInsertManyGeneratorSql gen = show . HPrint.ppInsert .: arrangeInsertManyGenerator gen
 
 {-# DEPRECATED arrangeInsertManySql
     "You probably want 'runInsertMany' instead. \
     \Will be removed in version 0.7." #-}
 arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
-arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
+arrangeInsertManySql = arrangeInsertManyGeneratorSql SD.defaultSqlGenerator
+
 
 {-# DEPRECATED arrangeUpdate
     "You probably want 'runUpdate' instead. \
