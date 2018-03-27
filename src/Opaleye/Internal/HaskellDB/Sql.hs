@@ -64,5 +64,6 @@ data SqlUpdate  = SqlUpdate SqlTable [(SqlColumn,SqlExpr)] [SqlExpr]
 -- | Data type for SQL DELETE statements.
 data SqlDelete  = SqlDelete SqlTable [SqlExpr]
 
+data OnConflict = DoNothing
 --- | Data type for SQL INSERT statements.
-data SqlInsert  = SqlInsert SqlTable [SqlColumn] (NEL.NonEmpty [SqlExpr])
+data SqlInsert  = SqlInsert SqlTable [SqlColumn] (NEL.NonEmpty [SqlExpr]) (Maybe OnConflict)
