@@ -4,15 +4,20 @@
 >
 > import           Opaleye (Column, Table, table,
 >                           tableColumn, (.==), (.<),
->                           arrangeDeleteSql, arrangeInsertManySql,
->                           arrangeUpdateSql, arrangeInsertManyReturningSql,
->                           PGInt4, PGFloat8)
+>                           Insert(..),
+>                           Update(..),
+>                           Delete(..),
+>                           rCount,
+>                           rReturning,
+>                           updateEasy,
+>                           PGInt4, PGFloat8, PGText,
+>                           pgString
+>                          )
 >
 > import           Data.Profunctor.Product (p4)
-> import           Data.Profunctor.Product.Default (def)
-> import qualified Opaleye.Internal.Unpackspec as U
-> import qualified Opaleye.PGTypes as P
 > import qualified Opaleye.Constant as C
+>
+> import           GHC.Int (Int64)
 
 Manipulation
 ============
@@ -21,19 +26,19 @@ Manipulation means changing the data in the database.  This means SQL
 DELETE, INSERT and UPDATE.
 
 To demonstrate manipulation in Opaleye we will need a table to perform
-our manipulation on.  It will have three columns: an integer-valued
-"id" column (assumed to be an auto-incrementing field) and two
-double-valued required fields.  The `Table` type constructor has two
+our manipulation on.  It will have four columns: an int4-valued "id"
+column (assumed to be an auto-incrementing field) and three
+float8-valued required fields.  The `Table` type constructor has two
 type arguments.  The first one is the type of writes to the table, and
-the second is the type of reads from the table.  The "id"
-column is defined as optional (for writes) because its write type is
-`Maybe (Column PGInt4)`.  That means we don't necessarily need to
-specify it when writing to the table.  The database will automatically
-fill in a value for us.
+the second is the type of reads from the table.  The "id" column is
+defined as optional (for writes) because its write type is `Maybe
+(Column PGInt4)`.  That means we don't necessarily need to specify it
+when writing to the table.  The database will automatically fill in a
+value for us.
 
 > myTable :: Table
->     (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8, Column P.PGText)
->     (Column PGInt4, Column PGFloat8, Column PGFloat8, Column P.PGText)
+>     (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8, Column PGText)
+>     (Column PGInt4, Column PGFloat8, Column PGFloat8, Column PGText)
 > myTable = table "tablename" (p4 ( tableColumn "id"
 >                                 , tableColumn "x"
 >                                 , tableColumn "y"
@@ -42,25 +47,32 @@ fill in a value for us.
 To perform a delete we provide an expression from our read type to
 `Column Bool`.  All rows for which the expression is true are deleted.
 
-> delete :: String
-> delete = arrangeDeleteSql myTable (\(_, x, y, _) -> x .< y)
+> delete :: Delete Int64
+> delete = Delete
+>   { dTable     = myTable
+>   , dWhere     = (\(_, x, y, _) -> x .< y)
+>   , dReturning = rCount
+>   }
 
-ghci> putStrLn delete
 DELETE FROM tablename
 WHERE ((x) < (y))
 
 
-To insert we provide a row with the write type.  Optional columns can
+To insert we provide rows with the write type.  Optional columns can
 be omitted by providing `Nothing` instead.  Numeric SQL types have a
 Haskell `Num` instance so we can write them using numeric literals.
 Values of other types should be created using the functions in the
-`Opaleye.PGTypes` module, for example `pgString` to create a `Column
-P.PGText` from a `String`.
+`Opaleye.PGTypes` module, for example `pgString` to create a `PGText`
+from a `String`.
 
-> insertNothing :: String
-> insertNothing = arrangeInsertManySql myTable (return (Nothing, 2, 3, P.pgString "Hello"))
+> insertNothing :: Insert Int64
+> insertNothing = Insert
+>   { iTable      = myTable
+>   , iRows       = [(Nothing, 2, 3, pgString "Hello")]
+>   , iReturning  = rCount
+>   , iOnConflict = Nothing
+>   }
 
-ghci> putStrLn insertNothing
 INSERT INTO "tablename" ("id",
                          "x",
                          "y",
@@ -71,14 +83,17 @@ VALUES (DEFAULT,
         E'Hello')
 
 
-If we'd like to pass a value into the insertion function, we can't
-rely on the Num instance and must use constant:
+If we'd like to pass a variable into the insertion function, we can't
+rely on the `Num` instance and must use `constant`:
 
-> insertNonLiteral :: Double -> String
-> insertNonLiteral i =
->   arrangeInsertManySql myTable (return (Nothing, 2, C.constant i, P.pgString "Hello"))
+> insertNonLiteral :: Double -> Insert Int64
+> insertNonLiteral i = Insert
+>   { iTable      = myTable
+>   , iRows       = [(Nothing, 2, C.constant i, pgString "Hello")]
+>   , iReturning  = rCount
+>   , iOnConflict = Nothing
+>   }
 
-ghci> putStrLn $ insertNonLiteral 12.0
 INSERT INTO "tablename" ("id",
                          "x",
                          "y",
@@ -91,10 +106,14 @@ VALUES (DEFAULT,
 
 If we really want to specify an optional column we can use `Just`.
 
-> insertJust :: String
-> insertJust = arrangeInsertManySql myTable (return (Just 1, 2, 3, P.pgString "Hello"))
+> insertJust :: Insert Int64
+> insertJust = Insert
+>   { iTable      = myTable
+>   , iRows       = [(Just 1, 2, 3, pgString "Hello")]
+>   , iReturning  = rCount
+>   , iOnConflict = Nothing
+>   }
 
-ghci> putStrLn insertJust
 INSERT INTO "tablename" ("id",
                          "x",
                          "y",
@@ -110,11 +129,14 @@ type, and a condition given by a function from the read type to
 `Column Bool`.  All rows that satisfy the condition are updated
 according to the update function.
 
-> update :: String
-> update = arrangeUpdateSql myTable (\(_, x, y, s) -> (Nothing, x + y, x - y, s))
->                                   (\(id_, _, _, _) -> id_ .== 5)
+> update :: Update Int64
+> update = Update
+>   { uTable      = myTable
+>   , uUpdateWith = updateEasy (\(id_, x, y, s) -> (id_, x + y, x - y, s))
+>   , uWhere      = (\(id_, _, _, _) -> id_ .== 5)
+>   , uReturning  = rCount
+>   }
 
-ghci> putStrLn update
 SET "id" = DEFAULT,
     "x" = ("x") + ("y"),
     "y" = ("x") - ("y"),
@@ -124,18 +146,17 @@ WHERE (("id") = 5)
 
 Sometimes when we insert a row with an automatically generated field
 we want the database to return the new field value to us so we can use
-it in future queries.  SQL supports that via INSERT RETURNING and
+it in future queries.  SQL supports that via `INSERT RETURNING` and
 Opaleye supports it also.
 
-> insertReturning :: String
-> insertReturning =
->   arrangeInsertManyReturningSql def' myTable (return (Nothing, 4, 5, P.pgString "Bye"))
->                                              (\(id_, _, _, _) -> id_)
->   -- TODO: vv This is too messy
->   where def' :: U.Unpackspec (Column a) (Column a)
->         def' = def
+> insertReturning :: Insert [Int]
+> insertReturning = Insert
+>   { iTable      = myTable
+>   , iRows       = [(Nothing, 4, 5, pgString "Bye")]
+>   , iReturning  = rReturning (\(id_, _, _, _) -> id_)
+>   , iOnConflict = Nothing
+>   }
 
-ghci> putStrLn insertReturning
 INSERT INTO "tablename" ("id",
                          "x",
                          "y",
@@ -145,15 +166,6 @@ VALUES (DEFAULT,
         5.0,
         E'Bye')
 RETURNING "id"
-
-
-Running the queries
-===================
-
-This tutorial has only shown you how to generate the SQL string for
-manipulation queries.  In practice you actually want to run them!  To
-run them you should use `runInsertMany` instead of `arrangeInsertManySql`,
-`runDelete` instead of `arrangeDeleteSql`, etc..
 
 
 Comments

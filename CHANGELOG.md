@@ -1,3 +1,6 @@
+* Added `runInsert_`, `runUpdate_`, `runDelete_` and supporting
+  functionality
+
 * Added `leftJoinA`
 
 ## 0.6.1.0
