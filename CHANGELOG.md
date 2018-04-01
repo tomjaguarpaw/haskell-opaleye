@@ -1,5 +1,3 @@
-## 0.6.2.0
-
 * Added `runInsertManyOnConflictDoNothing` and
   `runInsertManyReturningOnConflictDoNothing`
 
