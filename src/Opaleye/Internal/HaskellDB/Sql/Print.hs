@@ -98,7 +98,7 @@ ppDelete (SqlDelete table criteria) =
 
 
 ppConflictStatement :: Maybe OnConflict -> Doc
-ppConflictStatement Nothing = text "" 
+ppConflictStatement Nothing = text ""
 ppConflictStatement (Just DoNothing) = text "ON CONFLICT DO NOTHING"
 
 ppInsert :: SqlInsert -> Doc

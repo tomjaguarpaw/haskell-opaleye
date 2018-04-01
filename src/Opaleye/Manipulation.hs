@@ -90,7 +90,7 @@ runInsertManyIgnoreConflicts = runInsertManyGenerator SD.defaultSqlGenerator
 
 -- | Insert rows into a table and return a function of the inserted rows
 --
--- @runInsertManyReturning@'s use of the 'D.Default' typeclaarrangeInsertManyss means that the
+-- @runInsertManyReturning@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertManyReturning@.
@@ -279,7 +279,7 @@ arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert t c = arrangeInsertMany t (return c)
 
 {-# DEPRECATED arrangeInsertSql
-    "You probably want 'runInsertMany' instead. arrangeInsertMany\
+    "You probably want 'runInsertMany' instead. \
     \Will be removed in version 0.7." #-}
 arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
