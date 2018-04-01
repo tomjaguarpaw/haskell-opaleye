@@ -8,7 +8,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Monad.Trans.State as State
-import           Data.Profunctor (Profunctor, dimap)
+import           Data.Profunctor (Profunctor, dimap, rmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Functor.Identity as I
@@ -107,12 +107,11 @@ extractAttr s = extractAttrPE (const (s ++))
 
 -- }
 
-eitherFunction :: Functor f
-               => (a -> f b)
-               -> (a' -> f b')
-               -> Either a a'
-               -> f (Either b b')
-eitherFunction f g = fmap (either (fmap Left) (fmap Right)) (f PP.+++! g)
+eitherFunction :: (PP.SumProfunctor p, Functor f)
+               => p a  (f b)
+               -> p a' (f b')
+               -> p (Either a a') (f (Either b b'))
+eitherFunction f g = rmap (either (fmap Left) (fmap Right)) (f PP.+++! g)
 
 -- | Like 'Control.Lens.Iso.iso'.  In practice it won't actually be
 -- used as an isomorphism, but it seems to be appropriate anyway.
