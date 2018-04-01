@@ -105,10 +105,10 @@ runInsertManyOnConflictDoNothing conn table columns =
 -- | Insert rows into a table with @ON CONFLICT DO NOTHING@ and
 -- return a function of the inserted rows
 --
--- @runInsertManyReturning@'s use of the 'D.Default' typeclass means that the
--- compiler will have trouble inferring types.  It is strongly
--- recommended that you provide full type signatures when using
--- @runInsertManyReturning@.
+-- @runInsertManyReturningOnConflictDoNothing@'s use of the
+-- 'D.Default' typeclass means that the compiler will have trouble
+-- inferring types.  It is strongly recommended that you provide full
+-- type signatures when using it.
 runInsertManyReturningOnConflictDoNothing
   :: (D.Default RQ.QueryRunner columnsReturned haskells)
   => PGS.Connection
