@@ -17,23 +17,20 @@ import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Base16 as Base16
 import qualified Data.List.NonEmpty as NEL
 
-mkSqlGenerator :: SqlGenerator -> Maybe OnConflict -> SqlGenerator
-mkSqlGenerator gen conflict = SqlGenerator
+mkSqlGenerator :: SqlGenerator -> SqlGenerator
+mkSqlGenerator gen = SqlGenerator
     {
      sqlUpdate      = defaultSqlUpdate      gen,
      sqlDelete      = defaultSqlDelete      gen,
-     sqlInsert      = defaultSqlInsert      gen conflict,
+     sqlInsert      = defaultSqlInsert      gen,
      sqlExpr        = defaultSqlExpr        gen,
      sqlLiteral     = defaultSqlLiteral     gen,
      sqlQuote       = defaultSqlQuote       gen
     }
 
-
 defaultSqlGenerator :: SqlGenerator
-defaultSqlGenerator = mkSqlGenerator defaultSqlGenerator Nothing
+defaultSqlGenerator = mkSqlGenerator defaultSqlGenerator
 
-ignoreConflictsSqlGenerator :: SqlGenerator
-ignoreConflictsSqlGenerator = mkSqlGenerator defaultSqlGenerator (Just DoNothing)
 
 toSqlOrder :: SqlGenerator -> OrderExpr -> (SqlExpr,SqlOrder)
 toSqlOrder gen (OrderExpr o e) =
@@ -63,14 +60,15 @@ defaultSqlUpdate :: SqlGenerator
 defaultSqlUpdate gen tbl criteria assigns
         = SqlUpdate tbl (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria)
 
+
 defaultSqlInsert :: SqlGenerator
-                 -> Maybe OnConflict
                  -> SqlTable
                  -> [Attribute]
                  -> NEL.NonEmpty [PrimExpr]
+                 -> Maybe OnConflict
                  -> SqlInsert
-defaultSqlInsert gen conflict tbl attrs exprs =
-  SqlInsert tbl (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs) conflict
+defaultSqlInsert gen tbl attrs exprs =
+  SqlInsert tbl (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
 
 defaultSqlDelete :: SqlGenerator
                  -> SqlTable
