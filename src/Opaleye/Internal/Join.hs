@@ -54,6 +54,36 @@ joinExplicit uA uB returnColumnsA returnColumnsB joinType
           Column cond' = cond (columnsA, columnsB)
           primQueryR = PQ.Join joinType cond' ljPEsA ljPEsB primQueryA primQueryB
 
+leftJoinAExplicit :: U.Unpackspec a a
+                  -> NullMaker a nullableA
+                  -> Q.Query a
+                  -> Q.QueryArr (a -> Column T.PGBool) nullableA
+leftJoinAExplicit uA nullmaker rq =
+  Q.QueryArr $ \(p, primQueryL, t1) ->
+    let (columnsR, primQueryR, t2) = Q.runSimpleQueryArr rq ((), t1)
+        (newColumnsR, ljPEsR) = PM.run $ U.runUnpackspec uA (extractLeftJoinFields 2 t2) columnsR
+        renamedNullable = toNullable nullmaker newColumnsR
+        Column cond = p newColumnsR
+    in ( renamedNullable
+       , PQ.Join
+           PQ.LeftJoin
+           cond
+           []
+           --- ^ I am reasonably confident that we don't need any
+           --- column names here.  Columns that can become NULL need
+           --- to be written here so that we can wrap them.  If we
+           --- don't constant columns can avoid becoming NULL.
+           --- However, these are the left columns and cannot become
+           --- NULL in a left join, so we are fine.
+           ---
+           --- Report about the "avoiding NULL" bug:
+           ---
+           ---     https://github.com/tomjaguarpaw/haskell-opaleye/issues/223
+           ljPEsR
+           primQueryL
+           primQueryR
+       , T.next t2)
+
 extractLeftJoinFields :: Int
                       -> T.Tag
                       -> HPQ.PrimExpr

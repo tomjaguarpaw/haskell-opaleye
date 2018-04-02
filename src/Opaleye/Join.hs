@@ -28,7 +28,7 @@ module Opaleye.Join where
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Join as J
 import qualified Opaleye.Internal.PrimQuery as PQ
-import           Opaleye.QueryArr (Query)
+import           Opaleye.QueryArr (Query, QueryArr)
 import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.PGTypes as T
 
@@ -44,6 +44,17 @@ leftJoin  :: (D.Default U.Unpackspec columnsL columnsL,
           -> ((columnsL, columnsR) -> Column T.PGBool) -- ^ Condition on which to join
           -> Query (columnsL, nullableColumnsR) -- ^ Left join
 leftJoin = leftJoinExplicit D.def D.def D.def
+
+-- | 'leftJoinA' is a convenient way of using left joins within arrow
+-- notation
+leftJoinA :: (D.Default U.Unpackspec columnsR columnsR,
+              D.Default J.NullMaker columnsR nullableColumnsR)
+          => Query columnsR
+          -- ^ Right query
+          -> QueryArr (columnsR -> Column T.PGBool) nullableColumnsR
+          -- ^ Condition on which to join goes in, left join
+          -- result comes out
+leftJoinA = leftJoinAExplict D.def D.def
 
 rightJoin  :: (D.Default U.Unpackspec columnsL columnsL,
                D.Default U.Unpackspec columnsR columnsR,
@@ -75,6 +86,12 @@ leftJoinExplicit :: U.Unpackspec columnsL columnsL
                  -> Query (columnsL, nullableColumnsR)
 leftJoinExplicit uA uB nullmaker =
   J.joinExplicit uA uB id (J.toNullable nullmaker) PQ.LeftJoin
+
+leftJoinAExplict :: U.Unpackspec columnsR columnsR
+                 -> J.NullMaker columnsR nullableColumnsR
+                 -> Query columnsR
+                 -> QueryArr (columnsR -> Column T.PGBool) nullableColumnsR
+leftJoinAExplict = J.leftJoinAExplicit
 
 rightJoinExplicit :: U.Unpackspec columnsL columnsL
                   -> U.Unpackspec columnsR columnsR
