@@ -31,8 +31,9 @@ import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column(Column))
-import           Opaleye.Internal.Helpers ((.:), (.:.), (.::), (.::.))
+import           Opaleye.Internal.Helpers ((.:), (.:.), (.::.))
 import           Opaleye.Internal.Manipulation (Updater(Updater))
+import qualified Opaleye.Internal.Manipulation as MI
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Unpackspec as U
 import           Opaleye.PGTypes (PGBool)
@@ -52,6 +53,24 @@ import qualified Data.List.NonEmpty as NEL
 
 -- * Manipulation functions
 
+-- | Insert rows into a tabler using the given query generator, which
+-- | will potentially generate upserts as opposed to inserts.
+-- Generally it's a good idea to use @runInsertMany@ or @runInsertManyIgnoreConflicts@ instead.
+runInsertManyGenerator :: SG.SqlGenerator
+                       -- ^ Generator to use
+                       -> PGS.Connection
+                       -- ^
+                       -> T.Table columns columns'
+                       -- ^ Table to insert into
+                       -> [columns]
+                       -- ^ Rows to insert
+                       -> IO Int64
+runInsertManyGenerator generator conn table columns = case NEL.nonEmpty columns of
+    Nothing       -> return 0
+    Just columns' -> (PGS.execute_ conn . fromString .: (arrangeInsertManyGeneratorSql generator)) table columns'
+
+
+
 -- | Insert rows into a table
 runInsertMany :: PGS.Connection
               -- ^
@@ -61,14 +80,18 @@ runInsertMany :: PGS.Connection
               -- ^ Rows to insert
               -> IO Int64
               -- ^ Number of rows inserted
-runInsertMany conn table columns = case NEL.nonEmpty columns of
-  -- Inserting the empty list is just the same as returning 0
-  Nothing       -> return 0
-  Just columns' -> (PGS.execute_ conn . fromString .: arrangeInsertManySql) table columns'
+runInsertMany = runInsertManyGenerator SD.defaultSqlGenerator
+
+
+runInsertManyIgnoreConflicts :: PGS.Connection
+                             -> T.Table columns columns'
+                             -> [columns]
+                             -> IO Int64
+runInsertManyIgnoreConflicts = runInsertManyGenerator SD.defaultSqlGenerator
 
 -- | Insert rows into a table and return a function of the inserted rows
 --
--- @runInsertManyReturning@'s use of the 'D.Default' typeclass means that the
+-- @runInsertManyReturning@'s use of the 'D.Default' typeclaarrangeInsertManyss means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runInsertManyReturning@.
@@ -84,6 +107,44 @@ runInsertManyReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                        -> IO [haskells]
                        -- ^ Returned rows after @f@ has been applied
 runInsertManyReturning = runInsertManyReturningExplicit D.def
+
+-- | Insert rows into a table with @ON CONFLICT DO NOTHING@
+runInsertManyOnConflictDoNothing :: PGS.Connection
+                                 -- ^
+                                 -> T.Table columns columns'
+                                 -- ^ Table to insert into
+                                 -> [columns]
+                                 -- ^ Rows to insert
+                                 -> IO Int64
+                                 -- ^ Number of rows inserted
+runInsertManyOnConflictDoNothing conn table columns =
+  case NEL.nonEmpty columns of
+    -- Inserting the empty list is just the same as returning 0
+    Nothing       -> return 0
+    Just columns' -> (PGS.execute_ conn . fromString .:. MI.arrangeInsertManySql)
+                         table columns' (Just HSql.DoNothing)
+
+-- | Insert rows into a table with @ON CONFLICT DO NOTHING@ and
+-- return a function of the inserted rows
+--
+-- @runInsertManyReturningOnConflictDoNothing@'s use of the
+-- 'D.Default' typeclass means that the compiler will have trouble
+-- inferring types.  It is strongly recommended that you provide full
+-- type signatures when using it.
+runInsertManyReturningOnConflictDoNothing
+  :: (D.Default RQ.QueryRunner columnsReturned haskells)
+  => PGS.Connection
+  -- ^
+  -> T.Table columnsW columnsR
+  -- ^ Table to insert into
+  -> [columnsW]
+  -- ^ Rows to insert
+  -> (columnsR -> columnsReturned)
+  -- ^ Function @f@ to apply to the inserted rows
+  -> IO [haskells]
+  -- ^ Returned rows after @f@ has been applied
+runInsertManyReturningOnConflictDoNothing =
+  runInsertManyReturningOnConflictDoNothingExplicit D.def
 
 -- | Update rows in a table.
 --
@@ -194,17 +255,22 @@ runInsertManyReturningExplicit :: RQ.QueryRunner columnsReturned haskells
                                -> [columnsW]
                                -> (columnsR -> columnsReturned)
                                -> IO [haskells]
-runInsertManyReturningExplicit qr conn t columns r =
-  case NEL.nonEmpty columns of
-    Nothing       -> return []
-    Just columns' -> PGS.queryWith_ parser conn
-                       (fromString
-                        (arrangeInsertManyReturningSql u t columns' r))
-  where IRQ.QueryRunner u _ _ = qr
-        parser = IRQ.prepareRowParser qr (r v)
-        TI.View v = TI.tableColumnsView (TI.tableColumns t)
-        -- This method of getting hold of the return type feels a bit
-        -- suspect.  I haven't checked it for validity.
+runInsertManyReturningExplicit qr conn t columns f =
+  MI.runInsertManyReturningExplicit qr conn t columns f Nothing
+
+-- | You probably don't need this, but can just use
+-- 'runInsertManyReturningOnConflictDoNothing' instead.  You only need
+-- it if you want to run an UPDATE RETURNING statement but need to be
+-- explicit about the 'QueryRunner'.
+runInsertManyReturningOnConflictDoNothingExplicit
+  :: RQ.QueryRunner columnsReturned haskells
+  -> PGS.Connection
+  -> T.Table columnsW columnsR
+  -> [columnsW]
+  -> (columnsR -> columnsReturned)
+  -> IO [haskells]
+runInsertManyReturningOnConflictDoNothingExplicit qr conn t columns f =
+  MI.runInsertManyReturningExplicit qr conn t columns f (Just HSql.DoNothing)
 
 -- | You probably don't need this, but can just use
 -- 'runUpdateReturning' instead.  You only need it if you want to run
@@ -257,7 +323,7 @@ arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
 arrangeInsert t c = arrangeInsertMany t (return c)
 
 {-# DEPRECATED arrangeInsertSql
-    "You probably want 'runInsertMany' instead. \
+    "You probably want 'runInsertMany' instead. arrangeInsertMany\
     \Will be removed in version 0.7." #-}
 arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
@@ -266,18 +332,27 @@ arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
     "You probably want 'runInsertMany' instead. \
     \Will be removed in version 0.7." #-}
 arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
-arrangeInsertMany table columns = insert
-  where writer = TI.tableColumnsWriter (TI.tableColumns table)
-        (columnExprs, columnNames) = TI.runWriter' writer columns
-        insert = SG.sqlInsert SD.defaultSqlGenerator
-                      (PQ.tiToSqlTable (TI.tableIdentifier table))
-                      columnNames columnExprs
+arrangeInsertMany table columns = MI.arrangeInsertMany table columns Nothing
+
+arrangeInsertManyIgnoreConflicts :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
+arrangeInsertManyIgnoreConflicts = arrangeInsertManyGenerator SD.ignoreConflictsSqlGenerator
+
+{-# DEPRECATED arrangeInsertMany
+    "You probably want 'runInsertMany' instead. \
+    \Will be removed in version 0.7." #-}
+arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
+arrangeInsertMany = arrangeInsertManyGenerator SD.defaultSqlGenerator
+
+arrangeInsertManyGeneratorSql :: SG.SqlGenerator -> T.Table columns a -> NEL.NonEmpty columns -> String
+arrangeInsertManyGeneratorSql gen = show . HPrint.ppInsert .: arrangeInsertManyGenerator gen
 
 {-# DEPRECATED arrangeInsertManySql
     "You probably want 'runInsertMany' instead. \
     \Will be removed in version 0.7." #-}
 arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
-arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
+
+arrangeInsertManySql t c  = MI.arrangeInsertManySql t c Nothing
+
 
 {-# DEPRECATED arrangeUpdate
     "You probably want 'runUpdate' instead. \
@@ -325,11 +400,7 @@ arrangeInsertManyReturning :: U.Unpackspec columnsReturned ignored
                            -> (columnsR -> columnsReturned)
                            -> Sql.Returning HSql.SqlInsert
 arrangeInsertManyReturning unpackspec table columns returningf =
-  Sql.Returning insert returningSEs
-  where insert = arrangeInsertMany table columns
-        TI.View columnsR = TI.tableColumnsView (TI.tableColumns table)
-        returningPEs = U.collectPEs unpackspec (returningf columnsR)
-        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
+  MI.arrangeInsertManyReturning unpackspec table columns returningf Nothing
 
 {-# DEPRECATED arrangeInsertManyReturningSql
     "You probably want 'runInsertManyReturning' instead. \
@@ -339,8 +410,8 @@ arrangeInsertManyReturningSql :: U.Unpackspec columnsReturned ignored
                               -> NEL.NonEmpty columnsW
                               -> (columnsR -> columnsReturned)
                               -> String
-arrangeInsertManyReturningSql =
-  show . Print.ppInsertReturning .:: arrangeInsertManyReturning
+arrangeInsertManyReturningSql u t c r =
+  MI.arrangeInsertManyReturningSql u t c r Nothing
 
 {-# DEPRECATED arrangeUpdateReturning
     "You probably want 'runUpdateReturning' instead. \
