@@ -7,6 +7,7 @@ module Opaleye.Internal.HaskellDB.PrimQuery where
 import qualified Opaleye.Internal.Tag as T
 import Data.ByteString (ByteString)
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Scientific as Sci
 
 type TableName  = String
 type Attribute  = String
@@ -45,6 +46,7 @@ data Literal = NullLit
              | ByteStringLit ByteString
              | IntegerLit Integer
              | DoubleLit Double
+             | NumericLit Sci.Scientific
              | OtherLit String       -- ^ used for hacking in custom SQL
                deriving (Read,Show)
 
