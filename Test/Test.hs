@@ -1,6 +1,7 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
@@ -140,6 +141,9 @@ table8 = O.Table "table8" (O.required "column1")
 table9 :: O.Table (Column O.PGJsonb) (Column O.PGJsonb)
 table9 = O.Table "table9" (O.required "column1")
 
+table10 :: O.Table (Column O.PGInt4) (Column O.PGInt4)
+table10 = O.Table "table10" (O.required "column1")
+
 tableKeywordColNames :: O.Table (Column O.PGInt4, Column O.PGInt4)
                                 (Column O.PGInt4, Column O.PGInt4)
 tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
@@ -264,6 +268,16 @@ dropAndCreateTableJson = dropAndCreateTable "json"
 dropAndCreateTableJsonb :: (String, [String]) -> PGS.Query
 dropAndCreateTableJsonb = dropAndCreateTable "jsonb"
 
+dropAndCreateTablePk :: (String, [String]) -> PGS.Query
+dropAndCreateTablePk (t, cols) = String.fromString drop_
+  where drop_ = "DROP TABLE IF EXISTS \"public\".\"" ++ t ++ "\";"
+                ++ "CREATE TABLE \"public\".\"" ++ t ++ "\""
+                ++ " (" ++ allColumns ++ ");"
+        pk c = "\"" ++ c ++ "\"" ++ " integer primary key"
+        integer c = "\"" ++ c ++ "\"" ++ " integer"
+        commas = L.intercalate ","
+        allColumns = commas $ [pk $ head cols] ++ map integer (tail cols)
+
 type Table_ = (String, [String])
 
 -- This should ideally be derived from the table definition above
@@ -287,18 +301,23 @@ jsonTables = [("table8", ["column1"])]
 jsonbTables :: [Table_]
 jsonbTables = [("table9", ["column1"])]
 
+conflictTables :: [Table_]
+conflictTables = [("table10", ["column1"])]
+
 dropAndCreateDB :: PGS.Connection -> IO ()
 dropAndCreateDB conn = do
   mapM_ execute tables
   mapM_ executeTextTable textTables
   mapM_ executeSerial serialTables
   mapM_ executeJson jsonTables
+  mapM_ executeConflict conflictTables
   -- Disabled until Travis supports Postgresql >= 9.4
   -- mapM_ executeJsonb jsonbTables
   where execute = PGS.execute_ conn . dropAndCreateTableInt
         executeTextTable = PGS.execute_ conn . dropAndCreateTableText
         executeSerial = PGS.execute_ conn . dropAndCreateTableSerial
         executeJson = PGS.execute_ conn . dropAndCreateTableJson
+        executeConflict = PGS.execute_ conn . dropAndCreateTablePk
         -- executeJsonb = PGS.execute_ conn . dropAndCreateTableJsonb
 
 type Test = SpecWith PGS.Connection
@@ -702,6 +721,40 @@ testUpdate = it "" $ \conn -> do
         expectedR :: [Int]
         expectedR = [-1, -2]
 
+testInsertConflict :: Test
+testInsertConflict = it "inserts with conflicts" $ \conn -> do
+  _ <- O.runDelete conn table10 (const $ O.constant True)
+  returned <- O.runInsertManyReturning conn table10 insertT id
+  extras <- O.runInsertManyReturningOnConflictDoNothing conn table10 conflictsT id
+  moreExtras <- O.runInsertManyOnConflictDoNothing conn table10 moreConflictsT
+
+  returned `shouldBe` afterInsert
+  extras `shouldBe` afterConflicts
+  moreExtras `shouldBe` 1
+  runQueryTable10 conn `shouldReturn` allRows
+
+  O.runInsertMany conn table10 insertT `shouldThrow` (\ (_ :: PGS.SqlError) -> True)
+
+  where insertT :: [Column O.PGInt4]
+        insertT = [1, 2]
+
+        conflictsT :: [Column O.PGInt4]
+        conflictsT = [1, 3]
+
+        moreConflictsT :: [Column O.PGInt4]
+        moreConflictsT = [3, 4]
+
+        afterInsert :: [Int]
+        afterInsert = [1, 2]
+
+        afterConflicts :: [Int]
+        afterConflicts = [3]
+
+        allRows :: [Int]
+        allRows = [1, 2, 3, 4]
+
+        runQueryTable10 conn = O.runQuery conn (O.queryTable table10)
+
 testKeywordColNames :: Test
 testKeywordColNames = it "" $ \conn -> do
   let q :: IO [(Int, Int)]
@@ -1048,6 +1101,7 @@ main = do
         testValues
         testValuesEmpty
         testUpdate
+        testInsertConflict
       describe "range" $ do
         testRangeOverlap
         testRangeDateOverlap
