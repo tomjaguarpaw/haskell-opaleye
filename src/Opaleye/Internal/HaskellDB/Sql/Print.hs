@@ -97,11 +97,14 @@ ppDelete (SqlDelete table criteria) =
 
 
 ppInsert :: SqlInsert -> Doc
-ppInsert (SqlInsert table names values)
+ppInsert (SqlInsert table names values onConflict)
     = text "INSERT INTO" <+> ppTable table
       <+> parens (commaV ppColumn names)
       $$ text "VALUES" <+> commaV (parens . commaV ppSqlExpr)
                                   (NEL.toList values)
+      $$ maybe empty (\ case
+                         Sql.DoNothing -> text "ON CONFLICT DO NOTHING"
+                     ) onConflict
 
 -- If we wanted to make the SQL slightly more readable this would be
 -- one easy place to do it.  Currently we wrap all column references
