@@ -32,6 +32,7 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.ByteString as SBS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Time as Time
+import qualified Data.Scientific as Sci
 import qualified Data.String as String
 import           Data.UUID (UUID)
 import           GHC.Int (Int32, Int64)
@@ -158,6 +159,9 @@ instance QueryRunnerColumnDefault a b =>
 -- You can also add a 'FromField' instance using this.
 class QueryRunnerColumnDefault pgType haskellType where
   queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
+
+instance QueryRunnerColumnDefault T.PGNumeric Sci.Scientific where
+  queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGInt4 Int where
   queryRunnerColumnDefault = fieldQueryRunnerColumn

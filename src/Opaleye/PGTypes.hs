@@ -19,6 +19,7 @@ import qualified Data.Text as SText
 import qualified Data.Text.Lazy as LText
 import qualified Data.ByteString as SByteString
 import qualified Data.ByteString.Lazy as LByteString
+import           Data.Scientific as Sci
 import qualified Data.Time as Time
 import qualified Data.UUID as UUID
 
@@ -39,6 +40,7 @@ instance C.PGFractional PGFloat8 where
   pgFromRational = pgDouble . fromRational
 
 instance C.PGIntegral PGInt2
+instance C.PGIntegral PGNumeric
 instance C.PGIntegral PGInt4
 instance C.PGIntegral PGInt8
 
@@ -64,6 +66,9 @@ pgStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack
 
 pgLazyText :: LText.Text -> Column PGText
 pgLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack
+
+pgNumeric :: Sci.Scientific -> Column PGNumeric
+pgNumeric = IPT.literalColumn . HPQ.NumericLit
 
 pgInt4 :: Int -> Column PGInt4
 pgInt4 = IPT.literalColumn . HPQ.IntegerLit . fromIntegral

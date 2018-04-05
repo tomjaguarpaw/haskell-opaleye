@@ -16,6 +16,10 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Base16 as Base16
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Text.Lazy.Builder.Scientific as Sci
+import qualified Data.Text.Lazy as LT
+import qualified Data.Text.Lazy.Builder as LT
+
 
 mkSqlGenerator :: SqlGenerator -> SqlGenerator
 mkSqlGenerator gen = SqlGenerator
@@ -239,6 +243,7 @@ defaultSqlLiteral _ l =
                        else if isInfinite d && d < 0 then "'-Infinity'"
                        else if isInfinite d && d > 0 then "'Infinity'"
                        else show d
+      NumericLit n  -> LT.unpack . LT.toLazyText . Sci.scientificBuilder $ n
       OtherLit o    -> o
 
 

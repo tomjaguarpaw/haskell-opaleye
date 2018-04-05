@@ -13,6 +13,7 @@ import qualified Data.Text                       as ST
 import qualified Data.Text.Lazy                  as LT
 import qualified Data.ByteString                 as SBS
 import qualified Data.ByteString.Lazy            as LBS
+import qualified Data.Scientific                 as Sci
 import qualified Data.Time                       as Time
 import qualified Data.UUID                       as UUID
 
@@ -72,6 +73,9 @@ instance D.Default Constant ST.Text (Column T.PGText) where
 
 instance D.Default Constant LT.Text (Column T.PGText) where
   def = Constant T.pgLazyText
+
+instance D.Default Constant Sci.Scientific (Column T.PGNumeric) where
+  def = Constant T.pgNumeric
 
 instance D.Default Constant Int (Column T.PGInt4) where
   def = Constant T.pgInt4
@@ -143,8 +147,8 @@ instance D.Default Constant (R.PGRange Int.Int) (Column (T.PGRange T.PGInt4)) wh
 instance D.Default Constant (R.PGRange Int.Int64) (Column (T.PGRange T.PGInt8)) where
   def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgInt8 a b
 
--- TODO
---instance D.Default Constant (R.PGRange _) (Column (T.PGRange PGNumeric)) where
+instance D.Default Constant (R.PGRange Sci.Scientific) (Column (T.PGRange T.PGNumeric)) where
+  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgNumeric a b
 
 instance D.Default Constant (R.PGRange Time.LocalTime) (Column (T.PGRange T.PGTimestamp)) where
   def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgLocalTime a b
