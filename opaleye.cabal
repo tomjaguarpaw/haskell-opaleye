@@ -99,7 +99,7 @@ library
                    Opaleye.Internal.HaskellDB.Sql.Default,
                    Opaleye.Internal.HaskellDB.Sql.Generate,
                    Opaleye.Internal.HaskellDB.Sql.Print
-  ghc-options:     -Wall
+  ghc-options:     -Wall -Wcompat
 
 test-suite test
   default-language: Haskell2010
