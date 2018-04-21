@@ -20,6 +20,7 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Operators as O
 import           Opaleye.Internal.Helpers   ((.:))
 import qualified Opaleye.Order as Ord
+import qualified Opaleye.Select   as S
 import qualified Opaleye.SqlTypes as T
 
 import qualified Opaleye.Column   as Column
@@ -45,18 +46,18 @@ then 'keepWhen' will suit you better.
 (If you are familiar with 'Control.Monad.MonadPlus' or
 'Control.Applicative.Alternative' it may help you to know that
 'restrict' corresponds to the 'Control.Monad.guard' function.) -}
-restrict :: QueryArr (Column T.SqlBool) ()
+restrict :: S.SelectArr (Column T.SqlBool) ()
 restrict = QueryArr f where
   f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
 
 {-| Add a @WHERE EXISTS@ clause to the current query. -}
-restrictExists :: QueryArr a b -> QueryArr a ()
+restrictExists :: S.SelectArr a b -> S.SelectArr a ()
 restrictExists criteria = QueryArr f where
   f (a, primQ, t0) = ((), PQ.exists primQ existsQ, t1) where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
 {-| Add a @WHERE NOT EXISTS@ clause to the current query. -}
-restrictNotExists :: QueryArr a b -> QueryArr a ()
+restrictNotExists :: S.SelectArr a b -> S.SelectArr a ()
 restrictNotExists criteria = QueryArr f where
   f (a, primQ, t0) = ((), PQ.notExists primQ existsQ, t1) where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
@@ -68,10 +69,10 @@ You would typically use 'keepWhen' if you want to write
 your query using a "point free" style.  If you want to use 'A.Arrow'
 notation then 'restrict' will suit you better.
 
-This is the 'QueryArr' equivalent of 'Prelude.filter' from the
+This is the 'S.SelectArr' equivalent of 'Prelude.filter' from the
 'Prelude'.
 -}
-keepWhen :: (a -> Column T.SqlBool) -> QueryArr a a
+keepWhen :: (a -> Column T.SqlBool) -> S.SelectArr a a
 keepWhen p = proc a -> do
   restrict  -< p a
   A.returnA -< a
@@ -217,7 +218,7 @@ in_ fcas (Column a) = Column $ case NEL.nonEmpty (F.toList fcas) of
 -- expediency, is currently implemented using a @LEFT JOIN@.  Please
 -- file a bug if this causes any issues in practice.
 inQuery :: D.Default O.EqPP columns columns
-        => columns -> Query columns -> Query (Column T.SqlBool)
+        => columns -> S.Select columns -> S.Select (Column T.SqlBool)
 inQuery c q = qj'
   where -- Remove every row that isn't equal to c
         -- Replace the ones that are with '1'
