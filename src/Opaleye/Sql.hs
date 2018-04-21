@@ -13,6 +13,8 @@ import           Opaleye.Internal.Helpers ((.:))
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Tag as T
 
+import qualified Opaleye.Select as S
+
 import qualified Data.Profunctor.Product.Default as D
 
 -- * Showing SQL
@@ -25,56 +27,56 @@ import qualified Data.Profunctor.Product.Default as D
 -- Example type specialization:
 --
 -- @
--- showSql :: Query (Column a, Column b) -> Maybe String
+-- showSql :: Select (Column a, Column b) -> Maybe String
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- showSql :: Query (Foo (Column a) (Column b) (Column c)) -> Maybe String
+-- showSql :: Select (Foo (Column a) (Column b) (Column c)) -> Maybe String
 -- @
 showSql :: forall columns.
            D.Default U.Unpackspec columns columns
-        => Q.Query columns
+        => S.Select columns
         -> Maybe String
 showSql = showSqlExplicit (D.def :: U.Unpackspec columns columns)
 
 -- | Show the unoptimized SQL query string generated from the query.
 showSqlUnopt :: forall columns.
                 D.Default U.Unpackspec columns columns
-             => Q.Query columns
+             => S.Select columns
              -> Maybe String
 showSqlUnopt = showSqlUnoptExplicit (D.def :: U.Unpackspec columns columns)
 
 -- * Explicit versions
 
-showSqlExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
+showSqlExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
 showSqlExplicit = formatAndShowSQL
                   . (\(x, y, z) -> (x, Op.optimize y, z))
                   .: Q.runQueryArrUnpack
 
-showSqlUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
+showSqlUnoptExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
 showSqlUnoptExplicit = formatAndShowSQL .: Q.runQueryArrUnpack
 
 -- * Deprecated functions
 
 -- | Will be deprecated in version 0.7.  Use 'showSql' instead.
 showSqlForPostgres :: forall columns . D.Default U.Unpackspec columns columns =>
-                      Q.Query columns -> Maybe String
+                      S.Select columns -> Maybe String
 showSqlForPostgres = showSql
 
 -- | Will be deprecated in version 0.7.  Use 'showSqlUnopt' instead.
 showSqlForPostgresUnopt :: forall columns . D.Default U.Unpackspec columns columns =>
-                           Q.Query columns -> Maybe String
+                           S.Select columns -> Maybe String
 showSqlForPostgresUnopt = showSqlUnopt
 
 -- | Will be deprecated in version 0.7.  Use 'showSqlExplicit' instead.
-showSqlForPostgresExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
+showSqlForPostgresExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
 showSqlForPostgresExplicit = showSqlExplicit
 
 -- | Will be deprecated in version 0.7.  Use 'showSqlUnoptExplicit' instead.
-showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> Q.Query columns -> Maybe String
+showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
 showSqlForPostgresUnoptExplicit = showSqlUnoptExplicit
 
 {-# DEPRECATED formatAndShowSQL
