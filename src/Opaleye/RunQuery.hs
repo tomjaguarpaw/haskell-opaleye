@@ -17,8 +17,8 @@ import qualified Database.PostgreSQL.Simple.FromRow as FR
 import qualified Data.String as String
 
 import           Opaleye.Column (Column)
+import qualified Opaleye.Select as S
 import qualified Opaleye.Sql as S
-import           Opaleye.QueryArr (Query)
 import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
 import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Internal.QueryArr as Q
@@ -26,7 +26,7 @@ import qualified Opaleye.Internal.QueryArr as Q
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
 
--- * Running 'Query's
+-- * Running 'S.Select's
 
 -- | @runQuery@'s use of the 'D.Default' typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
@@ -36,13 +36,13 @@ import qualified Data.Profunctor.Product.Default as D
 -- Example type specialization:
 --
 -- @
--- runQuery :: Query (Column 'Opaleye.SqlTypes.SqlInt4', Column 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
+-- runQuery :: 'S.Select' (Column 'Opaleye.SqlTypes.SqlInt4', Column 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
 --
 -- @
--- runQuery :: Query (Foo (Column 'Opaleye.SqlTypes.SqlInt4') (Column 'Opaleye.SqlTypes.SqlText') (Column 'Opaleye.SqlTypes.SqlBool')
+-- runQuery :: 'S.Select' (Foo (Column 'Opaleye.SqlTypes.SqlInt4') (Column 'Opaleye.SqlTypes.SqlText') (Column 'Opaleye.SqlTypes.SqlBool')
 --          -> IO [Foo Int String Bool]
 -- @
 --
@@ -50,7 +50,7 @@ import qualified Data.Profunctor.Product.Default as D
 -- the 'Opaleye.Internal.RunQuery.QueryRunnerColumnDefault' typeclass.
 runQuery :: D.Default QueryRunner columns haskells
          => PGS.Connection
-         -> Query columns
+         -> S.Select columns
          -> IO [haskells]
 runQuery = runQueryExplicit D.def
 
@@ -62,7 +62,7 @@ runQuery = runQueryExplicit D.def
 runQueryFold
   :: D.Default QueryRunner columns haskells
   => PGS.Connection
-  -> Query columns
+  -> S.Select columns
   -> b
   -> (b -> haskells -> IO b)
   -> IO b
@@ -94,7 +94,7 @@ queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
 
 runQueryExplicit :: QueryRunner columns haskells
                  -> PGS.Connection
-                 -> Query columns
+                 -> S.Select columns
                  -> IO [haskells]
 runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
   where (sql, parser) = prepareQuery qr q
@@ -102,7 +102,7 @@ runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
 runQueryFoldExplicit
   :: QueryRunner columns haskells
   -> PGS.Connection
-  -> Query columns
+  -> S.Select columns
   -> b
   -> (b -> haskells -> IO b)
   -> IO b
@@ -120,7 +120,7 @@ runQueryFoldExplicit qr conn q z f = case sql of
 declareCursor
     :: D.Default QueryRunner columns haskells
     => PGS.Connection
-    -> Query columns
+    -> S.Select columns
     -> IO (IRQ.Cursor haskells)
 declareCursor = declareCursorExplicit D.def
 
@@ -128,7 +128,7 @@ declareCursor = declareCursorExplicit D.def
 declareCursorExplicit
     :: QueryRunner columns haskells
     -> PGS.Connection
-    -> Query columns
+    -> S.Select columns
     -> IO (IRQ.Cursor haskells)
 declareCursorExplicit qr conn q =
     case mbQuery of
@@ -158,7 +158,7 @@ foldForward (IRQ.Cursor rowParser cursor) chunkSize  f z =
 -- * Deprecated functions
 
 {-# DEPRECATED prepareQuery "Will be removed in version 0.7" #-}
-prepareQuery :: QueryRunner columns haskells -> Query columns -> (Maybe PGS.Query, FR.RowParser haskells)
+prepareQuery :: QueryRunner columns haskells -> S.Select columns -> (Maybe PGS.Query, FR.RowParser haskells)
 prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
   where sql :: Maybe PGS.Query
         sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
