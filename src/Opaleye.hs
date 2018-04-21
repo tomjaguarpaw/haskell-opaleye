@@ -28,6 +28,7 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.QueryArr
                , module Opaleye.RunQuery
                , module Opaleye.Sql
+               , module Opaleye.Select
                , module Opaleye.SqlTypes
                , module Opaleye.Table
                , module Opaleye.Values
@@ -47,6 +48,7 @@ import Opaleye.Order
 import Opaleye.PGTypes
 import Opaleye.QueryArr
 import Opaleye.RunQuery
+import Opaleye.Select
 import Opaleye.Sql
 import Opaleye.SqlTypes
 import Opaleye.Table
