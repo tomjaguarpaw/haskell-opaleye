@@ -21,6 +21,7 @@ import qualified Opaleye.Internal.Join           as IJ
 import qualified Opaleye.Internal.Operators      as IO
 import qualified Opaleye.Internal.Unpackspec     as IU
 import qualified Opaleye.Join                    as J
+import qualified Opaleye.Select                  as S
 import qualified Opaleye.SqlTypes                as T
 import qualified Opaleye.Operators               as O
 import           Opaleye.QueryArr                (Query)
@@ -29,11 +30,11 @@ joinF :: (columnsL -> columnsR -> columnsResult)
       -- ^ Calculate result columns from input columns
       -> (columnsL -> columnsR -> Column T.SqlBool)
       -- ^ Condition on which to join
-      -> Query columnsL
+      -> S.Select columnsL
       -- ^ Left query
-      -> Query columnsR
+      -> S.Select columnsR
       -- ^ Right query
-      -> Query columnsResult
+      -> S.Select columnsResult
 joinF f cond l r =
   fmap (uncurry f) (O.keepWhen (uncurry cond) <<< ((,) <$> l <*> r))
 
@@ -48,11 +49,11 @@ leftJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
           -- rows in the right query satisfying the join condition
           -> (columnsL -> columnsR -> Column T.SqlBool)
           -- ^ Condition on which to join
-          -> Query columnsL
+          -> S.Select columnsL
           -- ^ Left query
-          -> Query columnsR
+          -> S.Select columnsR
           -- ^ Right query
-          -> Query columnsResult
+          -> S.Select columnsResult
 leftJoinF f fL cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.sqlBool True))
         j  = J.leftJoinExplicit D.def
@@ -79,11 +80,11 @@ rightJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
            -- rows in the left query satisfying the join condition
            -> (columnsL -> columnsR -> Column T.SqlBool)
            -- ^ Condition on which to join
-           -> Query columnsL
+           -> S.Select columnsL
            -- ^ Left query
-           -> Query columnsR
+           -> S.Select columnsR
            -- ^ Right query
-           -> Query columnsResult
+           -> S.Select columnsResult
 rightJoinF f fR cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.sqlBool True))
         j  = J.rightJoinExplicit D.def
@@ -115,11 +116,11 @@ fullJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
            -- condition
           -> (columnsL -> columnsR -> Column T.SqlBool)
           -- ^ Condition on which to join
-          -> Query columnsL
+          -> S.Select columnsL
           -- ^ Left query
-          -> Query columnsR
+          -> S.Select columnsR
           -- ^ Right query
-          -> Query columnsResult
+          -> S.Select columnsResult
 fullJoinF f fL fR cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.sqlBool True))
         j  = J.fullJoinExplicit D.def
