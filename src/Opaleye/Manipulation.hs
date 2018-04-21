@@ -33,6 +33,7 @@ module Opaleye.Manipulation (module Opaleye.Manipulation,
                              -- Opaleye.
                              HSql.OnConflict(..)) where
 
+import qualified Opaleye.Field        as F
 import qualified Opaleye.Internal.Sql as Sql
 import qualified Opaleye.Internal.Print as Print
 import qualified Opaleye.RunQuery as RQ
@@ -146,7 +147,7 @@ data Update haskells = forall columnsW columnsR. Update
    -- value.  Many users have been confused by this because they
    -- assume it means that the column is to be left unchanged.  For an
    -- easier time wrap your update function in 'updateEasy'.
-   , uWhere      :: columnsR -> Column SqlBool
+   , uWhere      :: columnsR -> F.Field SqlBool
    , uReturning  :: MI.Returning columnsR haskells
    }
 
@@ -162,7 +163,7 @@ updateEasy u = u' . u
 
 data Delete haskells = forall columnsW columnsR. Delete
   { dTable     :: T.Table columnsW columnsR
-  , dWhere     :: columnsR -> Column SqlBool
+  , dWhere     :: columnsR -> F.Field SqlBool
   , dReturning :: MI.Returning columnsR Int64
   }
 
