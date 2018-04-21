@@ -18,9 +18,8 @@
 >                          showSqlForPostgres, Unpackspec,
 >                          PGInt4, PGInt8, PGText, PGDate, PGFloat8)
 >
-> import           Control.Applicative     ((<$>), (<*>), Applicative)
->
 > import qualified Data.Profunctor         as P
+> import qualified Data.Profunctor.Product as PP
 > import           Data.Profunctor.Product (p3)
 > import           Data.Profunctor.Product.Default (Default)
 > import qualified Data.Profunctor.Product.Default as D
@@ -159,13 +158,12 @@ compatible with Opaleye!
 >                            , bdDay  :: TableField f Day    PGDate NN Req
 >                            }
 >
-> instance ( Applicative (p (Birthday a))
->          , P.Profunctor p
+> instance ( PP.ProductProfunctor p
 >          , Default p (TableField a String PGText NN Req) (TableField b String PGText NN Req)
 >          , Default p (TableField a Day    PGDate NN Req) (TableField b Day    PGDate NN Req)) =>
 >   Default p (Birthday a) (Birthday b) where
->   def = Birthday <$> P.lmap bdName D.def
->                  <*> P.lmap bdDay  D.def
+>   def = Birthday PP.***$ P.lmap bdName D.def
+>                  PP.**** P.lmap bdDay  D.def
 
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
@@ -213,17 +211,16 @@ this information with the following datatype.
 >                        , radius   :: Field f Double PGFloat8 NN
 >                        }
 >
-> instance ( Applicative (p (Widget a))
->          , P.Profunctor p
+> instance ( PP.ProductProfunctor p
 >          , Default p (Field a String PGText NN)   (Field b String PGText NN)
 >          , Default p (Field a Int    PGInt4 NN)   (Field b Int    PGInt4 NN)
 >          , Default p (Field a Double PGFloat8 NN) (Field b Double PGFloat8 NN)) =>
 >   Default p (Widget a) (Widget b) where
->   def = Widget <$> P.lmap style    D.def
->                <*> P.lmap color    D.def
->                <*> P.lmap location D.def
->                <*> P.lmap quantity D.def
->                <*> P.lmap radius   D.def
+>   def = Widget PP.***$ P.lmap style    D.def
+>                PP.**** P.lmap color    D.def
+>                PP.**** P.lmap location D.def
+>                PP.**** P.lmap quantity D.def
+>                PP.**** P.lmap radius   D.def
 
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
