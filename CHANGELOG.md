@@ -1,3 +1,6 @@
+* Added `Opaleye.SqlTypes` and `sql`/`Sql...` names instead of
+  `pg`/`PG...` names
+
 * Added `runInsert_`, `runUpdate_`, `runDelete_` and supporting
   functionality
 

@@ -4,7 +4,7 @@ module Opaleye.Constant where
 
 import           Opaleye.Column                  (Column)
 import qualified Opaleye.Column                  as C
-import qualified Opaleye.PGTypes                 as T
+import qualified Opaleye.SqlTypes                 as T
 
 import qualified Data.Aeson                      as Ae
 import qualified Data.CaseInsensitive            as CI
@@ -28,7 +28,7 @@ import           Data.Functor                    ((<$>))
 import qualified Database.PostgreSQL.Simple.Range as R
 
 -- | 'constant' provides a convenient typeclass wrapper around the
--- 'Column' creation functions in "Opaleye.PGTypes".  Besides
+-- 'Column' creation functions in "Opaleye.SqlTypes".  Besides
 -- convenience it doesn't provide any additional functionality.
 --
 -- It can be used with functions like 'Opaleye.Manipulation.runInsert'
@@ -59,105 +59,105 @@ instance D.Default Constant haskell (Column sql)
   def = Constant (C.maybeToNullable . fmap f)
     where Constant f = D.def
 
-instance D.Default Constant String (Column T.PGText) where
-  def = Constant T.pgString
+instance D.Default Constant String (Column T.SqlText) where
+  def = Constant T.sqlString
 
-instance D.Default Constant LBS.ByteString (Column T.PGBytea) where
-  def = Constant T.pgLazyByteString
+instance D.Default Constant LBS.ByteString (Column T.SqlBytea) where
+  def = Constant T.sqlLazyByteString
 
-instance D.Default Constant SBS.ByteString (Column T.PGBytea) where
-  def = Constant T.pgStrictByteString
+instance D.Default Constant SBS.ByteString (Column T.SqlBytea) where
+  def = Constant T.sqlStrictByteString
 
-instance D.Default Constant ST.Text (Column T.PGText) where
-  def = Constant T.pgStrictText
+instance D.Default Constant ST.Text (Column T.SqlText) where
+  def = Constant T.sqlStrictText
 
-instance D.Default Constant LT.Text (Column T.PGText) where
-  def = Constant T.pgLazyText
+instance D.Default Constant LT.Text (Column T.SqlText) where
+  def = Constant T.sqlLazyText
 
-instance D.Default Constant Sci.Scientific (Column T.PGNumeric) where
-  def = Constant T.pgNumeric
+instance D.Default Constant Sci.Scientific (Column T.SqlNumeric) where
+  def = Constant T.sqlNumeric
 
-instance D.Default Constant Int (Column T.PGInt4) where
-  def = Constant T.pgInt4
+instance D.Default Constant Int (Column T.SqlInt4) where
+  def = Constant T.sqlInt4
 
-instance D.Default Constant Int.Int32 (Column T.PGInt4) where
-  def = Constant $ T.pgInt4 . fromIntegral
+instance D.Default Constant Int.Int32 (Column T.SqlInt4) where
+  def = Constant $ T.sqlInt4 . fromIntegral
 
-instance D.Default Constant Int.Int64 (Column T.PGInt8) where
-  def = Constant T.pgInt8
+instance D.Default Constant Int.Int64 (Column T.SqlInt8) where
+  def = Constant T.sqlInt8
 
-instance D.Default Constant Double (Column T.PGFloat8) where
-  def = Constant T.pgDouble
+instance D.Default Constant Double (Column T.SqlFloat8) where
+  def = Constant T.sqlDouble
 
-instance D.Default Constant Bool (Column T.PGBool) where
-  def = Constant T.pgBool
+instance D.Default Constant Bool (Column T.SqlBool) where
+  def = Constant T.sqlBool
 
-instance D.Default Constant UUID.UUID (Column T.PGUuid) where
-  def = Constant T.pgUUID
+instance D.Default Constant UUID.UUID (Column T.SqlUuid) where
+  def = Constant T.sqlUUID
 
-instance D.Default Constant Time.Day (Column T.PGDate) where
-  def = Constant T.pgDay
+instance D.Default Constant Time.Day (Column T.SqlDate) where
+  def = Constant T.sqlDay
 
-instance D.Default Constant Time.UTCTime (Column T.PGTimestamptz) where
-  def = Constant T.pgUTCTime
+instance D.Default Constant Time.UTCTime (Column T.SqlTimestamptz) where
+  def = Constant T.sqlUTCTime
 
-instance D.Default Constant Time.LocalTime (Column T.PGTimestamp) where
-  def = Constant T.pgLocalTime
+instance D.Default Constant Time.LocalTime (Column T.SqlTimestamp) where
+  def = Constant T.sqlLocalTime
 
-instance D.Default Constant Time.ZonedTime (Column T.PGTimestamptz) where
-  def = Constant T.pgZonedTime
+instance D.Default Constant Time.ZonedTime (Column T.SqlTimestamptz) where
+  def = Constant T.sqlZonedTime
 
-instance D.Default Constant Time.TimeOfDay (Column T.PGTime) where
-  def = Constant T.pgTimeOfDay
+instance D.Default Constant Time.TimeOfDay (Column T.SqlTime) where
+  def = Constant T.sqlTimeOfDay
 
-instance D.Default Constant (CI.CI ST.Text) (Column T.PGCitext) where
-  def = Constant T.pgCiStrictText
+instance D.Default Constant (CI.CI ST.Text) (Column T.SqlCitext) where
+  def = Constant T.sqlCiStrictText
 
-instance D.Default Constant (CI.CI LT.Text) (Column T.PGCitext) where
-  def = Constant T.pgCiLazyText
+instance D.Default Constant (CI.CI LT.Text) (Column T.SqlCitext) where
+  def = Constant T.sqlCiLazyText
 
-instance D.Default Constant SBS.ByteString (Column T.PGJson) where
-  def = Constant T.pgStrictJSON
+instance D.Default Constant SBS.ByteString (Column T.SqlJson) where
+  def = Constant T.sqlStrictJSON
 
-instance D.Default Constant LBS.ByteString (Column T.PGJson) where
-  def = Constant T.pgLazyJSON
+instance D.Default Constant LBS.ByteString (Column T.SqlJson) where
+  def = Constant T.sqlLazyJSON
 
-instance D.Default Constant Ae.Value (Column T.PGJson) where
-  def = Constant T.pgValueJSON
+instance D.Default Constant Ae.Value (Column T.SqlJson) where
+  def = Constant T.sqlValueJSON
 
-instance D.Default Constant SBS.ByteString (Column T.PGJsonb) where
-  def = Constant T.pgStrictJSONB
+instance D.Default Constant SBS.ByteString (Column T.SqlJsonb) where
+  def = Constant T.sqlStrictJSONB
 
-instance D.Default Constant LBS.ByteString (Column T.PGJsonb) where
-  def = Constant T.pgLazyJSONB
+instance D.Default Constant LBS.ByteString (Column T.SqlJsonb) where
+  def = Constant T.sqlLazyJSONB
 
-instance D.Default Constant Ae.Value (Column T.PGJsonb) where
-  def = Constant T.pgValueJSONB
+instance D.Default Constant Ae.Value (Column T.SqlJsonb) where
+  def = Constant T.sqlValueJSONB
 
 instance D.Default Constant haskell (Column sql) => D.Default Constant (Maybe haskell) (Maybe (Column sql)) where
   def = Constant (constant <$>)
 
 instance (D.Default Constant a (Column b), T.IsSqlType b)
-         => D.Default Constant [a] (Column (T.PGArray b)) where
-  def = Constant (T.pgArray (constantExplicit D.def))
+         => D.Default Constant [a] (Column (T.SqlArray b)) where
+  def = Constant (T.sqlArray (constantExplicit D.def))
 
-instance D.Default Constant (R.PGRange Int.Int) (Column (T.PGRange T.PGInt4)) where
-  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgInt4 a b
+instance D.Default Constant (R.PGRange Int.Int) (Column (T.SqlRange T.SqlInt4)) where
+  def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlInt4 a b
 
-instance D.Default Constant (R.PGRange Int.Int64) (Column (T.PGRange T.PGInt8)) where
-  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgInt8 a b
+instance D.Default Constant (R.PGRange Int.Int64) (Column (T.SqlRange T.SqlInt8)) where
+  def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlInt8 a b
 
-instance D.Default Constant (R.PGRange Sci.Scientific) (Column (T.PGRange T.PGNumeric)) where
-  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgNumeric a b
+instance D.Default Constant (R.PGRange Sci.Scientific) (Column (T.SqlRange T.SqlNumeric)) where
+  def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlNumeric a b
 
-instance D.Default Constant (R.PGRange Time.LocalTime) (Column (T.PGRange T.PGTimestamp)) where
-  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgLocalTime a b
+instance D.Default Constant (R.PGRange Time.LocalTime) (Column (T.SqlRange T.SqlTimestamp)) where
+  def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlLocalTime a b
 
-instance D.Default Constant (R.PGRange Time.UTCTime) (Column (T.PGRange T.PGTimestamptz)) where
-  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgUTCTime a b
+instance D.Default Constant (R.PGRange Time.UTCTime) (Column (T.SqlRange T.SqlTimestamptz)) where
+  def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlUTCTime a b
 
-instance D.Default Constant (R.PGRange Time.Day) (Column (T.PGRange T.PGDate)) where
-  def = Constant $ \(R.PGRange a b) -> T.pgRange T.pgDay a b
+instance D.Default Constant (R.PGRange Time.Day) (Column (T.SqlRange T.SqlDate)) where
+  def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlDay a b
 
 -- { Boilerplate instances
 

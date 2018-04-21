@@ -1,3 +1,6 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+
 -- | Ordering, @LIMIT@ and @OFFSET@
 
 module Opaleye.Order ( -- * Order by
@@ -15,15 +18,19 @@ module Opaleye.Order ( -- * Order by
                      , O.exact
                      -- * Other
                      , PGOrd
+                     , SqlOrd
                      ) where
 
 import qualified Opaleye.Column as C
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Order as O
-import qualified Opaleye.PGTypes as T
+import qualified Opaleye.SqlTypes as T
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+
+-- ^ We can probably disable ConstraintKinds and TypeSynonymInstances
+-- when we move to Sql... instead of PG..
 
 {-| Order the rows of a `Query` according to the `Order`.
 
@@ -32,8 +39,8 @@ import Data.Monoid ((\<\>))
 
 \-- Order by the first column ascending.  When first columns are equal
 \-- order by second column descending.
-example :: 'Query' ('C.Column' 'T.PGInt4', 'C.Column' 'T.PGText')
-        -> 'Query' ('C.Column' 'T.PGInt4', 'C.Column' 'T.PGText')
+example :: 'Query' ('C.Column' 'T.SqlInt4', 'C.Column' 'T.SqlText')
+        -> 'Query' ('C.Column' 'T.SqlInt4', 'C.Column' 'T.SqlText')
 example = 'orderBy' ('asc' fst \<\> 'desc' snd)
 @
 
@@ -44,26 +51,26 @@ orderBy os q =
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear last)
-asc :: PGOrd b => (a -> C.Column b) -> O.Order a
+asc :: SqlOrd b => (a -> C.Column b) -> O.Order a
 asc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                           , HPQ.orderNulls     = HPQ.NullsLast }
 
 -- | Specify an descending ordering by the given expression.
 --   (Any NULLs appear first)
-desc :: PGOrd b => (a -> C.Column b) -> O.Order a
+desc :: SqlOrd b => (a -> C.Column b) -> O.Order a
 desc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                            , HPQ.orderNulls     = HPQ.NullsFirst }
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear first)
-ascNullsFirst :: PGOrd b => (a -> C.Column b) -> O.Order a
+ascNullsFirst :: SqlOrd b => (a -> C.Column b) -> O.Order a
 ascNullsFirst = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                                     , HPQ.orderNulls     = HPQ.NullsFirst }
 
 
 -- | Specify an descending ordering by the given expression.
 --   (Any NULLs appear last)
-descNullsLast :: PGOrd b => (a -> C.Column b) -> O.Order a
+descNullsLast :: SqlOrd b => (a -> C.Column b) -> O.Order a
 descNullsLast = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                                     , HPQ.orderNulls     = HPQ.NullsLast }
 
@@ -114,18 +121,20 @@ offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 -- | Typeclass for Postgres types which support ordering operations.
 class PGOrd a where
 
-instance PGOrd T.PGBool
-instance PGOrd T.PGDate
-instance PGOrd T.PGFloat8
-instance PGOrd T.PGFloat4
-instance PGOrd T.PGInt8
-instance PGOrd T.PGInt4
-instance PGOrd T.PGInt2
-instance PGOrd T.PGNumeric
-instance PGOrd T.PGText
-instance PGOrd T.PGTime
-instance PGOrd T.PGTimestamptz
-instance PGOrd T.PGTimestamp
-instance PGOrd T.PGCitext
-instance PGOrd T.PGUuid
+type SqlOrd = PGOrd
+
+instance PGOrd T.SqlBool
+instance PGOrd T.SqlDate
+instance PGOrd T.SqlFloat8
+instance PGOrd T.SqlFloat4
+instance PGOrd T.SqlInt8
+instance PGOrd T.SqlInt4
+instance PGOrd T.SqlInt2
+instance PGOrd T.SqlNumeric
+instance PGOrd T.SqlText
+instance PGOrd T.SqlTime
+instance PGOrd T.SqlTimestamptz
+instance PGOrd T.SqlTimestamp
+instance PGOrd T.SqlCitext
+instance PGOrd T.SqlUuid
 instance PGOrd a => PGOrd (C.Nullable a)

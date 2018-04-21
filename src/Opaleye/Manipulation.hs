@@ -45,7 +45,7 @@ import           Opaleye.Internal.Manipulation (Updater(Updater))
 import qualified Opaleye.Internal.Manipulation as MI
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Unpackspec as U
-import           Opaleye.PGTypes (PGBool)
+import           Opaleye.SqlTypes (SqlBool)
 
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
@@ -146,7 +146,7 @@ data Update haskells = forall columnsW columnsR. Update
    -- value.  Many users have been confused by this because they
    -- assume it means that the column is to be left unchanged.  For an
    -- easier time wrap your update function in 'updateEasy'.
-   , uWhere      :: columnsR -> Column PGBool
+   , uWhere      :: columnsR -> Column SqlBool
    , uReturning  :: MI.Returning columnsR haskells
    }
 
@@ -162,7 +162,7 @@ updateEasy u = u' . u
 
 data Delete haskells = forall columnsW columnsR. Delete
   { dTable     :: T.Table columnsW columnsR
-  , dWhere     :: columnsR -> Column PGBool
+  , dWhere     :: columnsR -> Column SqlBool
   , dReturning :: MI.Returning columnsR Int64
   }
 
@@ -247,7 +247,7 @@ arrangeInsertManySql t c  = MI.arrangeInsertManySql t c Nothing
     "You probably want 'runUpdate' instead. \
     \Will be removed in version 0.7." #-}
 arrangeUpdate :: T.Table columnsW columnsR
-              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
+              -> (columnsR -> columnsW) -> (columnsR -> Column SqlBool)
               -> HSql.SqlUpdate
 arrangeUpdate t update cond =
   SG.sqlUpdate SD.defaultSqlGenerator
@@ -261,14 +261,14 @@ arrangeUpdate t update cond =
     "You probably want 'runUpdate' instead. \
     \Will be removed in version 0.7." #-}
 arrangeUpdateSql :: T.Table columnsW columnsR
-              -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
+              -> (columnsR -> columnsW) -> (columnsR -> Column SqlBool)
               -> String
 arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
 
 {-# DEPRECATED arrangeDelete
     "You probably want 'runDelete' instead. \
     \Will be removed in version 0.7." #-}
-arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
+arrangeDelete :: T.Table a columnsR -> (columnsR -> Column SqlBool) -> HSql.SqlDelete
 arrangeDelete t cond =
   SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier t)) [condExpr]
   where Column condExpr = cond tableCols
@@ -277,7 +277,7 @@ arrangeDelete t cond =
 {-# DEPRECATED arrangeDeleteSql
     "You probably want 'runDelete' instead. \
     \Will be removed in version 0.7." #-}
-arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
+arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column SqlBool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
 
 {-# DEPRECATED arrangeInsertManyReturning
@@ -308,7 +308,7 @@ arrangeInsertManyReturningSql u t c r =
 arrangeUpdateReturning :: U.Unpackspec columnsReturned ignored
                        -> T.Table columnsW columnsR
                        -> (columnsR -> columnsW)
-                       -> (columnsR -> Column PGBool)
+                       -> (columnsR -> Column SqlBool)
                        -> (columnsR -> columnsReturned)
                        -> Sql.Returning HSql.SqlUpdate
 arrangeUpdateReturning unpackspec t updatef cond returningf =
@@ -324,7 +324,7 @@ arrangeUpdateReturning unpackspec t updatef cond returningf =
 arrangeUpdateReturningSql :: U.Unpackspec columnsReturned ignored
                           -> T.Table columnsW columnsR
                           -> (columnsR -> columnsW)
-                          -> (columnsR -> Column PGBool)
+                          -> (columnsR -> Column SqlBool)
                           -> (columnsR -> columnsReturned)
                           -> String
 arrangeUpdateReturningSql =
@@ -436,7 +436,7 @@ runUpdateEasy :: D.Default Updater columnsR columnsW
               -- ^ Table to update
               -> (columnsR -> columnsR)
               -- ^ Update function to apply to chosen rows
-              -> (columnsR -> Column PGBool)
+              -> (columnsR -> Column SqlBool)
               -- ^ Predicate function @f@ to choose which rows to update.
               -- 'runUpdate' will update rows for which @f@ returns @TRUE@
               -- and leave unchanged rows for which @f@ returns @FALSE@.
@@ -451,7 +451,7 @@ runUpdate :: PGS.Connection
           -- ^ Table to update
           -> (columnsR -> columnsW)
           -- ^ Update function to apply to chosen rows
-          -> (columnsR -> Column PGBool)
+          -> (columnsR -> Column SqlBool)
           -- ^ Predicate function @f@ to choose which rows to update.
           -- 'runUpdate' will update rows for which @f@ returns @TRUE@
           -- and leave unchanged rows for which @f@ returns @FALSE@.
@@ -467,7 +467,7 @@ runUpdateReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                    -- ^ Table to update
                    -> (columnsR -> columnsW)
                    -- ^ Update function to apply to chosen rows
-                   -> (columnsR -> Column PGBool)
+                   -> (columnsR -> Column SqlBool)
                    -- ^ Predicate function @f@ to choose which rows to
                    -- update.  'runUpdate' will update rows for which
                    -- @f@ returns @TRUE@ and leave unchanged rows for
@@ -483,7 +483,7 @@ runUpdateReturningExplicit :: RQ.QueryRunner columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
                            -> (columnsR -> columnsW)
-                           -> (columnsR -> Column PGBool)
+                           -> (columnsR -> Column SqlBool)
                            -> (columnsR -> columnsReturned)
                            -> IO [haskells]
 runUpdateReturningExplicit qr conn t update cond r =
@@ -498,7 +498,7 @@ runDelete :: PGS.Connection
           -- ^
           -> T.Table a columnsR
           -- ^ Table to delete rows from
-          -> (columnsR -> Column PGBool)
+          -> (columnsR -> Column SqlBool)
           -- ^ Predicate function @f@ to choose which rows to delete.
           -- 'runDelete' will delete rows for which @f@ returns @TRUE@
           -- and leave unchanged rows for which @f@ returns @FALSE@.

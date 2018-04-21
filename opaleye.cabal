@@ -62,6 +62,7 @@ library
                    Opaleye.QueryArr,
                    Opaleye.RunQuery,
                    Opaleye.Sql,
+                   Opaleye.SqlTypes,
                    Opaleye.Table,
                    Opaleye.Values,
                    Opaleye.Internal.Aggregate,

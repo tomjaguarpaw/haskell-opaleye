@@ -106,67 +106,67 @@ ways.
 -}
 
 twoIntTable :: String
-            -> O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+            -> O.Table (Column O.SqlInt4, Column O.SqlInt4) (Column O.SqlInt4, Column O.SqlInt4)
 twoIntTable n = O.Table n (PP.p2 (O.required "column1", O.required "column2"))
 
-table1 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table1 :: O.Table (Column O.SqlInt4, Column O.SqlInt4) (Column O.SqlInt4, Column O.SqlInt4)
 table1 = twoIntTable "table1"
 
-table1F :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table1F :: O.Table (Column O.SqlInt4, Column O.SqlInt4) (Column O.SqlInt4, Column O.SqlInt4)
 table1F = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1
 
 -- This is implicitly testing our ability to handle upper case letters in table names.
-table2 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table2 :: O.Table (Column O.SqlInt4, Column O.SqlInt4) (Column O.SqlInt4, Column O.SqlInt4)
 table2 = twoIntTable "TABLE2"
 
-table3 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table3 :: O.Table (Column O.SqlInt4, Column O.SqlInt4) (Column O.SqlInt4, Column O.SqlInt4)
 table3 = twoIntTable "table3"
 
-table4 :: O.Table (Column O.PGInt4, Column O.PGInt4) (Column O.PGInt4, Column O.PGInt4)
+table4 :: O.Table (Column O.SqlInt4, Column O.SqlInt4) (Column O.SqlInt4, Column O.SqlInt4)
 table4 = twoIntTable "table4"
 
-table5 :: O.Table (Maybe (Column O.PGInt4), Maybe (Column  O.PGInt4))
-                  (Column O.PGInt4, Column O.PGInt4)
+table5 :: O.Table (Maybe (Column O.SqlInt4), Maybe (Column  O.SqlInt4))
+                  (Column O.SqlInt4, Column O.SqlInt4)
 table5 = O.TableWithSchema "public" "table5" (PP.p2 (O.optional "column1", O.optional "column2"))
 
-table6 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
+table6 :: O.Table (Column O.SqlText, Column O.SqlText) (Column O.SqlText, Column O.SqlText)
 table6 = O.Table "table6" (PP.p2 (O.required "column1", O.required "column2"))
 
-table7 :: O.Table (Column O.PGText, Column O.PGText) (Column O.PGText, Column O.PGText)
+table7 :: O.Table (Column O.SqlText, Column O.SqlText) (Column O.SqlText, Column O.SqlText)
 table7 = O.Table "table7" (PP.p2 (O.required "column1", O.required "column2"))
 
-table8 :: O.Table (Column O.PGJson) (Column O.PGJson)
+table8 :: O.Table (Column O.SqlJson) (Column O.SqlJson)
 table8 = O.Table "table8" (O.required "column1")
 
-table9 :: O.Table (Column O.PGJsonb) (Column O.PGJsonb)
+table9 :: O.Table (Column O.SqlJsonb) (Column O.SqlJsonb)
 table9 = O.Table "table9" (O.required "column1")
 
-table10 :: O.Table (Column O.PGInt4) (Column O.PGInt4)
+table10 :: O.Table (Column O.SqlInt4) (Column O.SqlInt4)
 table10 = O.Table "table10" (O.required "column1")
 
-tableKeywordColNames :: O.Table (Column O.PGInt4, Column O.PGInt4)
-                                (Column O.PGInt4, Column O.PGInt4)
+tableKeywordColNames :: O.Table (Column O.SqlInt4, Column O.SqlInt4)
+                                (Column O.SqlInt4, Column O.SqlInt4)
 tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
 
-table1Q :: Query (Column O.PGInt4, Column O.PGInt4)
+table1Q :: Query (Column O.SqlInt4, Column O.SqlInt4)
 table1Q = O.queryTable table1
 
-table2Q :: Query (Column O.PGInt4, Column O.PGInt4)
+table2Q :: Query (Column O.SqlInt4, Column O.SqlInt4)
 table2Q = O.queryTable table2
 
-table3Q :: Query (Column O.PGInt4, Column O.PGInt4)
+table3Q :: Query (Column O.SqlInt4, Column O.SqlInt4)
 table3Q = O.queryTable table3
 
-table6Q :: Query (Column O.PGText, Column O.PGText)
+table6Q :: Query (Column O.SqlText, Column O.SqlText)
 table6Q = O.queryTable table6
 
-table7Q :: Query (Column O.PGText, Column O.PGText)
+table7Q :: Query (Column O.SqlText, Column O.SqlText)
 table7Q = O.queryTable table7
 
-table8Q :: Query (Column O.PGJson)
+table8Q :: Query (Column O.SqlJson)
 table8Q = O.queryTable table8
 
-table9Q :: Query (Column O.PGJsonb)
+table9Q :: Query (Column O.SqlJsonb)
 table9Q = O.queryTable table9
 
 table1dataG :: Num a => [(a, a)]
@@ -178,7 +178,7 @@ table1dataG = [ (1, 100)
 table1data :: [(Int, Int)]
 table1data = table1dataG
 
-table1columndata :: [(Column O.PGInt4, Column O.PGInt4)]
+table1columndata :: [(Column O.SqlInt4, Column O.SqlInt4)]
 table1columndata = table1dataG
 
 table2dataG :: Num a => [(a, a)]
@@ -188,7 +188,7 @@ table2dataG = [ (1, 100)
 table2data :: [(Int, Int)]
 table2data = table2dataG
 
-table2columndata :: [(Column O.PGInt4, Column O.PGInt4)]
+table2columndata :: [(Column O.SqlInt4, Column O.SqlInt4)]
 table2columndata = table2dataG
 
 table3dataG :: Num a => [(a, a)]
@@ -197,7 +197,7 @@ table3dataG = [ (1, 50) ]
 table3data :: [(Int, Int)]
 table3data = table3dataG
 
-table3columndata :: [(Column O.PGInt4, Column O.PGInt4)]
+table3columndata :: [(Column O.SqlInt4, Column O.SqlInt4)]
 table3columndata = table3dataG
 
 table4dataG :: Num a => [(a, a)]
@@ -207,19 +207,19 @@ table4dataG = [ (1, 10)
 table4data :: [(Int, Int)]
 table4data = table4dataG
 
-table4columndata :: [(Column O.PGInt4, Column O.PGInt4)]
+table4columndata :: [(Column O.SqlInt4, Column O.SqlInt4)]
 table4columndata = table4dataG
 
 table6data :: [(String, String)]
 table6data = [("xy", "a"), ("z", "a"), ("more text", "a")]
 
-table6columndata :: [(Column O.PGText, Column O.PGText)]
+table6columndata :: [(Column O.SqlText, Column O.SqlText)]
 table6columndata = map (\(column1, column2) -> (O.pgString column1, O.pgString column2)) table6data
 
 table7data :: [(String, String)]
 table7data = [("foo", "c"), ("bar", "a"), ("baz", "b")]
 
-table7columndata :: [(Column O.PGText, Column O.PGText)]
+table7columndata :: [(Column O.SqlText, Column O.SqlText)]
 table7columndata = map (O.pgString *** O.pgString) table7data
 
 table8data :: [Json.Value]
@@ -230,10 +230,10 @@ table8data = [ Json.object
                ]
              ]
 
-table8columndata :: [Column O.PGJson]
+table8columndata :: [Column O.SqlJson]
 table8columndata = map O.pgValueJSON table8data
 
-table9columndata :: [Column O.PGJsonb]
+table9columndata :: [Column O.SqlJsonb]
 table9columndata = map O.pgValueJSONB table8data
 
 -- We have to quote the table names here because upper case letters in
@@ -381,7 +381,7 @@ testIn = it "restricts values to a range" $ query `queryShouldReturnSorted` filt
 
 testNum :: Test
 testNum = it "" $ query `queryShouldReturnSorted` (map op table1data)
-  where query :: Query (Column O.PGInt4)
+  where query :: Query (Column O.SqlInt4)
         query = proc () -> do
           t <- table1Q -< ()
           Arr.returnA -< op t
@@ -390,7 +390,7 @@ testNum = it "" $ query `queryShouldReturnSorted` (map op table1data)
 
 testDiv :: Test
 testDiv = it "" $ query `queryShouldReturnSorted` (map (op . toDoubles) table1data)
-  where query :: Query (Column O.PGFloat8)
+  where query :: Query (Column O.SqlFloat8)
         query = proc () -> do
           t <- Arr.arr (O.doubleOfInt *** O.doubleOfInt) <<< table1Q -< ()
           Arr.returnA -< op t
@@ -404,7 +404,7 @@ testDiv = it "" $ query `queryShouldReturnSorted` (map (op . toDoubles) table1da
 -- TODO: need to implement and test case_ returning tuples
 testCase :: Test
 testCase = it "" $ q `queryShouldReturnSorted` expected
-  where q :: Query (Column O.PGInt4)
+  where q :: Query (Column O.SqlInt4)
         q = table1Q >>> proc (i, j) -> do
           Arr.returnA -< O.case_ [(j .== 100, 12), (i .== 1, 21)] 33
         expected :: [Int]
@@ -414,7 +414,7 @@ testCase = it "" $ q `queryShouldReturnSorted` expected
 -- SQL.
 testCaseEmpty :: Test
 testCaseEmpty = it "" $ q `queryShouldReturnSorted` expected
-  where q :: Query (Column O.PGInt4)
+  where q :: Query (Column O.SqlInt4)
         q = table1Q >>> proc _ ->
           Arr.returnA -< O.case_ [] 33
         expected :: [Int]
@@ -426,10 +426,10 @@ testDistinct = it "" $ O.distinct table1Q `queryShouldReturnSorted` (L.nub table
 -- FIXME: the unsafeCoerceColumn is currently needed because the type
 -- changes required for aggregation are not currently dealt with by
 -- Opaleye.
-aggregateCoerceFIXME :: QueryArr (Column O.PGInt4) (Column O.PGInt8)
+aggregateCoerceFIXME :: QueryArr (Column O.SqlInt4) (Column O.SqlInt8)
 aggregateCoerceFIXME = Arr.arr aggregateCoerceFIXME'
 
-aggregateCoerceFIXME' :: Column a -> Column O.PGInt8
+aggregateCoerceFIXME' :: Column a -> Column O.SqlInt8
 aggregateCoerceFIXME' = O.unsafeCoerceColumn
 
 testAggregate :: Test
@@ -515,7 +515,7 @@ testCountRows3 :: Test
 testCountRows3 = it "" $ q `queryShouldReturnSorted` [3 :: Int64]
   where q        = O.countRows table7Q
 
-queryShouldReturnSortBy :: O.Order (Column O.PGInt4, Column O.PGInt4)
+queryShouldReturnSortBy :: O.Order (Column O.SqlInt4, Column O.SqlInt4)
                 -> ((Int, Int) -> (Int, Int) -> Ordering)
                 -> (PGS.Connection -> Expectation)
 queryShouldReturnSortBy orderQ order = testH (O.orderBy orderQ table1Q)
@@ -542,7 +542,7 @@ testOrderExact = it "" $ testH (O.orderBy (O.exact cols snd) table1Q) (result `s
                  , (1, 100)
                  ]
 
-limitOrderShouldMatch :: (Query (Column O.PGInt4, Column O.PGInt4) -> Query (Column O.PGInt4, Column O.PGInt4))
+limitOrderShouldMatch :: (Query (Column O.SqlInt4, Column O.SqlInt4) -> Query (Column O.SqlInt4, Column O.SqlInt4))
            -> ([(Int, Int)] -> [(Int, Int)]) -> (PGS.Connection -> Expectation)
 limitOrderShouldMatch olQ ol = testH (olQ (orderQ table1Q))
                        (ol (order table1data) `shouldBe`)
@@ -569,13 +569,13 @@ testDistinctAndAggregate = it "" $ q `queryShouldReturnSorted` expectedResult
         expectedResult = A.liftA2 (,) (L.nub table1data)
                                       [(1 :: Int, 400 :: Int64), (2, 300)]
 
-one :: Query (Column O.PGInt4)
-one = Arr.arr (const (1 :: Column O.PGInt4))
+one :: Query (Column O.SqlInt4)
+one = Arr.arr (const (1 :: Column O.SqlInt4))
 
 -- The point of the "double" tests is to ensure that we do not
 -- introduce name clashes in the operations which create new column names
 testDoubleH :: (Show haskells, Eq haskells, D.Default O.QueryRunner columns haskells) =>
-               (QueryArr () (Column O.PGInt4) -> QueryArr () columns) -> [haskells]
+               (QueryArr () (Column O.SqlInt4) -> QueryArr () columns) -> [haskells]
                -> (PGS.Connection -> Expectation)
 testDoubleH q expected1 = testH (q one &&& q one) (`shouldBe` expected2)
   where expected2 = A.liftA2 (,) expected1 expected1
@@ -588,21 +588,21 @@ testDoubleAggregate = it "" $ testDoubleH (O.aggregate O.count) [1 :: Int64]
 
 testDoubleLeftJoin :: Test
 testDoubleLeftJoin = it "" $ testDoubleH lj [(1 :: Int, Just (1 :: Int))]
-  where lj :: Query (Column O.PGInt4)
-          -> Query (Column O.PGInt4, Column (Nullable O.PGInt4))
+  where lj :: Query (Column O.SqlInt4)
+          -> Query (Column O.SqlInt4, Column (Nullable O.SqlInt4))
         lj q = O.leftJoin q q (uncurry (.==))
 
 testDoubleValues :: Test
 testDoubleValues = it "" $ testDoubleH v [1 :: Int]
-  where v :: Query (Column O.PGInt4) -> Query (Column O.PGInt4)
+  where v :: Query (Column O.SqlInt4) -> Query (Column O.SqlInt4)
         v _ = O.values [1]
 
 testDoubleUnionAll :: Test
 testDoubleUnionAll = it "" $ testDoubleH u [1 :: Int, 1]
   where u q = q `O.unionAll` q
 
-aLeftJoin :: Query ((Column O.PGInt4, Column O.PGInt4),
-                    (Column (Nullable O.PGInt4), Column (Nullable O.PGInt4)))
+aLeftJoin :: Query ((Column O.SqlInt4, Column O.SqlInt4),
+                    (Column (Nullable O.SqlInt4), Column (Nullable O.SqlInt4)))
 aLeftJoin = O.leftJoin table1Q table3Q (\(l, r) -> fst l .== fst r)
 
 testLeftJoin :: Test
@@ -615,10 +615,10 @@ testLeftJoin = it "" $ testH aLeftJoin (`shouldBe` expected)
 
 testLeftJoinNullable :: Test
 testLeftJoinNullable = it "" $ testH q (`shouldBe` expected)
-  where q :: Query ((Column O.PGInt4, Column O.PGInt4),
-                    ((Column (Nullable O.PGInt4), Column (Nullable O.PGInt4)),
-                     (Column (Nullable O.PGInt4),
-                      Column (Nullable O.PGInt4))))
+  where q :: Query ((Column O.SqlInt4, Column O.SqlInt4),
+                    ((Column (Nullable O.SqlInt4), Column (Nullable O.SqlInt4)),
+                     (Column (Nullable O.SqlInt4),
+                      Column (Nullable O.SqlInt4))))
         q = O.leftJoin table3Q aLeftJoin cond
 
         cond (x, y) = fst x .== fst (fst y)
@@ -649,7 +649,7 @@ testThreeWayProduct = it "" $ testH q (`shouldBe` expected)
 
 testValues :: Test
 testValues = it "" $ testH (O.values values) (values' `shouldBe`)
-  where values :: [(Column O.PGInt4, Column O.PGInt4)]
+  where values :: [(Column O.SqlInt4, Column O.SqlInt4)]
         values = [ (1, 10)
                  , (2, 100) ]
         values' :: [(Int, Int)]
@@ -659,7 +659,7 @@ testValues = it "" $ testH (O.values values) (values' `shouldBe`)
 {- FIXME: does not yet work
 testValuesDouble :: Test
 testValuesDouble = testG (O.values values) (values' ==)
-  where values :: [(Column O.PGInt4, Column O.PGFloat8)]
+  where values :: [(Column O.SqlInt4, Column O.SqlFloat8)]
         values = [ (1, 10.0)
                  , (2, 100.0) ]
         values' :: [(Int, Double)]
@@ -669,7 +669,7 @@ testValuesDouble = testG (O.values values) (values' ==)
 
 testValuesEmpty :: Test
 testValuesEmpty = it "" $ testH (O.values values) (values' `shouldBe`)
-  where values :: [Column O.PGInt4]
+  where values :: [Column O.SqlInt4]
         values = []
         values' :: [Int]
         values' = []
@@ -709,10 +709,10 @@ testUpdate = it "" $ \conn -> do
         expectedD = [(1, 10)]
         runQueryTable4 conn = O.runQuery conn (O.queryTable table4)
 
-        insertT :: [(Column O.PGInt4, Column O.PGInt4)]
+        insertT :: [(Column O.SqlInt4, Column O.SqlInt4)]
         insertT = [(1, 2), (3, 5)]
 
-        insertTMany :: [(Column O.PGInt4, Column O.PGInt4)]
+        insertTMany :: [(Column O.SqlInt4, Column O.SqlInt4)]
         insertTMany = [(20, 30), (40, 50)]
 
         expectedI :: [(Int, Int)]
@@ -735,13 +735,13 @@ testInsertConflict = it "inserts with conflicts" $ \conn -> do
 
   O.runInsertMany conn table10 insertT `shouldThrow` (\ (_ :: PGS.SqlError) -> True)
 
-  where insertT :: [Column O.PGInt4]
+  where insertT :: [Column O.SqlInt4]
         insertT = [1, 2]
 
-        conflictsT :: [Column O.PGInt4]
+        conflictsT :: [Column O.SqlInt4]
         conflictsT = [1, 3]
 
-        moreConflictsT :: [Column O.PGInt4]
+        moreConflictsT :: [Column O.SqlInt4]
         moreConflictsT = [3, 4]
 
         afterInsert :: [Int]
@@ -824,7 +824,7 @@ testArrayIndexOOB = it "returns Nothing when the index is out of bounds" $
 
 type JsonTest a = SpecWith (Query (Column a) -> PGS.Connection -> Expectation)
 -- Test opaleye's equivalent of c1->'c'
-testJsonGetFieldValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
+testJsonGetFieldValue :: (O.SqlIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
 testJsonGetFieldValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
             Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "c"
@@ -832,7 +832,7 @@ testJsonGetFieldValue dataQuery = it "" $ testH q (`shouldBe` expected)
         expected = [Just $ Json.Number $ fromInteger 21]
 
 -- Test opaleye's equivalent of c1->>'c'
-testJsonGetFieldText :: (O.PGIsJson a) => Query (Column a) -> Test
+testJsonGetFieldText :: (O.SqlIsJson a) => Query (Column a) -> Test
 testJsonGetFieldText dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
             Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "c"
@@ -840,7 +840,7 @@ testJsonGetFieldText dataQuery = it "" $ testH q (`shouldBe` expected)
         expected = [Just "21"]
 
 -- Special Test for Github Issue #350 : https://github.com/tomjaguarpaw/haskell-opaleye/issues/350
-testRestrictWithJsonOp :: (O.PGIsJson a) => Query (Column a) -> Test
+testRestrictWithJsonOp :: (O.SqlIsJson a) => Query (Column a) -> Test
 testRestrictWithJsonOp dataQuery = it "restricts the rows returned by checking equality with a value extracted using JSON operator" $ testH query (`shouldBe` table8data)
   where query = dataQuery >>> proc col1 -> do
           t <- table8Q -< ()
@@ -848,7 +848,7 @@ testRestrictWithJsonOp dataQuery = it "restricts the rows returned by checking e
           Arr.returnA -< t
 
 -- Test opaleye's equivalent of c1->'a'->2
-testJsonGetArrayValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
+testJsonGetArrayValue :: (O.SqlIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
 testJsonGetArrayValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
             Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "a" O..-> O.pgInt4 2
@@ -856,7 +856,7 @@ testJsonGetArrayValue dataQuery = it "" $ testH q (`shouldBe` expected)
         expected = [Just $ Json.Number $ fromInteger 30]
 
 -- Test opaleye's equivalent of c1->'a'->>2
-testJsonGetArrayText :: (O.PGIsJson a) => Query (Column a) -> Test
+testJsonGetArrayText :: (O.SqlIsJson a) => Query (Column a) -> Test
 testJsonGetArrayText dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
             Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "a" O..->> O.pgInt4 2
@@ -865,7 +865,7 @@ testJsonGetArrayText dataQuery = it "" $ testH q (`shouldBe` expected)
 
 -- Test opaleye's equivalent of c1->>'missing'
 -- Note that the missing field does not exist.
-testJsonGetMissingField :: (O.PGIsJson a) => Query (Column a) -> Test
+testJsonGetMissingField :: (O.SqlIsJson a) => Query (Column a) -> Test
 testJsonGetMissingField dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
             Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "missing"
@@ -873,7 +873,7 @@ testJsonGetMissingField dataQuery = it "" $ testH q (`shouldBe` expected)
         expected = [Nothing]
 
 -- Test opaleye's equivalent of c1#>'{b,x}'
-testJsonGetPathValue :: (O.PGIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
+testJsonGetPathValue :: (O.SqlIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
 testJsonGetPathValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
               Arr.returnA -< O.toNullable c1 O..#> O.pgArray O.pgStrictText ["b", "x"]
@@ -881,7 +881,7 @@ testJsonGetPathValue dataQuery = it "" $ testH q (`shouldBe` expected)
         expected = [Just $ Json.Number $ fromInteger 42]
 
 -- Test opaleye's equivalent of c1#>>'{b,x}'
-testJsonGetPathText :: (O.PGIsJson a) => Query (Column a) -> Test
+testJsonGetPathText :: (O.SqlIsJson a) => Query (Column a) -> Test
 testJsonGetPathText dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
               Arr.returnA -< O.toNullable c1 O..#>> O.pgArray O.pgStrictText ["b", "x"]
@@ -927,7 +927,7 @@ testJsonbContainsAll = it "" $ testH q (`shouldBe` [True])
 
 testRangeOverlap :: Test
 testRangeOverlap = it "generates overlap" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+  where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 3 7) `O.overlap` (range 4 12)
 
@@ -947,31 +947,31 @@ testRangeDateOverlap = it "generates time overlap" $ \conn -> do
 
 testRangeLeftOf :: Test
 testRangeLeftOf = it "generates 'left of'" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+  where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 1 10) O..<< (range 100 110)
 
 testRangeRightOf :: Test
 testRangeRightOf = it "generates 'right of'" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+  where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 50 60) O..>> (range 20 30)
 
 testRangeRightExtension :: Test
 testRangeRightExtension = it "generates right extension" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+  where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 1 20) O..&< (range 18 20)
 
 testRangeLeftExtension :: Test
 testRangeLeftExtension = it "generates left extension" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+  where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure $ (range 7 20) O..&> (range 5 10)
 
 testRangeAdjacency :: Test
 testRangeAdjacency = it "generates adjacency" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Column (O.PGRange O.PGInt4)
+  where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Exclusive b)
         q = A.pure $ (range 1 2) O..-|- (range 2 3)
 

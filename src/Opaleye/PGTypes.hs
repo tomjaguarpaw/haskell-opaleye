@@ -28,16 +28,16 @@ import           Data.Int (Int64)
 import qualified Database.PostgreSQL.Simple.Range as R
 
 instance C.PGNum PGFloat8 where
-  pgFromInteger = pgDouble . fromInteger
+  sqlFromInteger = pgDouble . fromInteger
 
 instance C.PGNum PGInt4 where
-  pgFromInteger = pgInt4 . fromInteger
+  sqlFromInteger = pgInt4 . fromInteger
 
 instance C.PGNum PGInt8 where
-  pgFromInteger = pgInt8 . fromInteger
+  sqlFromInteger = pgInt8 . fromInteger
 
 instance C.PGFractional PGFloat8 where
-  pgFromRational = pgDouble . fromRational
+  sqlFromRational = pgDouble . fromRational
 
 instance C.PGIntegral PGInt2
 instance C.PGIntegral PGNumeric
@@ -45,10 +45,10 @@ instance C.PGIntegral PGInt4
 instance C.PGIntegral PGInt8
 
 instance C.PGString PGText where
-  pgFromString = pgString
+  sqlFromString = pgString
 
 instance C.PGString PGCitext where
-  pgFromString = pgCiLazyText . CI.mk . LText.pack
+  sqlFromString = pgCiLazyText . CI.mk . LText.pack
 
 -- * Creating SQL values
 
@@ -160,11 +160,11 @@ pgRange pgEl start end = C.Column (HPQ.RangeExpr (showRangeType ([] :: [b])) (on
 {-# DEPRECATED showPGType
     "Use 'showSqlType' instead. 'showPGType' will be removed \
     \in version 0.7." #-}
-class IsSqlType pgType where
-  showPGType :: proxy pgType -> String
+class IsSqlType sqlType where
+  showPGType :: proxy sqlType -> String
   showPGType  = showSqlType
 
-  showSqlType :: proxy pgType -> String
+  showSqlType :: proxy sqlType -> String
   showSqlType = showPGType
 
 instance IsSqlType PGBool where

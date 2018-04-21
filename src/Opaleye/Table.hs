@@ -8,56 +8,56 @@
  Columns can be required or optional and, independently, nullable or
  non-nullable.
 
- A required non-nullable @PGInt4@ (for example) is created with
+ A required non-nullable @SqlInt4@ (for example) is created with
  'required' and gives rise to a
 
  @
- TableColumns (Column PGInt4) (Column PGInt4)
+ TableColumns (Column SqlInt4) (Column SqlInt4)
  @
 
  The leftmost argument is the type of writes. When you insert or
- update into this column you must give it a @Column PGInt4@ (which you
- can create with @pgInt4 :: Int -> Column PGInt4@).
+ update into this column you must give it a @Column SqlInt4@ (which you
+ can create with @sqlInt4 :: Int -> Column SqlInt4@).
 
- A required nullable @PGInt4@ is created with 'required' and gives rise
+ A required nullable @SqlInt4@ is created with 'required' and gives rise
  to a
 
  @
- TableColumns (Column (Nullable PGInt4)) (Column (Nullable PGInt4))
+ TableColumns (Column (Nullable SqlInt4)) (Column (Nullable SqlInt4))
  @
 
  When you insert or update into this column you must give it a @Column
- (Nullable PGInt4)@, which you can create either with @pgInt4@ and
+ (Nullable SqlInt4)@, which you can create either with @sqlInt4@ and
  @toNullable :: Column a -> Column (Nullable a)@, or with @null ::
  Column (Nullable a)@.
 
- An optional non-nullable @PGInt4@ is created with 'optional' and gives
+ An optional non-nullable @SqlInt4@ is created with 'optional' and gives
  rise to a
 
  @
- TableColumns (Maybe (Column PGInt4)) (Column PGInt4)
+ TableColumns (Maybe (Column SqlInt4)) (Column SqlInt4)
  @
 
  Optional columns are those that can be omitted on writes, such as
  those that have @DEFAULT@s or those that are @SERIAL@.
  When you insert or update into this column you must give it a @Maybe
- (Column PGInt4)@. If you provide @Nothing@ then the column will be
+ (Column SqlInt4)@. If you provide @Nothing@ then the column will be
  omitted from the query and the default value will be used. Otherwise
- you have to provide a @Just@ containing a @Column PGInt4@.
+ you have to provide a @Just@ containing a @Column SqlInt4@.
 
- An optional nullable @PGInt4@ is created with 'optional' and gives
+ An optional nullable @SqlInt4@ is created with 'optional' and gives
  rise to a
 
  @
- TableColumns (Maybe (Column (Nullable PGInt4))) (Column (Nullable PGInt4))
+ TableColumns (Maybe (Column (Nullable SqlInt4))) (Column (Nullable SqlInt4))
  @
 
  Optional columns are those that can be omitted on writes, such as
  those that have @DEFAULT@s or those that are @SERIAL@.
  When you insert or update into this column you must give it a @Maybe
- (Column (Nullable PGInt4))@. If you provide @Nothing@ then the default
+ (Column (Nullable SqlInt4))@. If you provide @Nothing@ then the default
  value will be used. Otherwise you have to provide a @Just@ containing
- a @Column (Nullable PGInt4)@ (which can be null).
+ a @Column (Nullable SqlInt4)@ (which can be null).
 
 -}
 

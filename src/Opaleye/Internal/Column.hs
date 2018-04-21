@@ -1,3 +1,5 @@
+{-# LANGUAGE ConstraintKinds #-}
+
 module Opaleye.Internal.Column where
 
 import Data.String
@@ -61,8 +63,13 @@ unsafeEq = binOp (HPQ.:==)
 
 class PGNum a where
   pgFromInteger :: Integer -> Column a
+  pgFromInteger = sqlFromInteger
 
-instance PGNum a => Num (Column a) where
+  sqlFromInteger :: Integer -> Column a
+
+type SqlNum = PGNum
+
+instance SqlNum a => Num (Column a) where
   fromInteger = pgFromInteger
   (*) = binOp (HPQ.:*)
   (+) = binOp (HPQ.:+)
@@ -77,16 +84,28 @@ instance PGNum a => Num (Column a) where
 
 class PGFractional a where
   pgFromRational :: Rational -> Column a
+  pgFromRational = sqlFromRational
 
-instance (PGNum a, PGFractional a) => Fractional (Column a) where
-  fromRational = pgFromRational
+  sqlFromRational :: Rational -> Column a
+
+type SqlFractional = PGFractional
+
+instance (SqlNum a, SqlFractional a) => Fractional (Column a) where
+  fromRational = sqlFromRational
   (/) = binOp (HPQ.:/)
 
 -- | A dummy typeclass whose instances support integral operations.
 class PGIntegral a
 
+type SqlIntegral = PGIntegral
+
 class PGString a where
     pgFromString :: String -> Column a
+    pgFromString = sqlFromString
 
-instance PGString a => IsString (Column a) where
-  fromString = pgFromString
+    sqlFromString :: String -> Column a
+
+type SqlString = PGString
+
+instance SqlString a => IsString (Column a) where
+  fromString = sqlFromString

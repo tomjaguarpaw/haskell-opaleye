@@ -36,13 +36,13 @@ import qualified Data.Profunctor.Product.Default as D
 -- Example type specialization:
 --
 -- @
--- runQuery :: Query (Column 'Opaleye.PGTypes.PGInt4', Column 'Opaleye.PGTypes.PGText') -> IO [(Int, String)]
+-- runQuery :: Query (Column 'Opaleye.SqlTypes.SqlInt4', Column 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
 --
 -- @
--- runQuery :: Query (Foo (Column 'Opaleye.PGTypes.PGInt4') (Column 'Opaleye.PGTypes.PGText') (Column 'Opaleye.PGTypes.PGBool')
+-- runQuery :: Query (Foo (Column 'Opaleye.SqlTypes.SqlInt4') (Column 'Opaleye.SqlTypes.SqlText') (Column 'Opaleye.SqlTypes.SqlBool')
 --          -> IO [Foo Int String Bool]
 -- @
 --
@@ -79,7 +79,7 @@ runQueryFold = runQueryFoldExplicit D.def
 -- instance QueryRunnerColumnDefault Foo Foo where
 --    queryRunnerColumnDefault =
 --        queryRunnerColumn ('Opaleye.Column.unsafeCoerceColumn'
---                               :: Column Foo -> Column PGInt4)
+--                               :: Column Foo -> Column SqlInt4)
 --                          Foo
 --                          queryRunnerColumnDefault
 -- @
