@@ -44,7 +44,7 @@ Opaleye assumes that a Postgres database already exists.  Currently
 there is no support for creating databases or tables, though these
 features may be added later according to demand.
 
-A table is defined with the `Table` constructor.  The syntax is
+A table is defined with the `table` function.  The syntax is
 simple.  You specify the types of the columns, the name of the table
 and the names of the columns in the underlying database, and whether
 the columns are required or optional.
@@ -270,8 +270,8 @@ Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
 "adaptor" to specify how columns are aggregated.  Note that this is
 yet another example of avoiding a headache by keeping your datatype
-fully polymorphic, because the 'count' aggregator changes a 'Wire
-String' into a 'Wire Int64'.
+fully polymorphic, because the 'count' aggregator changes a 'Column
+String' into a 'Column Int64'.
 
 Outer join
 ==========
