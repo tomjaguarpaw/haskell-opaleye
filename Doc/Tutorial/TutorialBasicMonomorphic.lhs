@@ -13,7 +13,7 @@
 >                          aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runQuery,
 >                          showSqlForPostgres, Unpackspec,
->                          PGInt4, PGInt8, PGText, PGDate, PGFloat8)
+>                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
 > import qualified Opaleye                 as O
 >
@@ -61,14 +61,14 @@ columns required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
 manipulation tutorial you can see an example of when they might differ.
 
-> personTable :: Table (Column PGText, Column PGInt4, Column PGText)
->                      (Column PGText, Column PGInt4, Column PGText)
+> personTable :: Table (Column SqlText, Column SqlInt4, Column SqlText)
+>                      (Column SqlText, Column SqlInt4, Column SqlText)
 > personTable = table "personTable" (p3 ( tableColumn "name"
 >                                       , tableColumn "age"
 >                                       , tableColumn "address" ))
 
-> personTable' :: Table (Column PGText, Column PGInt4, Column PGText)
->                       (Column PGText, Column PGInt4, Column PGText)
+> personTable' :: Table (Column SqlText, Column SqlInt4, Column SqlText)
+>                       (Column SqlText, Column SqlInt4, Column SqlText)
 > personTable' = table "personTable" (p3 ( tableColumn "name"
 >                                        , tableColumn "age"
 >                                        , tableColumn "address" ))
@@ -87,7 +87,7 @@ For this example file we will always use the typeclass versions
 because they are simpler to read and the typeclass magic is
 essentially invisible.)
 
-> personQuery :: Query (Column PGText, Column PGInt4, Column PGText)
+> personQuery :: Query (Column SqlText, Column SqlInt4, Column SqlText)
 > personQuery = queryTable personTable
 
 A `Query` corresponds to an SQL SELECT that we can run.  Here is the
@@ -132,16 +132,16 @@ to be polymorphic in all their fields.  Monomorphic field types will
 mean that you have to define more datatypes and more instances for
 them.
 
-> data BirthdayColumn = BirthdayColumn { bdNameColumn :: Column PGText
->                                      , bdDayColumn  :: Column PGDate }
+> data BirthdayColumn = BirthdayColumn { bdNameColumn :: Column SqlText
+>                                      , bdDayColumn  :: Column SqlDate }
 >
 > data Birthday = Birthday { bdName :: String, bdDay :: Day }
 >
 > birthdayColumnDef ::
 >   (Applicative (p BirthdayColumn),
 >    P.Profunctor p,
->    Default p (Column PGText) (Column PGText),
->    Default p (Column PGDate) (Column PGDate)) =>
+>    Default p (Column SqlText) (Column SqlText),
+>    Default p (Column SqlDate) (Column SqlDate)) =>
 >   p BirthdayColumn BirthdayColumn
 > birthdayColumnDef = BirthdayColumn <$> P.lmap bdNameColumn D.def
 >                                    <*> P.lmap bdDayColumn  D.def
@@ -192,11 +192,11 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data WidgetColumn = WidgetColumn { style    :: Column PGText
->                                  , color    :: Column PGText
->                                  , location :: Column PGText
->                                  , quantity :: Column PGInt4
->                                  , radius   :: Column PGFloat8
+> data WidgetColumn = WidgetColumn { style    :: Column SqlText
+>                                  , color    :: Column SqlText
+>                                  , location :: Column SqlText
+>                                  , quantity :: Column SqlInt4
+>                                  , radius   :: Column SqlFloat8
 >                                  }
 >
 > instance Default Unpackspec WidgetColumn WidgetColumn where
@@ -223,8 +223,8 @@ how many (possibly duplicated) locations there are, the total number
 of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
-> aggregateWidgets :: Query (Column PGText, Column PGText, Column PGInt8,
->                            Column PGInt4, Column PGFloat8)
+> aggregateWidgets :: Query (Column SqlText, Column SqlText, Column SqlInt8,
+>                            Column SqlInt4, Column SqlFloat8)
 > aggregateWidgets = aggregate ((,,,,) <$> P.lmap style    groupBy
 >                                      <*> P.lmap color    groupBy
 >                                      <*> P.lmap location count
@@ -286,8 +286,8 @@ nullability.  We introduce the following type synonym for this
 purpose, which is just a notational convenience.
 
 > data BirthdayColumnNullable =
->   BirthdayColumnNullable { bdNameColumnNullable :: Column (Nullable PGText)
->                          , bdDayColumnNullable  :: Column (Nullable PGDate) }
+>   BirthdayColumnNullable { bdNameColumnNullable :: Column (Nullable SqlText)
+>                          , bdDayColumnNullable  :: Column (Nullable SqlDate) }
 >
 > instance Default O.Unpackspec BirthdayColumnNullable BirthdayColumnNullable where
 >   def = BirthdayColumnNullable <$> P.lmap bdNameColumnNullable D.def
@@ -303,7 +303,7 @@ someone would take the time to implement it.
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
-> personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
+> personBirthdayLeftJoin :: Query ((Column SqlText, Column SqlInt4, Column SqlText),
 >                                  BirthdayColumnNullable)
 > personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
 >     where eqName ((name, _, _), birthdayRow) =

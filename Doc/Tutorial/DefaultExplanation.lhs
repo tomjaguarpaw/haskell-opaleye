@@ -2,7 +2,7 @@
 > module DefaultExplanation where
 >
 > import Opaleye (Column, Nullable, QueryRunner, Query,
->                 PGInt4, PGBool, PGText, PGFloat4)
+>                 SqlInt4, SqlBool, SqlText, SqlFloat4)
 > import qualified Opaleye as O
 > import qualified Opaleye.Internal.Binary as Internal.Binary
 > import Opaleye.Internal.Binary (Binaryspec)
@@ -33,31 +33,31 @@ and how it is used with the `unionAll` operation.  The version of
 > unionAllExplicit = O.unionAllExplicit
 
 What is the `Binaryspec` used for here?  Let's take a simple case
-where we want to union two queries of type `Query (Column PGInt4,
-Column PGText)`
+where we want to union two queries of type `Query (Column SqlInt4,
+Column SqlText)`
 
-> myQuery1 :: Query (Column PGInt4, Column PGText)
+> myQuery1 :: Query (Column SqlInt4, Column SqlText)
 > myQuery1 = undefined -- We won't actually need specific implementations here
 >
-> myQuery2 :: Query (Column PGInt4, Column PGText)
+> myQuery2 :: Query (Column SqlInt4, Column SqlText)
 > myQuery2 = undefined
 
 That means we will be using unionAll at the type
 
-> unionAllExplicit' :: Binaryspec (Column PGInt4, Column PGText) (Column PGInt4, Column PGText)
->                   -> Query (Column PGInt4, Column PGText)
->                   -> Query (Column PGInt4, Column PGText)
->                   -> Query (Column PGInt4, Column PGText)
+> unionAllExplicit' :: Binaryspec (Column SqlInt4, Column SqlText) (Column SqlInt4, Column SqlText)
+>                   -> Query (Column SqlInt4, Column SqlText)
+>                   -> Query (Column SqlInt4, Column SqlText)
+>                   -> Query (Column SqlInt4, Column SqlText)
 > unionAllExplicit' = unionAllExplicit
 
 Since every `Column` is actually just a string containing an SQL
-expression, `(Column PGInt4, Column PGText)` is a pair of expressions.
+expression, `(Column SqlInt4, Column SqlText)` is a pair of expressions.
 When we generate the SQL we need to take the two pairs of expressions,
 generate new unique names that refer to them and produce these new
-unique names in another value of type `(Column PGInt4, Column
-PGText)`.  This is exactly what a value of type
+unique names in another value of type `(Column SqlInt4, Column
+SqlText)`.  This is exactly what a value of type
 
-    Binaryspec (Column PGInt4, Column PGText) (Column PGInt4, Column PGText)
+    Binaryspec (Column SqlInt4, Column SqlText) (Column SqlInt4, Column SqlText)
 
 allows us to do.
 
@@ -76,7 +76,7 @@ work on a pair.
 
 Then we can use `binaryspecColumn2` in `unionAllExplicit`.
 
-> theUnionAll :: Query (Column PGInt4, Column PGText)
+> theUnionAll :: Query (Column SqlInt4, Column SqlText)
 > theUnionAll = unionAllExplicit binaryspecColumn2 myQuery1 myQuery2
 
 Now suppose that we wanted to take a union of two queries with columns
@@ -132,7 +132,7 @@ provide it.  This is exactly what `Opaleye.Binary.unionAll` does.
 >           => Query a -> Query a -> Query b
 > unionAll = O.unionAllExplicit def
 >
-> theUnionAll' :: Query (Column PGInt4, Column PGText)
+> theUnionAll' :: Query (Column SqlInt4, Column SqlText)
 > theUnionAll' = unionAll myQuery1 myQuery2
 
 In the long run this prevents writing a huge amount of boilerplate code.
@@ -150,28 +150,28 @@ this is `runQuery`
 
 Basic values of `QueryRunner` will have the following types
 
-> intRunner :: QueryRunner (Column PGInt4) Int
+> intRunner :: QueryRunner (Column SqlInt4) Int
 > intRunner = undefined -- The implementation is not important here
 >
-> doubleRunner :: QueryRunner (Column PGFloat4) Double
+> doubleRunner :: QueryRunner (Column SqlFloat4) Double
 > doubleRunner = undefined
 >
-> stringRunner :: QueryRunner (Column PGText) String
+> stringRunner :: QueryRunner (Column SqlText) String
 > stringRunner = undefined
 >
-> boolRunner :: QueryRunner (Column PGBool) Bool
+> boolRunner :: QueryRunner (Column SqlBool) Bool
 > boolRunner = undefined
 
 Furthermore we will have basic ways of running queries which return
 `Nullable` values, for example
 
-> nullableIntRunner :: QueryRunner (Column (Nullable PGInt4)) (Maybe Int)
+> nullableIntRunner :: QueryRunner (Column (Nullable SqlInt4)) (Maybe Int)
 > nullableIntRunner = undefined
 
-If I have a very simple query with a single column of `PGInt4` then I can
+If I have a very simple query with a single column of `SqlInt4` then I can
 run it using the `intRunner`.
 
-> myQuery3 :: Query (Column PGInt4)
+> myQuery3 :: Query (Column SqlInt4)
 > myQuery3 = undefined -- The implementation is not important
 >
 > runTheQuery :: SQL.Connection -> IO [Int]
@@ -180,11 +180,11 @@ run it using the `intRunner`.
 If my query has several columns of different types I need to build up
 a larger `QueryRunner`.
 
-> myQuery4 :: Query (Column PGInt4, Column PGText, Column PGBool, Column (Nullable PGInt4))
+> myQuery4 :: Query (Column SqlInt4, Column SqlText, Column SqlBool, Column (Nullable SqlInt4))
 > myQuery4 = undefined
 >
 > largerQueryRunner :: QueryRunner
->       (Column PGInt4, Column PGText, Column PGBool, Column (Nullable PGInt4))
+>       (Column SqlInt4, Column SqlText, Column SqlBool, Column (Nullable SqlInt4))
 >       (Int, String, Bool, Maybe Int)
 > largerQueryRunner = p4 (intRunner, stringRunner, boolRunner, nullableIntRunner)
 >
@@ -196,8 +196,8 @@ redundant!  Like the `Binaryspec` it can be automatically deduced.
 `Karamaan.Opaleye.RunQuery` already gives us `Default` instances for
 the following types (plus many others, of course!).
 
-* `QueryRunner (Column PGInt4) Int`
-* `QueryRunner (Column PGText) String`
+* `QueryRunner (Column SqlInt4) Int`
+* `QueryRunner (Column SqlText) String`
 * `QueryRunner (Column Bool) Bool`
 * `QueryRunner (Column (Nullable Int)) (Maybe Int)`
 
@@ -205,7 +205,7 @@ Then the `Default` typeclass machinery automatically deduces the
 correct value of the type we want.
 
 > largerQueryRunner' :: QueryRunner
->       (Column PGInt4, Column PGText, Column PGBool, Column (Nullable PGInt4))
+>       (Column SqlInt4, Column SqlText, Column SqlBool, Column (Nullable SqlInt4))
 >       (Int, String, Bool, Maybe Int)
 > largerQueryRunner' = def
 

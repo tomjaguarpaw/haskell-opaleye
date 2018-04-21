@@ -16,7 +16,7 @@
 >                          Query, (.==), aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runQuery,
 >                          showSqlForPostgres, Unpackspec,
->                          PGInt4, PGInt8, PGText, PGDate, PGFloat8)
+>                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
 > import           Control.Applicative     ((<$>), (<*>), Applicative)
 >
@@ -62,8 +62,8 @@ columns required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
 manipulation tutorial you can see an example of when they might differ.
 
-> personTable :: Table (Column PGText, Column PGInt4, Column PGText)
->                      (Column PGText, Column PGInt4, Column PGText)
+> personTable :: Table (Column SqlText, Column SqlInt4, Column SqlText)
+>                      (Column SqlText, Column SqlInt4, Column SqlText)
 > personTable = table "personTable" (p3 ( tableColumn "name"
 >                                       , tableColumn "age"
 >                                       , tableColumn "address" ))
@@ -82,7 +82,7 @@ For this example file we will always use the typeclass versions
 because they are simpler to read and the typeclass magic is
 essentially invisible.)
 
-> personQuery :: Query (Column PGText, Column PGInt4, Column PGText)
+> personQuery :: Query (Column SqlText, Column SqlInt4, Column SqlText)
 > personQuery = queryTable personTable
 
 A `Query` corresponds to an SQL SELECT that we can run.  Here is the
@@ -156,13 +156,13 @@ compatible with Opaleye!
 > -- could even have a symbol field containing the table name and use
 > -- https://hackage.haskell.org/package/base-4.8.2.0/docs/GHC-TypeLits.html#v:symbolVal
 > 
-> data Birthday f = Birthday { bdName :: TableField f String PGText NN Req
->                            , bdDay  :: TableField f Day    PGDate NN Req
+> data Birthday f = Birthday { bdName :: TableField f String SqlText NN Req
+>                            , bdDay  :: TableField f Day    SqlDate NN Req
 >                            }
 >
 > instance ( PP.ProductProfunctor p
->          , Default p (TableField a String PGText NN Req) (TableField b String PGText NN Req)
->          , Default p (TableField a Day    PGDate NN Req) (TableField b Day    PGDate NN Req)) =>
+>          , Default p (TableField a String SqlText NN Req) (TableField b String SqlText NN Req)
+>          , Default p (TableField a Day    SqlDate NN Req) (TableField b Day    SqlDate NN Req)) =>
 >   Default p (Birthday a) (Birthday b) where
 >   def = Birthday PP.***$ P.lmap bdName D.def
 >                  PP.**** P.lmap bdDay  D.def
@@ -206,17 +206,17 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data Widget f = Widget { style    :: Field f String PGText   NN
->                        , color    :: Field f String PGText   NN
->                        , location :: Field f String PGText   NN
->                        , quantity :: Field f Int    PGInt4   NN
->                        , radius   :: Field f Double PGFloat8 NN
+> data Widget f = Widget { style    :: Field f String SqlText   NN
+>                        , color    :: Field f String SqlText   NN
+>                        , location :: Field f String SqlText   NN
+>                        , quantity :: Field f Int    SqlInt4   NN
+>                        , radius   :: Field f Double SqlFloat8 NN
 >                        }
 >
 > instance ( PP.ProductProfunctor p
->          , Default p (Field a String PGText NN)   (Field b String PGText NN)
->          , Default p (Field a Int    PGInt4 NN)   (Field b Int    PGInt4 NN)
->          , Default p (Field a Double PGFloat8 NN) (Field b Double PGFloat8 NN)) =>
+>          , Default p (Field a String SqlText NN)   (Field b String SqlText NN)
+>          , Default p (Field a Int    SqlInt4 NN)   (Field b Int    SqlInt4 NN)
+>          , Default p (Field a Double SqlFloat8 NN) (Field b Double SqlFloat8 NN)) =>
 >   Default p (Widget a) (Widget b) where
 >   def = Widget PP.***$ P.lmap style    D.def
 >                PP.**** P.lmap color    D.def
@@ -241,8 +241,8 @@ how many (possibly duplicated) locations there are, the total number
 of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
-> aggregateWidgets :: Query (Column PGText, Column PGText, Column PGInt8,
->                            Column PGInt4, Column PGFloat8)
+> aggregateWidgets :: Query (Column SqlText, Column SqlText, Column SqlInt8,
+>                            Column SqlInt4, Column SqlFloat8)
 > aggregateWidgets = aggregate ((,,,,) <$> P.lmap style    groupBy
 >                                      <*> P.lmap color    groupBy
 >                                      <*> P.lmap location count
@@ -306,7 +306,7 @@ purpose, which is just a notational convenience.
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
-> personBirthdayLeftJoin :: Query ((Column PGText, Column PGInt4, Column PGText),
+> personBirthdayLeftJoin :: Query ((Column SqlText, Column SqlInt4, Column SqlText),
 >                                  Birthday Nulls)
 > personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
 >     where eqName ((name, _, _), birthdayRow) = name .== bdName birthdayRow

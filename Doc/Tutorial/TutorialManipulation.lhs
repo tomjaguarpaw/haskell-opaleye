@@ -10,8 +10,8 @@
 >                           rCount,
 >                           rReturning,
 >                           updateEasy,
->                           PGInt4, PGFloat8, PGText,
->                           pgString
+>                           SqlInt4, SqlFloat8, SqlText,
+>                           sqlString
 >                          )
 >
 > import           Data.Profunctor.Product (p4)
@@ -32,13 +32,13 @@ float8-valued required fields.  The `Table` type constructor has two
 type arguments.  The first one is the type of writes to the table, and
 the second is the type of reads from the table.  The "id" column is
 defined as optional (for writes) because its write type is `Maybe
-(Column PGInt4)`.  That means we don't necessarily need to specify it
+(Column SqlInt4)`.  That means we don't necessarily need to specify it
 when writing to the table.  The database will automatically fill in a
 value for us.
 
 > myTable :: Table
->     (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8, Column PGText)
->     (Column PGInt4, Column PGFloat8, Column PGFloat8, Column PGText)
+>     (Maybe (Column SqlInt4), Column SqlFloat8, Column SqlFloat8, Column SqlText)
+>     (Column SqlInt4, Column SqlFloat8, Column SqlFloat8, Column SqlText)
 > myTable = table "tablename" (p4 ( tableColumn "id"
 >                                 , tableColumn "x"
 >                                 , tableColumn "y"
@@ -62,13 +62,13 @@ To insert we provide rows with the write type.  Optional columns can
 be omitted by providing `Nothing` instead.  Numeric SQL types have a
 Haskell `Num` instance so we can write them using numeric literals.
 Values of other types should be created using the functions in the
-`Opaleye.PGTypes` module, for example `pgString` to create a `PGText`
+`Opaleye.SqlTypes` module, for example `sqlString` to create a `SqlText`
 from a `String`.
 
 > insertNothing :: Insert Int64
 > insertNothing = Insert
 >   { iTable      = myTable
->   , iRows       = [(Nothing, 2, 3, pgString "Hello")]
+>   , iRows       = [(Nothing, 2, 3, sqlString "Hello")]
 >   , iReturning  = rCount
 >   , iOnConflict = Nothing
 >   }
@@ -89,7 +89,7 @@ rely on the `Num` instance and must use `constant`:
 > insertNonLiteral :: Double -> Insert Int64
 > insertNonLiteral i = Insert
 >   { iTable      = myTable
->   , iRows       = [(Nothing, 2, C.constant i, pgString "Hello")]
+>   , iRows       = [(Nothing, 2, C.constant i, sqlString "Hello")]
 >   , iReturning  = rCount
 >   , iOnConflict = Nothing
 >   }
@@ -109,7 +109,7 @@ If we really want to specify an optional column we can use `Just`.
 > insertJust :: Insert Int64
 > insertJust = Insert
 >   { iTable      = myTable
->   , iRows       = [(Just 1, 2, 3, pgString "Hello")]
+>   , iRows       = [(Just 1, 2, 3, sqlString "Hello")]
 >   , iReturning  = rCount
 >   , iOnConflict = Nothing
 >   }
@@ -152,7 +152,7 @@ Opaleye supports it also.
 > insertReturning :: Insert [Int]
 > insertReturning = Insert
 >   { iTable      = myTable
->   , iRows       = [(Nothing, 4, 5, pgString "Bye")]
+>   , iRows       = [(Nothing, 4, 5, sqlString "Bye")]
 >   , iReturning  = rReturning (\(id_, _, _, _) -> id_)
 >   , iOnConflict = Nothing
 >   }

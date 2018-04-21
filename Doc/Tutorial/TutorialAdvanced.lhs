@@ -7,7 +7,7 @@
 > import           Opaleye.QueryArr (Query)
 > import           Opaleye.Column (Column)
 > import           Opaleye.Table (Table, table, tableColumn, queryTable)
-> import           Opaleye.PGTypes (PGText, PGInt4)
+> import           Opaleye.SqlTypes (SqlText, SqlInt4)
 > import qualified Opaleye.Aggregate as A
 > import           Opaleye.Aggregate (Aggregator, aggregate)
 >
@@ -32,18 +32,18 @@ this easily in SQL as `MAX(column) - MIN(column)`, Opaleye has the
 advantage of treating `range` as a first-class value able to be passed
 around between functions and manipulated at will.
 
-> range :: Aggregator (Column PGInt4) (Column PGInt4)
+> range :: Aggregator (Column SqlInt4) (Column SqlInt4)
 > range = dimap (\x -> (x, x)) (uncurry (-)) (A.max ***! A.min)
 
 We can test it on a person table which contains rows containing
 people's names along with the age of their children.
 
-> personTable :: Table (Column PGText, Column PGInt4)
->                      (Column PGText, Column PGInt4)
+> personTable :: Table (Column SqlText, Column SqlInt4)
+>                      (Column SqlText, Column SqlInt4)
 > personTable = table "personTable" (p2 ( tableColumn "name"
 >                                       , tableColumn "child_age" ))
 
-> rangeOfChildrensAges :: Query (Column PGText, Column PGInt4)
+> rangeOfChildrensAges :: Query (Column SqlText, Column SqlInt4)
 > rangeOfChildrensAges = aggregate (p2 (A.groupBy, range)) (queryTable personTable)
 
 
