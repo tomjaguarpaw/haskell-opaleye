@@ -145,12 +145,13 @@ compatible with Opaleye!
 > type instance Field H h o N  = Maybe h
 > type instance Field O h o NN = Column o
 > type instance Field O h o N  = Column (Nullable o)
+> type instance Field Nulls h o n = Column (Nullable o)
 >
 > type instance TableField H     h o n b   = Field H h o n
 > type instance TableField O     h o n b   = Field O h o n
 > type instance TableField W     h o n Req = Field O h o n
 > type instance TableField W     h o n Opt = Maybe (Field O h o n)
-> type instance TableField Nulls h o n b   = Column (Nullable o)
+> type instance TableField Nulls h o n b   = Field Nulls h o n
 >
 > -- Cryptic remark: If we were willing to only support 7.8 and up we
 > -- could even have a symbol field containing the table name and use
