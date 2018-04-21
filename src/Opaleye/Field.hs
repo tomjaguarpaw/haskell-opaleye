@@ -4,7 +4,7 @@
 module Opaleye.Field where
 
 import qualified Opaleye.Column   as C
-import qualified Opaleye.SqlTypes as T
+import qualified Opaleye.PGTypes  as T
 
 type family Field_ (a :: Nullability) b
 
@@ -21,7 +21,7 @@ null :: FieldNullable a
 null = C.null
 
 -- | @TRUE@ if the value of the column is @NULL@, @FALSE@ otherwise.
-isNull :: FieldNullable a -> Field T.SqlBool
+isNull :: FieldNullable a -> Field T.PGBool
 isNull = C.isNull
 
 -- | If the @Field 'Nullable a@ is NULL then return the @Field

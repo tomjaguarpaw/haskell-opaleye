@@ -25,7 +25,7 @@ import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerceColumn,
                                           unsafeCast, unsafeCompositeField)
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
-import qualified Opaleye.SqlTypes as T
+import qualified Opaleye.PGTypes as T
 import           Prelude hiding (null)
 
 -- | A NULL of any type
@@ -33,7 +33,7 @@ null :: Column (Nullable a)
 null = C.Column (HPQ.ConstExpr HPQ.NullLit)
 
 -- | @TRUE@ if the value of the column is @NULL@, @FALSE@ otherwise.
-isNull :: Column (Nullable a) -> Column T.SqlBool
+isNull :: Column (Nullable a) -> Column T.PGBool
 isNull = C.unOp HPQ.OpIsNull
 
 -- | If the @Column (Nullable a)@ is NULL then return the @Column b@
