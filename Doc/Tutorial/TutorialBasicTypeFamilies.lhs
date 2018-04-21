@@ -217,8 +217,7 @@ this information with the following datatype.
 >          , P.Profunctor p
 >          , Default p (Field a String PGText NN)   (Field b String PGText NN)
 >          , Default p (Field a Int    PGInt4 NN)   (Field b Int    PGInt4 NN)
->          , Default p (Field a Double PGFloat8 NN) (Field b Double PGFloat8 NN)
->          , Default p (Field a Day    PGDate NN)   (Field b Day    PGDate NN)) =>
+>          , Default p (Field a Double PGFloat8 NN) (Field b Double PGFloat8 NN)) =>
 >   Default p (Widget a) (Widget b) where
 >   def = Widget <$> P.lmap style    D.def
 >                <*> P.lmap color    D.def
