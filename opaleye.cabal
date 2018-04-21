@@ -52,6 +52,7 @@ library
                    Opaleye.Column,
                    Opaleye.Constant,
                    Opaleye.Distinct,
+                   Opaleye.Field,
                    Opaleye.FunctionalJoin,
                    Opaleye.Join,
                    Opaleye.Label,

@@ -1,3 +1,5 @@
+* Added `Opaleye.Field`
+
 * `queryTable` is renamed `selectTable`
 
 * `Query`/`QueryArr` are renamed `Select`/`SelectArr`
