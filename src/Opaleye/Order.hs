@@ -32,7 +32,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 -- We can probably disable ConstraintKinds and TypeSynonymInstances
 -- when we move to Sql... instead of PG..
 
-{-| Order the rows of a `Query` according to the `Order`.
+{-| Order the rows of a `Query` according to the `O.Order`.
 
 @
 import Data.Monoid ((\<\>))
