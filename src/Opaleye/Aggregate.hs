@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-duplicate-exports #-}
--- | Perform aggregation on 'Query's.  To aggregate a 'Query' you
+-- | Perform aggregation on 'S.Select's.  To aggregate a 'S.Select' you
 -- should construct an 'Aggregator' encoding how you want the
 -- aggregation to proceed, then call 'aggregate' on it.  The
 -- 'Aggregator' should be constructed from the basic 'Aggregator's
@@ -43,6 +43,7 @@ import qualified Opaleye.Internal.PackMap as PM
 import           Opaleye.QueryArr  (Query)
 import qualified Opaleye.Column    as C
 import qualified Opaleye.Order     as Ord
+import qualified Opaleye.Select    as S
 import qualified Opaleye.SqlTypes   as T
 import qualified Opaleye.Join      as J
 
@@ -52,14 +53,14 @@ import qualified Opaleye.Join      as J
 --   http://www.postgresql.org/docs/9.3/static/functions-aggregate.html
 
 {-|
-Given a 'Query' producing rows of type @a@ and an 'Aggregator' accepting rows of
+Given a 'S.Select' producing rows of type @a@ and an 'Aggregator' accepting rows of
 type @a@, apply the aggregator to the query.
 
 If you simply want to count the number of rows in a query you might
 find the 'countRows' function more convenient.
 
 By design there is no aggregation function of type @Aggregator b b' ->
-QueryArr a b -> QueryArr a b'@.  Such a function would allow violation
+'S.SelectArr' a b -> 'S.SelectArr' a b'@.  Such a function would allow violation
 of SQL's scoping rules and lead to invalid queries.
 
 Please note that when aggregating an empty query with no @GROUP BY@
@@ -71,7 +72,7 @@ query has zero rows it has zero groups, and thus zero rows in the
 result of an aggregation.
 
 -}
-aggregate :: Aggregator a b -> Query a -> Query b
+aggregate :: Aggregator a b -> S.Select a -> S.Select b
 aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
 -- | Order the values within each aggregation in `Aggregator` using
@@ -83,7 +84,7 @@ aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 -- you need different orderings for different aggregations, use
 -- 'Opaleye.Internal.Aggregate.orderAggregate'.
 
-aggregateOrdered  :: Ord.Order a -> Aggregator a b -> Query a -> Query b
+aggregateOrdered  :: Ord.Order a -> Aggregator a b -> S.Select a -> S.Select b
 aggregateOrdered o agg = aggregate (orderAggregate o agg)
 
 -- | Aggregate only distinct values
@@ -142,7 +143,7 @@ stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 -- changing the AST though, so I'm not too keen.
 --
 -- See https://github.com/tomjaguarpaw/haskell-opaleye/issues/162
-countRows :: Query a -> Query (C.Column T.SqlInt8)
+countRows :: S.Select a -> S.Select (C.Column T.SqlInt8)
 countRows = fmap (C.fromNullable 0)
             . fmap snd
             . (\q -> J.leftJoin (pure ())
