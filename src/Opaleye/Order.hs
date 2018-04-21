@@ -25,6 +25,7 @@ import qualified Opaleye.Column as C
 import           Opaleye.QueryArr (Query)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Order as O
+import qualified Opaleye.Select         as S
 import qualified Opaleye.SqlTypes as T
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
@@ -32,20 +33,20 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 -- We can probably disable ConstraintKinds and TypeSynonymInstances
 -- when we move to Sql... instead of PG..
 
-{-| Order the rows of a `Query` according to the `O.Order`.
+{-| Order the rows of a `S.Select` according to the `O.Order`.
 
 @
 import Data.Monoid ((\<\>))
 
 \-- Order by the first column ascending.  When first columns are equal
 \-- order by second column descending.
-example :: 'Query' ('C.Column' 'T.SqlInt4', 'C.Column' 'T.SqlText')
-        -> 'Query' ('C.Column' 'T.SqlInt4', 'C.Column' 'T.SqlText')
+example :: 'S.Select' ('C.Column' 'T.SqlInt4', 'C.Column' 'T.SqlText')
+        -> 'S.Select' ('C.Column' 'T.SqlInt4', 'C.Column' 'T.SqlText')
 example = 'orderBy' ('asc' fst \<\> 'desc' snd)
 @
 
 -}
-orderBy :: O.Order a -> Query a -> Query a
+orderBy :: O.Order a -> S.Select a -> S.Select a
 orderBy os q =
   Q.simpleQueryArr (O.orderByU os . Q.runSimpleQueryArr q)
 
@@ -103,7 +104,7 @@ not what you want).
 SELECT * FROM (SELECT * FROM yourTable LIMIT 10) OFFSET 50
 @
 -}
-limit :: Int -> Query a -> Query a
+limit :: Int -> S.Select a -> S.Select a
 limit n a = Q.simpleQueryArr (O.limit' n . Q.runSimpleQueryArr a)
 
 {- |
@@ -113,7 +114,7 @@ that many result rows.
 /WARNING:/ Please read the documentation of 'limit' before combining
 'offset' with 'limit'.
 -}
-offset :: Int -> Query a -> Query a
+offset :: Int -> S.Select a -> S.Select a
 offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 
 -- * Other
