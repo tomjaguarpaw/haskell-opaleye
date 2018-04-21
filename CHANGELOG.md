@@ -1,3 +1,7 @@
+* `queryTable` is renamed `selectTable`
+
+* `Query`/`QueryArr` are renamed `Select`/`SelectArr`
+
 * Added `Opaleye.SqlTypes` and `sql`/`Sql...` names instead of
   `pg`/`PG...` names
 

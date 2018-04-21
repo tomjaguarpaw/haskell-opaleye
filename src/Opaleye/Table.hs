@@ -69,7 +69,7 @@ module Opaleye.Table (-- * Creating tables
                       T.optional,
                       T.required,
                       -- * Querying tables
-                      queryTable,
+                      selectTable,
                       -- * Other
                       TableColumns,
                       -- * Deprecated
@@ -87,25 +87,29 @@ import           Opaleye.Internal.Table (View, Table, Writer,
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 
+import qualified Opaleye.Select                  as S
+
 import qualified Data.Profunctor.Product.Default as D
 
 -- | Example type specialization:
 --
 -- @
--- queryTable :: Table w (Column a, Column b)
---            -> Query (Column a, Column b)
+-- selectTable :: Table w (Column a, Column b)
+--             -> Select (Column a, Column b)
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- queryTable :: Table w (Foo (Column a) (Column b) (Column c))
---            -> Query (Foo (Column a) (Column b) (Column c))
+-- selectTable :: Table w (Foo (Column a) (Column b) (Column c))
+--             -> Select (Foo (Column a) (Column b) (Column c))
 -- @
-queryTable :: D.Default U.Unpackspec columns columns =>
-              Table a columns -> Q.Query columns
-queryTable = queryTableExplicit D.def
+selectTable :: D.Default U.Unpackspec columns columns
+            => Table a columns
+            -- ^
+            -> S.Select columns
+selectTable = selectTableExplicit D.def
 
 -- | Create a table with unqualified names.
 table :: String
@@ -125,8 +129,24 @@ tableWithSchema = T.TableWithSchema
 
 -- * Explicit versions
 
-queryTableExplicit :: U.Unpackspec tablecolumns columns ->
-                     Table a tablecolumns -> Q.Query columns
-queryTableExplicit cm table' = Q.simpleQueryArr f where
+selectTableExplicit :: U.Unpackspec tablecolumns columns
+                    -- ^
+                    -> Table a tablecolumns
+                    -- ^
+                    -> S.Select columns
+selectTableExplicit cm table' = Q.simpleQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
     (retwires, primQ) = T.queryTable cm table' t0
+
+-- * Deprecated versions
+
+-- | Use 'selectTable' instead.  Will be deprecated in version 0.7.
+queryTable :: D.Default U.Unpackspec columns columns =>
+              Table a columns -> S.Select columns
+queryTable = selectTable
+
+-- | Use 'selectTableExplicit' instead.  Will be deprecated in version
+-- 0.7.
+queryTableExplicit :: U.Unpackspec tablecolumns columns ->
+                     Table a tablecolumns -> S.Select columns
+queryTableExplicit = selectTableExplicit
