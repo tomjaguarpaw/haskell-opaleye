@@ -1,3 +1,5 @@
+* Added `Opaleye.RunSelect`
+
 * Added `Opaleye.Field`
 
 * `queryTable` is renamed `selectTable`

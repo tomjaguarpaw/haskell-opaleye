@@ -62,6 +62,7 @@ library
                    Opaleye.PGTypes,
                    Opaleye.QueryArr,
                    Opaleye.RunQuery,
+                   Opaleye.RunSelect,
                    Opaleye.Select,
                    Opaleye.Sql,
                    Opaleye.SqlTypes,
