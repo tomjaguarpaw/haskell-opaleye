@@ -4,6 +4,10 @@
 
 * `Query`/`QueryArr` are renamed `Select`/`SelectArr`
 
+* `QueryRunner` is renamed `FromFields`
+
+* `QueryRunnerColumn` is renamed `FromField`
+
 * Added `Opaleye.SqlTypes` and `sql`/`Sql...` names instead of
   `pg`/`PG...` names
 

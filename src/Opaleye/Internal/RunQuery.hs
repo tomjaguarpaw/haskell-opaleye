@@ -6,8 +6,9 @@ import           Control.Applicative (Applicative, pure, (*>), (<*>), liftA2)
 
 import qualified Database.PostgreSQL.Simple.Cursor  as PGSC (Cursor)
 import           Database.PostgreSQL.Simple.Internal (RowParser)
+import qualified Database.PostgreSQL.Simple.FromField as PGS
 import           Database.PostgreSQL.Simple.FromField
-  (FieldParser, FromField, fromField, pgArrayFieldParser)
+  (FieldParser, fromField, pgArrayFieldParser)
 import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
@@ -68,8 +69,10 @@ import           Data.Typeable (Typeable)
 data QueryRunnerColumn pgType haskellType =
   QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
 
-instance Functor (QueryRunnerColumn u) where
+instance Functor (FromField u) where
   fmap f ~(QueryRunnerColumn u fp) = QueryRunnerColumn u ((fmap . fmap . fmap) f fp)
+
+type FromField = QueryRunnerColumn
 
 -- | A 'QueryRunner' specifies how to convert Postgres values (@columns@)
 --   into Haskell values (@haskells@).  Most likely you will never need
@@ -99,18 +102,20 @@ data QueryRunner columns haskells =
               -- PGInt4)' has no columns when it is Nothing and one
               -- column when it is Just.
 
-fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn pgType haskell
+type FromFields = QueryRunner
+
+fieldQueryRunnerColumn :: PGS.FromField haskell => FromField pgType haskell
 fieldQueryRunnerColumn = fieldParserQueryRunnerColumn fromField
 
-fieldParserQueryRunnerColumn :: FieldParser haskell -> QueryRunnerColumn pgType haskell
+fieldParserQueryRunnerColumn :: FieldParser haskell -> FromField pgType haskell
 fieldParserQueryRunnerColumn = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
 
-queryRunner :: QueryRunnerColumn a b -> QueryRunner (Column a) b
+queryRunner :: FromField a b -> FromFields (Column a) b
 queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
     where QueryRunnerColumn u fp = qrc
 
-queryRunnerColumnNullable :: QueryRunnerColumn a b
-                          -> QueryRunnerColumn (Nullable a) (Maybe b)
+queryRunnerColumnNullable :: FromField a b
+                          -> FromField (Nullable a) (Maybe b)
 queryRunnerColumnNullable qr =
   QueryRunnerColumn (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
   where QueryRunnerColumn u fp = qr
@@ -159,6 +164,10 @@ instance QueryRunnerColumnDefault a b =>
 -- You can also add a 'FromField' instance using this.
 class QueryRunnerColumnDefault pgType haskellType where
   queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
+
+instance QueryRunnerColumnDefault sqlType haskellType
+    => D.Default FromField sqlType haskellType where
+  def = queryRunnerColumnDefault
 
 instance QueryRunnerColumnDefault T.PGNumeric Sci.Scientific where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
@@ -241,32 +250,32 @@ instance (Typeable b, QueryRunnerColumnDefault a b) =>
 
 -- }
 
-instance (Typeable b, FromField b, QueryRunnerColumnDefault a b) =>
+instance (Typeable b, PGS.FromField b, QueryRunnerColumnDefault a b) =>
          QueryRunnerColumnDefault (T.PGRange a) (PGSR.PGRange b) where
   queryRunnerColumnDefault = fieldQueryRunnerColumn
 
 -- Boilerplate instances
 
-instance Functor (QueryRunner c) where
+instance Functor (FromFields c) where
   fmap f (QueryRunner u r b) = QueryRunner u ((fmap . fmap) f r) b
 
 -- TODO: Seems like this one should be simpler!
-instance Applicative (QueryRunner c) where
+instance Applicative (FromFields c) where
   pure = flip (QueryRunner (P.lmap (const ()) PP.empty)) (const False)
          . pure
          . pure
   QueryRunner uf rf bf <*> QueryRunner ux rx bx =
     QueryRunner (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) ((<*>) <$> rf <*> rx) (liftA2 (||) bf bx)
 
-instance P.Profunctor QueryRunner where
+instance P.Profunctor FromFields where
   dimap f g (QueryRunner u r b) =
     QueryRunner (P.lmap f u) (P.dimap f (fmap g) r) (P.lmap f b)
 
-instance PP.ProductProfunctor QueryRunner where
+instance PP.ProductProfunctor FromFields where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 
-instance PP.SumProfunctor QueryRunner where
+instance PP.SumProfunctor FromFields where
   f +++! g = QueryRunner (P.rmap (const ()) (fu PP.+++! gu))
                          (PackMap.eitherFunction fr gr)
                          (either fb gb)
@@ -300,7 +309,7 @@ jsonFieldTypeParser jsonTypeName field mData = do
 
 -- }
 
-prepareRowParser :: QueryRunner columns haskells -> columns -> RowParser haskells
+prepareRowParser :: FromFields columns haskells -> columns -> RowParser haskells
 prepareRowParser (QueryRunner _ rowParser nonZeroColumns) cols =
   if nonZeroColumns cols
   then rowParser cols
