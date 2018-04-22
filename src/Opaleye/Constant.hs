@@ -27,7 +27,7 @@ import           Data.Functor                    ((<$>))
 
 import qualified Database.PostgreSQL.Simple.Range as R
 
--- | 'constant' provides a convenient typeclass wrapper around the
+-- | 'toFields' provides a convenient typeclass wrapper around the
 -- 'Column' creation functions in "Opaleye.SqlTypes".  Besides
 -- convenience it doesn't provide any additional functionality.
 --
@@ -42,17 +42,23 @@ import qualified Database.PostgreSQL.Simple.Range as R
 --      -> 'Opaleye.Table' columns columns'
 --      -> haskells
 --      -> IO Int64
---   customInsert conn table haskells = 'Opaleye.Manipulation.runInsert' conn table $ 'constant' haskells
+--   customInsert conn table haskells = 'Opaleye.Manipulation.runInsert' conn table $ 'toFields' haskells
 -- @
 --
 -- In order to use this function with your custom types, you need to define an
 -- instance of 'D.Default' 'Constant' for your custom types.
+toFields :: D.Default Constant haskells columns
+         => haskells -> columns
+toFields = constantExplicit D.def
+
 constant :: D.Default Constant haskells columns
          => haskells -> columns
 constant = constantExplicit D.def
 
 newtype Constant haskells columns =
   Constant { constantExplicit :: haskells -> columns }
+
+type ToFields = Constant
 
 instance D.Default Constant haskell (Column sql)
          => D.Default Constant (Maybe haskell) (Column (C.Nullable sql)) where

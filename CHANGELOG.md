@@ -8,6 +8,10 @@
 
 * `QueryRunnerColumn` is renamed `FromField`
 
+* `Constant` is renamed `ToFields`
+
+* `constant` is renamed `toFields`
+
 * Added `Opaleye.SqlTypes` and `sql`/`Sql...` names instead of
   `pg`/`PG...` names
 
