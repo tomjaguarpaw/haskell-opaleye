@@ -37,9 +37,9 @@ import qualified Database.PostgreSQL.Simple.Range as R
 --
 -- @
 --   customInsert
---      :: ( 'D.Default' 'Constant' haskells columns )
+--      :: ( 'D.Default' 'Constant' haskells fields )
 --      => Connection
---      -> 'Opaleye.Table' columns columns'
+--      -> 'Opaleye.Table' fields fields'
 --      -> haskells
 --      -> IO Int64
 --   customInsert conn table haskells = 'Opaleye.Manipulation.runInsert' conn table $ 'toFields' haskells
@@ -47,16 +47,16 @@ import qualified Database.PostgreSQL.Simple.Range as R
 --
 -- In order to use this function with your custom types, you need to define an
 -- instance of 'D.Default' 'Constant' for your custom types.
-toFields :: D.Default Constant haskells columns
-         => haskells -> columns
+toFields :: D.Default Constant haskells fields
+         => haskells -> fields
 toFields = constantExplicit D.def
 
-constant :: D.Default Constant haskells columns
-         => haskells -> columns
+constant :: D.Default Constant haskells fields
+         => haskells -> fields
 constant = constantExplicit D.def
 
-newtype Constant haskells columns =
-  Constant { constantExplicit :: haskells -> columns }
+newtype Constant haskells fields =
+  Constant { constantExplicit :: haskells -> fields }
 
 type ToFields = Constant
 

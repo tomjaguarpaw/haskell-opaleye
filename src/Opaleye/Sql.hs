@@ -36,27 +36,27 @@ import qualified Data.Profunctor.Product.Default as D
 -- @
 -- showSql :: Select (Foo (Column a) (Column b) (Column c)) -> Maybe String
 -- @
-showSql :: forall columns.
-           D.Default U.Unpackspec columns columns
-        => S.Select columns
+showSql :: forall fields.
+           D.Default U.Unpackspec fields fields
+        => S.Select fields
         -> Maybe String
-showSql = showSqlExplicit (D.def :: U.Unpackspec columns columns)
+showSql = showSqlExplicit (D.def :: U.Unpackspec fields fields)
 
 -- | Show the unoptimized SQL query string generated from the query.
-showSqlUnopt :: forall columns.
-                D.Default U.Unpackspec columns columns
-             => S.Select columns
+showSqlUnopt :: forall fields.
+                D.Default U.Unpackspec fields fields
+             => S.Select fields
              -> Maybe String
-showSqlUnopt = showSqlUnoptExplicit (D.def :: U.Unpackspec columns columns)
+showSqlUnopt = showSqlUnoptExplicit (D.def :: U.Unpackspec fields fields)
 
 -- * Explicit versions
 
-showSqlExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
+showSqlExplicit :: U.Unpackspec fields b -> S.Select fields -> Maybe String
 showSqlExplicit = formatAndShowSQL
                   . (\(x, y, z) -> (x, Op.optimize y, z))
                   .: Q.runQueryArrUnpack
 
-showSqlUnoptExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
+showSqlUnoptExplicit :: U.Unpackspec fields b -> S.Select fields -> Maybe String
 showSqlUnoptExplicit = formatAndShowSQL .: Q.runQueryArrUnpack
 
 -- * Deprecated functions

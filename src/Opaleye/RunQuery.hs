@@ -50,9 +50,9 @@ import qualified Data.Profunctor.Product.Default as D
 --
 -- Opaleye types are converted to Haskell types based on instances of
 -- the 'Opaleye.Internal.RunQuery.QueryRunnerColumnDefault' typeclass.
-runQuery :: D.Default IRQ.FromFields columns haskells
+runQuery :: D.Default IRQ.FromFields fields haskells
          => PGS.Connection
-         -> S.Select columns
+         -> S.Select fields
          -> IO [haskells]
 runQuery = runQueryExplicit D.def
 
@@ -62,9 +62,9 @@ runQuery = runQueryExplicit D.def
 -- This fold is /not/ strict. The stream consumer is responsible for
 -- forcing the evaluation of its result to avoid space leaks.
 runQueryFold
-  :: D.Default IRQ.FromFields columns haskells
+  :: D.Default IRQ.FromFields fields haskells
   => PGS.Connection
-  -> S.Select columns
+  -> S.Select fields
   -> b
   -> (b -> haskells -> IO b)
   -> IO b
@@ -94,17 +94,17 @@ queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
 
 -- * Explicit versions
 
-runQueryExplicit :: IRQ.FromFields columns haskells
+runQueryExplicit :: IRQ.FromFields fields haskells
                  -> PGS.Connection
-                 -> S.Select columns
+                 -> S.Select fields
                  -> IO [haskells]
 runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
   where (sql, parser) = prepareQuery qr q
 
 runQueryFoldExplicit
-  :: IRQ.FromFields columns haskells
+  :: IRQ.FromFields fields haskells
   -> PGS.Connection
-  -> S.Select columns
+  -> S.Select fields
   -> b
   -> (b -> haskells -> IO b)
   -> IO b
@@ -120,17 +120,17 @@ runQueryFoldExplicit qr conn q z f = case sql of
 --
 -- Returns 'Nothing' when the query returns zero rows.
 declareCursor
-    :: D.Default IRQ.FromFields columns haskells
+    :: D.Default IRQ.FromFields fields haskells
     => PGS.Connection
-    -> S.Select columns
+    -> S.Select fields
     -> IO (IRQ.Cursor haskells)
 declareCursor = declareCursorExplicit D.def
 
 -- | Like 'declareCursor' but takes a 'IRQ.FromFields' explicitly.
 declareCursorExplicit
-    :: IRQ.FromFields columns haskells
+    :: IRQ.FromFields fields haskells
     -> PGS.Connection
-    -> S.Select columns
+    -> S.Select fields
     -> IO (IRQ.Cursor haskells)
 declareCursorExplicit qr conn q =
     case mbQuery of
@@ -140,7 +140,7 @@ declareCursorExplicit qr conn q =
     (mbQuery, rowParser) = prepareQuery qr q
 
 -- | Close the given cursor.
-closeCursor :: IRQ.Cursor columns -> IO ()
+closeCursor :: IRQ.Cursor fields -> IO ()
 closeCursor IRQ.EmptyCursor       = pure ()
 closeCursor (IRQ.Cursor _ cursor) = PGSC.closeCursor cursor
 
@@ -160,7 +160,7 @@ foldForward (IRQ.Cursor rowParser cursor) chunkSize  f z =
 -- * Deprecated functions
 
 {-# DEPRECATED prepareQuery "Will be removed in version 0.7" #-}
-prepareQuery :: IRQ.FromFields columns haskells -> S.Select columns -> (Maybe PGS.Query, FR.RowParser haskells)
+prepareQuery :: IRQ.FromFields fields haskells -> S.Select fields -> (Maybe PGS.Query, FR.RowParser haskells)
 prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
   where sql :: Maybe PGS.Query
         sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)

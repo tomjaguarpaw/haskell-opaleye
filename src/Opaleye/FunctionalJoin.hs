@@ -25,34 +25,34 @@ import qualified Opaleye.Select                  as S
 import qualified Opaleye.SqlTypes                as T
 import qualified Opaleye.Operators               as O
 
-joinF :: (columnsL -> columnsR -> columnsResult)
-      -- ^ Calculate result columns from input columns
-      -> (columnsL -> columnsR -> F.Field T.SqlBool)
+joinF :: (fieldsL -> fieldsR -> fieldsResult)
+      -- ^ Calculate result fields from input fields
+      -> (fieldsL -> fieldsR -> F.Field T.SqlBool)
       -- ^ Condition on which to join
-      -> S.Select columnsL
+      -> S.Select fieldsL
       -- ^ Left query
-      -> S.Select columnsR
+      -> S.Select fieldsR
       -- ^ Right query
-      -> S.Select columnsResult
+      -> S.Select fieldsResult
 joinF f cond l r =
   fmap (uncurry f) (O.keepWhen (uncurry cond) <<< ((,) <$> l <*> r))
 
-leftJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
-              D.Default IU.Unpackspec columnsL columnsL,
-              D.Default IU.Unpackspec columnsR columnsR)
-          => (columnsL -> columnsR -> columnsResult)
+leftJoinF :: (D.Default IO.IfPP fieldsResult fieldsResult,
+              D.Default IU.Unpackspec fieldsL fieldsL,
+              D.Default IU.Unpackspec fieldsR fieldsR)
+          => (fieldsL -> fieldsR -> fieldsResult)
           -- ^ Calculate result row from input rows for rows in the
           -- right query satisfying the join condition
-          -> (columnsL -> columnsResult)
+          -> (fieldsL -> fieldsResult)
           -- ^ Calculate result row from input row when there are /no/
           -- rows in the right query satisfying the join condition
-          -> (columnsL -> columnsR -> F.Field T.SqlBool)
+          -> (fieldsL -> fieldsR -> F.Field T.SqlBool)
           -- ^ Condition on which to join
-          -> S.Select columnsL
+          -> S.Select fieldsL
           -- ^ Left query
-          -> S.Select columnsR
+          -> S.Select fieldsR
           -- ^ Right query
-          -> S.Select columnsResult
+          -> S.Select fieldsResult
 leftJoinF f fL cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.sqlBool True))
         j  = J.leftJoinExplicit D.def
@@ -68,22 +68,22 @@ leftJoinF f fL cond l r = fmap ret j
                                       (F.FieldNullable T.SqlBool)
         nullmakerBool = D.def
 
-rightJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
-               D.Default IU.Unpackspec columnsL columnsL,
-               D.Default IU.Unpackspec columnsR columnsR)
-           => (columnsL -> columnsR -> columnsResult)
+rightJoinF :: (D.Default IO.IfPP fieldsResult fieldsResult,
+               D.Default IU.Unpackspec fieldsL fieldsL,
+               D.Default IU.Unpackspec fieldsR fieldsR)
+           => (fieldsL -> fieldsR -> fieldsResult)
            -- ^ Calculate result row from input rows for rows in the
            -- left query satisfying the join condition
-           -> (columnsR -> columnsResult)
+           -> (fieldsR -> fieldsResult)
            -- ^ Calculate result row from input row when there are /no/
            -- rows in the left query satisfying the join condition
-           -> (columnsL -> columnsR -> F.Field T.SqlBool)
+           -> (fieldsL -> fieldsR -> F.Field T.SqlBool)
            -- ^ Condition on which to join
-           -> S.Select columnsL
+           -> S.Select fieldsL
            -- ^ Left query
-           -> S.Select columnsR
+           -> S.Select fieldsR
            -- ^ Right query
-           -> S.Select columnsResult
+           -> S.Select fieldsResult
 rightJoinF f fR cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.sqlBool True))
         j  = J.rightJoinExplicit D.def
@@ -99,27 +99,27 @@ rightJoinF f fR cond l r = fmap ret j
                                       (F.FieldNullable T.SqlBool)
         nullmakerBool = D.def
 
-fullJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
-              D.Default IU.Unpackspec columnsL columnsL,
-              D.Default IU.Unpackspec columnsR columnsR)
-          => (columnsL -> columnsR -> columnsResult)
+fullJoinF :: (D.Default IO.IfPP fieldsResult fieldsResult,
+              D.Default IU.Unpackspec fieldsL fieldsL,
+              D.Default IU.Unpackspec fieldsR fieldsR)
+          => (fieldsL -> fieldsR -> fieldsResult)
            -- ^ Calculate result row from input rows for rows in the
            -- left and right query satisfying the join condition
-          -> (columnsL -> columnsResult)
+          -> (fieldsL -> fieldsResult)
            -- ^ Calculate result row from left input row when there
            -- are /no/ rows in the right query satisfying the join
            -- condition
-          -> (columnsR -> columnsResult)
+          -> (fieldsR -> fieldsResult)
            -- ^ Calculate result row from right input row when there
            -- are /no/ rows in the left query satisfying the join
            -- condition
-          -> (columnsL -> columnsR -> F.Field T.SqlBool)
+          -> (fieldsL -> fieldsR -> F.Field T.SqlBool)
           -- ^ Condition on which to join
-          -> S.Select columnsL
+          -> S.Select fieldsL
           -- ^ Left query
-          -> S.Select columnsR
+          -> S.Select fieldsR
           -- ^ Right query
-          -> S.Select columnsResult
+          -> S.Select fieldsResult
 fullJoinF f fL fR cond l r = fmap ret j
   where a1 = fmap (\x -> (x, T.sqlBool True))
         j  = J.fullJoinExplicit D.def

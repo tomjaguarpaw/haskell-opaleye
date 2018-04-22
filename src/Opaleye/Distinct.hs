@@ -25,6 +25,6 @@ import qualified Data.Profunctor.Product.Default as D
 -- By design there is no @distinct@ function of type @SelectArr a b ->
 -- SelectArr a b@.  Such a function would allow violation of SQL's
 -- scoping rules and lead to invalid queries.
-distinct :: D.Default Distinctspec columns columns =>
-            Select columns -> Select columns
+distinct :: D.Default Distinctspec fields fields =>
+            Select fields -> Select fields
 distinct = distinctExplicit D.def

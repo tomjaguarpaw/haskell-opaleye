@@ -39,58 +39,58 @@ import           Data.Profunctor.Product.Default (Default, def)
 
 -- * Binary operations
 
-unionAll :: Default B.Binaryspec columns columns =>
-            S.Select columns -> S.Select columns -> S.Select columns
+unionAll :: Default B.Binaryspec fields fields =>
+            S.Select fields -> S.Select fields -> S.Select fields
 unionAll = unionAllExplicit def
 
 -- | The same as unionAll, except that it additionally removes any
 --   duplicate rows.
-union :: Default B.Binaryspec columns columns =>
-         S.Select columns -> S.Select columns -> S.Select columns
+union :: Default B.Binaryspec fields fields =>
+         S.Select fields -> S.Select fields -> S.Select fields
 union = unionExplicit def
 
-intersectAll :: Default B.Binaryspec columns columns =>
-            S.Select columns -> S.Select columns -> S.Select columns
+intersectAll :: Default B.Binaryspec fields fields =>
+            S.Select fields -> S.Select fields -> S.Select fields
 intersectAll = intersectAllExplicit def
 
 -- | The same as intersectAll, except that it additionally removes any
 --   duplicate rows.
-intersect :: Default B.Binaryspec columns columns =>
-         S.Select columns -> S.Select columns -> S.Select columns
+intersect :: Default B.Binaryspec fields fields =>
+         S.Select fields -> S.Select fields -> S.Select fields
 intersect = intersectExplicit def
 
-exceptAll :: Default B.Binaryspec columns columns =>
-            S.Select columns -> S.Select columns -> S.Select columns
+exceptAll :: Default B.Binaryspec fields fields =>
+            S.Select fields -> S.Select fields -> S.Select fields
 exceptAll = exceptAllExplicit def
 
 -- | The same as exceptAll, except that it additionally removes any
 --   duplicate rows.
-except :: Default B.Binaryspec columns columns =>
-         S.Select columns -> S.Select columns -> S.Select columns
+except :: Default B.Binaryspec fields fields =>
+         S.Select fields -> S.Select fields -> S.Select fields
 except = exceptExplicit def
 
 -- * Explicit versions
 
-unionAllExplicit :: B.Binaryspec columns columns'
-                 -> S.Select columns -> S.Select columns -> S.Select columns'
+unionAllExplicit :: B.Binaryspec fields fields'
+                 -> S.Select fields -> S.Select fields -> S.Select fields'
 unionAllExplicit = B.sameTypeBinOpHelper PQ.UnionAll
 
-unionExplicit :: B.Binaryspec columns columns'
-              -> S.Select columns -> S.Select columns -> S.Select columns'
+unionExplicit :: B.Binaryspec fields fields'
+              -> S.Select fields -> S.Select fields -> S.Select fields'
 unionExplicit = B.sameTypeBinOpHelper PQ.Union
 
-intersectAllExplicit :: B.Binaryspec columns columns'
-                 -> S.Select columns -> S.Select columns -> S.Select columns'
+intersectAllExplicit :: B.Binaryspec fields fields'
+                 -> S.Select fields -> S.Select fields -> S.Select fields'
 intersectAllExplicit = B.sameTypeBinOpHelper PQ.IntersectAll
 
-intersectExplicit :: B.Binaryspec columns columns'
-              -> S.Select columns -> S.Select columns -> S.Select columns'
+intersectExplicit :: B.Binaryspec fields fields'
+              -> S.Select fields -> S.Select fields -> S.Select fields'
 intersectExplicit = B.sameTypeBinOpHelper PQ.Intersect
 
-exceptAllExplicit :: B.Binaryspec columns columns'
-                 -> S.Select columns -> S.Select columns -> S.Select columns'
+exceptAllExplicit :: B.Binaryspec fields fields'
+                 -> S.Select fields -> S.Select fields -> S.Select fields'
 exceptAllExplicit = B.sameTypeBinOpHelper PQ.ExceptAll
 
-exceptExplicit :: B.Binaryspec columns columns'
-              -> S.Select columns -> S.Select columns -> S.Select columns'
+exceptExplicit :: B.Binaryspec fields fields'
+              -> S.Select fields -> S.Select fields -> S.Select fields'
 exceptExplicit = B.sameTypeBinOpHelper PQ.Except

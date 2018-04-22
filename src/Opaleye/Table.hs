@@ -105,17 +105,17 @@ import qualified Data.Profunctor.Product.Default as D
 -- selectTable :: Table w (Foo (Column a) (Column b) (Column c))
 --             -> Select (Foo (Column a) (Column b) (Column c))
 -- @
-selectTable :: D.Default U.Unpackspec columns columns
-            => Table a columns
+selectTable :: D.Default U.Unpackspec fields fields
+            => Table a fields
             -- ^
-            -> S.Select columns
+            -> S.Select fields
 selectTable = selectTableExplicit D.def
 
 -- | Create a table with unqualified names.
 table :: String
       -- ^ Table name
-      -> TableColumns writeColumns viewColumns
-      -> Table writeColumns viewColumns
+      -> TableColumns writeFields viewFields
+      -> Table writeFields viewFields
 table = T.Table
 
 -- | Create a table.
@@ -123,17 +123,17 @@ tableWithSchema :: String
                 -- ^ Schema name
                 -> String
                 -- ^ Table name
-                -> TableColumns writeColumns viewColumns
-                -> Table writeColumns viewColumns
+                -> TableColumns writeFields viewFields
+                -> Table writeFields viewFields
 tableWithSchema = T.TableWithSchema
 
 -- * Explicit versions
 
-selectTableExplicit :: U.Unpackspec tablecolumns columns
+selectTableExplicit :: U.Unpackspec tablefields fields
                     -- ^
-                    -> Table a tablecolumns
+                    -> Table a tablefields
                     -- ^
-                    -> S.Select columns
+                    -> S.Select fields
 selectTableExplicit cm table' = Q.simpleQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
     (retwires, primQ) = T.queryTable cm table' t0
@@ -141,12 +141,12 @@ selectTableExplicit cm table' = Q.simpleQueryArr f where
 -- * Deprecated versions
 
 -- | Use 'selectTable' instead.  Will be deprecated in version 0.7.
-queryTable :: D.Default U.Unpackspec columns columns =>
-              Table a columns -> S.Select columns
+queryTable :: D.Default U.Unpackspec fields fields =>
+              Table a fields -> S.Select fields
 queryTable = selectTable
 
 -- | Use 'selectTableExplicit' instead.  Will be deprecated in version
 -- 0.7.
-queryTableExplicit :: U.Unpackspec tablecolumns columns ->
-                     Table a tablecolumns -> S.Select columns
+queryTableExplicit :: U.Unpackspec tablefields fields ->
+                     Table a tablefields -> S.Select fields
 queryTableExplicit = selectTableExplicit

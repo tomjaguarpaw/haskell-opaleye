@@ -125,10 +125,10 @@ runDelete_ conn i = case i of
 
 -- * Create a manipulation
 
-data Insert haskells = forall columnsW columnsR. Insert
-   { iTable      :: T.Table columnsW columnsR
-   , iRows       :: [columnsW]
-   , iReturning  :: MI.Returning columnsR haskells
+data Insert haskells = forall fieldsW fieldsR. Insert
+   { iTable      :: T.Table fieldsW fieldsR
+   , iRows       :: [fieldsW]
+   , iReturning  :: MI.Returning fieldsR haskells
    , iOnConflict :: Maybe HSql.OnConflict
    -- ^ NB There is a clash of terminology between Haskell and
    -- Postgres.
@@ -139,38 +139,38 @@ data Insert haskells = forall columnsW columnsR. Insert
    --        NOTHING@
    }
 
-data Update haskells = forall columnsW columnsR. Update
-   { uTable      :: T.Table columnsW columnsR
-   , uUpdateWith :: columnsR -> columnsW
+data Update haskells = forall fieldsW fieldsR. Update
+   { uTable      :: T.Table fieldsW fieldsR
+   , uUpdateWith :: fieldsR -> fieldsW
    -- ^ Be careful: providing 'Nothing' to a column created by
    -- 'Opaleye.Table.optional' updates the column to its default
    -- value.  Many users have been confused by this because they
    -- assume it means that the column is to be left unchanged.  For an
    -- easier time wrap your update function in 'updateEasy'.
-   , uWhere      :: columnsR -> F.Field SqlBool
-   , uReturning  :: MI.Returning columnsR haskells
+   , uWhere      :: fieldsR -> F.Field SqlBool
+   , uReturning  :: MI.Returning fieldsR haskells
    }
 
 -- | A convenient wrapper for writing your update function
 --
 -- @uUpdateWith = updateEasy (\\... -> ...)@
-updateEasy :: D.Default Updater columnsR columnsW
-           => (columnsR -> columnsR)
+updateEasy :: D.Default Updater fieldsR fieldsW
+           => (fieldsR -> fieldsR)
            -- ^
-           -> (columnsR -> columnsW)
+           -> (fieldsR -> fieldsW)
 updateEasy u = u' . u
   where Updater u' = D.def
 
-data Delete haskells = forall columnsW columnsR. Delete
-  { dTable     :: T.Table columnsW columnsR
-  , dWhere     :: columnsR -> F.Field SqlBool
-  , dReturning :: MI.Returning columnsR Int64
+data Delete haskells = forall fieldsW fieldsR. Delete
+  { dTable     :: T.Table fieldsW fieldsR
+  , dWhere     :: fieldsR -> F.Field SqlBool
+  , dReturning :: MI.Returning fieldsR Int64
   }
 
 -- ** Returning
 
 -- | Return the number of rows inserted or updated
-rCount :: MI.Returning columnsR Int64
+rCount :: MI.Returning fieldsR Int64
 rCount = MI.Count
 
 -- | Return a function of the inserted or updated rows
@@ -179,19 +179,19 @@ rCount = MI.Count
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- 'rReturning'.
-rReturning :: D.Default RQ.QueryRunner columns haskells
-           => (columnsR -> columns)
+rReturning :: D.Default RQ.QueryRunner fields haskells
+           => (fieldsR -> fields)
            -- ^
-           -> MI.Returning columnsR [haskells]
+           -> MI.Returning fieldsR [haskells]
 rReturning = MI.Returning
 
 -- | Return a function of the inserted or updated rows.  Explicit
 -- version.  You probably just want to use 'rReturning' instead.
-rReturningExplicit :: RQ.QueryRunner columns haskells
+rReturningExplicit :: RQ.QueryRunner fields haskells
                    -- ^
-                   -> (columnsR -> columns)
+                   -> (fieldsR -> fields)
                    -- ^
-                   -> MI.Returning columnsR [haskells]
+                   -> MI.Returning fieldsR [haskells]
 rReturningExplicit = MI.ReturningExplicit
 
 -- * Deprecated versions
@@ -201,7 +201,7 @@ rReturningExplicit = MI.ReturningExplicit
 {-# DEPRECATED runInsert
     "'runInsert' will be removed in version 0.7. \
     \Use 'runInsertMany' instead." #-}
-runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
+runInsert :: PGS.Connection -> T.Table fields fields' -> fields -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
 -- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
@@ -212,11 +212,11 @@ runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 {-# DEPRECATED runInsertReturning
     "'runInsertReturning' will be removed in version 0.7. \
     \Use 'runInsertManyReturning' instead." #-}
-runInsertReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
+runInsertReturning :: (D.Default RQ.QueryRunner fieldsReturned haskells)
                    => PGS.Connection
-                   -> T.Table columnsW columnsR
-                   -> columnsW
-                   -> (columnsR -> columnsReturned)
+                   -> T.Table fieldsW fieldsR
+                   -> fieldsW
+                   -> (fieldsR -> fieldsReturned)
                    -> IO [haskells]
 runInsertReturning = runInsertReturningExplicit D.def
 
