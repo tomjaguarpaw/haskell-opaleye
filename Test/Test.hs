@@ -23,18 +23,15 @@ import qualified Data.Time   as Time
 import qualified Data.Aeson as Json
 import qualified Data.Text as T
 
-import           System.Environment (lookupEnv)
-
-import           Control.Applicative ((<$>), (<*>), (<|>))
+import           Control.Applicative ((<$>), (<*>))
 import qualified Control.Applicative as A
 import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), (<<<), (>>>))
 
 import           GHC.Int (Int64)
+import TestConnection
 
 import Test.Hspec
-
-import qualified Configuration.Dotenv as Dotenv
 
 {-
 
@@ -936,24 +933,7 @@ jsonbTests = [testJsonGetFieldValue  table9Q,testJsonGetFieldText  table9Q,
 
 main :: IO ()
 main = do
-  let envVarName = "POSTGRES_CONNSTRING"
-
-  connectStringEnvVar <- lookupEnv envVarName
-
-  connectStringDotEnv <- do vars <- Dotenv.parseFile ".env"
-                            return (lookup envVarName vars)
-                         `Dotenv.onMissingFile`
-                         return Nothing
-
-  let connectString = connectStringEnvVar <|> connectStringDotEnv
-
-  conn <- maybe
-    (fail ("Set " ++ envVarName ++ " environment variable\n"
-           ++ "For example " ++ envVarName ++ "='user=tom dbname=opaleye_test "
-           ++ "host=localhost port=25433 password=tom'"))
-    (PGS.connectPostgreSQL . String.fromString)
-    connectString
-
+  conn <- getTestDbConnection
   dropAndCreateDB conn
 
   let insert (writeable, columndata) =
