@@ -86,7 +86,9 @@ essentially invisible.)
 > personQuery = queryTable personTable
 
 A `Query` corresponds to an SQL SELECT that we can run.  Here is the
-SQL generated for `personQuery`.
+SQL generated for `personQuery`.  (`printSQL` is just a convenient
+utility function for the purposes of this example file.  See below for
+its definition.)
 
 ghci> printSql personQuery
 SELECT name0_1 as result1,
@@ -112,9 +114,6 @@ SELECT name,
        age
        address
 FROM personTable
-
-(`printSQL` is just a convenient utility function for the purposes of
-this example file.  See below for its definition.)
 
 
 Record types
