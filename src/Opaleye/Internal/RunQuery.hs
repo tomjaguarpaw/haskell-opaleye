@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Opaleye.Internal.RunQuery where
 
@@ -18,6 +19,7 @@ import           Opaleye.Internal.Column (Nullable)
 import qualified Opaleye.Internal.PackMap as PackMap
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
+import qualified Opaleye.Map                 as Map
 import qualified Opaleye.PGTypes as T
 import qualified Opaleye.Internal.PGTypes as IPT (strictDecodeUtf8)
 
@@ -349,3 +351,80 @@ prepareRowParser (QueryRunner _ rowParser nonZeroColumns) cols =
 
 -- | Cursor within a transaction.
 data Cursor haskells = EmptyCursor | Cursor (RowParser haskells) PGSC.Cursor
+
+--
+
+data HaskellToSql
+data SqlToHaskell
+
+type instance Map.Map HaskellToSql Int = Column (T.PGInt4)
+type instance Map.Map HaskellToSql Int32 = Column (T.PGInt4)
+type instance Map.Map HaskellToSql String = Column (T.PGText)
+type instance Map.Map HaskellToSql Int64 = Column (T.PGInt8)
+type instance Map.Map HaskellToSql Double = Column (T.PGFloat8)
+type instance Map.Map HaskellToSql Bool = Column (T.PGBool)
+type instance Map.Map HaskellToSql UUID = Column (T.PGUuid)
+type instance Map.Map HaskellToSql SBS.ByteString = Column (T.PGBytea)
+type instance Map.Map HaskellToSql LBS.ByteString = Column (T.PGBytea)
+type instance Map.Map HaskellToSql ST.Text = Column (T.PGText)
+type instance Map.Map HaskellToSql LT.Text = Column (T.PGText)
+type instance Map.Map HaskellToSql Time.Day = Column (T.PGDate)
+type instance Map.Map HaskellToSql Time.UTCTime = Column (T.PGTimestamptz)
+type instance Map.Map HaskellToSql Time.LocalTime = Column (T.PGTimestamp)
+type instance Map.Map HaskellToSql Time.ZonedTime = Column (T.PGTimestamptz)
+type instance Map.Map HaskellToSql Time.TimeOfDay = Column (T.PGTime)
+type instance Map.Map HaskellToSql (CI.CI ST.Text) = Column (T.PGCitext)
+type instance Map.Map HaskellToSql (CI.CI LT.Text) = Column (T.PGCitext)
+type instance Map.Map HaskellToSql Ae.Value = Column (T.PGJson)
+
+type instance Map.Map HaskellToSql (Maybe Int) = Column (Nullable (T.PGInt4))
+type instance Map.Map HaskellToSql (Maybe Int32) = Column (Nullable (T.PGInt4))
+type instance Map.Map HaskellToSql (Maybe String) = Column (Nullable (T.PGText))
+type instance Map.Map HaskellToSql (Maybe Int64) = Column (Nullable (T.PGInt8))
+type instance Map.Map HaskellToSql (Maybe Double) = Column (Nullable (T.PGFloat8))
+type instance Map.Map HaskellToSql (Maybe Bool) = Column (Nullable (T.PGBool))
+type instance Map.Map HaskellToSql (Maybe UUID) = Column (Nullable (T.PGUuid))
+type instance Map.Map HaskellToSql (Maybe SBS.ByteString) = Column (Nullable (T.PGBytea))
+type instance Map.Map HaskellToSql (Maybe LBS.ByteString) = Column (Nullable (T.PGBytea))
+type instance Map.Map HaskellToSql (Maybe ST.Text) = Column (Nullable (T.PGText))
+type instance Map.Map HaskellToSql (Maybe LT.Text) = Column (Nullable (T.PGText))
+type instance Map.Map HaskellToSql (Maybe Time.Day) = Column (Nullable (T.PGDate))
+type instance Map.Map HaskellToSql (Maybe Time.UTCTime) = Column (Nullable (T.PGTimestamptz))
+type instance Map.Map HaskellToSql (Maybe Time.LocalTime) = Column (Nullable (T.PGTimestamp))
+type instance Map.Map HaskellToSql (Maybe Time.ZonedTime) = Column (Nullable (T.PGTimestamptz))
+type instance Map.Map HaskellToSql (Maybe Time.TimeOfDay) = Column (Nullable (T.PGTime))
+type instance Map.Map HaskellToSql (Maybe (CI.CI ST.Text)) = Column (Nullable (T.PGCitext))
+type instance Map.Map HaskellToSql (Maybe (CI.CI LT.Text)) = Column (Nullable (T.PGCitext))
+type instance Map.Map HaskellToSql (Maybe Ae.Value) = Column (Nullable (T.PGJson))
+
+type instance Map.Map SqlToHaskell (Column T.PGInt4) = Int
+type instance Map.Map SqlToHaskell (Column T.PGInt8) = Int64
+type instance Map.Map SqlToHaskell (Column T.PGText) = ST.Text
+type instance Map.Map SqlToHaskell (Column T.PGFloat8) = Double
+type instance Map.Map SqlToHaskell (Column T.PGBool) = Bool
+type instance Map.Map SqlToHaskell (Column T.PGUuid) = UUID
+type instance Map.Map SqlToHaskell (Column T.PGBytea) = SBS.ByteString
+type instance Map.Map SqlToHaskell (Column T.PGText) = ST.Text
+type instance Map.Map SqlToHaskell (Column T.PGDate) = Time.Day
+type instance Map.Map SqlToHaskell (Column T.PGTimestamp) = Time.LocalTime
+type instance Map.Map SqlToHaskell (Column T.PGTimestamptz) = Time.ZonedTime
+type instance Map.Map SqlToHaskell (Column T.PGTime) = Time.TimeOfDay
+type instance Map.Map SqlToHaskell (Column T.PGCitext) = (CI.CI ST.Text)
+type instance Map.Map SqlToHaskell (Column T.PGJson) = Ae.Value
+type instance Map.Map SqlToHaskell (Column T.PGJsonb) = Ae.Value
+
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGInt4)) = Maybe Int
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGInt8)) = Maybe Int64
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGText)) = Maybe ST.Text
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGFloat8)) = Maybe Double
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGBool)) = Maybe Bool
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGUuid)) = Maybe UUID
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGBytea)) = Maybe SBS.ByteString
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGText)) = Maybe ST.Text
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGDate)) = Maybe Time.Day
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGTimestamp)) = Maybe Time.LocalTime
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGTimestamptz)) = Maybe Time.ZonedTime
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGTime)) = Maybe Time.TimeOfDay
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGCitext)) = Maybe (CI.CI ST.Text)
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGJson)) = Maybe Ae.Value
+type instance Map.Map SqlToHaskell (Column (Nullable T.PGJsonb)) = Maybe Ae.Value

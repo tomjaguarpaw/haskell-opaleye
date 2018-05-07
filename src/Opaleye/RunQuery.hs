@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 
 -- | This module will be deprecated in 0.7.  Use "Opaleye.RunSelect" instead.
 
@@ -21,6 +22,7 @@ import qualified Database.PostgreSQL.Simple.FromRow as FR
 import qualified Data.String as String
 
 import           Opaleye.Column (Column)
+import qualified Opaleye.Map    as Map
 import qualified Opaleye.Select as S
 import qualified Opaleye.Sql as S
 import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
@@ -39,6 +41,14 @@ runQuery :: D.Default IRQ.FromFields fields haskells
          -> S.Select fields
          -> IO [haskells]
 runQuery = runQueryExplicit D.def
+
+runQueryInferrable :: ( D.Default QueryRunner columns haskells
+--                      , Map.Map IRQ.HaskellToSql haskells ~ columns
+                      , Map.Map IRQ.SqlToHaskell columns ~ haskells)
+                   => PGS.Connection
+                   -> S.Select columns
+                   -> IO [haskells]
+runQueryInferrable = Opaleye.RunQuery.runQuery
 
 -- | Use 'Opaleye.RunSelect.runSelectFold' instead.  @runQueryFold@
 -- will be deprecated in 0.7.
