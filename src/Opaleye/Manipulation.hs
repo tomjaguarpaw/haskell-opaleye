@@ -85,6 +85,43 @@ runInsertManyReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                        -- ^ Returned rows after @f@ has been applied
 runInsertManyReturning = runInsertManyReturningExplicit D.def
 
+-- | Insert rows into a table with a conflict resolution strategy
+runInsertManyOnConflict :: PGS.Connection
+                        -- ^
+                        -> T.Table columns columns'
+                        -- ^ Table to insert into
+                        -> [columns]
+                        -- ^ Rows to insert
+                        -> Maybe HSql.OnConflict
+                        -- ^ Strategy for resolving conflicts
+                        -> IO Int64
+                        -- ^ Number of rows inserted
+runInsertManyOnConflict conn table columns onConflict = case NEL.nonEmpty columns of
+  -- Inserting the empty list is just the same as returning 0
+  Nothing       -> return 0
+  Just columns' -> (PGS.execute_ conn . fromString .:. arrangeInsertManyOnConflictSql) table columns' onConflict
+
+-- | Insert rows into a table, ignoring conflicts, and return a function of the inserted rows
+--
+-- @runInsertManyOnConflictReturning@'s use of the 'D.Default' typeclass means that the
+-- compiler will have trouble inferring types.  It is strongly
+-- recommended that you provide full type signatures when using
+-- @runInsertManyOnConflictReturning@.
+runInsertManyOnConflictReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
+                                 => PGS.Connection
+                                    -- ^
+                                 -> T.Table columnsW columnsR
+                                 -- ^ Table to insert into
+                                 -> [columnsW]
+                                 -- ^ Rows to insert
+                                 -> Maybe HSql.OnConflict
+                                 -- ^ Conflict resolution strategy
+                                 -> (columnsR -> columnsReturned)
+                                 -- ^ Function @f@ to apply to the inserted rows
+                                 -> IO [haskells]
+                                 -- ^ Returned rows after @f@ has been applied
+runInsertManyOnConflictReturning = runInsertManyOnConflictReturningExplicit D.def
+
 -- | Update rows in a table.
 --
 -- (N.B. 'runUpdateEasy''s \"returning\" counterpart
@@ -195,11 +232,25 @@ runInsertManyReturningExplicit :: RQ.QueryRunner columnsReturned haskells
                                -> (columnsR -> columnsReturned)
                                -> IO [haskells]
 runInsertManyReturningExplicit qr conn t columns r =
+  runInsertManyOnConflictReturningExplicit qr conn t columns Nothing r
+
+-- | You probably don't need this, but can just use
+-- 'runInsertManyOnConflictReturning' instead.  You only need it if you want to
+-- run an UPDATE RETURNING statement but need to be explicit about the
+-- 'QueryRunner'.
+runInsertManyOnConflictReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+                                         -> PGS.Connection
+                                         -> T.Table columnsW columnsR
+                                         -> [columnsW]
+                                         -> Maybe HSql.OnConflict
+                                         -> (columnsR -> columnsReturned)
+                                         -> IO [haskells]
+runInsertManyOnConflictReturningExplicit qr conn t columns onConflict r =
   case NEL.nonEmpty columns of
     Nothing       -> return []
     Just columns' -> PGS.queryWith_ parser conn
                        (fromString
-                        (arrangeInsertManyReturningSql u t columns' r))
+                        (arrangeInsertManyOnConflictReturningSql u t columns' onConflict r))
   where IRQ.QueryRunner u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
         TI.View v = TI.tableColumnsView (TI.tableColumns t)
@@ -266,18 +317,30 @@ arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
     "You probably want 'runInsertMany' instead. \
     \Will be removed in version 0.7." #-}
 arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
-arrangeInsertMany table columns = insert
-  where writer = TI.tableColumnsWriter (TI.tableColumns table)
-        (columnExprs, columnNames) = TI.runWriter' writer columns
-        insert = SG.sqlInsert SD.defaultSqlGenerator
-                      (PQ.tiToSqlTable (TI.tableIdentifier table))
-                      columnNames columnExprs
+arrangeInsertMany table columns = arrangeInsertManyOnConflict table columns Nothing
 
 {-# DEPRECATED arrangeInsertManySql
     "You probably want 'runInsertMany' instead. \
     \Will be removed in version 0.7." #-}
 arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
 arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
+
+{-# DEPRECATED arrangeInsertManyOnConflict
+    "You probably want 'runInsertManyOnConflict' instead. \
+    \Will be removed in version 0.7." #-}
+arrangeInsertManyOnConflict :: T.Table columns a -> NEL.NonEmpty columns -> Maybe HSql.OnConflict -> HSql.SqlInsert
+arrangeInsertManyOnConflict table columns onConflict = insert
+  where writer = TI.tableColumnsWriter (TI.tableColumns table)
+        (columnExprs, columnNames) = TI.runWriter' writer columns
+        insert = SG.sqlInsert SD.defaultSqlGenerator
+                      (PQ.tiToSqlTable (TI.tableIdentifier table))
+                      columnNames columnExprs onConflict
+
+{-# DEPRECATED arrangeInsertManyOnConflictSql
+    "You probably want 'runInsertManyOnConflict' instead. \
+    \Will be removed in version 0.7." #-}
+arrangeInsertManyOnConflictSql :: T.Table columns a -> NEL.NonEmpty columns -> Maybe HSql.OnConflict -> String
+arrangeInsertManyOnConflictSql = show . HPrint.ppInsert .:. arrangeInsertManyOnConflict
 
 {-# DEPRECATED arrangeUpdate
     "You probably want 'runUpdate' instead. \
@@ -325,11 +388,7 @@ arrangeInsertManyReturning :: U.Unpackspec columnsReturned ignored
                            -> (columnsR -> columnsReturned)
                            -> Sql.Returning HSql.SqlInsert
 arrangeInsertManyReturning unpackspec table columns returningf =
-  Sql.Returning insert returningSEs
-  where insert = arrangeInsertMany table columns
-        TI.View columnsR = TI.tableColumnsView (TI.tableColumns table)
-        returningPEs = U.collectPEs unpackspec (returningf columnsR)
-        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
+  arrangeInsertManyOnConflictReturning unpackspec table columns Nothing returningf
 
 {-# DEPRECATED arrangeInsertManyReturningSql
     "You probably want 'runInsertManyReturning' instead. \
@@ -341,6 +400,34 @@ arrangeInsertManyReturningSql :: U.Unpackspec columnsReturned ignored
                               -> String
 arrangeInsertManyReturningSql =
   show . Print.ppInsertReturning .:: arrangeInsertManyReturning
+
+{-# DEPRECATED arrangeInsertManyOnConflictReturning
+    "You probably want 'runInsertManyOnConflictReturning' instead. \
+    \Will be removed in version 0.7." #-}
+arrangeInsertManyOnConflictReturning :: U.Unpackspec columnsReturned ignored
+                                     -> T.Table columnsW columnsR
+                                     -> NEL.NonEmpty columnsW
+                                     -> Maybe HSql.OnConflict
+                                     -> (columnsR -> columnsReturned)
+                                     -> Sql.Returning HSql.SqlInsert
+arrangeInsertManyOnConflictReturning unpackspec table columns onConflict returningf =
+  Sql.Returning insert returningSEs
+  where insert = arrangeInsertManyOnConflict table columns onConflict
+        TI.View columnsR = TI.tableColumnsView (TI.tableColumns table)
+        returningPEs = U.collectPEs unpackspec (returningf columnsR)
+        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
+
+{-# DEPRECATED arrangeInsertManyOnConflictReturningSql
+    "You probably want 'runInsertManyOnConflictReturning' instead. \
+    \Will be removed in version 0.7." #-}
+arrangeInsertManyOnConflictReturningSql :: U.Unpackspec columnsReturned ignored
+                                        -> T.Table columnsW columnsR
+                                        -> NEL.NonEmpty columnsW
+                                        -> Maybe HSql.OnConflict
+                                        -> (columnsR -> columnsReturned)
+                                        -> String
+arrangeInsertManyOnConflictReturningSql =
+  show . Print.ppInsertReturning .::. arrangeInsertManyOnConflictReturning
 
 {-# DEPRECATED arrangeUpdateReturning
     "You probably want 'runUpdateReturning' instead. \
