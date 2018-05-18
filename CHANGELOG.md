@@ -20,7 +20,11 @@
 * Added `runInsert_`, `runUpdate_`, `runDelete_` and supporting
   functionality
 
+* Add `PGNumeric` type
+
 * Added `leftJoinA`
+
+* Added `liesWithin`
 
 ## 0.6.1.0
 
