@@ -1,5 +1,5 @@
--- | 'Query' and 'QueryArr' are the composable units of database
--- querying that are used in Opaleye.
+-- | Use "Opaleye.Select" instead.  This module will be deprecated in
+-- 0.7.
 
 module Opaleye.QueryArr (Query, QueryArr) where
 
