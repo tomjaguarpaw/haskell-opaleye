@@ -1,3 +1,23 @@
+## 0.6.7000.0
+
+This is a pre-release of version 0.7.0.0.  GHC >= 8.0 is required.  It
+contains the following new important features
+
+* A new API for manipulation, including `ON CONFLICT DO NOTHING`
+  support for `UPDATE`
+
+* Initial support for product types written in "Higher kinded data"
+  style (but deriving of related functionality using TH or Generics is
+  not yet provided).
+
+* Type inference for outer joins
+
+* Many renamings.  In particular, `Column` will become `Field` in
+  0.7.0.0.  You should be able to almost completely port your code to
+  the 0.7.0.0 names whilst remaining compatible with 0.6.7000.0.
+
+### Details
+
 * Added `Opaleye.RunSelect`
 
 * Added `Opaleye.Field`
