@@ -178,6 +178,9 @@ runWriter' (Writer (PM.PackMap f)) columns = Arr.first unZip outColumns
 
 data Zip a = Zip { unZip :: NEL.NonEmpty [a] }
 
+instance Semigroup (Zip a) where
+  (<>) = mappend
+
 instance Monoid (Zip a) where
   mempty = Zip mempty'
     where mempty' = [] `NEL.cons` mempty'
