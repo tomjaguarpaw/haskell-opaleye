@@ -89,7 +89,7 @@ data QueryRunner columns haskells =
               -- We never actually look at the columns except to see
               -- its "type" in the case of a sum profunctor
               (columns -> Bool)
-              -- ^ Have we actually requested any columns?  If we
+              -- Have we actually requested any columns?  If we
               -- asked for zero columns then the SQL generator will
               -- have to put a dummy 0 into the SELECT statement,
               -- since we can't select zero columns.  In that case we
