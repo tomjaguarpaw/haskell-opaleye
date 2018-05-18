@@ -32,8 +32,11 @@ isNull = C.isNull
 --
 -- Will be generalized to @Field_ n b@ in a later version.
 matchNullable :: Field_ 'NonNullable b
+              -- ^
               -> (Field_ 'NonNullable a -> Field_ 'NonNullable b)
+              -- ^
               -> Field_ 'Nullable a
+              -- ^
               -> Field_ 'NonNullable b
 matchNullable = C.matchNullable
 
@@ -46,7 +49,9 @@ matchNullable = C.matchNullable
 --
 -- Will be generalized to @Field_ n a@ in a later version.
 fromNullable :: Field_ 'NonNullable a
+             -- ^
              -> Field_ 'Nullable a
+             -- ^
              -> Field_ 'NonNullable a
 fromNullable = C.fromNullable
 

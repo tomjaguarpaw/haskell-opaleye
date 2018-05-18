@@ -118,6 +118,8 @@ fullJoinExplicit :: U.Unpackspec fieldsL fieldsL
 fullJoinExplicit uA uB nullmakerA nullmakerB =
   J.joinExplicit uA uB (J.toNullable nullmakerA) (J.toNullable nullmakerB) PQ.FullJoin
 
+-- * Inferrable versions
+
 leftJoinInferrable :: (D.Default U.Unpackspec columnsL columnsL,
                        D.Default U.Unpackspec columnsR columnsR,
                        D.Default J.NullMaker columnsR nullableColumnsR,

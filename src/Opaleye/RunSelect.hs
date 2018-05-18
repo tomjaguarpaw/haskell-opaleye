@@ -46,7 +46,9 @@ import qualified Data.Profunctor.Product.Default as D
 -- @
 runSelect :: D.Default FromFields fields haskells
           => PGS.Connection
+          -- ^
           -> S.Select fields
+          -- ^
           -> IO [haskells]
 runSelect = RQ.runQuery
 
@@ -58,9 +60,13 @@ runSelect = RQ.runQuery
 runSelectFold
   :: D.Default FromFields fields haskells
   => PGS.Connection
+  -- ^
   -> S.Select fields
+  -- ^
   -> b
+  -- ^
   -> (b -> haskells -> IO b)
+  -- ^
   -> IO b
 runSelectFold = RQ.runQueryFold
 
@@ -73,7 +79,9 @@ runSelectFold = RQ.runQueryFold
 declareCursor
     :: D.Default FromFields fields haskells
     => PGS.Connection
+    -- ^
     -> S.Select fields
+    -- ^
     -> IO (IRQ.Cursor haskells)
 declareCursor = RQ.declareCursor
 
@@ -86,9 +94,13 @@ closeCursor = RQ.closeCursor
 -- returned, otherwise a 'Right' value is returned.
 foldForward
     :: IRQ.Cursor haskells
+    -- ^
     -> Int
+    -- ^
     -> (a -> haskells -> IO a)
+    -- ^
     -> a
+    -- ^
     -> IO (Either a a)
 foldForward = RQ.foldForward
 
