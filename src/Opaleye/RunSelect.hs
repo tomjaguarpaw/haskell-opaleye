@@ -42,7 +42,7 @@ import qualified Data.Profunctor.Product.Default as D
 --
 -- @
 -- runSelect :: 'S.Select' (Foo (Column 'Opaleye.SqlTypes.SqlInt4') (Column 'Opaleye.SqlTypes.SqlText') (Column 'Opaleye.SqlTypes.SqlBool')
---          -> IO [Foo Int String Bool]
+--           -> IO [Foo Int String Bool]
 -- @
 runSelect :: D.Default FromFields fields haskells
           => PGS.Connection
