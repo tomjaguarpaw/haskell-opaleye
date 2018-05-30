@@ -3,11 +3,11 @@ sudo: required
 env:
 - GHCVER=8.0.2
 - GHCVER=8.2.2
-- GHCVER=8.4.1
+- GHCVER=8.4.3
 - GHCVER=head
 
 script:
-- curl -sL https://raw.github.com/tomjaguarpaw/neil/d215f46/travis.sh | sh -s tomjaguarpaw d215f46
+- curl -sL https://raw.github.com/tomjaguarpaw/neil/930a726f/travis.sh | sh -s tomjaguarpaw 930a726f
 
 # To clear the caches go to
 #
