@@ -33,9 +33,15 @@ ppSql (SelectBinary v) = ppSelectBinary v
 ppSql (SelectLabel v)  = ppSelectLabel v
 ppSql (SelectExists v) = ppSelectExists v
 
+ppDistinctOn :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
+ppDistinctOn = maybe mempty $ \nel ->
+    text "DISTINCT ON" <+>
+        text "(" $$ HPrint.commaV HPrint.ppSqlExpr (NEL.toList nel) $$ text ")"
+
 ppSelectFrom :: From -> Doc
 ppSelectFrom s = text "SELECT"
-                 <+> ppAttrs (Sql.attrs s)
+                 <+> ppDistinctOn (Sql.distinctOn s)
+                 $$  ppAttrs (Sql.attrs s)
                  $$  ppTables (Sql.tables s)
                  $$  HPrint.ppWhere (Sql.criteria s)
                  $$  ppGroupBy (Sql.groupBy s)

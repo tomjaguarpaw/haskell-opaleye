@@ -1,7 +1,8 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
--- | Ordering, @LIMIT@ and @OFFSET@
+-- | Ordering, @LIMIT@, @OFFSET@ and @DISTINCT ON@
 
 module Opaleye.Order ( -- * Order by
                        orderBy
@@ -14,6 +15,9 @@ module Opaleye.Order ( -- * Order by
                      -- * Limit and offset
                      , limit
                      , offset
+                     -- * Distinct on
+                     , distinctOn
+                     , distinctOnBy
                      -- * Exact ordering
                      , O.exact
                      -- * Other
@@ -21,14 +25,14 @@ module Opaleye.Order ( -- * Order by
                      , SqlOrd
                      ) where
 
+import qualified Data.Profunctor.Product.Default as D
 import qualified Opaleye.Column as C
-import           Opaleye.QueryArr (Query)
-import qualified Opaleye.Internal.QueryArr as Q
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Order as O
+import qualified Opaleye.Internal.QueryArr as Q
+import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Select         as S
 import qualified Opaleye.SqlTypes as T
-
-import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 -- We can probably disable ConstraintKinds and TypeSynonymInstances
 -- when we move to Sql... instead of PG..
@@ -116,6 +120,24 @@ that many result rows.
 -}
 offset :: Int -> S.Select a -> S.Select a
 offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
+
+-- * Distinct on
+
+-- | Keep a row from each set where the given function returns the same result. No
+--   ordering is guaranteed. Mutliple fields may be distinguished by projecting out
+--   tuples of 'Column's. Use 'distinctOnBy' to control how the rows are chosen.
+distinctOn :: D.Default U.Unpackspec b b => (a -> b) -> S.Select a -> S.Select a
+distinctOn proj q = Q.simpleQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
+
+
+-- | Keep the row from each set where the given function returns the same result. The
+--   row is chosen according to which comes first by the supplied ordering. However, no
+--   output ordering is guaranteed. Mutliple fields may be distinguished by projecting
+--   out tuples of 'Column's.
+distinctOnBy :: D.Default U.Unpackspec b b => (a -> b) -> O.Order a
+             -> S.Select a -> S.Select a
+distinctOnBy proj ord q = Q.simpleQueryArr (O.distinctOnBy D.def proj ord . Q.runSimpleQueryArr q)
+
 
 -- * Other
 
