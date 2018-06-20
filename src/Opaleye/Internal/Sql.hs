@@ -36,13 +36,14 @@ data SelectAttrs =
   deriving Show
 
 data From = From {
-  attrs     :: SelectAttrs,
-  tables    :: [Select],
-  criteria  :: [HSql.SqlExpr],
-  groupBy   :: Maybe (NEL.NonEmpty HSql.SqlExpr),
-  orderBy   :: [(HSql.SqlExpr, HSql.SqlOrder)],
-  limit     :: Maybe Int,
-  offset    :: Maybe Int
+  attrs      :: SelectAttrs,
+  tables     :: [Select],
+  criteria   :: [HSql.SqlExpr],
+  groupBy    :: Maybe (NEL.NonEmpty HSql.SqlExpr),
+  orderBy    :: [(HSql.SqlExpr, HSql.SqlOrder)],
+  distinctOn :: Maybe (NEL.NonEmpty HSql.SqlExpr),
+  limit      :: Maybe Int,
+  offset     :: Maybe Int
   }
           deriving Show
 
@@ -82,19 +83,19 @@ data Exists = Exists
 
 sqlQueryGenerator :: PQ.PrimQueryFold' V.Void Select
 sqlQueryGenerator = PQ.PrimQueryFold
-  { PQ.unit      = unit
-  , PQ.empty     = empty
-  , PQ.baseTable = baseTable
-  , PQ.product   = product
-  , PQ.aggregate = aggregate
-  , PQ.order     = order
-  , PQ.limit     = limit_
-  , PQ.join      = join
-  , PQ.values    = values
-  , PQ.binary    = binary
-  , PQ.label     = label
-  , PQ.relExpr   = relExpr
-  , PQ.existsf   = exists
+  { PQ.unit              = unit
+  , PQ.empty             = empty
+  , PQ.baseTable         = baseTable
+  , PQ.product           = product
+  , PQ.aggregate         = aggregate
+  , PQ.distinctOnOrderBy = distinctOnOrderBy
+  , PQ.limit             = limit_
+  , PQ.join              = join
+  , PQ.values            = values
+  , PQ.binary            = binary
+  , PQ.label             = label
+  , PQ.relExpr           = relExpr
+  , PQ.existsf           = exists
   }
 
 exists :: Bool -> Select -> Select -> Select
@@ -153,10 +154,19 @@ aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
 aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct) -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = maybe id (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord)
 
-order :: [HPQ.OrderExpr] -> Select -> Select
-order oes s = SelectFrom $
-    newSelect { tables = [s]
-              , orderBy = map (SD.toSqlOrder SD.defaultSqlGenerator) oes }
+distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr) -> [HPQ.OrderExpr] -> Select -> Select
+distinctOnOrderBy distinctExprs orderExprs s = SelectFrom $ newSelect
+    { tables     = [s]
+    , distinctOn = fmap (SG.sqlExpr SD.defaultSqlGenerator) <$> distinctExprs
+    , orderBy    = map (SD.toSqlOrder SD.defaultSqlGenerator) $
+        -- Postgres requires all 'DISTINCT ON' expressions to appear before any other
+        -- 'ORDER BY' expressions if there are any.
+        maybe [] (map (HPQ.OrderExpr ascOp) . NEL.toList) distinctExprs ++ orderExprs
+    }
+    where
+        ascOp = HPQ.OrderOp
+            { HPQ.orderDirection = HPQ.OpAsc
+            , HPQ.orderNulls     = HPQ.NullsLast }
 
 limit_ :: PQ.LimitOp -> Select -> Select
 limit_ lo s = SelectFrom $ newSelect { tables = [s]
@@ -221,13 +231,14 @@ binOp o = case o of
 
 newSelect :: From
 newSelect = From {
-  attrs     = Star,
-  tables    = [],
-  criteria  = [],
-  groupBy   = Nothing,
-  orderBy   = [],
-  limit     = Nothing,
-  offset    = Nothing
+  attrs      = Star,
+  tables     = [],
+  criteria   = [],
+  groupBy    = Nothing,
+  orderBy    = [],
+  distinctOn = Nothing,
+  limit      = Nothing,
+  offset     = Nothing
   }
 
 sqlExpr :: HPQ.PrimExpr -> HSql.SqlExpr

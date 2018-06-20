@@ -24,6 +24,7 @@ import qualified Data.String as String
 import qualified Data.Time   as Time
 import qualified Data.Aeson as Json
 import qualified Data.Text as T
+import qualified Data.Function as F
 
 import           System.Environment (lookupEnv)
 
@@ -423,6 +424,60 @@ testCaseEmpty = it "" $ q `queryShouldReturnSorted` expected
 
 testDistinct :: Test
 testDistinct = it "" $ O.distinct table1Q `queryShouldReturnSorted` (L.nub table1data)
+
+
+testDistinctOn :: Test
+testDistinctOn = do
+    it "distinct on (col1)" $ \conn -> do
+        let p = fst
+            q = O.distinctOn p table1Q
+            expected = L.nubBy (F.on (==) p) $ L.sortOn p table1data
+        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
+    it "distinct on (col1, col2)" $ \conn -> do
+        let p = fst &&& snd
+            q = O.distinctOn p table1Q
+            expected = L.nubBy (F.on (==) p) $ L.sortOn p table1data
+        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
+
+    let f1 (x,_,_) = x
+        f2 (_,y,_) = y
+        f3 (_,_,z) = z
+
+    it "distinct on (col1) order by col2" $ \conn -> do
+        let proj = f1
+            ord  = f2
+            q = O.distinctOnBy proj (O.asc ord) $ O.values pgTriples
+            expected = L.nubBy ((==) `F.on` proj) $ L.sortOn (proj &&& ord) triples
+        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
+    it "distinct on (col1, col2) order by col3" $ \conn -> do
+        let proj = f1 &&& f2
+            ord  = f3
+            q = O.distinctOnBy proj (O.asc ord) $ O.values pgTriples
+            expected = L.nubBy ((==) `F.on` proj) $ L.sortOn (proj &&& ord) triples
+        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
+    it "distinct on (col3) order by col2 desc" $ \conn -> do
+        let proj = f3
+            ord  = f2
+            q = O.distinctOnBy proj (O.desc ord) $ O.values pgTriples
+            expected = L.nubBy ((==) `F.on` proj) . L.reverse $
+                L.sortOn (proj &&& ord) triples
+        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
+    where
+
+        pgTriples :: [(O.Column O.PGInt8, O.Column O.PGInt8, O.Column O.PGText)]
+        pgTriples = (\(x,y,z) -> (O.pgInt8 x, O.pgInt8 y, O.pgStrictText z)) <$> triples
+
+        triples :: [(Int64, Int64, T.Text)]
+        triples =
+            [ (1, 900, "a")
+            , (1, 800, "a")
+            , (2, 400, "a")
+            , (2, 500, "b")
+            , (2, 500, "b")
+            , (4, 400, "b")
+            , (4, 600, "b")
+            , (4, 100, "b")
+            ]
 
 -- FIXME: the unsafeCoerceColumn is currently needed because the type
 -- changes required for aggregation are not currently dealt with by
@@ -1054,6 +1109,8 @@ main = do
         testDoubleAggregate
       describe "distinct" $ do
         testDistinct
+      describe "distinct on"
+        testDistinctOn
       describe "order" $ do
         testOrderBy
         testOrderBy2
