@@ -1,43 +1,37 @@
-{-# LANGUAGE Arrows #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE Arrows              #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
-import qualified QuickCheck
-import qualified TypeFamilies ()
-
-import           Opaleye (Column, Nullable, Query, QueryArr, (.==), (.>))
-import qualified Opaleye as O
-import qualified Opaleye.Internal.Aggregate as IA
-
-import qualified Database.PostgreSQL.Simple as PGS
+import qualified Configuration.Dotenv             as Dotenv
+import           Control.Applicative              ((<$>), (<*>), (<|>))
+import qualified Control.Applicative              as A
+import           Control.Arrow                    ((&&&), (***), (<<<), (>>>))
+import qualified Control.Arrow                    as Arr
+import qualified Data.Aeson                       as Json
+import qualified Data.Function                    as F
+import qualified Data.List                        as L
+import           Data.Monoid                      ((<>))
+import qualified Data.Ord                         as Ord
+import qualified Data.Profunctor                  as P
+import qualified Data.Profunctor.Product          as PP
+import qualified Data.Profunctor.Product.Default  as D
+import qualified Data.String                      as String
+import qualified Data.Text                        as T
+import qualified Data.Time                        as Time
+import qualified Database.PostgreSQL.Simple       as PGS
 import qualified Database.PostgreSQL.Simple.Range as R
-import qualified Data.Profunctor.Product.Default as D
-import qualified Data.Profunctor.Product as PP
-import qualified Data.Profunctor as P
-import qualified Data.Ord as Ord
-import qualified Data.List as L
-import           Data.Monoid ((<>))
-import qualified Data.String as String
-import qualified Data.Time   as Time
-import qualified Data.Aeson as Json
-import qualified Data.Text as T
-import qualified Data.Function as F
-
-import           System.Environment (lookupEnv)
-
-import           Control.Applicative ((<$>), (<*>), (<|>))
-import qualified Control.Applicative as A
-import qualified Control.Arrow as Arr
-import           Control.Arrow ((&&&), (***), (<<<), (>>>))
-
-import           GHC.Int (Int64)
-
-import Test.Hspec
-
-import qualified Configuration.Dotenv as Dotenv
+import           GHC.Int                          (Int64)
+import           Opaleye                          (Column, Nullable, Query,
+                                                   QueryArr, (.==), (.>))
+import qualified Opaleye                          as O
+import qualified Opaleye.Internal.Aggregate       as IA
+import qualified QuickCheck
+import           System.Environment               (lookupEnv)
+import           Test.Hspec
+import qualified TypeFamilies                     ()
 
 {-
 
