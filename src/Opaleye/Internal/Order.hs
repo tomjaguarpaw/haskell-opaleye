@@ -1,19 +1,19 @@
 module Opaleye.Internal.Order where
 
-import           Data.Function (on)
-import qualified Data.Functor.Contravariant as C
+import           Data.Function                        (on)
+import qualified Data.Functor.Contravariant           as C
 import qualified Data.Functor.Contravariant.Divisible as Divisible
-import qualified Data.List.NonEmpty as NL
-import qualified Data.Monoid as M
-import qualified Data.Profunctor as P
-import qualified Data.Semigroup as S
-import qualified Data.Void as Void
-import qualified Opaleye.Column as C
-import qualified Opaleye.Internal.Column as IC
+import qualified Data.List.NonEmpty                   as NL
+import qualified Data.Monoid                          as M
+import qualified Data.Profunctor                      as P
+import qualified Data.Semigroup                       as S
+import qualified Data.Void                            as Void
+import qualified Opaleye.Column                       as C
+import qualified Opaleye.Internal.Column              as IC
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
-import qualified Opaleye.Internal.PrimQuery as PQ
-import qualified Opaleye.Internal.Tag as T
-import qualified Opaleye.Internal.Unpackspec as U
+import qualified Opaleye.Internal.PrimQuery           as PQ
+import qualified Opaleye.Internal.Tag                 as T
+import qualified Opaleye.Internal.Unpackspec          as U
 
 {-|
 An `Order` @a@ represents a sort order and direction for the elements
