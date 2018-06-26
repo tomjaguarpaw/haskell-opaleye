@@ -349,6 +349,14 @@ overlap = C.binOp (HPQ.:&&)
 liesWithin :: T.IsRangeType a => Column a -> Column (T.SqlRange a) -> F.Field T.SqlBool
 liesWithin = C.binOp (HPQ.:<@)
 
+-- | Access the upper bound of a range. For discrete range types it is the exclusive bound.
+upperBound :: T.IsRangeType a => Column (T.SqlRange a) -> Column (C.Nullable a)
+upperBound (Column range) = Column $ HPQ.FunExpr "upper" [range]
+
+-- | Access the lower bound of a range. For discrete range types it is the inclusive bound.
+lowerBound :: T.IsRangeType a => Column (T.SqlRange a) -> Column (C.Nullable a)
+lowerBound (Column range) = Column $ HPQ.FunExpr "lower" [range]
+
 infix 4 .<<
 (.<<) :: Column (T.SqlRange a) -> Column (T.SqlRange a) -> F.Field T.SqlBool
 (.<<) = C.binOp (HPQ.:<<)
