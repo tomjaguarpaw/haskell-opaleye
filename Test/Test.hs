@@ -1025,6 +1025,22 @@ testRangeAdjacency = it "generates adjacency" $ testH q (`shouldBe` [True])
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Exclusive b)
         q = A.pure $ (range 1 2) O..-|- (range 2 3)
 
+testRangeBoundsEnum :: forall a b.
+    ( Show a, Eq a, Enum a, O.IsRangeType b
+    , O.QueryRunnerColumnDefault (Nullable b) (Maybe a))
+        => String -> (a -> Column b) -> a -> a -> Test
+testRangeBoundsEnum msg mkCol x y = it msg $ \conn -> do
+    -- bound functions for discrete range types return fields as from the form [x,y)
+    let ranges = [ O.pgRange mkCol (R.Inclusive x) R.PosInfinity
+                 , O.pgRange mkCol R.NegInfinity   (R.Inclusive y)
+                 , O.pgRange mkCol (R.Exclusive x) (R.Exclusive y)
+                 ]
+    [r1,r2,r3] <- mapM (O.runQuery conn . pure . (O.lowerBound &&& O.upperBound)) ranges
+    r1 `shouldBe` [(Just x, Nothing)]
+    r2 `shouldBe` [(Nothing, Just $ succ y)]
+    r3 `shouldBe` [(Just $ succ x, Just y)]
+
+
 -- Note: these tests are left out of allTests until Travis supports
 -- Postgresql >= 9.4
 jsonbTests :: [Test]
@@ -1162,3 +1178,7 @@ main = do
         testRangeRightExtension
         testRangeLeftExtension
         testRangeAdjacency
+        testRangeBoundsEnum "can access bounds from an Int8 range"
+            O.pgInt8 10 26
+        testRangeBoundsEnum "can access bounds from a date range"
+            O.pgDay (read "2018-01-01") (read "2018-01-12")
