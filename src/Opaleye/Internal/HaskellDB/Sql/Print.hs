@@ -138,8 +138,8 @@ ppRange t start end =
   where value_boundTypeT = \case
           Inclusive a -> (Inclusive', a)
           Exclusive a -> (Exclusive', a)
-          PosInfinity -> (Exclusive', ConstSqlExpr "'infinity'")
-          NegInfinity -> (Exclusive', ConstSqlExpr "'-infinity'")
+          PosInfinity -> (Exclusive', ConstSqlExpr "NULL")
+          NegInfinity -> (Exclusive', ConstSqlExpr "NULL")
 
         (startType, startValue) = value_boundTypeT start
         (endType,   endValue)   = value_boundTypeT end
