@@ -31,6 +31,7 @@ import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
                                   empty, equals, hcat, hsep, parens, punctuate,
                                   text, vcat, brackets)
 import Data.Foldable (toList)
+import Prelude hiding ((<>))
 
 -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first
 -- column.  We need an identity function, but due to
