@@ -1,3 +1,13 @@
+## 0.6.7001.0
+
+* Fix bug with infinity in range bounds
+
+* Fix incompatibility with GHC 8.4
+
+* Add range accessors, `upperBound` and `lowerBound`
+
+* Add `distinctOn` and `distinctOnBy`
+
 ## 0.6.7000.0
 
 This is a pre-release of version 0.7.0.0.  GHC >= 8.0 is required.  It
