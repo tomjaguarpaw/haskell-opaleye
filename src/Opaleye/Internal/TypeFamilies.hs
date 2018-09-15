@@ -24,8 +24,8 @@ data OT
 data NullsT
 data WT
 
-type NN = 'F.Nullable
-type N  = 'F.NonNullable
+type NN = 'F.NonNullable
+type N  = 'F.Nullable
 
 data Optionality = OReq | OOpt
 
