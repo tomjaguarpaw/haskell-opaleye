@@ -395,10 +395,13 @@ eitherPP :: (D.Default p a a', D.Default p b b',
          => p [Either a b] [Either a' b']
 eitherPP = PP.list (D.def PP.+++! D.def)
 
+-- Replace this with `isSuccess` when the following issue is fixed
+--
+--     https://github.com/nick8325/quickcheck/issues/220
 errorIfNotSuccess :: TQ.Result -> IO ()
 errorIfNotSuccess r = case r of
-  TQ.Success _ _ _ -> return ()
-  _                -> error "Failed"
+  TQ.Success {} -> return ()
+  _             -> error "Failed"
 
 firstBoolOrTrue :: b -> [Either a b] -> (b, [Either a b])
 firstBoolOrTrue true c = (b, c)
