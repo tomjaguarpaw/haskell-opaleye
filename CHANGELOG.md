@@ -1,3 +1,11 @@
+## 0.6.7002.0
+
+This is a breaking release that doesn't follow the PVP but because
+it's essentially a pre-release for version 0.7 I'm just going to
+blacklist the broken versions on Hackage and forget about it.
+
+* Swapped `N` and `NN` because they were the wrong way round.
+
 ## 0.6.7001.0
 
 * Fix bug with infinity in range bounds
