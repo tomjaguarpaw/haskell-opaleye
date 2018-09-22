@@ -4,10 +4,11 @@ env:
 - GHCVER=8.0.2
 - GHCVER=8.2.2
 - GHCVER=8.4.3
+- GHCVER=8.6.1
 - GHCVER=head
 
 script:
-- curl -sL https://raw.github.com/tomjaguarpaw/neil/930a726f/travis.sh | sh -s tomjaguarpaw 930a726f
+- curl -sSL https://raw.github.com/tomjaguarpaw/neil/stable3/travis.sh | sh -s tomjaguarpaw stable3
 
 # To clear the caches go to
 #
