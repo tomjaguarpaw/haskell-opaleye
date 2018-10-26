@@ -184,12 +184,12 @@ runWriter' (Writer (PM.PackMap f)) columns = Arr.first unZip outColumns
 newtype Zip a = Zip { unZip :: NEL.NonEmpty [a] }
 
 instance Semigroup (Zip a) where
-  (<>) = mappend
+  Zip xs <> Zip ys = Zip (NEL.zipWith (++) xs ys)
 
 instance Monoid (Zip a) where
   mempty = Zip mempty'
     where mempty' = [] `NEL.cons` mempty'
-  Zip xs `mappend` Zip ys = Zip (NEL.zipWith (++) xs ys)
+  mappend = (<>)
 
 requiredW :: String -> Writer (Column a) (Column a)
 requiredW columnName =
