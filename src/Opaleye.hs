@@ -18,6 +18,7 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.Column
                , module Opaleye.Constant
                , module Opaleye.Distinct
+               , module Opaleye.Field
                , module Opaleye.FunctionalJoin
                , module Opaleye.Join
                , module Opaleye.Label
@@ -27,6 +28,7 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.PGTypes
                , module Opaleye.QueryArr
                , module Opaleye.RunQuery
+               , module Opaleye.RunSelect
                , module Opaleye.Sql
                , module Opaleye.Select
                , module Opaleye.SqlTypes
@@ -39,6 +41,13 @@ import Opaleye.Binary
 import Opaleye.Column
 import Opaleye.Constant
 import Opaleye.Distinct
+import Opaleye.Field
+  hiding (null,
+          isNull,
+          matchNullable,
+          fromNullable,
+          toNullable,
+          maybeToNullable)
 import Opaleye.FunctionalJoin
 import Opaleye.Join
 import Opaleye.Label
@@ -48,6 +57,11 @@ import Opaleye.Order
 import Opaleye.PGTypes
 import Opaleye.QueryArr
 import Opaleye.RunQuery
+import Opaleye.RunSelect
+  hiding (foldForward,
+          closeCursor,
+          declareCursor,
+          declareCursorExplicit)
 import Opaleye.Select
 import Opaleye.Sql
 import Opaleye.SqlTypes
