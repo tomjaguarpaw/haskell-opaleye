@@ -131,10 +131,6 @@ to be polymorphic in all their fields.  In fact there's a nice scheme
 using type families that reduces boiler plate and has always been
 compatible with Opaleye!
 
-> -- Cryptic remark: If we were willing to only support 7.8 and up we
-> -- could even have a symbol field containing the table name and use
-> -- https://hackage.haskell.org/package/base-4.8.2.0/docs/GHC-TypeLits.html#v:symbolVal
-> 
 > data Birthday f = Birthday { bdName :: TableField f String SqlText NN Req
 >                            , bdDay  :: TableField f Day    SqlDate NN Req
 >                            }
