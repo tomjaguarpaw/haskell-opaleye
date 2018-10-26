@@ -8,12 +8,12 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye (Column, Nullable, matchNullable, isNull,
->                          Table, table, tableColumn, queryTable,
->                          Query, QueryArr, restrict, (.==), (.<=), (.&&), (.<),
+> import           Opaleye (Field, FieldNullable, matchNullable, isNull,
+>                          Table, table, tableField, selectTable,
+>                          Select, SelectArr, restrict, (.==), (.<=), (.&&), (.<),
 >                          (.===),
 >                          (.++), ifThenElse, sqlString, aggregate, groupBy,
->                          count, avg, sum, leftJoin, runQuery,
+>                          count, avg, sum, leftJoin, runSelect,
 >                          showSqlForPostgres, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8, SqlBool)
 >
@@ -59,17 +59,17 @@ columns required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
 manipulation tutorial you can see an example of when they might differ.
 
-> personTable :: Table (Column SqlText, Column SqlInt4, Column SqlText)
->                      (Column SqlText, Column SqlInt4, Column SqlText)
-> personTable = table "personTable" (p3 ( tableColumn "name"
->                                       , tableColumn "age"
->                                       , tableColumn "address" ))
+> personTable :: Table (Field SqlText, Field SqlInt4, Field SqlText)
+>                      (Field SqlText, Field SqlInt4, Field SqlText)
+> personTable = table "personTable" (p3 ( tableField "name"
+>                                       , tableField "age"
+>                                       , tableField "address" ))
 
 By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
 could have used the `tableWithSchema` function instead of `table`.
 
-To query a table we use `queryTable`.
+To query a table we use `selectTable`.
 
 (Here and in a few other places in Opaleye there is some typeclass
 magic going on behind the scenes to reduce boilerplate.  However, you
@@ -79,13 +79,13 @@ For this example file we will always use the typeclass versions
 because they are simpler to read and the typeclass magic is
 essentially invisible.)
 
-> personQuery :: Query (Column SqlText, Column SqlInt4, Column SqlText)
-> personQuery = queryTable personTable
+> personSelect :: Select (Field SqlText, Field SqlInt4, Field SqlText)
+> personSelect = selectTable personTable
 
-A `Query` corresponds to an SQL SELECT that we can run.  Here is the
-SQL generated for `personQuery`.
+A `Select` corresponds to an SQL SELECT that we can run.  Here is the
+SQL generated for `personSelect`.
 
-ghci> printSql personQuery
+ghci> printSql personSelect
 SELECT name0_1 as result1,
        age1_1 as result2,
        address2_1 as result3
@@ -126,7 +126,7 @@ synonyms.  For example:
 
 > data Birthday' a b = Birthday { bdName :: a, bdDay :: b }
 > type Birthday = Birthday' String Day
-> type BirthdayColumn = Birthday' (Column SqlText) (Column SqlDate)
+> type BirthdayField = Birthday' (Field SqlText) (Field SqlDate)
 
 To get user defined types to work with the typeclass magic they must
 have instances defined for them.  The instances are derivable with
@@ -141,15 +141,15 @@ things out by hand here.  If you want to avoid Template Haskell see
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
-> birthdayTable :: Table BirthdayColumn BirthdayColumn
+> birthdayTable :: Table BirthdayField BirthdayField
 > birthdayTable = table "birthdayTable"
->                        (pBirthday Birthday { bdName = tableColumn "name"
->                                            , bdDay  = tableColumn "birthday" })
+>                        (pBirthday Birthday { bdName = tableField "name"
+>                                            , bdDay  = tableField "birthday" })
 >
-> birthdayQuery :: Query BirthdayColumn
-> birthdayQuery = queryTable birthdayTable
+> birthdaySelect :: Select BirthdayField
+> birthdaySelect = selectTable birthdayTable
 
-ghci> printSql birthdayQuery
+ghci> printSql birthdaySelect
 SELECT name0_1 as result1,
        birthday1_1 as result2
 FROM (SELECT *
@@ -169,7 +169,7 @@ Projection
 
 "Projection" means discarding some of the columns of our query, for
 example we might want to discard the "address" column of our
-`personQuery`.
+`personSelect`.
 
 Projection gives us our first example of using "arrow notation" to
 write Opaleye queries.  Arrow notation is essentially a restricted
@@ -177,13 +177,13 @@ version of "do notation".  Arrow notation allows you to write arrow
 computations, and do notation allows you to write monadic
 computations.
 
-Here we run the `personQuery` passing in () to signify "zero
+Here we run the `personSelect` passing in () to signify "zero
 arguments".  We pattern match on the results and return only the
 columns we are interested in.
 
-> nameAge :: Query (Column SqlText, Column SqlInt4)
+> nameAge :: Select (Field SqlText, Field SqlInt4)
 > nameAge = proc () -> do
->   (name, age, _) <- personQuery -< ()
+>   (name, age, _) <- personSelect -< ()
 >   returnA -< (name, age)
 
 ghci> printSql nameAge
@@ -205,14 +205,14 @@ Product
 =======
 
 "Product" means taking the Cartesian product of two queries.  This is
-simple in arrow notation.  Here we take the product of `personQuery`
-and `birthdayQuery`.
+simple in arrow notation.  Here we take the product of `personSelect`
+and `birthdaySelect`.
 
 > personBirthdayProduct ::
->   Query ((Column SqlText, Column SqlInt4, Column SqlText), BirthdayColumn)
+>   Select ((Field SqlText, Field SqlInt4, Field SqlText), BirthdayField)
 > personBirthdayProduct = proc () -> do
->   personRow   <- personQuery -< ()
->   birthdayRow <- birthdayQuery -< ()
+>   personRow   <- personSelect -< ()
+>   birthdayRow <- birthdaySelect -< ()
 >
 >   returnA -< (personRow, birthdayRow)
 
@@ -253,12 +253,12 @@ Restriction
 "Restriction" means restricting the rows of the result of a query to
 only those where some condition holds.
 
-We can restrict `personQuery` to the rows where the person is up to 18
+We can restrict `personSelect` to the rows where the person is up to 18
 years old.
 
-> youngPeople :: Query (Column SqlText, Column SqlInt4, Column SqlText)
+> youngPeople :: Select (Field SqlText, Field SqlInt4, Field SqlText)
 > youngPeople = proc () -> do
->   row@(_, age, _) <- personQuery -< ()
+>   row@(_, age, _) <- personSelect -< ()
 >   restrict -< age .<= 18
 >
 >   returnA -< row
@@ -286,9 +286,9 @@ WHERE age <= 18
 We can use a variety of operators to form more complex restriction
 conditions.
 
-> twentiesAtAddress :: Query (Column SqlText, Column SqlInt4, Column SqlText)
+> twentiesAtAddress :: Select (Field SqlText, Field SqlInt4, Field SqlText)
 > twentiesAtAddress = proc () -> do
->   row@(_, age, address) <- personQuery -< ()
+>   row@(_, age, address) <- personSelect -< ()
 >
 >   restrict -< (20 .<= age) .&& (age .< 30)
 >   restrict -< address .== sqlString "1 My Street, My Town"
@@ -327,10 +327,10 @@ A Product followed by a restriction is sometimes called a "join" or
 such.
 
 > personAndBirthday ::
->   Query (Column SqlText, Column SqlInt4, Column SqlText, Column SqlDate)
+>   Select (Field SqlText, Field SqlInt4, Field SqlText, Field SqlDate)
 > personAndBirthday = proc () -> do
->   (name, age, address) <- personQuery -< ()
->   birthday             <- birthdayQuery -< ()
+>   (name, age, address) <- personSelect -< ()
+>   birthday             <- birthdaySelect -< ()
 >
 >   restrict -< name .== bdName birthday
 >
@@ -380,17 +380,17 @@ For example, suppose we have an employee table which records the name
 of each employee and the name of their boss.  If their boss is
 recorded as NULL then that means they have no boss!
 
-> employeeTable :: Table (Column SqlText, Column (Nullable SqlText))
->                        (Column SqlText, Column (Nullable SqlText))
-> employeeTable = table "employeeTable" (p2 ( tableColumn "name"
->                                           , tableColumn "boss" ))
+> employeeTable :: Table (Field SqlText, FieldNullable SqlText)
+>                        (Field SqlText, FieldNullable SqlText)
+> employeeTable = table "employeeTable" (p2 ( tableField "name"
+>                                           , tableField "boss" ))
 
 We can write a query that returns as string indicating for each
 employee whether they have a boss.
 
-> hasBoss :: Query (Column SqlText)
+> hasBoss :: Select (Field SqlText)
 > hasBoss = proc () -> do
->   (name, nullableBoss) <- queryTable employeeTable -< ()
+>   (name, nullableBoss) <- selectTable employeeTable -< ()
 >
 >   let aOrNo = ifThenElse (isNull nullableBoss) (sqlString "no") (sqlString "a")
 >
@@ -419,8 +419,8 @@ status along with the name of their boss, if any.  The combinator
 returns its first argument.  If not it passes the non-NULL value to
 the function that is the second argument.
 
-> bossQuery :: QueryArr (Column SqlText, Column (Nullable SqlText)) (Column SqlText)
-> bossQuery = proc (name, nullableBoss) -> do
+> bossSelect :: SelectArr (Field SqlText, FieldNullable SqlText) (Field SqlText)
+> bossSelect = proc (name, nullableBoss) -> do
 >   returnA -< matchNullable (name .++ sqlString " has no boss")
 >                            (\boss -> sqlString "The boss of " .++ name
 >                                      .++ sqlString " is " .++ boss)
@@ -440,7 +440,7 @@ and in pure Haskell the same computation could be expressed as
 
 Then we get the following SQL.
 
-ghci> printSql (bossQuery <<< queryTable employeeTable)
+ghci> printSql (bossSelect <<< selectTable employeeTable)
 
 SELECT CASE WHEN boss1_1 IS NULL THEN (name0_1) || ' has no boss'
      ELSE (('The boss of ' || (name0_1)) || ' is ') || (boss1_1) END as result1
@@ -469,28 +469,28 @@ example we can pull out the restriction to one's age being "in the
 twenties" and the restriction to the one's address being "1 My Street,
 My Town".
 
-The types are of the form `QueryArr a ()`.  This means that they read
-columns of type `a` but do not return any columns.  (Note: `Query` is
-just a synonym for `QueryArr ()` which means that it is a `QueryArr`
+The types are of the form `SelectArr a ()`.  This means that they read
+columns of type `a` but do not return any columns.  (Note: `Select` is
+just a synonym for `SelectArr ()` which means that it is a `SelectArr`
 that does not read any columns.)
 
-> restrictIsTwenties :: QueryArr (Column SqlInt4) ()
+> restrictIsTwenties :: SelectArr (Field SqlInt4) ()
 > restrictIsTwenties = proc age -> do
 >   restrict -< (20 .<= age) .&& (age .< 30)
 >
-> restrictAddressIs1MyStreet :: QueryArr (Column SqlText) ()
+> restrictAddressIs1MyStreet :: SelectArr (Field SqlText) ()
 > restrictAddressIs1MyStreet = proc address -> do
 >   restrict -< address .== sqlString "1 My Street, My Town"
 
 We can't generate "the SQL of" these combinators.  They are not
-`Query`s so they don't have any SQL!  (This corresponds to the
+`Select`s so they don't have any SQL!  (This corresponds to the
 observation that in Haskell typically values can be "shown", but
 functions cannot be "shown".) Instead we use them to reimplement
 `twentiesAtAddress` in a more neatly-factored way.
 
-> twentiesAtAddress' :: Query (Column SqlText, Column SqlInt4, Column SqlText)
+> twentiesAtAddress' :: Select (Field SqlText, Field SqlInt4, Field SqlText)
 > twentiesAtAddress' = proc () -> do
->   row@(_, age, address) <- personQuery -< ()
+>   row@(_, age, address) <- personSelect -< ()
 >
 >   restrictIsTwenties -< age
 >   restrictAddressIs1MyStreet -< address
@@ -516,12 +516,12 @@ Composability of joins
 ----------------------
 
 We can perform a similar transformation for `personAndBirthday` by
-pulling out a `QueryArr` which perform the mapping of a person's name
-to their date of birth by looking up in `birthdayQuery`.
+pulling out a `SelectArr` which perform the mapping of a person's name
+to their date of birth by looking up in `birthdaySelect`.
 
-> birthdayOfPerson :: QueryArr (Column SqlText) (Column SqlDate)
+> birthdayOfPerson :: SelectArr (Field SqlText) (Field SqlDate)
 > birthdayOfPerson = proc name -> do
->   birthday <- birthdayQuery -< ()
+>   birthday <- birthdaySelect -< ()
 >
 >   restrict -< name .== bdName birthday
 >
@@ -530,9 +530,9 @@ to their date of birth by looking up in `birthdayQuery`.
 We can then reimplement `personAndBirthday` as follows
 
 > personAndBirthday' ::
->   Query (Column SqlText, Column SqlInt4, Column SqlText, Column SqlDate)
+>   Select (Field SqlText, Field SqlInt4, Field SqlText, Field SqlDate)
 > personAndBirthday' = proc () -> do
->   (name, age, address) <- personQuery -< ()
+>   (name, age, address) <- personSelect -< ()
 >   birthday <- birthdayOfPerson -< name
 >
 >   returnA -< (name, age, address, birthday)
@@ -580,16 +580,16 @@ this information with the following datatype.
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
 
-> widgetTable :: Table (Widget (Column SqlText) (Column SqlText) (Column SqlText)
->                              (Column SqlInt4) (Column SqlFloat8))
->                      (Widget (Column SqlText) (Column SqlText) (Column SqlText)
->                              (Column SqlInt4) (Column SqlFloat8))
+> widgetTable :: Table (Widget (Field SqlText) (Field SqlText) (Field SqlText)
+>                              (Field SqlInt4) (Field SqlFloat8))
+>                      (Widget (Field SqlText) (Field SqlText) (Field SqlText)
+>                              (Field SqlInt4) (Field SqlFloat8))
 > widgetTable = table "widgetTable"
->                      (pWidget Widget { style    = tableColumn "style"
->                                      , color    = tableColumn "color"
->                                      , location = tableColumn "location"
->                                      , quantity = tableColumn "quantity"
->                                      , radius   = tableColumn "radius" })
+>                      (pWidget Widget { style    = tableField "style"
+>                                      , color    = tableField "color"
+>                                      , location = tableField "location"
+>                                      , quantity = tableField "quantity"
+>                                      , radius   = tableField "radius" })
 
 
 Say we want to group by the style and color of widgets, calculating
@@ -597,14 +597,14 @@ how many (possibly duplicated) locations there are, the total number
 of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
-> aggregateWidgets :: Query (Widget (Column SqlText) (Column SqlText) (Column SqlInt8)
->                                   (Column SqlInt4) (Column SqlFloat8))
+> aggregateWidgets :: Select (Widget (Field SqlText) (Field SqlText) (Field SqlInt8)
+>                                   (Field SqlInt4) (Field SqlFloat8))
 > aggregateWidgets = aggregate (pWidget Widget { style    = groupBy
 >                                              , color    = groupBy
 >                                              , location = count
 >                                              , quantity = sum
 >                                              , radius   = avg })
->                              (queryTable widgetTable)
+>                              (selectTable widgetTable)
 
 The generated SQL is
 
@@ -644,8 +644,8 @@ Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
 "adaptor" to specify how columns are aggregated.  Note that this is
 yet another example of avoiding a headache by keeping your datatype
-fully polymorphic, because the 'count' aggregator changes a 'Column
-String' into a 'Column Int64'.
+fully polymorphic, because the 'count' aggregator changes a 'Field
+String' into a 'Field Int64'.
 
 Outer join
 ==========
@@ -659,15 +659,15 @@ columns we have to make sure the type of the output supports
 nullability.  We introduce the following type synonym for this
 purpose, which is just a notational convenience.
 
-> type ColumnNullableBirthday = Birthday' (Column (Nullable SqlText))
->                                         (Column (Nullable SqlDate))
+> type FieldNullableBirthday = Birthday' (FieldNullable SqlText)
+>                                         (FieldNullable SqlDate)
 
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
-> personBirthdayLeftJoin :: Query ((Column SqlText, Column SqlInt4, Column SqlText),
->                                  ColumnNullableBirthday)
-> personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
+> personBirthdayLeftJoin :: Select ((Field SqlText, Field SqlInt4, Field SqlText),
+>                                  FieldNullableBirthday)
+> personBirthdayLeftJoin = leftJoin personSelect birthdaySelect eqName
 >     where eqName ((name, _, _), birthdayRow) = name .== bdName birthdayRow
 
 The generated SQL is
@@ -747,21 +747,21 @@ and integer quantity of goods.
 
 We could represent the integer ID in Opaleye as a `SqlInt4`
 
-> type BadWarehouseColumn = Warehouse' (Column SqlInt4)
->                                      (Column SqlText)
->                                      (Column SqlInt4)
+> type BadWarehouseField = Warehouse' (Field SqlInt4)
+>                                      (Field SqlText)
+>                                      (Field SqlInt4)
 >
-> badWarehouseTable :: Table BadWarehouseColumn BadWarehouseColumn
+> badWarehouseTable :: Table BadWarehouseField BadWarehouseField
 > badWarehouseTable = table "warehouse_table"
->         (pWarehouse Warehouse { wId       = tableColumn "id"
->                               , wLocation = tableColumn "location"
->                               , wNumGoods = tableColumn "num_goods" })
+>         (pWarehouse Warehouse { wId       = tableField "id"
+>                               , wLocation = tableField "location"
+>                               , wNumGoods = tableField "num_goods" })
 
 but that would expose us to the following sorts of errors, where we
 can meaninglessly relate the warehouse ID with the quantity of goods
 it holds.
 
-> badComparison :: BadWarehouseColumn -> Column SqlBool
+> badComparison :: BadWarehouseField -> Field SqlBool
 > badComparison w = wId w .== wNumGoods w
 
 On the other hand we can make a newtype for the warehouse ID
@@ -769,30 +769,30 @@ On the other hand we can make a newtype for the warehouse ID
 > newtype WarehouseId' a = WarehouseId a
 > $(makeAdaptorAndInstance "pWarehouseId" ''WarehouseId')
 >
-> type WarehouseIdColumn = WarehouseId' (Column SqlInt4)
+> type WarehouseIdField = WarehouseId' (Field SqlInt4)
 >
-> type GoodWarehouseColumn = Warehouse' WarehouseIdColumn
->                                       (Column SqlText)
->                                       (Column SqlInt4)
+> type GoodWarehouseField = Warehouse' WarehouseIdField
+>                                       (Field SqlText)
+>                                       (Field SqlInt4)
 >
-> goodWarehouseTable :: Table GoodWarehouseColumn GoodWarehouseColumn
+> goodWarehouseTable :: Table GoodWarehouseField GoodWarehouseField
 > goodWarehouseTable = table "warehouse_table"
->         (pWarehouse Warehouse { wId       = pWarehouseId (WarehouseId (tableColumn "id"))
->                               , wLocation = tableColumn "location"
->                               , wNumGoods = tableColumn "num_goods" })
+>         (pWarehouse Warehouse { wId       = pWarehouseId (WarehouseId (tableField "id"))
+>                               , wLocation = tableField "location"
+>                               , wNumGoods = tableField "num_goods" })
 
 Now the comparison will not pass the type checker
 
-> -- forbiddenComparison :: GoodWarehouseColumn -> Column SqlBool
+> -- forbiddenComparison :: GoodWarehouseField -> Field SqlBool
 > -- forbiddenComparison w = wId w .== wNumGoods w
 > --
-> -- => Couldn't match type `WarehouseId' (Column SqlInt4)' with `Column SqlInt4'
+> -- => Couldn't match type `WarehouseId' (Field SqlInt4)' with `Field SqlInt4'
 
-but we can compare two `WarehouseIdColumn`s.
+but we can compare two `WarehouseIdField`s.
 
-> permittedComparison :: GoodWarehouseColumn
->                     -> GoodWarehouseColumn
->                     -> Column SqlBool
+> permittedComparison :: GoodWarehouseField
+>                     -> GoodWarehouseField
+>                     -> Field SqlBool
 > permittedComparison w1 w2 = wId w1 .=== wId w2
 
 (Currently we use `.===`, a more polymorphic version of `.==`, but
@@ -803,47 +803,47 @@ Running queries on Postgres
 
 
 Opaleye provides simple facilities for running queries on Postgres.
-`runQuery` is a typeclass polymorphic function that effectively has
+`runSelect` is a typeclass polymorphic function that effectively has
 the following type
 
-> -- runQuery :: Database.PostgreSQL.Simple.Connection
-> --          -> Query columns -> IO [haskells]
+> -- runSelect :: Database.PostgreSQL.Simple.Connection
+> --          -> Select columns -> IO [haskells]
 
 It converts a "record" of Opaleye columns to a list of "records" of
 Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
 
-For example, for the 'twentiesAtAddress' query `runQuery` would have
+For example, for the 'twentiesAtAddress' query `runSelect` would have
 the following type:
 
-> runTwentiesQuery :: PGS.Connection
->                  -> Query (Column SqlText, Column SqlInt4, Column SqlText)
+> runTwentiesSelect :: PGS.Connection
+>                  -> Select (Field SqlText, Field SqlInt4, Field SqlText)
 >                  -> IO [(String, Int, String)]
-> runTwentiesQuery = runQuery
+> runTwentiesSelect = runSelect
 
 Note that nullable columns are indicated with the Nullable type
 constructor, and these are converted to Maybe when executed.  If we
 have a table with a nullable column then Nullable columns turn into
-Maybes.  We could run the query `queryTable employeeTable` like this.
+Maybes.  We could run the query `selectTable employeeTable` like this.
 
-> runEmployeesQuery :: PGS.Connection
->                   -> Query (Column SqlText, Column (Nullable SqlText))
+> runEmployeesSelect :: PGS.Connection
+>                   -> Select (Field SqlText, FieldNullable SqlText)
 >                   -> IO [(String, Maybe String)]
-> runEmployeesQuery = runQuery
+> runEmployeesSelect = runSelect
 
 Newtypes are taken care of automatically by the typeclass instance
 that was generated by `makeAdaptorAndInstance`.  A `WarehouseId'
-(Column SqlInt4)` becomes a `WarehouseId' Int` when the query is run.
-We could run the query `queryTable goodWarehouseTable` like this.
+(Field SqlInt4)` becomes a `WarehouseId' Int` when the query is run.
+We could run the query `selectTable goodWarehouseTable` like this.
 
 > type WarehouseId = WarehouseId' Int
 > type GoodWarehouse = Warehouse' WarehouseId String Int
 >
-> runWarehouseQuery :: PGS.Connection
->                   -> Query GoodWarehouseColumn
+> runWarehouseSelect :: PGS.Connection
+>                   -> Select GoodWarehouseField
 >                   -> IO [GoodWarehouse]
-> runWarehouseQuery = runQuery
+> runWarehouseSelect = runSelect
 
 
 Conclusion
@@ -856,5 +856,5 @@ Utilities
 
 This is a little utility function to help with printing generated SQL.
 
-> printSql :: Default Unpackspec a a => Query a -> IO ()
+> printSql :: Default Unpackspec a a => Select a -> IO ()
 > printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres

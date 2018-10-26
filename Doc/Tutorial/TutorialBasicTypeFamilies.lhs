@@ -14,10 +14,10 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye (Column,
->                          Table, table, tableColumn, queryTable,
->                          Query, (.==), aggregate, groupBy,
->                          count, avg, sum, leftJoin, runQuery,
+> import           Opaleye (Field,
+>                          Table, table, tableField, selectTable,
+>                          Select, (.==), aggregate, groupBy,
+>                          count, avg, sum, leftJoin, runSelect,
 >                          showSqlForPostgres, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
@@ -67,17 +67,17 @@ us what columns we can write to the table and the second what columns
 we can read from the table.  In this case all columns are required, so
 the write and read types will be the same.
 
-> personTable :: Table (Column SqlText, Column SqlInt4, Column SqlText)
->                      (Column SqlText, Column SqlInt4, Column SqlText)
-> personTable = table "personTable" (p3 ( tableColumn "name"
->                                       , tableColumn "age"
->                                       , tableColumn "address" ))
+> personTable :: Table (Field SqlText, Field SqlInt4, Field SqlText)
+>                      (Field SqlText, Field SqlInt4, Field SqlText)
+> personTable = table "personTable" (p3 ( tableField "name"
+>                                       , tableField "age"
+>                                       , tableField "address" ))
 
 By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
 could have used the `tableWithSchema` function instead of `table`.
 
-To query a table we use `queryTable`.
+To query a table we use `selectTable`.
 
 (Here and in a few other places in Opaleye there is some typeclass
 magic going on behind the scenes to reduce boilerplate.  However, you
@@ -87,15 +87,15 @@ For this example file we will always use the typeclass versions
 because they are simpler to read and the typeclass magic is
 essentially invisible.)
 
-> personQuery :: Query (Column SqlText, Column SqlInt4, Column SqlText)
-> personQuery = queryTable personTable
+> personSelect :: Select (Field SqlText, Field SqlInt4, Field SqlText)
+> personSelect = selectTable personTable
 
-A `Query` corresponds to an SQL SELECT that we can run.  Here is the
-SQL generated for `personQuery`.  (`printSQL` is just a convenient
+A `Select` corresponds to an SQL SELECT that we can run.  Here is the
+SQL generated for `personSelect`.  (`printSQL` is just a convenient
 utility function for the purposes of this example file.  See below for
 its definition.)
 
-    ghci> printSql personQuery
+    ghci> printSql personSelect
     SELECT name0_1 as result1,
            age1_1 as result2,
            address2_1 as result3
@@ -164,14 +164,14 @@ the same way as before.
 
 > birthdayTable :: Table (Birthday W) (Birthday O)
 > birthdayTable = table "birthdayTable" $ pBirthday $ Birthday {
->     bdName = tableColumn "name"
->   , bdDay  = tableColumn "birthday"
+>     bdName = tableField "name"
+>   , bdDay  = tableField "birthday"
 > }
 >
-> birthdayQuery :: Query (Birthday O)
-> birthdayQuery = queryTable birthdayTable
+> birthdaySelect :: Select (Birthday O)
+> birthdaySelect = selectTable birthdayTable
 
-    ghci> printSql birthdayQuery
+    ghci> printSql birthdaySelect
     SELECT name0_1 as result1,
            birthday1_1 as result2
     FROM (SELECT *
@@ -235,11 +235,11 @@ strings, but in practice they might have been a different data type.
 
 > widgetTable :: Table (Widget W) (Widget O)
 > widgetTable = table "widgetTable" $ pWidget $ Widget {
->     style    = tableColumn "style"
->   , color    = tableColumn "color"
->   , location = tableColumn "location"
->   , quantity = tableColumn "quantity"
->   , radius   = tableColumn "radius"
+>     style    = tableField "style"
+>   , color    = tableField "color"
+>   , location = tableField "location"
+>   , quantity = tableField "quantity"
+>   , radius   = tableField "radius"
 > }
 
 Say we want to group by the style and color of widgets, calculating
@@ -247,14 +247,14 @@ how many (possibly duplicated) locations there are, the total number
 of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
-> aggregateWidgets :: Query (Column SqlText, Column SqlText, Column SqlInt8,
->                            Column SqlInt4, Column SqlFloat8)
+> aggregateWidgets :: Select (Field SqlText, Field SqlText, Field SqlInt8,
+>                            Field SqlInt4, Field SqlFloat8)
 > aggregateWidgets = aggregate ((,,,,) <$> P.lmap style    groupBy
 >                                      <*> P.lmap color    groupBy
 >                                      <*> P.lmap location count
 >                                      <*> P.lmap quantity sum
 >                                      <*> P.lmap radius   avg)
->                              (queryTable widgetTable)
+>                              (selectTable widgetTable)
 
 The generated SQL is
 
@@ -301,9 +301,9 @@ Opaleye supports outer joins (i.e. left joins, right joins and full
 outer joins).  An outer join is expressed by specifying the two tables
 to join and the join condition.
 
-> personBirthdayLeftJoin :: Query ((Column SqlText, Column SqlInt4, Column SqlText),
+> personBirthdayLeftJoin :: Select ((Field SqlText, Field SqlInt4, Field SqlText),
 >                                  Birthday Nulls)
-> personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
+> personBirthdayLeftJoin = leftJoin personSelect birthdaySelect eqName
 >     where eqName ((name, _, _), birthdayRow) = name .== bdName birthdayRow
 
 The generated SQL is
@@ -356,10 +356,10 @@ Types of joins are inferrable in new versions of Opaleye.  Here is a
 
 > typeInferred =
 >     O.fullJoinInferrable (O.fullJoinInferrable
->                     birthdayQuery
->                     (queryTable widgetTable)
+>                     birthdaySelect
+>                     (selectTable widgetTable)
 >                     (const (O.pgBool True)))
->                birthdayQuery
+>                birthdaySelect
 >                (const (O.pgBool True))
 
 Running queries on Postgres
@@ -367,21 +367,21 @@ Running queries on Postgres
 
 
 Opaleye provides simple facilities for running queries on Postgres.
-`runQuery` is a typeclass polymorphic function that effectively has
+`runSelect` is a typeclass polymorphic function that effectively has
 the following type
 
-> -- runQuery :: Database.PostgreSQL.Simple.Connection
-> --          -> Query columns -> IO [haskells]
+> -- runSelect :: Database.PostgreSQL.Simple.Connection
+> --          -> Select columns -> IO [haskells]
 
 It converts a "record" of Opaleye columns to a list of "records" of
 Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
 
-> runBirthdayQuery :: PGS.Connection
->                  -> Query (Birthday O)
+> runBirthdaySelect :: PGS.Connection
+>                  -> Select (Birthday O)
 >                  -> IO [Birthday H]
-> runBirthdayQuery = runQuery
+> runBirthdaySelect = runSelect
 
 Conclusion
 ==========
@@ -393,5 +393,5 @@ Utilities
 
 This is a little utility function to help with printing generated SQL.
 
-> printSql :: Default Unpackspec a a => Query a -> IO ()
+> printSql :: Default Unpackspec a a => Select a -> IO ()
 > printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres

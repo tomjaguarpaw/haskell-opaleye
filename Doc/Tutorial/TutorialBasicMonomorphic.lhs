@@ -6,12 +6,12 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye (Column, Nullable,
->                          Table, table, queryTable,
->                          tableColumn,
->                          Query, (.==),
+> import           Opaleye (Field, FieldNullable,
+>                          Table, table, selectTable,
+>                          tableField,
+>                          Select, (.==),
 >                          aggregate, groupBy,
->                          count, avg, sum, leftJoin, runQuery,
+>                          count, avg, sum, leftJoin, runSelect,
 >                          showSqlForPostgres, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
@@ -61,23 +61,23 @@ columns required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
 manipulation tutorial you can see an example of when they might differ.
 
-> personTable :: Table (Column SqlText, Column SqlInt4, Column SqlText)
->                      (Column SqlText, Column SqlInt4, Column SqlText)
-> personTable = table "personTable" (p3 ( tableColumn "name"
->                                       , tableColumn "age"
->                                       , tableColumn "address" ))
+> personTable :: Table (Field SqlText, Field SqlInt4, Field SqlText)
+>                      (Field SqlText, Field SqlInt4, Field SqlText)
+> personTable = table "personTable" (p3 ( tableField "name"
+>                                       , tableField "age"
+>                                       , tableField "address" ))
 
-> personTable' :: Table (Column SqlText, Column SqlInt4, Column SqlText)
->                       (Column SqlText, Column SqlInt4, Column SqlText)
-> personTable' = table "personTable" (p3 ( tableColumn "name"
->                                        , tableColumn "age"
->                                        , tableColumn "address" ))
+> personTable' :: Table (Field SqlText, Field SqlInt4, Field SqlText)
+>                       (Field SqlText, Field SqlInt4, Field SqlText)
+> personTable' = table "personTable" (p3 ( tableField "name"
+>                                        , tableField "age"
+>                                        , tableField "address" ))
 
 By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
 could have used the `tableWithSchema` constructor instead of `table`.
 
-To query a table we use `queryTable`.
+To query a table we use `selectTable`.
 
 (Here and in a few other places in Opaleye there is some typeclass
 magic going on behind the scenes to reduce boilerplate.  However, you
@@ -87,13 +87,13 @@ For this example file we will always use the typeclass versions
 because they are simpler to read and the typeclass magic is
 essentially invisible.)
 
-> personQuery :: Query (Column SqlText, Column SqlInt4, Column SqlText)
-> personQuery = queryTable personTable
+> personSelect :: Select (Field SqlText, Field SqlInt4, Field SqlText)
+> personSelect = selectTable personTable
 
-A `Query` corresponds to an SQL SELECT that we can run.  Here is the
-SQL generated for `personQuery`.
+A `Select` corresponds to an SQL SELECT that we can run.  Here is the
+SQL generated for `personSelect`.
 
-ghci> printSql personQuery
+ghci> printSql personSelect
 SELECT name0_1 as result1,
        age1_1 as result2,
        address2_1 as result3
@@ -132,22 +132,22 @@ to be polymorphic in all their fields.  Monomorphic field types will
 mean that you have to define more datatypes and more instances for
 them.
 
-> data BirthdayColumn = BirthdayColumn { bdNameColumn :: Column SqlText
->                                      , bdDayColumn  :: Column SqlDate }
+> data BirthdayField = BirthdayField { bdNameField :: Field SqlText
+>                                      , bdDayField  :: Field SqlDate }
 >
 > data Birthday = Birthday { bdName :: String, bdDay :: Day }
 >
-> birthdayColumnDef ::
->   (Applicative (p BirthdayColumn),
+> birthdayFieldDef ::
+>   (Applicative (p BirthdayField),
 >    P.Profunctor p,
->    Default p (Column SqlText) (Column SqlText),
->    Default p (Column SqlDate) (Column SqlDate)) =>
->   p BirthdayColumn BirthdayColumn
-> birthdayColumnDef = BirthdayColumn <$> P.lmap bdNameColumn D.def
->                                    <*> P.lmap bdDayColumn  D.def
+>    Default p (Field SqlText) (Field SqlText),
+>    Default p (Field SqlDate) (Field SqlDate)) =>
+>   p BirthdayField BirthdayField
+> birthdayFieldDef = BirthdayField <$> P.lmap bdNameField D.def
+>                                    <*> P.lmap bdDayField  D.def
 >
-> instance Default Unpackspec BirthdayColumn BirthdayColumn where
->   def = birthdayColumnDef
+> instance Default Unpackspec BirthdayField BirthdayField where
+>   def = birthdayFieldDef
 
 Naturally this is all derivable using `Generic` or Template Haskell,
 but no one's bothered to implement that yet.  Would you like to?
@@ -155,16 +155,16 @@ but no one's bothered to implement that yet.  Would you like to?
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
-> birthdayTable :: Table BirthdayColumn BirthdayColumn
+> birthdayTable :: Table BirthdayField BirthdayField
 > birthdayTable =
 >   table "birthdayTable"
->   (BirthdayColumn <$> P.lmap bdNameColumn (tableColumn "name")
->                   <*> P.lmap bdDayColumn  (tableColumn "birthday"))
+>   (BirthdayField <$> P.lmap bdNameField (tableField "name")
+>                   <*> P.lmap bdDayField  (tableField "birthday"))
 >
-> birthdayQuery :: Query BirthdayColumn
-> birthdayQuery = queryTable birthdayTable
+> birthdaySelect :: Select BirthdayField
+> birthdaySelect = selectTable birthdayTable
 
-ghci> printSql birthdayQuery
+ghci> printSql birthdaySelect
 SELECT name0_1 as result1,
        birthday1_1 as result2
 FROM (SELECT *
@@ -192,15 +192,15 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data WidgetColumn = WidgetColumn { style    :: Column SqlText
->                                  , color    :: Column SqlText
->                                  , location :: Column SqlText
->                                  , quantity :: Column SqlInt4
->                                  , radius   :: Column SqlFloat8
+> data WidgetField = WidgetField { style    :: Field SqlText
+>                                  , color    :: Field SqlText
+>                                  , location :: Field SqlText
+>                                  , quantity :: Field SqlInt4
+>                                  , radius   :: Field SqlFloat8
 >                                  }
 >
-> instance Default Unpackspec WidgetColumn WidgetColumn where
->   def = WidgetColumn <$> P.lmap style    D.def
+> instance Default Unpackspec WidgetField WidgetField where
+>   def = WidgetField <$> P.lmap style    D.def
 >                      <*> P.lmap color    D.def
 >                      <*> P.lmap location D.def
 >                      <*> P.lmap quantity D.def
@@ -209,13 +209,13 @@ this information with the following datatype.
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
 
-> widgetTable :: Table WidgetColumn WidgetColumn
+> widgetTable :: Table WidgetField WidgetField
 > widgetTable = table "widgetTable"
->                      (WidgetColumn <$> P.lmap style    (tableColumn "style")
->                                    <*> P.lmap color    (tableColumn "color")
->                                    <*> P.lmap location (tableColumn "location")
->                                    <*> P.lmap quantity (tableColumn "quantity")
->                                    <*> P.lmap radius   (tableColumn "radius"))
+>                      (WidgetField <$> P.lmap style    (tableField "style")
+>                                    <*> P.lmap color    (tableField "color")
+>                                    <*> P.lmap location (tableField "location")
+>                                    <*> P.lmap quantity (tableField "quantity")
+>                                    <*> P.lmap radius   (tableField "radius"))
 
 
 Say we want to group by the style and color of widgets, calculating
@@ -223,14 +223,14 @@ how many (possibly duplicated) locations there are, the total number
 of such widgets and their average radius.  `aggregateWidgets` shows us
 how to do this.
 
-> aggregateWidgets :: Query (Column SqlText, Column SqlText, Column SqlInt8,
->                            Column SqlInt4, Column SqlFloat8)
+> aggregateWidgets :: Select (Field SqlText, Field SqlText, Field SqlInt8,
+>                            Field SqlInt4, Field SqlFloat8)
 > aggregateWidgets = aggregate ((,,,,) <$> P.lmap style    groupBy
 >                                      <*> P.lmap color    groupBy
 >                                      <*> P.lmap location count
 >                                      <*> P.lmap quantity sum
 >                                      <*> P.lmap radius   avg)
->                              (queryTable widgetTable)
+>                              (selectTable widgetTable)
 
 The generated SQL is
 
@@ -270,8 +270,8 @@ Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
 "adaptor" to specify how columns are aggregated.  Note that this is
 yet another example of avoiding a headache by keeping your datatype
-fully polymorphic, because the 'count' aggregator changes a 'Column
-String' into a 'Column Int64'.
+fully polymorphic, because the 'count' aggregator changes a 'Field
+String' into a 'Field Int64'.
 
 Outer join
 ==========
@@ -285,17 +285,17 @@ columns we have to make sure the type of the output supports
 nullability.  We introduce the following type synonym for this
 purpose, which is just a notational convenience.
 
-> data BirthdayColumnNullable =
->   BirthdayColumnNullable { bdNameColumnNullable :: Column (Nullable SqlText)
->                          , bdDayColumnNullable  :: Column (Nullable SqlDate) }
+> data BirthdayFieldNullable =
+>   BirthdayFieldNullable { bdNameFieldNullable :: FieldNullable SqlText
+>                          , bdDayFieldNullable  :: FieldNullable SqlDate }
 >
-> instance Default O.Unpackspec BirthdayColumnNullable BirthdayColumnNullable where
->   def = BirthdayColumnNullable <$> P.lmap bdNameColumnNullable D.def
->                                <*> P.lmap bdDayColumnNullable  D.def
+> instance Default O.Unpackspec BirthdayFieldNullable BirthdayFieldNullable where
+>   def = BirthdayFieldNullable <$> P.lmap bdNameFieldNullable D.def
+>                                <*> P.lmap bdDayFieldNullable  D.def
 >
-> instance Default Opaleye.Internal.Join.NullMaker BirthdayColumn BirthdayColumnNullable where
->   def = BirthdayColumnNullable <$> P.lmap bdNameColumn D.def
->                                <*> P.lmap bdDayColumn  D.def
+> instance Default Opaleye.Internal.Join.NullMaker BirthdayField BirthdayFieldNullable where
+>   def = BirthdayFieldNullable <$> P.lmap bdNameField D.def
+>                                <*> P.lmap bdDayField  D.def
 
 Again, this is all derivable using `Generic` or Template Haskell, if
 someone would take the time to implement it.
@@ -303,11 +303,11 @@ someone would take the time to implement it.
 A left join is expressed by specifying the two tables to join and the
 join condition.
 
-> personBirthdayLeftJoin :: Query ((Column SqlText, Column SqlInt4, Column SqlText),
->                                  BirthdayColumnNullable)
-> personBirthdayLeftJoin = leftJoin personQuery birthdayQuery eqName
+> personBirthdayLeftJoin :: Select ((Field SqlText, Field SqlInt4, Field SqlText),
+>                                  BirthdayFieldNullable)
+> personBirthdayLeftJoin = leftJoin personSelect birthdaySelect eqName
 >     where eqName ((name, _, _), birthdayRow) =
->             name .== bdNameColumn birthdayRow
+>             name .== bdNameField birthdayRow
 
 The generated SQL is
 
@@ -371,25 +371,25 @@ Running queries on Postgres
 
 
 Opaleye provides simple facilities for running queries on Postgres.
-`runQuery` is a typeclass polymorphic function that effectively has
+`runSelect` is a typeclass polymorphic function that effectively has
 the following type
 
-> -- runQuery :: Database.PostgreSQL.Simple.Connection
-> --          -> Query columns -> IO [haskells]
+> -- runSelect :: Database.PostgreSQL.Simple.Connection
+> --          -> Select fields -> IO [haskells]
 
 It converts a "record" of Opaleye columns to a list of "records" of
 Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
 
-> instance Default O.QueryRunner BirthdayColumn Birthday where
->   def = Birthday <$> P.lmap bdNameColumn D.def
->                  <*> P.lmap bdDayColumn  D.def
+> instance Default O.FromFields BirthdayField Birthday where
+>   def = Birthday <$> P.lmap bdNameField D.def
+>                  <*> P.lmap bdDayField  D.def
 >
-> runBirthdayQuery :: PGS.Connection
->                  -> Query BirthdayColumn
+> runBirthdaySelect :: PGS.Connection
+>                  -> Select BirthdayField
 >                  -> IO [Birthday]
-> runBirthdayQuery = runQuery
+> runBirthdaySelect = runSelect
 
 Again, this is derivable using `Generic` or Template Haskell, if
 someone would take the time to implement it.
@@ -404,5 +404,5 @@ Utilities
 
 This is a little utility function to help with printing generated SQL.
 
-> printSql :: Default Unpackspec a a => Query a -> IO ()
+> printSql :: Default Unpackspec a a => Select a -> IO ()
 > printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres
