@@ -52,10 +52,10 @@ import qualified Control.Arrow as Arr
 -- The constructors of Table are internal only and will be
 -- deprecated in version 0.7.
 data Table writerColumns viewColumns
-  = Table String (TableColumns writerColumns viewColumns)
+  = Table String (TableFields writerColumns viewColumns)
     -- ^ For unqualified table names. Do not use the constructor.  It
     -- is internal and will be deprecated in version 0.7.
-  | TableWithSchema String String (TableColumns writerColumns viewColumns)
+  | TableWithSchema String String (TableFields writerColumns viewColumns)
     -- ^ Schema name, table name, table properties.  Do not use the
     -- constructor.  It is internal and will be deprecated in version 0.7.
 
@@ -63,29 +63,33 @@ tableIdentifier :: Table writeColumns viewColumns -> PQ.TableIdentifier
 tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
 tableIdentifier (TableWithSchema s t _) = PQ.TableIdentifier (Just s) t
 
-tableColumns :: Table writeColumns viewColumns -> TableColumns writeColumns viewColumns
+tableColumns :: Table writeColumns viewColumns -> TableFields writeColumns viewColumns
 tableColumns (Table _ p) = p
 tableColumns (TableWithSchema _ _ p) = p
 
 -- | Use 'tableColumns' instead.  Will be deprecated soon.
-tableProperties :: Table writeColumns viewColumns -> TableColumns writeColumns viewColumns
+tableProperties :: Table writeColumns viewColumns -> TableFields writeColumns viewColumns
 tableProperties = tableColumns
 
--- | Use 'TableColumns' instead. 'TableProperties' will be deprecated
+-- | Use 'TableFields' instead. 'TableProperties' will be deprecated
 -- in version 0.7.
 data TableProperties writeColumns viewColumns = TableProperties
    { tablePropertiesWriter :: Writer writeColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
 
--- | The new name for 'TableColumns' which will replace
--- 'TableColumn' in version 0.7.
+-- | Use 'TableFields' instead. 'TableColumns' will be deprecated in
+-- version 0.7.
 type TableColumns = TableProperties
 
-tableColumnsWriter :: TableColumns writeColumns viewColumns
+-- | The new name for 'TableColumns' and 'TableProperties' which will
+-- replace them in version 0.7.
+type TableFields = TableProperties
+
+tableColumnsWriter :: TableFields writeColumns viewColumns
                    -> Writer writeColumns viewColumns
 tableColumnsWriter = tablePropertiesWriter
 
-tableColumnsView :: TableColumns writeColumns viewColumns
+tableColumnsView :: TableFields writeColumns viewColumns
                  -> View viewColumns
 tableColumnsView = tablePropertiesView
 
@@ -111,14 +115,14 @@ newtype Writer columns dummy =
 
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
-required :: String -> TableColumns (Column a) (Column a)
+required :: String -> TableFields (Column a) (Column a)
 required columnName = TableProperties
   (requiredW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 -- | 'optional' is for columns that you can omit on writes, such as
 --  columns which have defaults or which are SERIAL.
-optional :: String -> TableColumns (Maybe (Column a)) (Column a)
+optional :: String -> TableFields (Maybe (Column a)) (Column a)
 optional columnName = TableProperties
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
@@ -128,7 +132,7 @@ class TableColumn writeType sqlType | writeType -> sqlType where
     -- the write type.  It's generally more convenient to use this
     -- than 'required' or 'optional' but you do have to provide a type
     -- signature instead.
-    tableColumn :: String -> TableColumns writeType (Column sqlType)
+    tableColumn :: String -> TableFields writeType (Column sqlType)
 
 instance TableColumn (Column a) a where
     tableColumn = required
@@ -137,7 +141,7 @@ instance TableColumn (Maybe (Column a)) a where
     tableColumn = optional
 
 tableField :: TableColumn writeType sqlType
-           => String -> TableColumns writeType (Column sqlType)
+           => String -> TableFields writeType (Column sqlType)
 tableField = tableColumn
 
 queryTable :: U.Unpackspec viewColumns columns

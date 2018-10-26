@@ -12,7 +12,7 @@
  'required' and gives rise to a
 
  @
- TableColumns (Column SqlInt4) (Column SqlInt4)
+ TableFields (Column SqlInt4) (Column SqlInt4)
  @
 
  The leftmost argument is the type of writes. When you insert or
@@ -23,7 +23,7 @@
  to a
 
  @
- TableColumns (Column (Nullable SqlInt4)) (Column (Nullable SqlInt4))
+ TableFields (Column (Nullable SqlInt4)) (Column (Nullable SqlInt4))
  @
 
  When you insert or update into this column you must give it a @Column
@@ -35,7 +35,7 @@
  rise to a
 
  @
- TableColumns (Maybe (Column SqlInt4)) (Column SqlInt4)
+ TableFields (Maybe (Column SqlInt4)) (Column SqlInt4)
  @
 
  Optional columns are those that can be omitted on writes, such as
@@ -49,7 +49,7 @@
  rise to a
 
  @
- TableColumns (Maybe (Column (Nullable SqlInt4))) (Column (Nullable SqlInt4))
+ TableFields (Maybe (Column (Nullable SqlInt4))) (Column (Nullable SqlInt4))
  @
 
  Optional columns are those that can be omitted on writes, such as
@@ -72,7 +72,8 @@ module Opaleye.Table (-- * Creating tables
                       -- * Querying tables
                       selectTable,
                       -- * Other
-                      TableColumns,
+                      T.TableColumns,
+                      TableFields,
                       -- * Deprecated
                       View,
                       Writer,
@@ -83,7 +84,7 @@ module Opaleye.Table (-- * Creating tables
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
 import           Opaleye.Internal.Table (View, Table, Writer,
-                                         TableColumns)
+                                         TableFields)
 
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
@@ -115,7 +116,7 @@ selectTable = selectTableExplicit D.def
 -- | Create a table with unqualified names.
 table :: String
       -- ^ Table name
-      -> TableColumns writeFields viewFields
+      -> TableFields writeFields viewFields
       -> Table writeFields viewFields
 table = T.Table
 
@@ -124,7 +125,7 @@ tableWithSchema :: String
                 -- ^ Schema name
                 -> String
                 -- ^ Table name
-                -> TableColumns writeFields viewFields
+                -> TableFields writeFields viewFields
                 -> Table writeFields viewFields
 tableWithSchema = T.TableWithSchema
 
