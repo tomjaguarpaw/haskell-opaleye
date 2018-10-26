@@ -9,22 +9,15 @@ module Opaleye.RunSelect
    IRQ.FromFields,
    IRQ.FromField) where
 
-import           Control.Applicative (pure, (<$>))
 import qualified Database.PostgreSQL.Simple as PGS
-import qualified Database.PostgreSQL.Simple.Cursor  as PGSC
-import qualified Database.PostgreSQL.Simple.FromRow as FR
-import qualified Data.String as String
 
-import           Opaleye.Column (Column)
 import qualified Opaleye.Select as S
 import qualified Opaleye.RunQuery          as RQ
 import qualified Opaleye.Sql as S
 import qualified Opaleye.TypeFamilies as TF
 import           Opaleye.Internal.RunQuery (FromFields)
 import qualified Opaleye.Internal.RunQuery as IRQ
-import qualified Opaleye.Internal.QueryArr as Q
 
-import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
 
 -- * Running 'S.Select's

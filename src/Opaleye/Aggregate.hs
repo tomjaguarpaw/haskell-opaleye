@@ -40,7 +40,6 @@ import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PackMap as PM
 
-import           Opaleye.QueryArr  (Query)
 import qualified Opaleye.Column    as C
 import qualified Opaleye.Order     as Ord
 import qualified Opaleye.Select    as S
