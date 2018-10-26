@@ -17,7 +17,7 @@
 > import           Opaleye (Field,
 >                          Table, table, tableField, selectTable,
 >                          Select, (.==), aggregate, groupBy,
->                          count, avg, sum, leftJoin, runSelect,
+>                          count, avg, sum, leftJoin, runSelect, runSelectTF,
 >                          showSqlForPostgres, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
@@ -382,6 +382,12 @@ minimize the number of confusing error messages!
 >                  -> Select (Birthday O)
 >                  -> IO [Birthday H]
 > runBirthdaySelect = runSelect
+
+The type of selects can be inferred if you use the `runSelectTF`
+function.
+
+> -- printNames :: PGS.Connection -> Select (Birthday O) -> IO ()
+> printNames conn select = mapM_ (print . bdName) =<< runSelectTF conn select
 
 Conclusion
 ==========

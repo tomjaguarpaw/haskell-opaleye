@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Opaleye.RunSelect
@@ -18,6 +19,7 @@ import           Opaleye.Column (Column)
 import qualified Opaleye.Select as S
 import qualified Opaleye.RunQuery          as RQ
 import qualified Opaleye.Sql as S
+import qualified Opaleye.TypeFamilies as TF
 import           Opaleye.Internal.RunQuery (FromFields)
 import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Internal.QueryArr as Q
@@ -51,6 +53,16 @@ runSelect :: D.Default FromFields fields haskells
           -- ^
           -> IO [haskells]
 runSelect = RQ.runQuery
+
+-- | 'runSelectTF' has better type inference than 'runSelect' but only
+-- works with "higher-kinded data" types.
+runSelectTF :: D.Default FromFields (rec TF.O) (rec TF.H)
+            => PGS.Connection
+            -- ^
+            -> S.Select (rec TF.O)
+            -- ^
+            -> IO [rec TF.H]
+runSelectTF = RQ.runQuery
 
 -- | @runSelectFold@ streams the results of a query incrementally and consumes
 -- the results with a left fold.
