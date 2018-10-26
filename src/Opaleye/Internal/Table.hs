@@ -181,7 +181,7 @@ runWriter' (Writer (PM.PackMap f)) columns = Arr.first unZip outColumns
   where (outColumns, ()) = f extract columns
         extract (pes, s) = ((Zip (fmap return pes), [s]), ())
 
-data Zip a = Zip { unZip :: NEL.NonEmpty [a] }
+newtype Zip a = Zip { unZip :: NEL.NonEmpty [a] }
 
 instance Semigroup (Zip a) where
   (<>) = mappend
