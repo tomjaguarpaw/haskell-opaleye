@@ -66,6 +66,7 @@ module Opaleye.Table (-- * Creating tables
                       tableWithSchema,
                       T.Table,
                       T.tableColumn,
+                      T.tableField,
                       T.optional,
                       T.required,
                       -- * Querying tables

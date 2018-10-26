@@ -136,6 +136,10 @@ instance TableColumn (Column a) a where
 instance TableColumn (Maybe (Column a)) a where
     tableColumn = optional
 
+tableField :: TableColumn writeType sqlType
+           => String -> TableColumns writeType (Column sqlType)
+tableField = tableColumn
+
 queryTable :: U.Unpackspec viewColumns columns
             -> Table writeColumns viewColumns
             -> Tag.Tag
