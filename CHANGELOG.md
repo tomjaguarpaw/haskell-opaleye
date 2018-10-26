@@ -1,3 +1,11 @@
+## 0.6.7003.0
+
+* Add `tableField` as a future replacement for `tableColumn`
+
+* Export `Opaleye.Field` and `Opaleye.RunSelect` from `Opaleye`
+
+* Use new nomenclature in tutorials
+
 ## 0.6.7002.0
 
 This is a breaking release that doesn't follow the PVP but because
