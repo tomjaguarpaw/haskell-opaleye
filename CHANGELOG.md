@@ -1,3 +1,7 @@
+## 0.6.7003.1
+
+* Bumped some depedencies so there is an install plan on GHC 8.6
+
 ## 0.6.7003.0
 
 * Add `tableField` as a future replacement for `tableColumn`
