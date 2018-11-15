@@ -167,6 +167,8 @@ class IsSqlType sqlType where
   showSqlType :: proxy sqlType -> String
   showSqlType = showPGType
 
+  {-# MINIMAL showPGType | showSqlType #-}
+
 instance IsSqlType PGBool where
   showSqlType _ = "boolean"
 instance IsSqlType PGDate where
