@@ -109,11 +109,8 @@ runUpdate_ conn i = case i of
 -- constructor.
 runDelete_ :: PGS.Connection
            -- ^
-           -> Delete Int64
-           -- ^ You must pass 'rCount' here.  'runDelete_' does not
-           -- yet support @DELETE RETURNING@.  If you want it please
-           -- file an issue.
-           -> IO Int64
+           -> Delete haskells
+           -> IO haskells
            -- ^ Returns a type that depends on the 'MI.Returning' that
            -- you provided when creating the 'Update'.
 runDelete_ conn i = case i of
@@ -121,6 +118,10 @@ runDelete_ conn i = case i of
     let delete = case returning_ of
           MI.Count ->
             runDelete
+          MI.Returning f ->
+            \c t w -> MI.runDeleteReturning c t w f
+          MI.ReturningExplicit qr f ->
+            \c t w -> MI.runDeleteReturningExplicit qr c t w f
     in delete conn table_ where_
 
 -- * Create a manipulation
@@ -164,7 +165,7 @@ updateEasy u = u' . u
 data Delete haskells = forall fieldsW fieldsR. Delete
   { dTable     :: T.Table fieldsW fieldsR
   , dWhere     :: fieldsR -> F.Field SqlBool
-  , dReturning :: MI.Returning fieldsR Int64
+  , dReturning :: MI.Returning fieldsR haskells
   }
 
 -- ** Returning
@@ -270,10 +271,7 @@ arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
     "You probably want 'runDelete' instead. \
     \Will be removed in version 0.7." #-}
 arrangeDelete :: T.Table a columnsR -> (columnsR -> Column SqlBool) -> HSql.SqlDelete
-arrangeDelete t cond =
-  SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier t)) [condExpr]
-  where Column condExpr = cond tableCols
-        TI.View tableCols = TI.tableColumnsView (TI.tableColumns t)
+arrangeDelete = MI.arrangeDelete
 
 {-# DEPRECATED arrangeDeleteSql
     "You probably want 'runDelete' instead. \
@@ -506,3 +504,4 @@ runDelete :: PGS.Connection
           -> IO Int64
           -- ^ The number of rows deleted
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
+

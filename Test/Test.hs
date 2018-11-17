@@ -33,6 +33,8 @@ import           System.Environment               (lookupEnv)
 import           Test.Hspec
 import qualified TypeFamilies                     ()
 
+import Opaleye.Manipulation (Delete (Delete))
+
 {-
 
 Status
@@ -771,6 +773,17 @@ testUpdate = it "" $ \conn -> do
         expectedR :: [Int]
         expectedR = [-1, -2]
 
+testDeleteReturning :: Test
+testDeleteReturning = it "" $ \conn -> do
+  result <- O.runDelete_ conn delete
+  O.runInsertMany conn table4 ([(40,50)] :: [(Column O.SqlInt4, Column O.SqlInt4)]) :: IO Int64
+  result `shouldBe` expected
+  where delete = Delete table cond returning
+        table = table4
+        cond (_, y) = y .> 45
+        returning = O.rReturning id
+        expected = [(40, 50)] :: [(Int, Int)]
+
 testInsertConflict :: Test
 testInsertConflict = it "inserts with conflicts" $ \conn -> do
   _ <- O.runDelete conn table10 (const $ O.constant True)
@@ -1169,6 +1182,7 @@ main = do
         testValues
         testValuesEmpty
         testUpdate
+        testDeleteReturning
         testInsertConflict
       describe "range" $ do
         testRangeOverlap

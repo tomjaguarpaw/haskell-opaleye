@@ -7,12 +7,12 @@ module Opaleye.Internal.Manipulation where
 
 import qualified Control.Applicative as A
 
-import           Opaleye.Internal.Column (Column)
+import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.HaskellDB.Sql  as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Default  as SD
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
 import qualified Opaleye.Internal.HaskellDB.Sql.Print    as HPrint
-import           Opaleye.Internal.Helpers        ((.:.), (.::.))
+import           Opaleye.Internal.Helpers        ((.:.), (.::.), (.::))
 import qualified Opaleye.Internal.PrimQuery      as PQ
 import qualified Opaleye.Internal.Print          as Print
 import qualified Opaleye.Internal.RunQuery       as IRQ
@@ -21,6 +21,7 @@ import qualified Opaleye.Internal.Sql            as Sql
 import qualified Opaleye.Internal.Table          as TI
 import qualified Opaleye.Internal.Unpackspec     as U
 import qualified Opaleye.Table                   as T
+import           Opaleye.SqlTypes (SqlBool)
 
 import           Data.Int                       (Int64)
 import qualified Data.List.NonEmpty              as NEL
@@ -130,3 +131,58 @@ instance D.Default Updater (Column a) (Column a) where
 instance D.Default Updater (Column a) (Maybe (Column a)) where
   def = Updater Just
 
+arrangeDeleteReturning :: U.Unpackspec columnsReturned ignored
+                       -> T.Table columnsW columnsR
+                       -> (columnsR -> Column SqlBool)
+                       -> (columnsR -> columnsReturned)
+                       -> Sql.Returning HSql.SqlDelete
+  -- this implementation was copied, it does not make sense yet
+arrangeDeleteReturning unpackspec t cond returningf =
+  Sql.Returning delete returningSEs
+  where delete = arrangeDelete t cond
+        TI.View columnsR = TI.tableColumnsView (TI.tableColumns t)
+        returningPEs = U.collectPEs unpackspec (returningf columnsR)
+        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
+
+arrangeDeleteReturningSql :: U.Unpackspec columnsReturned ignored
+                          -> T.Table columnsW columnsR
+                          -> (columnsR -> Column SqlBool)
+                          -> (columnsR -> columnsReturned)
+                          -> String
+arrangeDeleteReturningSql =
+  show . Print.ppDeleteReturning .:: arrangeDeleteReturning
+
+
+runDeleteReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
+                   => PGS.Connection
+                   -- ^
+                   -> T.Table a columnsR
+                   -- ^ Table to delete rows from
+                   -> (columnsR -> Column SqlBool)
+                   -- ^ Predicate function @f@ to choose which rows to delete.
+                   -- 'runDeleteReturning' will delete rows for which @f@ returns @TRUE@
+                   -- and leave unchanged rows for
+                   -- which @f@ returns @FALSE@.
+                   -> (columnsR -> columnsReturned)
+                   -> IO [haskells]
+                   -- ^ Returned rows which have been deleted
+runDeleteReturning = runDeleteReturningExplicit D.def
+
+runDeleteReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+                           -> PGS.Connection
+                           -> T.Table a columnsR
+                           -> (columnsR -> Column SqlBool)
+                           -> (columnsR -> columnsReturned)
+                           -> IO [haskells]
+runDeleteReturningExplicit qr conn t cond r =
+  PGS.queryWith_ parser conn
+                 (fromString (arrangeDeleteReturningSql u t cond r))
+  where IRQ.QueryRunner u _ _ = qr
+        parser = IRQ.prepareRowParser qr (r v)
+        TI.View v = TI.tableColumnsView (TI.tableColumns t)
+
+arrangeDelete :: T.Table a columnsR -> (columnsR -> Column SqlBool) -> HSql.SqlDelete
+arrangeDelete t cond =
+  SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier t)) [condExpr]
+  where Column condExpr = cond tableCols
+        TI.View tableCols = TI.tableColumnsView (TI.tableColumns t)
