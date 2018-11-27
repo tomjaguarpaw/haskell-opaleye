@@ -4,11 +4,12 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Opaleye.PGTypes (module Opaleye.PGTypes) where
+module Opaleye.PGTypes (module Opaleye.PGTypes, IsSqlType(..)) where
 
 import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.PGTypes as IPT
+import           Opaleye.Internal.PGTypes (IsSqlType(..))
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Sql.Default as HSD
@@ -157,18 +158,6 @@ pgRange pgEl start end = C.Column (HPQ.RangeExpr (showRangeType ([] :: [b])) (on
         oneEl R.NegInfinity   = HPQ.NegInfinity
         oneEl R.PosInfinity   = HPQ.PosInfinity
 
-{-# DEPRECATED showPGType
-    "Use 'showSqlType' instead. 'showPGType' will be removed \
-    \in version 0.7." #-}
-class IsSqlType sqlType where
-  showPGType :: proxy sqlType -> String
-  showPGType  = showSqlType
-
-  showSqlType :: proxy sqlType -> String
-  showSqlType = showPGType
-
-  {-# MINIMAL showPGType | showSqlType #-}
-
 instance IsSqlType PGBool where
   showSqlType _ = "boolean"
 instance IsSqlType PGDate where
@@ -201,8 +190,6 @@ instance IsSqlType PGBytea where
   showSqlType _ = "bytea"
 instance IsSqlType a => IsSqlType (PGArray a) where
   showSqlType _ = showSqlType ([] :: [a]) ++ "[]"
-instance IsSqlType a => IsSqlType (C.Nullable a) where
-  showSqlType _ = showSqlType ([] :: [a])
 instance IsSqlType PGJson where
   showSqlType _ = "json"
 instance IsSqlType PGJsonb where
@@ -255,7 +242,7 @@ data PGRange a
 
 -- * Deprecated functions
 
-literalColumn :: HPQ.Literal -> Column a
+literalColumn :: IsSqlType a => HPQ.Literal -> Column a
 literalColumn = IPT.literalColumn
 {-# DEPRECATED literalColumn
     "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be removed in version 0.7."
