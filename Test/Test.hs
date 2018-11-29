@@ -886,6 +886,11 @@ testArrayIndexOOB = it "returns Nothing when the index is out of bounds" $
   testH (A.pure $ O.pgArray O.pgInt4 [5,6,7] `O.index` O.pgInt4 8)
         (`shouldBe` ([Nothing] :: [Maybe Int]))
 
+testSingletonArray :: Test
+testSingletonArray = it "constructs a singleton PGInt8 array" $
+  testH (A.pure $ O.singletonArray (O.pgInt8 1))
+        (`shouldBe` ([[1]] :: [[Int64]]))
+
 type JsonTest a = SpecWith (Query (Column a) -> PGS.Connection -> Expectation)
 -- Test opaleye's equivalent of c1->'c'
 testJsonGetFieldValue :: (O.SqlIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
@@ -1180,6 +1185,7 @@ main = do
         testFloatArray
         testArrayIndex
         testArrayIndexOOB
+        testSingletonArray
       describe "joins" $ do
         testLeftJoin
         testLeftJoinNullable
