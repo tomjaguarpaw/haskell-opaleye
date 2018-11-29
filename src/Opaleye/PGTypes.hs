@@ -84,7 +84,7 @@ pgBool :: Bool -> Column PGBool
 pgBool = IPT.literalColumn . HPQ.BoolLit
 
 pgUUID :: UUID.UUID -> Column PGUuid
-pgUUID = C.unsafeCoerceColumn . pgString . UUID.toString
+pgUUID = IPT.literalColumn . HPQ.StringLit . UUID.toString
 
 pgDay :: Time.Day -> Column PGDate
 pgDay = IPT.unsafePgFormatTime "date" "'%F'"
