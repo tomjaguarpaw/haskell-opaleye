@@ -242,8 +242,8 @@ data PGRange a
 
 -- * Deprecated functions
 
-literalColumn :: IsSqlType a => HPQ.Literal -> Column a
-literalColumn = IPT.literalColumn
+literalColumn :: HPQ.Literal -> Column a
+literalColumn = C.Column . HPQ.ConstExpr
 {-# DEPRECATED literalColumn
     "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be removed in version 0.7."
   #-}
