@@ -144,6 +144,12 @@ pgLazyJSONB = pgJSONB . IPT.lazyDecodeUtf8
 pgValueJSONB :: Ae.ToJSON a => a -> Column PGJsonb
 pgValueJSONB = pgLazyJSONB . Ae.encode
 
+pgTSVector :: String -> Column PGTSVector
+pgTSVector = IPT.castToType "tsvector" . HSD.quote
+
+pgTSQuery :: String -> Column PGTSQuery
+pgTSQuery = IPT.castToType "tsquery" . HSD.quote
+
 pgArray :: forall a b. IsSqlType b => (a -> C.Column b) -> [a] -> C.Column (PGArray b)
 pgArray pgEl xs = C.unsafeCast arrayTy $
   C.Column (HPQ.ArrayExpr (map oneEl xs))
@@ -194,6 +200,9 @@ instance IsSqlType PGJson where
   showSqlType _ = "json"
 instance IsSqlType PGJsonb where
   showSqlType _ = "jsonb"
+instance IsSqlType PGTSQuery where
+  showSqlType _ = "tsquery"
+
 instance IsRangeType a => IsSqlType (PGRange a) where
   showSqlType _ = showRangeType ([] :: [a])
 
@@ -239,6 +248,8 @@ data PGBytea
 data PGJson
 data PGJsonb
 data PGRange a
+data PGTSQuery
+data PGTSVector
 
 -- * Deprecated functions
 

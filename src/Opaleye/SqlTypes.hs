@@ -95,6 +95,9 @@ sqlLazyJSON = P.pgLazyJSON
 sqlValueJSON :: Ae.ToJSON a => a -> F.Field SqlJson
 sqlValueJSON = P.pgValueJSON
 
+sqlTSQuery :: String -> F.Field SqlTSQuery
+sqlTSQuery = P.pgTSQuery
+
 -- The jsonb data type was introduced in PostgreSQL version 9.4
 -- JSONB values must be SQL string quoted
 --
@@ -143,3 +146,5 @@ type SqlBytea = P.PGBytea
 type SqlJson = P.PGJson
 type SqlJsonb = P.PGJsonb
 type SqlRange = P.PGRange
+type SqlTSQuery  = P.PGTSQuery
+type SqlTSVector = P.PGTSVector

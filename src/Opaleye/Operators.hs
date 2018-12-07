@@ -120,6 +120,10 @@ infix 4 .>=
 (.>=) :: Ord.SqlOrd a => Column a -> Column a -> F.Field T.SqlBool
 (.>=) = C.binOp (HPQ.:>=)
 
+infix 4 @@
+(@@) :: Column T.SqlTSVector -> Column T.SqlTSQuery -> F.Field T.SqlBool
+(@@) = C.binOp (HPQ.:@@)
+
 -- * Numerical operators
 
 -- | Integral division, named after 'Prelude.quot'.  It maps to the
