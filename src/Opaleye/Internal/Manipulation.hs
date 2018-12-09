@@ -37,8 +37,6 @@ import qualified Database.PostgreSQL.Simple as PGS
 data Returning a b where
   Count
     :: Returning a Int64
-  Returning
-    :: D.Default RQ.QueryRunner b c => (a -> b) -> Returning a [c]
   ReturningExplicit
     :: RQ.QueryRunner b c -> (a -> b) -> Returning a [c]
 

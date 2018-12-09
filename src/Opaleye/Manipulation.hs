@@ -79,8 +79,6 @@ runInsert_ conn i = case i of
             runInsertMany
           (MI.Count, Just HSql.DoNothing) ->
             runInsertManyOnConflictDoNothing
-          (MI.Returning f, oc) ->
-            \c t r -> MI.runInsertManyReturningExplicit D.def c t r f oc
           (MI.ReturningExplicit qr f, oc) ->
             \c t r -> MI.runInsertManyReturningExplicit qr c t r f oc
     in insert conn table_ rows_
@@ -99,8 +97,6 @@ runUpdate_ conn i = case i of
     let update = case returning_ of
           MI.Count ->
             runUpdate
-          MI.Returning f ->
-            \c t u w -> runUpdateReturning c t u w f
           MI.ReturningExplicit qr f ->
             \c t u w -> runUpdateReturningExplicit qr c t u w f
     in update conn table_ updateWith_ where_
@@ -118,8 +114,6 @@ runDelete_ conn i = case i of
     let delete = case returning_ of
           MI.Count ->
             runDelete
-          MI.Returning f ->
-            \c t w -> MI.runDeleteReturning c t w f
           MI.ReturningExplicit qr f ->
             \c t w -> MI.runDeleteReturningExplicit qr c t w f
     in delete conn table_ where_
@@ -184,7 +178,7 @@ rReturning :: D.Default RQ.QueryRunner fields haskells
            => (fieldsR -> fields)
            -- ^
            -> MI.Returning fieldsR [haskells]
-rReturning = MI.Returning
+rReturning = rReturningExplicit D.def
 
 -- | Return a function of the inserted or updated rows.  Explicit
 -- version.  You probably just want to use 'rReturning' instead.
