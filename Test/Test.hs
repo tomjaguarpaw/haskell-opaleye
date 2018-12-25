@@ -891,6 +891,11 @@ testSingletonArray = it "constructs a singleton PGInt8 array" $
   testH (A.pure $ O.singletonArray (O.pgInt8 1))
         (`shouldBe` ([[1]] :: [[Int64]]))
 
+testArrayAppend :: Test
+testArrayAppend = it "appends two arrays" $
+  testH (A.pure $ O.pgArray O.pgInt4 [5,6,7] `O.arrayAppend` O.pgArray O.pgInt4 [1,2,3])
+        (`shouldBe` ([[5,6,7,1,2,3]] :: [[Int]]))
+
 type JsonTest a = SpecWith (Query (Column a) -> PGS.Connection -> Expectation)
 -- Test opaleye's equivalent of c1->'c'
 testJsonGetFieldValue :: (O.SqlIsJson a, O.QueryRunnerColumnDefault a Json.Value) => Query (Column a) -> Test
@@ -1186,6 +1191,7 @@ main = do
         testArrayIndex
         testArrayIndexOOB
         testSingletonArray
+        testArrayAppend
       describe "joins" $ do
         testLeftJoin
         testLeftJoinNullable
