@@ -108,7 +108,7 @@ runDelete_ :: PGS.Connection
            -> Delete haskells
            -> IO haskells
            -- ^ Returns a type that depends on the 'MI.Returning' that
-           -- you provided when creating the 'Update'.
+           -- you provided when creating the 'Delete'.
 runDelete_ conn i = case i of
   Delete table_ where_ returning_ ->
     let delete = case returning_ of
