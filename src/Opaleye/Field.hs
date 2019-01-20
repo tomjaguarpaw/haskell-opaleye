@@ -20,7 +20,7 @@ type Field a = Field_ 'NonNullable a
 null :: FieldNullable a
 null = C.null
 
--- | @TRUE@ if the value of the column is @NULL@, @FALSE@ otherwise.
+-- | @TRUE@ if the value of the field is @NULL@, @FALSE@ otherwise.
 isNull :: FieldNullable a -> Field T.PGBool
 isNull = C.isNull
 

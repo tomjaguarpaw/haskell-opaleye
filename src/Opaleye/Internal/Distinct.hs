@@ -16,8 +16,8 @@ import           Data.Profunctor.Product.Default (Default, def)
 -- instead implement it as SQL's DISTINCT but implementing it in terms
 -- of something else that we already have is easier at this point.
 
-distinctExplicit :: Distinctspec columns columns'
-                 -> Query columns -> Query columns'
+distinctExplicit :: Distinctspec fields fields'
+                 -> Query fields -> Query fields'
 distinctExplicit (Distinctspec agg) = aggregate agg
 
 newtype Distinctspec a b = Distinctspec (Aggregator a b)
