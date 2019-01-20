@@ -5,7 +5,7 @@ module Opaleye.Select where
 
 import qualified Opaleye.QueryArr as Q
 
--- | A Postgres @SELECT@, i.e. some functionality that can run via SQL
+-- | A @SELECT@, i.e. some functionality that can run via SQL
 -- and produce a collection of rows.
 --
 -- @Select a@ is analogous to a Haskell value @[a]@.
