@@ -13,7 +13,6 @@ import qualified Database.PostgreSQL.Simple as PGS
 
 import qualified Opaleye.Select as S
 import qualified Opaleye.RunQuery          as RQ
-import qualified Opaleye.Sql as S
 import qualified Opaleye.TypeFamilies as TF
 import           Opaleye.Internal.RunQuery (FromFields)
 import qualified Opaleye.Internal.RunQuery as IRQ
