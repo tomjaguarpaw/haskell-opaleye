@@ -8,7 +8,7 @@ env:
 - GHCVER=head
 
 script:
-- curl -sSL https://raw.github.com/tomjaguarpaw/neil/stable5/travis.sh | sh -s tomjaguarpaw stable5
+- curl -sSL https://raw.github.com/tomjaguarpaw/neil/hoogle/travis.sh | sh -s tomjaguarpaw hoogle
 
 # To clear the caches go to
 #
