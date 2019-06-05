@@ -336,8 +336,17 @@ emptyArray = T.sqlArray id []
 arrayAppend :: F.Field (T.SqlArray a) -> F.Field (T.SqlArray a) -> F.Field (T.SqlArray a)
 arrayAppend = C.binOp (HPQ.:||)
 
+-- | Prepend an element to a 'T.SqlArray'
 arrayPrepend :: Column a -> Column (T.SqlArray a) -> Column (T.SqlArray a)
 arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es])
+
+-- | Remove all instances of an element from a 'T.SqlArray'
+arrayRemove :: Column a -> Column (T.SqlArray a) -> Column (T.SqlArray a)
+arrayRemove (Column e) (Column es) = Column (HPQ.FunExpr "array_remove" [es, e])
+
+-- | Remove all 'NULL' values from a 'T.SqlArray'
+arrayRemoveNulls :: Column (T.SqlArray (C.Nullable a)) -> Column (T.SqlArray a)
+arrayRemoveNulls = Column.unsafeCoerceColumn . arrayRemove Column.null
 
 singletonArray :: T.IsSqlType a => Column a -> Column (T.SqlArray a)
 singletonArray x = arrayPrepend x emptyArray
