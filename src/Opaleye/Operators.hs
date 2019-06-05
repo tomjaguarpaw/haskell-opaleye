@@ -332,7 +332,7 @@ infix 4 .?&
 emptyArray :: T.IsSqlType a => Column (T.SqlArray a)
 emptyArray = T.sqlArray id []
 
--- | Append two 'F.SqlArray's
+-- | Append two 'T.SqlArray's
 arrayAppend :: F.Field (T.SqlArray a) -> F.Field (T.SqlArray a) -> F.Field (T.SqlArray a)
 arrayAppend = C.binOp (HPQ.:||)
 
