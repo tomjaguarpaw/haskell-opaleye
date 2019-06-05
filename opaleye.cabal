@@ -41,6 +41,7 @@ library
     , scientific          >= 0.3     && < 0.4
     , semigroups          >= 0.13    && < 0.20
     , text                >= 0.11    && < 1.3
+    , template-haskell    >= 2.10    && < 2.15
     , transformers        >= 0.3     && < 0.6
     , time                >= 1.4     && < 1.10
     , time-locale-compat  >= 0.1     && < 0.2
@@ -92,6 +93,7 @@ library
                    Opaleye.Internal.TableMaker,
                    Opaleye.Internal.Tag,
                    Opaleye.Internal.TypeFamilies,
+                   Opaleye.Internal.TypeFamiliesTH,
                    Opaleye.Internal.Unpackspec,
                    Opaleye.Internal.Values
                    Opaleye.Internal.HaskellDB.PrimQuery,

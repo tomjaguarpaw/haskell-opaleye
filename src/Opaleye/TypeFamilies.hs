@@ -15,6 +15,8 @@ module Opaleye.TypeFamilies
   , TF.Opt
   , TF.Req
   , TF.Nulls
+  , TH.makeTableAdaptorInstanceMap
   ) where
 
 import Opaleye.Internal.TypeFamilies as TF
+import Opaleye.Internal.TypeFamiliesTH as TH
