@@ -1,23 +1,20 @@
-{-# LANGUAGE ConstraintKinds  #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns   #-}
-{-# LANGUAGE RankNTypes       #-}
-{-# LANGUAGE TemplateHaskell  #-}
-{-# LANGUAGE TypeOperators    #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Opaleye.Internal.TypeFamiliesTH (makeTableAdaptorInstanceMap) where
 
-import           Control.Applicative                 ((<|>))
-import           Data.List                           (foldl', nub)
-import           Data.Maybe                          (listToMaybe, mapMaybe)
-import           Data.Profunctor.Product             (ProductProfunctor)
-import           Data.Profunctor.Product.Default     (Default (..))
-import           Data.Profunctor.Product.Internal.TH (adaptorDefinition,
-                                                      adaptorDefinitionFields)
-import           Language.Haskell.TH
-import           Opaleye.Internal.TypeFamilies       ((:<$>), (:<*>), F, IMap,
-                                                      RecordField, TableField)
-import           Opaleye.Map                         (Map)
+import Data.List (foldl', nub)
+import Data.Maybe (listToMaybe, mapMaybe)
+import Data.Profunctor.Product (ProductProfunctor)
+import Data.Profunctor.Product.Default (Default (..))
+import Data.Profunctor.Product.Internal.TH (adaptorDefinition, adaptorDefinitionFields)
+import Language.Haskell.TH
+import Opaleye.Internal.TypeFamilies ((:<$>), (:<*>), F, IMap, RecordField, TableField)
+import Opaleye.Map (Map)
 
 
 type DefaultTable h o n r p a b = Default p (TableField a h o n r) (TableField b h o n r)
@@ -72,31 +69,18 @@ dataDecInfo tyName tyVars constructors = do
     conInfo _               = fail "Cannot handle constructor type"
 
 
-findTableFieldTypeName :: ConTysFields -> Maybe Name
-findTableFieldTypeName = firstInstance findTableFieldApp . fieldTypes
-  where
-    findTableFieldApp (AppT (ConT t) (VarT x)) | t == ''TableField = Just x
-    findTableFieldApp (AppT f _)               = findTableFieldApp f
-    findTableFieldApp _                        = Nothing
-
-
-findRecordFieldTypeName :: ConTysFields -> Maybe Name
-findRecordFieldTypeName = firstInstance findRecordFieldApp . fieldTypes
-  where
-    findRecordFieldApp (AppT (ConT t) (VarT x)) | t == ''RecordField = Just x
-    findRecordFieldApp (AppT f _)               = findRecordFieldApp f
-    findRecordFieldApp _                        = Nothing
-
-
 findFieldTypeName :: ConTysFields -> Q Name
-findFieldTypeName fieldTys =
-    maybe err return $ findTableFieldTypeName fieldTys <|> findRecordFieldTypeName fieldTys
+findFieldTypeName = firstInstance findFieldApp . fieldTypes
   where
     err = fail "Could not find TableField or RecordField"
 
+    findFieldApp (AppT (ConT t) (VarT x))
+        | t == ''TableField = Just x
+        | t == ''RecordField = Just x
+    findFieldApp (AppT f _) = findFieldApp f
+    findFieldApp _ = Nothing
 
-firstInstance :: (a -> Maybe b) -> [a] -> Maybe b
-firstInstance f = listToMaybe . mapMaybe f
+    firstInstance f = maybe err return . listToMaybe . mapMaybe f
 
 
 appTTableField :: Name -> [Name] -> ConTysFields -> Type -> Q Type
