@@ -1,23 +1,27 @@
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ConstraintKinds  #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NamedFieldPuns   #-}
+{-# LANGUAGE RankNTypes       #-}
+{-# LANGUAGE TemplateHaskell  #-}
+{-# LANGUAGE TypeOperators    #-}
 
 module Opaleye.Internal.TypeFamiliesTH (makeTableAdaptorInstanceMap) where
 
-import Data.List (foldl', nub)
-import Data.Maybe (listToMaybe, mapMaybe)
-import Data.Profunctor.Product (ProductProfunctor)
-import Data.Profunctor.Product.Default (Default (..))
-import Data.Profunctor.Product.Internal.TH (adaptorDefinition, adaptorDefinitionFields)
-import Language.Haskell.TH
-import Opaleye.Internal.TypeFamilies ((:<$>), (:<*>), F, IMap, TableField)
-import Opaleye.Map (Map)
+import           Control.Applicative                 ((<|>))
+import           Data.List                           (foldl', nub)
+import           Data.Maybe                          (listToMaybe, mapMaybe)
+import           Data.Profunctor.Product             (ProductProfunctor)
+import           Data.Profunctor.Product.Default     (Default (..))
+import           Data.Profunctor.Product.Internal.TH (adaptorDefinition,
+                                                      adaptorDefinitionFields)
+import           Language.Haskell.TH
+import           Opaleye.Internal.TypeFamilies       ((:<$>), (:<*>), F, IMap,
+                                                      RecordField, TableField)
+import           Opaleye.Map                         (Map)
 
 
 type DefaultTable h o n r p a b = Default p (TableField a h o n r) (TableField b h o n r)
+type DefaultRecord h o n p a b = Default p (RecordField a h o n) (RecordField b h o n)
 
 
 -- Taken, slightly modified, from product-profunctors makeAdaptorAndInstance
@@ -68,19 +72,36 @@ dataDecInfo tyName tyVars constructors = do
     conInfo _               = fail "Cannot handle constructor type"
 
 
-findTableFieldTypeName :: ConTysFields -> Q Name
-findTableFieldTypeName = firstInstance (fail "Could not find TableField") findTableFieldApp . fieldTypes
+findTableFieldTypeName :: ConTysFields -> Maybe Name
+findTableFieldTypeName = firstInstance findTableFieldApp . fieldTypes
   where
     findTableFieldApp (AppT (ConT t) (VarT x)) | t == ''TableField = Just x
     findTableFieldApp (AppT f _)               = findTableFieldApp f
     findTableFieldApp _                        = Nothing
 
-    firstInstance err f = maybe err return . listToMaybe . mapMaybe f
+
+findRecordFieldTypeName :: ConTysFields -> Maybe Name
+findRecordFieldTypeName = firstInstance findRecordFieldApp . fieldTypes
+  where
+    findRecordFieldApp (AppT (ConT t) (VarT x)) | t == ''RecordField = Just x
+    findRecordFieldApp (AppT f _)               = findRecordFieldApp f
+    findRecordFieldApp _                        = Nothing
+
+
+findFieldTypeName :: ConTysFields -> Q Name
+findFieldTypeName fieldTys =
+    maybe err return $ findTableFieldTypeName fieldTys <|> findRecordFieldTypeName fieldTys
+  where
+    err = fail "Could not find TableField or RecordField"
+
+
+firstInstance :: (a -> Maybe b) -> [a] -> Maybe b
+firstInstance f = listToMaybe . mapMaybe f
 
 
 appTTableField :: Name -> [Name] -> ConTysFields -> Type -> Q Type
 appTTableField tyName args fieldTys t = do
-    f <- varT =<< findTableFieldTypeName fieldTys
+    f <- varT =<< findFieldTypeName fieldTys
     appTAll (ConT tyName) . replaceFirst f t <$> mapM varT args
   where
     replaceFirst _ _ [] = []
@@ -162,7 +183,9 @@ instanceDef adaptorName DataDecInfo{dTyName, dTyVars, dConName, dConTys} = insta
 defaultTableConstraint :: Type -> Q Type
 defaultTableConstraint (AppT (AppT (AppT (AppT (AppT (ConT tf) _) h) o) n) r)
     | tf == ''TableField = [t| DefaultTable $(pure h) $(pure o) $(pure n) $(pure r) $p $a $b |]
-defaultTableConstraint _ = fail "Non TableField Field"
+defaultTableConstraint (AppT (AppT (AppT (AppT (ConT rf) _) h) o) n)
+    | rf == ''RecordField = [t| DefaultRecord $(pure h) $(pure o) $(pure n) $p $a $b |]
+defaultTableConstraint _ = fail "Non TableField or RecordField Field"
 
 
 mapTypeInstance :: DataDecInfo -> Q Dec
