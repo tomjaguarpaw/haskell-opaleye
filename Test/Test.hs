@@ -1063,16 +1063,17 @@ testRangeBoundsEnum msg mkCol x y = it msg $ \conn -> do
     r2 `shouldBe` [(Nothing, Just $ succ y)]
     r3 `shouldBe` [(Just $ succ x, Just y)]
 
-
-jsonbTests :: [Test]
-jsonbTests = [testJsonGetFieldValue  table9Q,testJsonGetFieldText  table9Q,
-             testJsonGetMissingField table9Q,testJsonGetArrayValue table9Q,
-             testJsonGetArrayText    table9Q,testJsonGetPathValue  table9Q,
-             testJsonGetPathText     table9Q,
-             testJsonbRightInLeft, testJsonbLeftInRight,
-             testJsonbContains, testJsonbContainsMissing,
-             testJsonbContainsAny, testJsonbContainsAll
-             ]
+jsonTests :: (O.SqlIsJson a, O.QueryRunnerColumnDefault a Json.Value)
+          => Query (Column a) -> Test
+jsonTests t = do
+  testJsonGetFieldValue   t
+  testJsonGetFieldText    t
+  testJsonGetMissingField t
+  testJsonGetArrayValue   t
+  testJsonGetArrayText    t
+  testJsonGetPathValue    t
+  testJsonGetPathText     t
+  testRestrictWithJsonOp  t
 
 testLiterals :: Test
 testLiterals = do
@@ -1192,15 +1193,15 @@ main = do
         testLeftJoinNullable
         testThreeWayProduct
         testLeftJoinF
-      describe "json" $ do
-        testJsonGetFieldValue   table8Q
-        testJsonGetFieldText    table8Q
-        testJsonGetMissingField table8Q
-        testJsonGetArrayValue   table8Q
-        testJsonGetArrayText    table8Q
-        testJsonGetPathValue    table8Q
-        testJsonGetPathText     table8Q
-        testRestrictWithJsonOp  table8Q
+      describe "json" $ jsonTests table8Q
+      describe "jsonb" $ do
+        jsonTests table9Q
+        testJsonbRightInLeft
+        testJsonbLeftInRight
+        testJsonbContains
+        testJsonbContainsMissing
+        testJsonbContainsAny
+        testJsonbContainsAll
       describe "uncat" $ do
         testKeywordColNames
         testInsertSerial
