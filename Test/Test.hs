@@ -1054,14 +1054,17 @@ testRangeBoundsEnum :: forall a b.
         => String -> (a -> Column b) -> a -> a -> Test
 testRangeBoundsEnum msg mkCol x y = it msg $ \conn -> do
     -- bound functions for discrete range types return fields as from the form [x,y)
-    let ranges = [ O.pgRange mkCol (R.Inclusive x) R.PosInfinity
-                 , O.pgRange mkCol R.NegInfinity   (R.Inclusive y)
-                 , O.pgRange mkCol (R.Exclusive x) (R.Exclusive y)
-                 ]
-    [r1,r2,r3] <- mapM (O.runQuery conn . pure . (O.lowerBound &&& O.upperBound)) ranges
-    r1 `shouldBe` [(Just x, Nothing)]
-    r2 `shouldBe` [(Nothing, Just $ succ y)]
-    r3 `shouldBe` [(Just $ succ x, Just y)]
+    let pgr = O.pgRange mkCol
+        ranges_expecteds =
+          [ (pgr (R.Inclusive x) R.PosInfinity,   (Just x, Nothing))
+          , (pgr R.NegInfinity   (R.Inclusive y), (Nothing, Just $ succ y))
+          , (pgr (R.Exclusive x) (R.Exclusive y), (Just $ succ x, Just y))
+          ]
+        ranges    = map fst ranges_expecteds
+        expecteds = map ((:[]) . snd) ranges_expecteds
+
+    r <- mapM (O.runQuery conn . pure . (O.lowerBound &&& O.upperBound)) ranges
+    r `shouldBe` expecteds
 
 jsonTests :: (O.SqlIsJson a, O.QueryRunnerColumnDefault a Json.Value)
           => Query (Column a) -> Test
