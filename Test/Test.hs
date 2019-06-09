@@ -21,7 +21,6 @@ import qualified Data.Profunctor.Product.Default  as D
 import qualified Data.String                      as String
 import qualified Data.Text                        as T
 import qualified Data.Time                        as Time
-import           Data.UUID                        (UUID)
 import qualified Database.PostgreSQL.Simple       as PGS
 import qualified Database.PostgreSQL.Simple.Range as R
 import           GHC.Int                          (Int64)
@@ -777,7 +776,7 @@ testUpdate = it "" $ \conn -> do
 testDeleteReturning :: Test
 testDeleteReturning = it "" $ \conn -> do
   result <- O.runDelete_ conn delete
-  O.runInsertMany conn table4 ([(40,50)] :: [(Column O.SqlInt4, Column O.SqlInt4)]) :: IO Int64
+  _ <- O.runInsertMany conn table4 ([(40,50)] :: [(Column O.SqlInt4, Column O.SqlInt4)]) :: IO Int64
   result `shouldBe` expected
   where delete = Delete table cond returning
         table = table4
@@ -828,10 +827,10 @@ testKeywordColNames = it "" $ \conn -> do
 
 testInsertSerial :: Test
 testInsertSerial = it "" $ \conn -> do
-  _ <- O.runInsert conn table5 (Just 10, Just 20)
-  _ <- O.runInsert conn table5 (Just 30, Nothing)
-  _ <- O.runInsert conn table5 (Nothing, Nothing)
-  _ <- O.runInsert conn table5 (Nothing, Just 40)
+  _ <- runInsert conn table5 (Just 10, Just 20)
+  _ <- runInsert conn table5 (Just 30, Nothing)
+  _ <- runInsert conn table5 (Nothing, Nothing)
+  _ <- runInsert conn table5 (Nothing, Just 40)
 
   resultI <- O.runQuery conn (O.queryTable table5)
 
@@ -842,6 +841,7 @@ testInsertSerial = it "" $ \conn -> do
                    , (30, 1)
                    , (1, 2)
                    , (2, 40) ]
+        runInsert conn table row = O.runInsertMany conn table [row]
 
 testInQuery :: Test
 testInQuery = it "" $ \conn -> do
@@ -1120,8 +1120,7 @@ main = do
 
   dropAndCreateDB conn
 
-  let insert (writeable, columndata) =
-        mapM_ (O.runInsert conn writeable) columndata
+  let insert (t, d) = do { _ <- O.runInsertMany conn t d; return () }
 
   mapM_ insert [ (table1, table1columndata)
                , (table2, table2columndata)
