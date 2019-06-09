@@ -309,14 +309,13 @@ dropAndCreateDB conn = do
   mapM_ executeSerial serialTables
   mapM_ executeJson jsonTables
   mapM_ executeConflict conflictTables
-  -- Disabled until Travis supports Postgresql >= 9.4
-  -- mapM_ executeJsonb jsonbTables
+  mapM_ executeJsonb jsonbTables
   where execute = PGS.execute_ conn . dropAndCreateTableInt
         executeTextTable = PGS.execute_ conn . dropAndCreateTableText
         executeSerial = PGS.execute_ conn . dropAndCreateTableSerial
         executeJson = PGS.execute_ conn . dropAndCreateTableJson
         executeConflict = PGS.execute_ conn . dropAndCreateTablePk
-        -- executeJsonb = PGS.execute_ conn . dropAndCreateTableJsonb
+        executeJsonb = PGS.execute_ conn . dropAndCreateTableJsonb
 
 type Test = SpecWith PGS.Connection
 
@@ -1065,8 +1064,6 @@ testRangeBoundsEnum msg mkCol x y = it msg $ \conn -> do
     r3 `shouldBe` [(Just $ succ x, Just y)]
 
 
--- Note: these tests are left out of allTests until Travis supports
--- Postgresql >= 9.4
 jsonbTests :: [Test]
 jsonbTests = [testJsonGetFieldValue  table9Q,testJsonGetFieldText  table9Q,
              testJsonGetMissingField table9Q,testJsonGetArrayValue table9Q,
@@ -1129,8 +1126,7 @@ main = do
   insert (table6, table6columndata)
   insert (table7, table7columndata)
   insert (table8, table8columndata)
-  -- Disabled until Travis supports Postgresql >= 9.4
-  -- insert (table9, table9columndata)
+  insert (table9, table9columndata)
 
   -- Need to run quickcheck after table data has been inserted
   QuickCheck.run conn
