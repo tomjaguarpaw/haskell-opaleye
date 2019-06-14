@@ -283,8 +283,7 @@ Idealized SQL:
     GROUP BY style, color
 
 Note: In `widgetTable` and `aggregateWidgets` we see more explicit
-uses of our Template Haskell derived code.  We use the 'sequencePPHKD'
-"adaptor" to specify how columns are aggregated.
+uses of our Template Haskell derived code.
 
 Outer join
 ==========
