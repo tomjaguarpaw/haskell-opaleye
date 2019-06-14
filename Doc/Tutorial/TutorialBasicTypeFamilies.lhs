@@ -150,8 +150,8 @@ Please volunteer to do that if you can.
 > pBirthday :: PP.ProductProfunctor p
 >           => Birthday (p :<$> a :<*> b)
 >           -> p (Birthday a) (Birthday b)
-> pBirthday (Birthday a b) = Birthday PP.***$ P.lmap bdName a
->                                     PP.**** P.lmap bdDay b
+> pBirthday b = Birthday PP.***$ P.lmap bdName (bdName b)
+>                        PP.**** P.lmap bdDay  (bdDay b)
 >
 > type instance M.Map g (Birthday (F f)) = Birthday (F (IMap g f))
 
@@ -218,11 +218,11 @@ one's implemented the Template Haskell or generics to do that yet.
 > pWidget :: PP.ProductProfunctor p
 >         => Widget (p :<$> a :<*> b)
 >         -> p (Widget a) (Widget b)
-> pWidget (Widget a b c d e) = Widget PP.***$ P.lmap style a
->                                     PP.**** P.lmap color b
->                                     PP.**** P.lmap location c
->                                     PP.**** P.lmap quantity d
->                                     PP.**** P.lmap radius e
+> pWidget w = Widget PP.***$ P.lmap style    (style w)
+>                    PP.**** P.lmap color    (color w)
+>                    PP.**** P.lmap location (location w)
+>                    PP.**** P.lmap quantity (quantity w)
+>                    PP.**** P.lmap radius   (radius w)
 >
 > type instance M.Map g (Widget (F f)) = Widget (F (IMap g f))
 
