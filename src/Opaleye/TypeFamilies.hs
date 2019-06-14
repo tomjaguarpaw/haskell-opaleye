@@ -16,6 +16,8 @@ module Opaleye.TypeFamilies
   , TF.Req
   , TF.Nulls
   , TF.TableField
+  , TF.SequencePPHKD
+  , TF.sequencePPHKD
   ) where
 
 import Opaleye.Internal.TypeFamilies as TF

@@ -5,6 +5,8 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeInType #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 -- TODO
 -- Updater -- easier -- this one's probably not needed
@@ -16,6 +18,7 @@ module Opaleye.Internal.TypeFamilies where
 
 import           Opaleye.Column (Column, Nullable)
 import qualified Opaleye.Field as F
+import qualified Data.Profunctor.Product as PP
 
 type family IMap f a
 
@@ -78,3 +81,7 @@ type O = 'H OT
 type Nulls = 'H NullsT
 type W = 'H WT
 type F = 'H
+
+class SequencePPHKD rec where
+  sequencePPHKD
+    :: PP.ProductProfunctor p => rec (p :<$> a :<*> b) -> p (rec a) (rec b)

@@ -25,7 +25,7 @@
 > import qualified Opaleye.Map          as M
 > import           Opaleye.TypeFamilies (O, H, NN, Req, Nulls, W,
 >                                        TableRecordField, IMap, F,
->                                        (:<$>), (:<*>))
+>                                        SequencePPHKD, sequencePPHKD)
 >
 > import qualified Data.Profunctor         as P
 > import qualified Data.Profunctor.Product as PP
@@ -145,13 +145,11 @@ Please volunteer to do that if you can.
 >          , Default p (TableRecordField a Day    SqlDate NN Req)
 >                      (TableRecordField b Day    SqlDate NN Req)) =>
 >   Default p (Birthday a) (Birthday b) where
->   def = pBirthday (Birthday D.def D.def)
+>   def = sequencePPHKD (Birthday D.def D.def)
 >
-> pBirthday :: PP.ProductProfunctor p
->           => Birthday (p :<$> a :<*> b)
->           -> p (Birthday a) (Birthday b)
-> pBirthday b = Birthday PP.***$ P.lmap bdName (bdName b)
->                        PP.**** P.lmap bdDay  (bdDay b)
+> instance SequencePPHKD Birthday where
+>   sequencePPHKD b = Birthday PP.***$ P.lmap bdName (bdName b)
+>                              PP.**** P.lmap bdDay  (bdDay b)
 >
 > type instance M.Map g (Birthday (F f)) = Birthday (F (IMap g f))
 
@@ -159,7 +157,7 @@ Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
 > birthdayTable :: Table (Birthday W) (Birthday O)
-> birthdayTable = table "birthdayTable" $ pBirthday $ Birthday {
+> birthdayTable = table "birthdayTable" $ sequencePPHKD $ Birthday {
 >     bdName = tableField "name"
 >   , bdDay  = tableField "birthday"
 > }
@@ -213,16 +211,14 @@ one's implemented the Template Haskell or generics to do that yet.
 >          , Default p (TableRecordField a Double SqlFloat8 NN Req)
 >                      (TableRecordField b Double SqlFloat8 NN Req)) =>
 >   Default p (Widget a) (Widget b) where
->   def = pWidget (Widget D.def D.def D.def D.def D.def)
+>   def = sequencePPHKD (Widget D.def D.def D.def D.def D.def)
 >
-> pWidget :: PP.ProductProfunctor p
->         => Widget (p :<$> a :<*> b)
->         -> p (Widget a) (Widget b)
-> pWidget w = Widget PP.***$ P.lmap style    (style w)
->                    PP.**** P.lmap color    (color w)
->                    PP.**** P.lmap location (location w)
->                    PP.**** P.lmap quantity (quantity w)
->                    PP.**** P.lmap radius   (radius w)
+> instance SequencePPHKD Widget where
+>   sequencePPHKD w = Widget PP.***$ P.lmap style    (style w)
+>                            PP.**** P.lmap color    (color w)
+>                            PP.**** P.lmap location (location w)
+>                            PP.**** P.lmap quantity (quantity w)
+>                            PP.**** P.lmap radius   (radius w)
 >
 > type instance M.Map g (Widget (F f)) = Widget (F (IMap g f))
 
@@ -230,7 +226,7 @@ For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
 
 > widgetTable :: Table (Widget W) (Widget O)
-> widgetTable = table "widgetTable" $ pWidget $ Widget {
+> widgetTable = table "widgetTable" $ sequencePPHKD $ Widget {
 >     style    = tableField "style"
 >   , color    = tableField "color"
 >   , location = tableField "location"
@@ -287,7 +283,7 @@ Idealized SQL:
     GROUP BY style, color
 
 Note: In `widgetTable` and `aggregateWidgets` we see more explicit
-uses of our Template Haskell derived code.  We use the 'pWidget'
+uses of our Template Haskell derived code.  We use the 'sequencePPHKD'
 "adaptor" to specify how columns are aggregated.
 
 Outer join
