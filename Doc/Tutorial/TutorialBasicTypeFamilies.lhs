@@ -8,6 +8,7 @@
 > {-# LANGUAGE FunctionalDependencies #-}
 > {-# LANGUAGE NoMonomorphismRestriction #-}
 > {-# LANGUAGE DataKinds #-}
+> {-# LANGUAGE PolyKinds #-}
 > {-# LANGUAGE TypeOperators #-}
 >
 > module TutorialBasicTypeFamilies where
@@ -25,7 +26,8 @@
 > import qualified Opaleye.Map          as M
 > import           Opaleye.TypeFamilies (O, H, NN, Req, Nulls, W,
 >                                        TableRecordField, IMap, F,
->                                        SequencePPHKD, sequencePPHKD)
+>                                        SequencePPHKD, sequencePPHKD,
+>                                        (:<$>), (:<*>))
 >
 > import qualified Data.Profunctor         as P
 > import qualified Data.Profunctor.Product as PP
@@ -36,6 +38,9 @@
 > import           Data.Time.Calendar (Day)
 >
 > import qualified Database.PostgreSQL.Simple as PGS
+
+> import Opaleye.Internal.Table (TableProperties)
+> import Opaleye.Internal.TypeFamilies (Arr)
 
 Introduction
 ============
@@ -156,8 +161,14 @@ Please volunteer to do that if you can.
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
+> tableHKD :: SequencePPHKD rec
+>          => String
+>          -> rec (TableProperties :<$> (a :: Arr h k *) :<*> b)
+>          -> Table (rec a) (rec b)
+> tableHKD s = table s . sequencePPHKD
+
 > birthdayTable :: Table (Birthday W) (Birthday O)
-> birthdayTable = table "birthdayTable" $ sequencePPHKD $ Birthday {
+> birthdayTable = tableHKD "birthdayTable" $ Birthday {
 >     bdName = tableField "name"
 >   , bdDay  = tableField "birthday"
 > }
@@ -226,7 +237,7 @@ For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
 
 > widgetTable :: Table (Widget W) (Widget O)
-> widgetTable = table "widgetTable" $ sequencePPHKD $ Widget {
+> widgetTable = tableHKD "widgetTable" $ Widget {
 >     style    = tableField "style"
 >   , color    = tableField "color"
 >   , location = tableField "location"

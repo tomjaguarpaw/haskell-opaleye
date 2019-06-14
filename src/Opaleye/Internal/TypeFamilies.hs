@@ -19,6 +19,7 @@ module Opaleye.Internal.TypeFamilies where
 import           Opaleye.Column (Column, Nullable)
 import qualified Opaleye.Field as F
 import qualified Data.Profunctor.Product as PP
+import Data.Kind
 
 type family IMap f a
 
@@ -82,6 +83,7 @@ type Nulls = 'H NullsT
 type W = 'H WT
 type F = 'H
 
-class SequencePPHKD rec where
+class SequencePPHKD (rec :: Arr k1 k2 * -> *) where
   sequencePPHKD
-    :: PP.ProductProfunctor p => rec (p :<$> a :<*> b) -> p (rec a) (rec b)
+    :: PP.ProductProfunctor p => rec (p :<$> (a :: Arr k1 k2 *) :<*> b)
+                              -> p (rec a) (rec b)
