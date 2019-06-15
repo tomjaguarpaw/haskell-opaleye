@@ -119,7 +119,7 @@ foldForward = RQ.foldForward
 -- newtype Foo = Foo Int
 --
 -- instance QueryRunnerColumnDefault Foo Foo where
---    fromFieldDefault = unsafeFromField Foo fromFieldDefault
+--    defaultFromField = unsafeFromField Foo defaultFromField
 -- @
 --
 -- It is \"unsafe\" because it does not check that the @sqlType@
