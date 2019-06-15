@@ -1,3 +1,8 @@
+-- | Functions for working directly with 'Field_'s.
+--
+-- Please note that numeric 'Field_' types are instances of 'Num', so
+-- you can use '*', '/', '+', '-' on them.
+
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 
