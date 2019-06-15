@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 module Opaleye.Internal.RunQuery where
 
@@ -128,12 +129,12 @@ queryRunnerColumnNullable qr =
 
 -- { Instances for automatic derivation
 
-instance QueryRunnerColumnDefault a b =>
+instance FromFieldDefault a b =>
          QueryRunnerColumnDefault (Nullable a) (Maybe b) where
   fromFieldDefault = queryRunnerColumnNullable fromFieldDefault
 
-instance QueryRunnerColumnDefault a b =>
-         D.Default QueryRunner (Column a) b where
+instance FromFieldDefault a b =>
+         D.Default FromFields (Column a) b where
   def = queryRunner fromFieldDefault
 
 -- }
@@ -175,7 +176,9 @@ class QueryRunnerColumnDefault sqlType haskellType where
 
   {-# MINIMAL queryRunnerColumnDefault | fromFieldDefault #-}
 
-instance QueryRunnerColumnDefault sqlType haskellType
+type FromFieldDefault = QueryRunnerColumnDefault
+
+instance FromFieldDefault sqlType haskellType
     => D.Default FromField sqlType haskellType where
   def = fromFieldDefault
 
@@ -253,14 +256,14 @@ instance QueryRunnerColumnDefault T.PGJsonb Ae.Value where
 arrayColumn :: Column (T.PGArray a) -> Column a
 arrayColumn = C.unsafeCoerceColumn
 
-instance (Typeable b, QueryRunnerColumnDefault a b) =>
+instance (Typeable b, FromFieldDefault a b) =>
          QueryRunnerColumnDefault (T.PGArray a) [b] where
   fromFieldDefault = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
     where QueryRunnerColumn c f = fromFieldDefault
 
 -- }
 
-instance (Typeable b, PGS.FromField b, QueryRunnerColumnDefault a b) =>
+instance (Typeable b, PGS.FromField b, FromFieldDefault a b) =>
          QueryRunnerColumnDefault (T.PGRange a) (PGSR.PGRange b) where
   fromFieldDefault = fieldQueryRunnerColumn
 
