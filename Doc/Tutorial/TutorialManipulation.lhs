@@ -3,7 +3,7 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye (Column, Table, table,
->                           tableColumn, (.==), (.<),
+>                           tableField, (.==), (.<),
 >                           Insert(..),
 >                           Update(..),
 >                           Delete(..),
@@ -39,10 +39,10 @@ value for us.
 > myTable :: Table
 >     (Maybe (Column SqlInt4), Column SqlFloat8, Column SqlFloat8, Column SqlText)
 >     (Column SqlInt4, Column SqlFloat8, Column SqlFloat8, Column SqlText)
-> myTable = table "tablename" (p4 ( tableColumn "id"
->                                 , tableColumn "x"
->                                 , tableColumn "y"
->                                 , tableColumn "s" ))
+> myTable = table "tablename" (p4 ( tableField "id"
+>                                 , tableField "x"
+>                                 , tableField "y"
+>                                 , tableField "s" ))
 
 To perform a delete we provide an expression from our read type to
 `Column Bool`.  All rows for which the expression is true are deleted.

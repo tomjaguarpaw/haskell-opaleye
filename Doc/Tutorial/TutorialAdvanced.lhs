@@ -6,7 +6,7 @@
 >
 > import           Opaleye.QueryArr (Query)
 > import           Opaleye.Column (Column)
-> import           Opaleye.Table (Table, table, tableColumn, queryTable)
+> import           Opaleye.Table (Table, table, tableField, queryTable)
 > import           Opaleye.SqlTypes (SqlText, SqlInt4)
 > import qualified Opaleye.Aggregate as A
 > import           Opaleye.Aggregate (Aggregator, aggregate)
@@ -40,8 +40,8 @@ people's names along with the age of their children.
 
 > personTable :: Table (Column SqlText, Column SqlInt4)
 >                      (Column SqlText, Column SqlInt4)
-> personTable = table "personTable" (p2 ( tableColumn "name"
->                                       , tableColumn "child_age" ))
+> personTable = table "personTable" (p2 ( tableField "name"
+>                                       , tableField "child_age" ))
 
 > rangeOfChildrensAges :: Query (Column SqlText, Column SqlInt4)
 > rangeOfChildrensAges = aggregate (p2 (A.groupBy, range)) (queryTable personTable)
