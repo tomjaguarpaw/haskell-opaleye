@@ -24,7 +24,7 @@
 > import qualified Opaleye              as O
 > import qualified Opaleye.Map          as M
 > import           Opaleye.TypeFamilies (O, H, NN, Req, Nulls, W,
->                                        TableField, IMap, F,
+>                                        TableRecordField, IMap, F,
 >                                        (:<$>), (:<*>))
 >
 > import qualified Data.Profunctor         as P
@@ -131,8 +131,8 @@ to be polymorphic in all their fields.  In fact there's a nice scheme
 using type families that reduces boiler plate and has always been
 compatible with Opaleye!
 
-> data Birthday f = Birthday { bdName :: TableField f String SqlText NN Req
->                            , bdDay  :: TableField f Day    SqlDate NN Req
+> data Birthday f = Birthday { bdName :: TableRecordField f String SqlText NN Req
+>                            , bdDay  :: TableRecordField f Day    SqlDate NN Req
 >                            }
 
 This instance, adaptor and type family are fully derivable by Template
@@ -140,10 +140,10 @@ Haskell or generics but I haven't got round to writing that yet.
 Please volunteer to do that if you can.
 
 > instance ( PP.ProductProfunctor p
->          , Default p (TableField a String SqlText NN Req)
->                      (TableField b String SqlText NN Req)
->          , Default p (TableField a Day    SqlDate NN Req)
->                      (TableField b Day    SqlDate NN Req)) =>
+>          , Default p (TableRecordField a String SqlText NN Req)
+>                      (TableRecordField b String SqlText NN Req)
+>          , Default p (TableRecordField a Day    SqlDate NN Req)
+>                      (TableRecordField b Day    SqlDate NN Req)) =>
 >   Default p (Birthday a) (Birthday b) where
 >   def = pBirthday (Birthday D.def D.def)
 >
@@ -195,23 +195,23 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data Widget f = Widget { style    :: TableField f String SqlText   NN Req
->                        , color    :: TableField f String SqlText   NN Req
->                        , location :: TableField f String SqlText   NN Req
->                        , quantity :: TableField f Int    SqlInt4   NN Req
->                        , radius   :: TableField f Double SqlFloat8 NN Req
+> data Widget f = Widget { style    :: TableRecordField f String SqlText   NN Req
+>                        , color    :: TableRecordField f String SqlText   NN Req
+>                        , location :: TableRecordField f String SqlText   NN Req
+>                        , quantity :: TableRecordField f Int    SqlInt4   NN Req
+>                        , radius   :: TableRecordField f Double SqlFloat8 NN Req
 >                        }
 
 This instance, adaptor and type family are fully derivable but no
 one's implemented the Template Haskell or generics to do that yet.
 
 > instance ( PP.ProductProfunctor p
->          , Default p (TableField a String SqlText NN Req)
->                      (TableField b String SqlText NN Req)
->          , Default p (TableField a Int    SqlInt4 NN Req)
->                      (TableField b Int    SqlInt4 NN Req)
->          , Default p (TableField a Double SqlFloat8 NN Req)
->                      (TableField b Double SqlFloat8 NN Req)) =>
+>          , Default p (TableRecordField a String SqlText NN Req)
+>                      (TableRecordField b String SqlText NN Req)
+>          , Default p (TableRecordField a Int    SqlInt4 NN Req)
+>                      (TableRecordField b Int    SqlInt4 NN Req)
+>          , Default p (TableRecordField a Double SqlFloat8 NN Req)
+>                      (TableRecordField b Double SqlFloat8 NN Req)) =>
 >   Default p (Widget a) (Widget b) where
 >   def = pWidget (Widget D.def D.def D.def D.def D.def)
 >
