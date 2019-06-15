@@ -27,14 +27,14 @@ import qualified Data.Profunctor.Product.Default as D
 -- Example type specialization:
 --
 -- @
--- showSql :: Select (Column a, Column b) -> Maybe String
+-- showSql :: Select (Field a, Field b) -> Maybe String
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- showSql :: Select (Foo (Column a) (Column b) (Column c)) -> Maybe String
+-- showSql :: Select (Foo (Field a) (Field b) (Field c)) -> Maybe String
 -- @
 showSql :: forall fields.
            D.Default U.Unpackspec fields fields

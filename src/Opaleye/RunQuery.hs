@@ -40,13 +40,13 @@ import qualified Data.Profunctor.Product.Default as D
 -- Example type specialization:
 --
 -- @
--- runQuery :: 'S.Select' (Column 'Opaleye.SqlTypes.SqlInt4', Column 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
+-- runQuery :: 'S.Select' (Field 'Opaleye.SqlTypes.SqlInt4', Field 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
 --
 -- @
--- runQuery :: 'S.Select' (Foo (Column 'Opaleye.SqlTypes.SqlInt4') (Column 'Opaleye.SqlTypes.SqlText') (Column 'Opaleye.SqlTypes.SqlBool')
+-- runQuery :: 'S.Select' (Foo (Field 'Opaleye.SqlTypes.SqlInt4') (Field 'Opaleye.SqlTypes.SqlText') (Field 'Opaleye.SqlTypes.SqlBool')
 --          -> IO [Foo Int String Bool]
 -- @
 --

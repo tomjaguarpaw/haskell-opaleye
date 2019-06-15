@@ -13,10 +13,10 @@
 -- Example specialization:
 --
 -- @
--- leftJoin :: Select (Column a, Column b)
---          -> Select (Column c, Column (Nullable d))
---          -> (((Column a, Column b), (Column c, Column (Nullable d))) -> Column 'Opaleye.SqlTypes.SqlBool')
---          -> Select ((Column a, Column b), (Column (Nullable c), Column (Nullable d)))
+-- leftJoin :: Select (Field a, Field b)
+--          -> Select (Field c, FieldNullable d)
+--          -> (((Field a, Field b), (Field c, FieldNullable d)) -> Field 'Opaleye.SqlTypes.SqlBool')
+--          -> Select ((Field a, Field b), (FieldNullable c, FieldNullable d))
 -- @
 
 {-# LANGUAGE FlexibleContexts      #-}

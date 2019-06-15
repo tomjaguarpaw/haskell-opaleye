@@ -5,59 +5,59 @@
 
 {- |
 
- Columns can be required or optional and, independently, nullable or
+ Fields can be required or optional and, independently, nullable or
  non-nullable.
 
  A required non-nullable @SqlInt4@ (for example) is created with
  'required' and gives rise to a
 
  @
- TableFields (Column SqlInt4) (Column SqlInt4)
+ TableFields (Field SqlInt4) (Field SqlInt4)
  @
 
  The leftmost argument is the type of writes. When you insert or
- update into this column you must give it a @Column SqlInt4@ (which you
- can create with @sqlInt4 :: Int -> Column SqlInt4@).
+ update into this column you must give it a @Field SqlInt4@ (which you
+ can create with @sqlInt4 :: Int -> Field SqlInt4@).
 
  A required nullable @SqlInt4@ is created with 'required' and gives rise
  to a
 
  @
- TableFields (Column (Nullable SqlInt4)) (Column (Nullable SqlInt4))
+ TableFields (FieldNullable SqlInt4) (FieldNullable SqlInt4)
  @
 
- When you insert or update into this column you must give it a @Column
- (Nullable SqlInt4)@, which you can create either with @sqlInt4@ and
- @toNullable :: Column a -> Column (Nullable a)@, or with @null ::
- Column (Nullable a)@.
+ When you insert or update into this column you must give it a
+ @FieldNullable SqlInt4@, which you can create either with @sqlInt4@ and
+ @toNullable :: Field a -> FieldNullable a@, or with @null ::
+ FieldNullable a@.
 
  An optional non-nullable @SqlInt4@ is created with 'optional' and gives
  rise to a
 
  @
- TableFields (Maybe (Column SqlInt4)) (Column SqlInt4)
+ TableFields (Maybe (Field SqlInt4)) (Field SqlInt4)
  @
 
  Optional columns are those that can be omitted on writes, such as
  those that have @DEFAULT@s or those that are @SERIAL@.
  When you insert or update into this column you must give it a @Maybe
- (Column SqlInt4)@. If you provide @Nothing@ then the column will be
+ (Field SqlInt4)@. If you provide @Nothing@ then the column will be
  omitted from the query and the default value will be used. Otherwise
- you have to provide a @Just@ containing a @Column SqlInt4@.
+ you have to provide a @Just@ containing a @Field SqlInt4@.
 
  An optional nullable @SqlInt4@ is created with 'optional' and gives
  rise to a
 
  @
- TableFields (Maybe (Column (Nullable SqlInt4))) (Column (Nullable SqlInt4))
+ TableFields (Maybe (FieldNullable SqlInt4)) (FieldNullable SqlInt4)
  @
 
  Optional columns are those that can be omitted on writes, such as
  those that have @DEFAULT@s or those that are @SERIAL@.
  When you insert or update into this column you must give it a @Maybe
- (Column (Nullable SqlInt4))@. If you provide @Nothing@ then the default
+ (FieldNullable SqlInt4)@. If you provide @Nothing@ then the default
  value will be used. Otherwise you have to provide a @Just@ containing
- a @Column (Nullable SqlInt4)@ (which can be null).
+ a @FieldNullable SqlInt4@ (which can be null).
 
 -}
 
@@ -96,16 +96,16 @@ import qualified Data.Profunctor.Product.Default as D
 -- | Example type specialization:
 --
 -- @
--- selectTable :: Table w (Column a, Column b)
---             -> Select (Column a, Column b)
+-- selectTable :: Table w (Field a, Field b)
+--             -> Select (Field a, Field b)
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- selectTable :: Table w (Foo (Column a) (Column b) (Column c))
---             -> Select (Foo (Column a) (Column b) (Column c))
+-- selectTable :: Table w (Foo (Field a) (Field b) (Field c))
+--             -> Select (Foo (Field a) (Field b) (Field c))
 -- @
 selectTable :: D.Default U.Unpackspec fields fields
             => Table a fields

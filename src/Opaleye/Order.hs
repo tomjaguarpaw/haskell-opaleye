@@ -44,8 +44,8 @@ import Data.Monoid ((\<\>))
 
 \-- Order by the first column ascending.  When first columns are equal
 \-- order by second column descending.
-example :: 'S.Select' ('C.Column' 'T.SqlInt4', 'C.Column' 'T.SqlText')
-        -> 'S.Select' ('C.Column' 'T.SqlInt4', 'C.Column' 'T.SqlText')
+example :: 'S.Select' ('Opaleye.Field.Field' 'T.SqlInt4', 'Opaleye.Field.Field' 'T.SqlText')
+        -> 'S.Select' ('Opaleye.Field.Field' 'T.SqlInt4', 'Opaleye.Field.Field' 'T.SqlText')
 example = 'orderBy' ('asc' fst \<\> 'desc' snd)
 @
 
@@ -125,7 +125,8 @@ offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 
 -- | Keep a row from each set where the given function returns the same result. No
 --   ordering is guaranteed. Mutliple fields may be distinguished by projecting out
---   tuples of 'Column's. Use 'distinctOnBy' to control how the rows are chosen.
+--   tuples of 'Opaleye.Field.Field_'s. Use 'distinctOnBy' to control how the rows
+--   are chosen.
 distinctOn :: D.Default U.Unpackspec b b => (a -> b) -> S.Select a -> S.Select a
 distinctOn proj q = Q.simpleQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
 
@@ -133,7 +134,7 @@ distinctOn proj q = Q.simpleQueryArr (O.distinctOn D.def proj . Q.runSimpleQuery
 -- | Keep the row from each set where the given function returns the same result. The
 --   row is chosen according to which comes first by the supplied ordering. However, no
 --   output ordering is guaranteed. Mutliple fields may be distinguished by projecting
---   out tuples of 'Column's.
+--   out tuples of 'Opaleye.Field.Field_'s.
 distinctOnBy :: D.Default U.Unpackspec b b => (a -> b) -> O.Order a
              -> S.Select a -> S.Select a
 distinctOnBy proj ord q = Q.simpleQueryArr (O.distinctOnBy D.def proj ord . Q.runSimpleQueryArr q)

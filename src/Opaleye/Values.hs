@@ -15,14 +15,14 @@ import           Data.Profunctor.Product.Default (Default, def)
 -- Example type specialization:
 --
 -- @
--- values :: [(Column a, Column b)] -> Select (Column a, Column b)
+-- values :: [(Field a, Field b)] -> Select (Field a, Field b)
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- queryTable :: [Foo (Column a) (Column b) (Column c)] -> S.Select (Foo (Column a) (Column b) (Column c))
+-- selectTable :: [Foo (Field a) (Field b) (Field c)] -> S.Select (Foo (Field a) (Field b) (Field c))
 -- @
 values :: (Default V.Valuesspec fields fields,
            Default U.Unpackspec fields fields) =>
