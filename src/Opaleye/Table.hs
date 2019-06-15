@@ -65,7 +65,6 @@ module Opaleye.Table (-- * Defining tables
                       table,
                       tableWithSchema,
                       T.Table,
-                      T.tableColumn,
                       T.tableField,
                       T.optional,
                       T.required,
@@ -75,6 +74,7 @@ module Opaleye.Table (-- * Defining tables
                       T.TableColumns,
                       TableFields,
                       -- * Deprecated
+                      T.tableColumn,
                       View,
                       Writer,
                       T.Table(T.Table, T.TableWithSchema),
