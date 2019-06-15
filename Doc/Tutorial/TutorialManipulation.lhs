@@ -15,7 +15,7 @@
 >                          )
 >
 > import           Data.Profunctor.Product (p4)
-> import qualified Opaleye.Constant as C
+> import qualified Opaleye.ToFields as C
 >
 > import           GHC.Int (Int64)
 
@@ -84,12 +84,12 @@ VALUES (DEFAULT,
 
 
 If we'd like to pass a variable into the insertion function, we can't
-rely on the `Num` instance and must use `constant`:
+rely on the `Num` instance and must use `toFields`:
 
 > insertNonLiteral :: Double -> Insert Int64
 > insertNonLiteral i = Insert
 >   { iTable      = myTable
->   , iRows       = [(Nothing, 2, C.constant i, sqlString "Hello")]
+>   , iRows       = [(Nothing, 2, C.toFields i, sqlString "Hello")]
 >   , iReturning  = rCount
 >   , iOnConflict = Nothing
 >   }

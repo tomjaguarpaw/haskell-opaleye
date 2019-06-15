@@ -1,3 +1,6 @@
+-- | Do not use.  Use "Opaleye.ToFields" instead.  Will be deprecated
+-- in version 0.7.
+
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 
 module Opaleye.Constant where
