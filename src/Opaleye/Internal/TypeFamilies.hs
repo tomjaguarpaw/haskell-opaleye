@@ -7,6 +7,7 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 -- TODO
 -- Updater -- easier -- this one's probably not needed
@@ -83,7 +84,7 @@ type Nulls = 'H NullsT
 type W = 'H WT
 type F = 'H
 
-class SequencePPHKD (rec :: Arr k1 k2 * -> *) where
+class SequencePPHKD (rec :: Arr k1 k2 * -> *) | rec -> k1 where
   sequencePPHKD
     :: PP.ProductProfunctor p => rec (p :<$> (a :: Arr k1 k2 *) :<*> b)
                               -> p (rec a) (rec b)
