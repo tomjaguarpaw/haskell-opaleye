@@ -40,7 +40,6 @@
 > import qualified Database.PostgreSQL.Simple as PGS
 
 > import Opaleye.Internal.Table (TableProperties)
-> import Opaleye.Internal.TypeFamilies (Arr)
 
 Introduction
 ============
@@ -163,7 +162,7 @@ the same way as before.
 
 > tableHKD :: SequencePPHKD rec
 >          => String
->          -> rec (TableProperties :<$> (a :: Arr h k *) :<*> b)
+>          -> rec (TableProperties :<$> a :<*> b)
 >          -> Table (rec a) (rec b)
 > tableHKD s = table s . sequencePPHKD
 
