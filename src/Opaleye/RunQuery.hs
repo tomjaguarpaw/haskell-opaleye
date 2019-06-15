@@ -81,14 +81,14 @@ runQueryFold = runQueryFoldExplicit D.def
 -- newtype Foo = Foo Int
 --
 -- instance QueryRunnerColumnDefault Foo Foo where
---    queryRunnerColumnDefault =
+--    fromFieldDefault =
 --        queryRunnerColumn ('Opaleye.Column.unsafeCoerceColumn'
 --                               :: Column Foo -> Column SqlInt4)
 --                          Foo
---                          queryRunnerColumnDefault
+--                          fromFieldDefault
 -- @
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
-                  -> IRQ.QueryRunnerColumn a b -> IRQ.QueryRunnerColumn a' b'
+                  -> IRQ.FromField a b -> IRQ.FromField a' b'
 queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
                                                             (fmapFP haskellF fp)
   where IRQ.QueryRunnerColumn u fp = qrc

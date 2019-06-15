@@ -162,81 +162,88 @@ instance QueryRunnerColumnDefault a b =>
 -- 3. If you have a more complicated case, but not a 'FromField' instance,
 -- write a 'FieldParser' for your type and use 'fieldParserQueryRunnerColumn'.
 -- You can also add a 'FromField' instance using this.
-class QueryRunnerColumnDefault pgType haskellType where
-  queryRunnerColumnDefault :: QueryRunnerColumn pgType haskellType
+class QueryRunnerColumnDefault sqlType haskellType where
+  -- | Do not use @queryRunnerColumnDefault@.  It will be deprecated
+  -- in version 0.7.
+  queryRunnerColumnDefault :: FromField sqlType haskellType
+  queryRunnerColumnDefault = fromFieldDefault
+  fromFieldDefault         :: FromField sqlType haskellType
+  fromFieldDefault = queryRunnerColumnDefault
+
+  {-# MINIMAL queryRunnerColumnDefault | fromFieldDefault #-}
 
 instance QueryRunnerColumnDefault sqlType haskellType
     => D.Default FromField sqlType haskellType where
-  def = queryRunnerColumnDefault
+  def = fromFieldDefault
 
 instance QueryRunnerColumnDefault T.PGNumeric Sci.Scientific where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGInt4 Int where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGInt4 Int32 where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGInt8 Int64 where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGText String where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGFloat8 Double where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGBool Bool where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGUuid UUID where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGBytea SBS.ByteString where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGBytea LBS.ByteString where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGText ST.Text where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGText LT.Text where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGDate Time.Day where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGTimestamptz Time.UTCTime where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGTimestamp Time.LocalTime where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGTimestamptz Time.ZonedTime where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGTime Time.TimeOfDay where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGCitext (CI.CI ST.Text) where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGCitext (CI.CI LT.Text) where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGJson String where
-  queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonFieldParser
+  fromFieldDefault = fieldParserQueryRunnerColumn jsonFieldParser
 
 instance QueryRunnerColumnDefault T.PGJson Ae.Value where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 instance QueryRunnerColumnDefault T.PGJsonb String where
-  queryRunnerColumnDefault = fieldParserQueryRunnerColumn jsonbFieldParser
+  fromFieldDefault = fieldParserQueryRunnerColumn jsonbFieldParser
 
 instance QueryRunnerColumnDefault T.PGJsonb Ae.Value where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
@@ -245,14 +252,14 @@ arrayColumn = C.unsafeCoerceColumn
 
 instance (Typeable b, QueryRunnerColumnDefault a b) =>
          QueryRunnerColumnDefault (T.PGArray a) [b] where
-  queryRunnerColumnDefault = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
-    where QueryRunnerColumn c f = queryRunnerColumnDefault
+  fromFieldDefault = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
+    where QueryRunnerColumn c f = fromFieldDefault
 
 -- }
 
 instance (Typeable b, PGS.FromField b, QueryRunnerColumnDefault a b) =>
          QueryRunnerColumnDefault (T.PGRange a) (PGSR.PGRange b) where
-  queryRunnerColumnDefault = fieldQueryRunnerColumn
+  fromFieldDefault = fieldQueryRunnerColumn
 
 -- Boilerplate instances
 
