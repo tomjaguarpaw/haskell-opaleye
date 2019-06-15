@@ -49,13 +49,15 @@ import           Data.Typeable (Typeable)
 
 -- }
 
--- | A 'QueryRunnerColumn' @pgType@ @haskellType@ encodes how to turn
--- a value of Postgres type @pgType@ into a value of Haskell type
--- @haskellType@.  For example a value of type 'QueryRunnerColumn'
--- 'T.PGText' 'String' encodes how to turn a 'T.PGText' result from the
+-- | A 'FromField' @sqlType@ @haskellType@
+-- (or the old name, 'QueryRunnerColumn' @sqlType@ @haskellType@)
+-- encodes how to turn
+-- a value of Postgres type @sqlType@ into a value of Haskell type
+-- @haskellType@.  For example a value of type 'FromField'
+-- 'T.SqlText' 'String' encodes how to turn a 'T.SqlText' result from the
 -- database into a Haskell 'String'.
 --
--- \"'QueryRunnerColumn' @pgType@ @haskellType@\" corresponds to
+-- \"'FromField' @sqlType@ @haskellType@\" corresponds to
 -- postgresql-simple's \"'FieldParser' @haskellType@\".
 
 -- This is *not* a Product Profunctor because it is the only way I
@@ -74,14 +76,15 @@ instance Functor (FromField u) where
 
 type FromField = QueryRunnerColumn
 
--- | A 'QueryRunner' specifies how to convert Postgres values (@columns@)
+-- | A 'FromFields' (or the old name 'QueryRunner')
+--   specifies how to convert Postgres values (@fields@)
 --   into Haskell values (@haskells@).  Most likely you will never need
 --   to create on of these or handle one directly.  It will be provided
---   for you by the 'D.Default' 'QueryRunner' instance.
+--   for you by the 'D.Default' 'FromFields' instance.
 --
--- \"'QueryRunner' @columns@ @haskells@\" corresponds to
+-- \"'FromFields' @fields@ @haskells@\" corresponds to
 -- postgresql-simple's \"'RowParser' @haskells@\".  \"'Default'
--- 'QueryRunner' @columns@ @haskells@\" corresponds to
+-- 'FromFields' @columns@ @haskells@\" corresponds to
 -- postgresql-simple's \"@FromRow@ @haskells@\".
 data QueryRunner columns haskells =
   QueryRunner (U.Unpackspec columns ())
@@ -127,22 +130,22 @@ queryRunnerColumnNullable qr =
 
 instance QueryRunnerColumnDefault a b =>
          QueryRunnerColumnDefault (Nullable a) (Maybe b) where
-  queryRunnerColumnDefault = queryRunnerColumnNullable queryRunnerColumnDefault
+  fromFieldDefault = queryRunnerColumnNullable fromFieldDefault
 
 instance QueryRunnerColumnDefault a b =>
          D.Default QueryRunner (Column a) b where
-  def = queryRunner queryRunnerColumnDefault
+  def = queryRunner fromFieldDefault
 
 -- }
 
 -- { Instances that must be provided once for each type.  Instances
 --   for Nullable are derived automatically from these.
 
--- | A 'QueryRunnerColumnDefault' @pgType@ @haskellType@ represents
--- the default way to turn a @pgType@ result from the database into a
+-- | A 'QueryRunnerColumnDefault' @sqlType@ @haskellType@ represents
+-- the default way to turn a @sqlType@ result from the database into a
 -- Haskell value of type @haskellType@.
 --
--- \"'QueryRunnerColumnDefault' @pgType@ @haskellType@\" corresponds
+-- \"'QueryRunnerColumnDefault' @sqlType@ @haskellType@\" corresponds
 -- to postgresql-simple's \"'FromField' @haskellType@\".
 --
 -- Creating an instance of 'QueryRunnerColumnDefault' for your own types is
