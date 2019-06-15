@@ -7,7 +7,6 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE FunctionalDependencies #-}
 
 -- TODO
 -- Updater -- easier -- this one's probably not needed
@@ -73,7 +72,11 @@ type instance A ('H WT) ('TC '(t, Opt)) = Maybe (A ('H OT) ('C t))
 type instance A ('H NullsT) ('TC '(t, b)) = A ('H NullsT) ('C t)
 
 type RecordField f a b c = A f ('C '(a, b, c))
-type TableRecordField f a b c d = A f ('TC '( '(a, b, c), d))
+-- I don't like this kind signature but there's a problem.  Our type
+-- functions (RecordField, TableRecordField, etc.) are overly general.
+-- There's nothing constraining h.  Ideally we'd want them to work for
+-- only one kind.
+type TableRecordField (f :: Arr * (TC *) *) a b c d = A f ('TC '( '(a, b, c), d))
 -- | Do not use.  Use 'TableRecordField' instead.  Will be deprecated
 -- in version 0.7.
 type TableField f a b c d = TableRecordField f a b c d
@@ -84,7 +87,6 @@ type Nulls = 'H NullsT
 type W = 'H WT
 type F = 'H
 
-class SequencePPHKD (rec :: Arr k1 k2 * -> *) | rec -> k1 where
+class SequencePPHKD rec where
   sequencePPHKD
-    :: PP.ProductProfunctor p => rec (p :<$> (a :: Arr k1 k2 *) :<*> b)
-                              -> p (rec a) (rec b)
+    :: PP.ProductProfunctor p => rec (p :<$> a :<*> b) -> p (rec a) (rec b)
