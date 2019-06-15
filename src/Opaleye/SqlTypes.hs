@@ -1,3 +1,7 @@
+-- | SQL types and functions to create 'Opaleye.Field.Field_'s of
+-- those types.  You may find it more convenient to use
+-- "Opaleye.Constant" instead.
+
 module Opaleye.SqlTypes (module Opaleye.SqlTypes,
                          P.IsSqlType,
                          P.IsRangeType) where

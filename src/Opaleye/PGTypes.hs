@@ -1,5 +1,4 @@
--- | Postgres types and functions to create 'Column's of those types.
--- You may find it more convenient to use "Opaleye.Constant" instead.
+-- | Use "Opaleye.SqlTypes" instead.  Will be deprecated in version 0.7.
 
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE ScopedTypeVariables #-}
