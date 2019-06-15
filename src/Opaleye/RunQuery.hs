@@ -53,19 +53,8 @@ runQueryFold = runQueryFoldExplicit D.def
 
 -- * Creating new 'QueryRunnerColumn's
 
--- | Use 'queryRunnerColumn' to make an instance to allow you to run queries on
---   your own datatypes.  For example:
---
--- @
--- newtype Foo = Foo Int
---
--- instance QueryRunnerColumnDefault Foo Foo where
---    fromFieldDefault =
---        queryRunnerColumn ('Opaleye.Column.unsafeCoerceColumn'
---                               :: Column Foo -> Column SqlInt4)
---                          Foo
---                          fromFieldDefault
--- @
+-- | Use 'Opaleye.RunSelect.unsafeFromField' instead.
+-- @queryRunnerColumn@ will be deprecated in 0.7.
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
                   -> IRQ.FromField a b -> IRQ.FromField a' b'
 queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
