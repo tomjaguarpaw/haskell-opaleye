@@ -148,7 +148,13 @@ instance FromFieldDefault a b =>
 -- { Instances that must be provided once for each type.  Instances
 --   for Nullable are derived automatically from these.
 
--- | A 'QueryRunnerColumnDefault' @sqlType@ @haskellType@ represents
+-- | (Note that a better name for this class would be
+-- 'FromFieldDefault' and it probably will have this name in version
+-- 0.7.  When you see 'QueryRunnerColumnDefault' please read
+-- 'FromFieldDefault' instead.  That will probably make things easier
+-- to understand.)
+--
+-- A 'QueryRunnerColumnDefault' @sqlType@ @haskellType@ represents
 -- the default way to turn a @sqlType@ result from the database into a
 -- Haskell value of type @haskellType@.
 --
