@@ -128,21 +128,21 @@ optional columnName = TableProperties
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 class TableColumn writeType sqlType | writeType -> sqlType where
+    -- | Do not use.  Use 'tableField' instead.  Will be deprecated in
+    -- 0.7.
+    tableColumn :: String -> TableFields writeType (Column sqlType)
+    tableColumn = tableField
     -- | Infer either a 'required' or 'optional' column depending on
     -- the write type.  It's generally more convenient to use this
     -- than 'required' or 'optional' but you do have to provide a type
     -- signature instead.
-    tableColumn :: String -> TableFields writeType (Column sqlType)
+    tableField  :: String -> TableFields writeType (Column sqlType)
 
 instance TableColumn (Column a) a where
-    tableColumn = required
+    tableField = required
 
 instance TableColumn (Maybe (Column a)) a where
-    tableColumn = optional
-
-tableField :: TableColumn writeType sqlType
-           => String -> TableFields writeType (Column sqlType)
-tableField = tableColumn
+    tableField = optional
 
 queryTable :: U.Unpackspec viewColumns columns
             -> Table writeColumns viewColumns
