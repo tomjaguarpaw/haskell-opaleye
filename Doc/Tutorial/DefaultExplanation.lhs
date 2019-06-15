@@ -1,7 +1,7 @@
 > {-# LANGUAGE FlexibleContexts #-}
 > module DefaultExplanation where
 >
-> import Opaleye (Column, Nullable, QueryRunner, Query,
+> import Opaleye (Field, FieldNullable, FromFields, Select,
 >                 SqlInt4, SqlBool, SqlText, SqlFloat4)
 > import qualified Opaleye as O
 > import qualified Opaleye.Internal.Binary as Internal.Binary
@@ -29,62 +29,62 @@ and how it is used with the `unionAll` operation.  The version of
 `unionAll` that does not have a Default constraint is called
 `unionAllExplicit` and has the following type.
 
-> unionAllExplicit :: Binaryspec a b -> Query a -> Query a -> Query b
+> unionAllExplicit :: Binaryspec a b -> Select a -> Select a -> Select b
 > unionAllExplicit = O.unionAllExplicit
 
 What is the `Binaryspec` used for here?  Let's take a simple case
-where we want to union two queries of type `Query (Column SqlInt4,
-Column SqlText)`
+where we want to union two queries of type `Select (Field SqlInt4,
+Field SqlText)`
 
-> myQuery1 :: Query (Column SqlInt4, Column SqlText)
-> myQuery1 = undefined -- We won't actually need specific implementations here
+> mySelect1 :: Select (Field SqlInt4, Field SqlText)
+> mySelect1 = undefined -- We won't actually need specific implementations here
 >
-> myQuery2 :: Query (Column SqlInt4, Column SqlText)
-> myQuery2 = undefined
+> mySelect2 :: Select (Field SqlInt4, Field SqlText)
+> mySelect2 = undefined
 
 That means we will be using unionAll at the type
 
-> unionAllExplicit' :: Binaryspec (Column SqlInt4, Column SqlText) (Column SqlInt4, Column SqlText)
->                   -> Query (Column SqlInt4, Column SqlText)
->                   -> Query (Column SqlInt4, Column SqlText)
->                   -> Query (Column SqlInt4, Column SqlText)
+> unionAllExplicit' :: Binaryspec (Field SqlInt4, Field SqlText) (Field SqlInt4, Field SqlText)
+>                   -> Select (Field SqlInt4, Field SqlText)
+>                   -> Select (Field SqlInt4, Field SqlText)
+>                   -> Select (Field SqlInt4, Field SqlText)
 > unionAllExplicit' = unionAllExplicit
 
-Since every `Column` is actually just a string containing an SQL
-expression, `(Column SqlInt4, Column SqlText)` is a pair of expressions.
+Since every `Field` is actually just a string containing an SQL
+expression, `(Field SqlInt4, Field SqlText)` is a pair of expressions.
 When we generate the SQL we need to take the two pairs of expressions,
 generate new unique names that refer to them and produce these new
-unique names in another value of type `(Column SqlInt4, Column
+unique names in another value of type `(Field SqlInt4, Field
 SqlText)`.  This is exactly what a value of type
 
-    Binaryspec (Column SqlInt4, Column SqlText) (Column SqlInt4, Column SqlText)
+    Binaryspec (Field SqlInt4, Field SqlText) (Field SqlInt4, Field SqlText)
 
 allows us to do.
 
 So the next question is, how do we get our hands on a value of that
-type?  Well, we have `binaryspecColumn` which is a value that allows
+type?  Well, we have `binaryspecField` which is a value that allows
 us to access the column name within a single column.
 
-> binaryspecColumn :: Binaryspec (Column a) (Column a)
+> binaryspecColumn :: Binaryspec (Field a) (Field a)
 > binaryspecColumn = Internal.Binary.binaryspecColumn
 
 `Binaryspec` is a `ProductProfunctor` so we can combine two of them to
 work on a pair.
 
-> binaryspecColumn2 :: Binaryspec (Column a, Column b) (Column a, Column b)
+> binaryspecColumn2 :: Binaryspec (Field a, Field b) (Field a, Field b)
 > binaryspecColumn2 = binaryspecColumn ***! binaryspecColumn
 
 Then we can use `binaryspecColumn2` in `unionAllExplicit`.
 
-> theUnionAll :: Query (Column SqlInt4, Column SqlText)
-> theUnionAll = unionAllExplicit binaryspecColumn2 myQuery1 myQuery2
+> theUnionAll :: Select (Field SqlInt4, Field SqlText)
+> theUnionAll = unionAllExplicit binaryspecColumn2 mySelect1 mySelect2
 
 Now suppose that we wanted to take a union of two queries with columns
 in a tuple of size four.  We can make a suitable `Binaryspec` like
 this:
 
-> binaryspecColumn4 :: Binaryspec (Column a, Column b, Column c, Column d)
->                                   (Column a, Column b, Column c, Column d)
+> binaryspecColumn4 :: Binaryspec (Field a, Field b, Field c, Field d)
+>                                 (Field a, Field b, Field c, Field d)
 > binaryspecColumn4 = p4 (binaryspecColumn, binaryspecColumn,
 >                         binaryspecColumn, binaryspecColumn)
 
@@ -100,17 +100,17 @@ deduced.  This is where the `Default` typeclass comes in.
 
 `Opaleye.Internal.Binary` contains the `Default` instance
 
-    instance Default Binaryspec (Column a) (Column a) where
+    instance Default Binaryspec (Field a) (Field a) where
       def = binaryspecColumn
 
 That means that we know the "default" way of getting a
 
-    Binaryspec (Column a) (Column a)
+    Binaryspec (Field a) (Field a)
 
 However, if we have a default way of getting one of these, we also
 have a default way of getting a
 
-    Binaryspec (Column a, Column b) (Column a, Column b)
+    Binaryspec (Field a, Field b) (Field a, Field b)
 
 just by using the `ProductProfunctor` product operation `(***!)`.  And
 in the general case for a product type `T` with n type parameters we
@@ -129,94 +129,94 @@ automatically uses the default `Binaryspec` so we don't have to
 provide it.  This is exactly what `Opaleye.Binary.unionAll` does.
 
 > unionAll :: Default Binaryspec a b
->           => Query a -> Query a -> Query b
+>           => Select a -> Select a -> Select b
 > unionAll = O.unionAllExplicit def
 >
-> theUnionAll' :: Query (Column SqlInt4, Column SqlText)
-> theUnionAll' = unionAll myQuery1 myQuery2
+> theUnionAll' :: Select (Field SqlInt4, Field SqlText)
+> theUnionAll' = unionAll mySelect1 mySelect2
 
 In the long run this prevents writing a huge amount of boilerplate code.
 
-A further example: `QueryRunner`
+A further example: `FromFields`
 ==============================
 
-A `QueryRunner a b` is the product-profunctor which represents how to
-turn run a `Query a` (currently on Postgres) and return you a list of
+A `FromFields a b` is the product-profunctor which represents how to
+turn run a `Select a` (currently on Postgres) and return you a list of
 rows, each row of type `b`.  The function which is responsible for
-this is `runQuery`
+this is `runSelect`
 
-> runQueryExplicit :: QueryRunner a b -> SQL.Connection -> Query a -> IO [b]
-> runQueryExplicit = O.runQueryExplicit
+> runSelectExplicit :: FromFields a b -> SQL.Connection -> Select a -> IO [b]
+> runSelectExplicit = O.runSelectExplicit
 
-Basic values of `QueryRunner` will have the following types
+Basic values of `FromFields` will have the following types
 
-> intRunner :: QueryRunner (Column SqlInt4) Int
+> intRunner :: FromFields (Field SqlInt4) Int
 > intRunner = undefined -- The implementation is not important here
 >
-> doubleRunner :: QueryRunner (Column SqlFloat4) Double
+> doubleRunner :: FromFields (Field SqlFloat4) Double
 > doubleRunner = undefined
 >
-> stringRunner :: QueryRunner (Column SqlText) String
+> stringRunner :: FromFields (Field SqlText) String
 > stringRunner = undefined
 >
-> boolRunner :: QueryRunner (Column SqlBool) Bool
+> boolRunner :: FromFields (Field SqlBool) Bool
 > boolRunner = undefined
 
 Furthermore we will have basic ways of running queries which return
 `Nullable` values, for example
 
-> nullableIntRunner :: QueryRunner (Column (Nullable SqlInt4)) (Maybe Int)
+> nullableIntRunner :: FromFields (FieldNullable SqlInt4) (Maybe Int)
 > nullableIntRunner = undefined
 
 If I have a very simple query with a single column of `SqlInt4` then I can
 run it using the `intRunner`.
 
-> myQuery3 :: Query (Column SqlInt4)
-> myQuery3 = undefined -- The implementation is not important
+> mySelect3 :: Select (Field SqlInt4)
+> mySelect3 = undefined -- The implementation is not important
 >
-> runTheQuery :: SQL.Connection -> IO [Int]
-> runTheQuery c = runQueryExplicit intRunner c myQuery3
+> runTheSelect :: SQL.Connection -> IO [Int]
+> runTheSelect c = runSelectExplicit intRunner c mySelect3
 
 If my query has several columns of different types I need to build up
-a larger `QueryRunner`.
+a larger `FromFields`.
 
-> myQuery4 :: Query (Column SqlInt4, Column SqlText, Column SqlBool, Column (Nullable SqlInt4))
-> myQuery4 = undefined
+> mySelect4 :: Select (Field SqlInt4, Field SqlText, Field SqlBool, FieldNullable SqlInt4)
+> mySelect4 = undefined
 >
-> largerQueryRunner :: QueryRunner
->       (Column SqlInt4, Column SqlText, Column SqlBool, Column (Nullable SqlInt4))
+> largerSelectRunner :: FromFields
+>       (Field SqlInt4, Field SqlText, Field SqlBool, FieldNullable SqlInt4)
 >       (Int, String, Bool, Maybe Int)
-> largerQueryRunner = p4 (intRunner, stringRunner, boolRunner, nullableIntRunner)
+> largerSelectRunner = p4 (intRunner, stringRunner, boolRunner, nullableIntRunner)
 >
-> runTheBiggerQuery :: SQL.Connection -> IO [(Int, String, Bool, Maybe Int)]
-> runTheBiggerQuery c = runQueryExplicit largerQueryRunner c myQuery4
+> runTheBiggerSelect :: SQL.Connection -> IO [(Int, String, Bool, Maybe Int)]
+> runTheBiggerSelect c = runSelectExplicit largerSelectRunner c mySelect4
 
-But having to build up `largerQueryRunner` was a pain and completely
+But having to build up `largerSelectRunner` was a pain and completely
 redundant!  Like the `Binaryspec` it can be automatically deduced.
-`Karamaan.Opaleye.RunQuery` already gives us `Default` instances for
+`Opaleye.RunSelect` already gives us `Default` instances for
 the following types (plus many others, of course!).
 
-* `QueryRunner (Column SqlInt4) Int`
-* `QueryRunner (Column SqlText) String`
-* `QueryRunner (Column Bool) Bool`
-* `QueryRunner (Column (Nullable Int)) (Maybe Int)`
+* `FromFields (Field SqlInt4) Int`
+* `FromFields (Field SqlText) String`
+* `FromFields (Field Bool) Bool`
+* `FromFields (Field (Nullable Int)) (Maybe Int)`
 
 Then the `Default` typeclass machinery automatically deduces the
 correct value of the type we want.
 
-> largerQueryRunner' :: QueryRunner
->       (Column SqlInt4, Column SqlText, Column SqlBool, Column (Nullable SqlInt4))
+> largerSelectRunner' :: FromFields
+>       (Field SqlInt4, Field SqlText, Field SqlBool, FieldNullable SqlInt4)
 >       (Int, String, Bool, Maybe Int)
-> largerQueryRunner' = def
+> largerSelectRunner' = def
 
-And we can produce a version of `runQuery` which allows us to write
+And we can produce a version of `runSelect` which allows us to write
 our query without explicitly passing the product-profunctor value.
 
-> runQuery :: Default QueryRunner a b => SQL.Connection -> Query a -> IO [b]
-> runQuery = O.runQueryExplicit def
+> runSelect :: Default FromFields a b => SQL.Connection -> Select a -> IO [b]
+> runSelect = O.runSelectExplicit def
 >
-> runTheBiggerQuery' :: SQL.Connection -> IO [(Int, String, Bool, Maybe Int)]
-> runTheBiggerQuery' c = runQuery c myQuery4
+> runTheBiggerSelect' :: SQL.Connection -> IO [(Int, String, Bool, Maybe Int)]
+> runTheBiggerSelect' c = runSelect c mySelect4
 
 Conclusion
 ==========

@@ -4,12 +4,11 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye.QueryArr (Query)
-> import           Opaleye.Column (Column)
-> import           Opaleye.Table (Table, table, tableField, queryTable)
-> import           Opaleye.SqlTypes (SqlText, SqlInt4)
+> import           Opaleye (Select, Field, Table, table, tableField,
+>                           queryTable, SqlText, SqlInt4, Aggregator,
+>                           aggregate)
 > import qualified Opaleye.Aggregate as A
-> import           Opaleye.Aggregate (Aggregator, aggregate)
+> import           Opaleye.Aggregate ()
 >
 > import qualified Opaleye.Sql as Sql
 > import qualified Opaleye.Internal.Unpackspec as U
@@ -32,18 +31,18 @@ this easily in SQL as `MAX(column) - MIN(column)`, Opaleye has the
 advantage of treating `range` as a first-class value able to be passed
 around between functions and manipulated at will.
 
-> range :: Aggregator (Column SqlInt4) (Column SqlInt4)
+> range :: Aggregator (Field SqlInt4) (Field SqlInt4)
 > range = dimap (\x -> (x, x)) (uncurry (-)) (A.max ***! A.min)
 
 We can test it on a person table which contains rows containing
 people's names along with the age of their children.
 
-> personTable :: Table (Column SqlText, Column SqlInt4)
->                      (Column SqlText, Column SqlInt4)
+> personTable :: Table (Field SqlText, Field SqlInt4)
+>                      (Field SqlText, Field SqlInt4)
 > personTable = table "personTable" (p2 ( tableField "name"
 >                                       , tableField "child_age" ))
 
-> rangeOfChildrensAges :: Query (Column SqlText, Column SqlInt4)
+> rangeOfChildrensAges :: Select (Field SqlText, Field SqlInt4)
 > rangeOfChildrensAges = aggregate (p2 (A.groupBy, range)) (queryTable personTable)
 
 
@@ -72,5 +71,5 @@ GROUP BY name
 Helper function
 ===============
 
-> printSql :: Default U.Unpackspec a a => Query a -> IO ()
+> printSql :: Default U.Unpackspec a a => Select a -> IO ()
 > printSql = putStrLn . maybe "Empty query" id . Sql.showSqlForPostgres
