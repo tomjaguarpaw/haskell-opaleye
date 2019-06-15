@@ -137,10 +137,10 @@ data Insert haskells = forall fieldsW fieldsR. Insert
 data Update haskells = forall fieldsW fieldsR. Update
    { uTable      :: T.Table fieldsW fieldsR
    , uUpdateWith :: fieldsR -> fieldsW
-   -- ^ Be careful: providing 'Nothing' to a column created by
-   -- 'Opaleye.Table.optional' updates the column to its default
+   -- ^ Be careful: providing 'Nothing' to a field created by
+   -- 'Opaleye.Table.optional' updates the field to its default
    -- value.  Many users have been confused by this because they
-   -- assume it means that the column is to be left unchanged.  For an
+   -- assume it means that the field is to be left unchanged.  For an
    -- easier time wrap your update function in 'updateEasy'.
    , uWhere      :: fieldsR -> F.Field SqlBool
    , uReturning  :: MI.Returning fieldsR haskells

@@ -15,7 +15,7 @@ import           Control.Arrow                   ((<<<))
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor.Product         as PP
 
-import qualified Opaleye.Column                  as C
+import qualified Opaleye.Field                   as C
 import qualified Opaleye.Field                   as F
 import qualified Opaleye.Internal.Join           as IJ
 import qualified Opaleye.Internal.Operators      as IO

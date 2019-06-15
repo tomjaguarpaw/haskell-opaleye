@@ -42,8 +42,8 @@ import qualified Opaleye.SqlTypes as T
 @
 import Data.Monoid ((\<\>))
 
-\-- Order by the first column ascending.  When first columns are equal
-\-- order by second column descending.
+\-- Order by the first field ascending.  When first fields are equal
+\-- order by second field descending.
 example :: 'S.Select' ('Opaleye.Field.Field' 'T.SqlInt4', 'Opaleye.Field.Field' 'T.SqlText')
         -> 'S.Select' ('Opaleye.Field.Field' 'T.SqlInt4', 'Opaleye.Field.Field' 'T.SqlText')
 example = 'orderBy' ('asc' fst \<\> 'desc' snd)
