@@ -8,7 +8,7 @@
  Fields can be required or optional and, independently, nullable or
  non-nullable.
 
- A required non-nullable @SqlInt4@ (for example) is created with
+ A required non-nullable @SqlInt4@ (for example) is defined with
  'required' and gives rise to a
 
  @
@@ -17,9 +17,9 @@
 
  The leftmost argument is the type of writes. When you insert or
  update into this column you must give it a @Field SqlInt4@ (which you
- can create with @sqlInt4 :: Int -> Field SqlInt4@).
+ can define with @sqlInt4 :: Int -> Field SqlInt4@).
 
- A required nullable @SqlInt4@ is created with 'required' and gives rise
+ A required nullable @SqlInt4@ is defined with 'required' and gives rise
  to a
 
  @
@@ -27,11 +27,11 @@
  @
 
  When you insert or update into this column you must give it a
- @FieldNullable SqlInt4@, which you can create either with @sqlInt4@ and
+ @FieldNullable SqlInt4@, which you can define either with @sqlInt4@ and
  @toNullable :: Field a -> FieldNullable a@, or with @null ::
  FieldNullable a@.
 
- An optional non-nullable @SqlInt4@ is created with 'optional' and gives
+ An optional non-nullable @SqlInt4@ is defined with 'optional' and gives
  rise to a
 
  @
@@ -45,7 +45,7 @@
  omitted from the query and the default value will be used. Otherwise
  you have to provide a @Just@ containing a @Field SqlInt4@.
 
- An optional nullable @SqlInt4@ is created with 'optional' and gives
+ An optional nullable @SqlInt4@ is defined with 'optional' and gives
  rise to a
 
  @
@@ -61,7 +61,7 @@
 
 -}
 
-module Opaleye.Table (-- * Creating tables
+module Opaleye.Table (-- * Defining tables
                       table,
                       tableWithSchema,
                       T.Table,
@@ -113,14 +113,14 @@ selectTable :: D.Default U.Unpackspec fields fields
             -> S.Select fields
 selectTable = selectTableExplicit D.def
 
--- | Create a table with unqualified names.
+-- | Define a table with an unqualified name.
 table :: String
       -- ^ Table name
       -> TableFields writeFields viewFields
       -> Table writeFields viewFields
 table = T.Table
 
--- | Create a table.
+-- | Define a table with a qualified name.
 tableWithSchema :: String
                 -- ^ Schema name
                 -> String
