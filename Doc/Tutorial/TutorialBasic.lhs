@@ -43,19 +43,19 @@ there is no support for creating databases or tables, though these
 features may be added later according to demand.
 
 A table is defined with the `table` function.  The syntax is
-simple.  You specify the types of the columns, the name of the table
-and the names of the columns in the underlying database, and whether
-the columns are required or optional.
+simple.  You specify the types of the fields, the name of the table
+and the names of the fields in the underlying database, and whether
+the fields are required or optional.
 
 (Note: This simple syntax is supported by an extra combinator that
-describes the shape of the container that you are storing the columns
+describes the shape of the container that you are storing the fields
 in.  In the first example we are using a tuple of size 3 and the
 combinator is called `p3`.  We'll see examples of others later.)
 
 The `Table` type constructor has two arguments.  The first one tells
-us what columns we can write to the table and the second what columns
+us what fields we can write to the table and the second what fields
 we can read from the table.  In this document we will always make all
-columns required, so the write and read types will be the same.  All
+fields required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
 manipulation tutorial you can see an example of when they might differ.
 
@@ -167,8 +167,8 @@ FROM birthdayTable
 Projection
 ==========
 
-"Projection" means discarding some of the columns of our query, for
-example we might want to discard the "address" column of our
+"Projection" means discarding some of the fields of our query, for
+example we might want to discard the "address" field of our
 `personSelect`.
 
 Projection gives us our first example of using "arrow notation" to
@@ -179,7 +179,7 @@ computations.
 
 Here we run the `personSelect` passing in () to signify "zero
 arguments".  We pattern match on the results and return only the
-columns we are interested in.
+fields we are interested in.
 
 > nameAge :: Select (Field SqlText, Field SqlInt4)
 > nameAge = proc () -> do
@@ -374,7 +374,7 @@ Nullability
 NULLs in SQL have been the source of a lot of complaints, but as
 Haskell programmers we know that there is nothing wrong with
 nullability as long is it is reflected in the type system.  Nullable
-columns are indicated with the `Nullable` type constructor.
+fields are indicated with the `FieldNullable` type constructor.
 
 For example, suppose we have an employee table which records the name
 of each employee and the name of their boss.  If their boss is
@@ -470,9 +470,9 @@ twenties" and the restriction to the one's address being "1 My Street,
 My Town".
 
 The types are of the form `SelectArr a ()`.  This means that they read
-columns of type `a` but do not return any columns.  (Note: `Select` is
+fields of type `a` but do not return any fields.  (Note: `Select` is
 just a synonym for `SelectArr ()` which means that it is a `SelectArr`
-that does not read any columns.)
+that does not read any fields.)
 
 > restrictIsTwenties :: SelectArr (Field SqlInt4) ()
 > restrictIsTwenties = proc age -> do
@@ -642,7 +642,7 @@ GROUP BY style, color
 
 Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
-"adaptor" to specify how columns are aggregated.  Note that this is
+"adaptor" to specify how fields are aggregated.  Note that this is
 yet another example of avoiding a headache by keeping your datatype
 fully polymorphic, because the 'count' aggregator changes a 'Field
 String' into a 'Field Int64'.
@@ -654,8 +654,8 @@ Opaleye supports left joins.  (Full outer joins and right joins are
 left to be added as a simple starter project for a new Opaleye
 contributer!)
 
-Because left joins can change non-nullable columns into nullable
-columns we have to make sure the type of the output supports
+Because left joins can change non-nullable fields into nullable
+fields we have to make sure the type of the output supports
 nullability.  We introduce the following type synonym for this
 purpose, which is just a notational convenience.
 
@@ -807,9 +807,9 @@ Opaleye provides simple facilities for running queries on Postgres.
 the following type
 
 > -- runSelect :: Database.PostgreSQL.Simple.Connection
-> --          -> Select columns -> IO [haskells]
+> --          -> Select fields -> IO [haskells]
 
-It converts a "record" of Opaleye columns to a list of "records" of
+It converts a "record" of Opaleye fields to a list of "records" of
 Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
@@ -822,9 +822,9 @@ the following type:
 >                  -> IO [(String, Int, String)]
 > runTwentiesSelect = runSelect
 
-Note that nullable columns are indicated with the Nullable type
+Note that nullable fields are indicated with the FieldNullable type
 constructor, and these are converted to Maybe when executed.  If we
-have a table with a nullable column then Nullable columns turn into
+have a table with a nullable field then FieldNullables turn into
 Maybes.  We could run the query `selectTable employeeTable` like this.
 
 > runEmployeesSelect :: PGS.Connection
