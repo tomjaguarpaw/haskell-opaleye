@@ -1,6 +1,6 @@
 name:            opaleye
 copyright:       Copyright (c) 2014-2019 Purely Agile Limited
-version:         0.6.7003.1
+version:         0.6.7004.0
 synopsis:        An SQL-generating DSL targeting PostgreSQL
 description:     An SQL-generating DSL targeting PostgreSQL.  Allows
                  Postgres queries to be written within Haskell in a

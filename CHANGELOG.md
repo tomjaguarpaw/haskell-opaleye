@@ -1,3 +1,26 @@
+## 0.6.7004.0
+
+* Many changes to the documentation that use the new names.  See entry
+  for version 0.6.7000.0.
+
+* Added `fromPGSFromField` to replace `fieldQueryRunnerColumn`.
+
+* Added `fromPGSFieldParser` to replace `fieldParserQueryRunnerColumn`.
+
+* Added `defaultFromField` to replace `queryRunnerColumnDefault`.
+
+* Added `tableField` to replace `tableColumn`.
+
+* Added `unsafeFromField` to replace `queryRunnerColumn`.
+
+* Added `toFieldsExplicit` to replace `constantExplicit`.
+
+* Added `TableRecordField` to replace `TableField` in
+  `Opaleye.TypeFamilies`.  The latter may be used to replace
+  `TableColumn` in the future.
+
+* Added array functions `arrayAppend`, `arrayRemove`, `arrayRemoveNulls`.
+
 ## 0.6.7003.1
 
 * Bumped some depedencies so there is an install plan on GHC 8.6
