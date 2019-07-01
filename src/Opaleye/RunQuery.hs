@@ -18,7 +18,8 @@ import           Control.Applicative (pure, (<$>))
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Cursor  as PGSC
 import qualified Database.PostgreSQL.Simple.FromRow as FR
-import qualified Data.String as String
+import qualified Database.PostgreSQL.Simple.Types as PT
+import Data.Text.Encoding (encodeUtf8)
 
 import           Opaleye.Column (Column)
 import qualified Opaleye.Select as S
@@ -136,7 +137,9 @@ foldForward (IRQ.Cursor rowParser cursor) chunkSize  f z =
 prepareQuery :: IRQ.FromFields fields haskells -> S.Select fields -> (Maybe PGS.Query, FR.RowParser haskells)
 prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
   where sql :: Maybe PGS.Query
-        sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
+        -- using the Query function directly skips a conversion to String, fromString appears to do
+        -- no validation for the PT.Query type anyhow
+        sql = fmap (PT.Query . encodeUtf8) (S.showSqlForPostgresExplicitText u q)
         -- FIXME: We're doing work twice here
         (b, _, _) = Q.runSimpleQueryArrStart q ()
         parser = IRQ.prepareRowParser qr b

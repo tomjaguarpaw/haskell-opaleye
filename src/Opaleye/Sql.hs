@@ -2,7 +2,12 @@
 
 module Opaleye.Sql where
 
+import Data.Text
+import Data.Text.Prettyprint.Doc
+
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import Opaleye.Internal.HaskellDB.Sql (SqlStatement)
+import Data.Text.Prettyprint.Doc.Render.Text (renderStrict) -- renderLazy?
 
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Sql as Sql
@@ -42,6 +47,12 @@ showSql :: forall fields.
         -> Maybe String
 showSql = showSqlExplicit (D.def :: U.Unpackspec fields fields)
 
+showSqlText ::  forall fields.
+                D.Default U.Unpackspec fields fields
+            => S.Select fields
+            -> Maybe Text
+showSqlText = showSqlExplicitText (D.def :: U.Unpackspec fields fields)
+
 -- | Show the unoptimized SQL query string generated from the query.
 showSqlUnopt :: forall fields.
                 D.Default U.Unpackspec fields fields
@@ -50,11 +61,18 @@ showSqlUnopt :: forall fields.
 showSqlUnopt = showSqlUnoptExplicit (D.def :: U.Unpackspec fields fields)
 
 -- * Explicit versions
-
 showSqlExplicit :: U.Unpackspec fields b -> S.Select fields -> Maybe String
 showSqlExplicit = formatAndShowSQL
                   . (\(x, y, z) -> (x, Op.optimize y, z))
                   .: Q.runQueryArrUnpack
+
+showSqlExplicitText :: U.Unpackspec fields b -> S.Select fields -> Maybe Text
+showSqlExplicitText = formatAndShowSQLText
+                      . (\(x, y, z) -> (x, Op.optimize y, z))
+                      .: Q.runQueryArrUnpack
+
+showSqlUnoptExplicitText :: U.Unpackspec fields b -> S.Select fields -> Maybe Text
+showSqlUnoptExplicitText = formatAndShowSQLText .: Q.runQueryArrUnpack
 
 showSqlUnoptExplicit :: U.Unpackspec fields b -> S.Select fields -> Maybe String
 showSqlUnoptExplicit = formatAndShowSQL .: Q.runQueryArrUnpack
@@ -75,6 +93,10 @@ showSqlForPostgresUnopt = showSqlUnopt
 showSqlForPostgresExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
 showSqlForPostgresExplicit = showSqlExplicit
 
+-- | Will be deprecated in version 0.7.  Use 'showSqlExplicit' instead.
+showSqlForPostgresExplicitText :: U.Unpackspec columns b -> S.Select columns -> Maybe Text
+showSqlForPostgresExplicitText = showSqlExplicitText
+
 -- | Will be deprecated in version 0.7.  Use 'showSqlUnoptExplicit' instead.
 showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
 showSqlForPostgresUnoptExplicit = showSqlUnoptExplicit
@@ -83,7 +105,13 @@ showSqlForPostgresUnoptExplicit = showSqlUnoptExplicit
     "You probably want 'showSqlExplicit' or 'showSqlUnoptExplicit' instead. \
     \Will be removed in version 0.7." #-}
 formatAndShowSQL :: ([HPQ.PrimExpr], PQ.PrimQuery' a, T.Tag) -> Maybe String
-formatAndShowSQL = fmap (show . Pr.ppSql . Sql.sql) . traverse2Of3 Op.removeEmpty
+formatAndShowSQL = fmap show . formatAndShowSQL'
+
+formatAndShowSQLText :: ([HPQ.PrimExpr], PQ.PrimQuery' a, T.Tag) -> Maybe Text
+formatAndShowSQLText = fmap (renderStrict . layoutCompact) . formatAndShowSQL'
+
+formatAndShowSQL' :: ([HPQ.PrimExpr], PQ.PrimQuery' a, T.Tag) -> Maybe (Doc SqlStatement)
+formatAndShowSQL' = fmap (Pr.ppSql . Sql.sql) . traverse2Of3 Op.removeEmpty
   where -- Just a lens
         traverse2Of3 :: Functor f => (a -> f b) -> (x, a, y) -> f (x, b, y)
         traverse2Of3 f (x, y, z) = fmap (\y' -> (x, y', z)) (f y)
