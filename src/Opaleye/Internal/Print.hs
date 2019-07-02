@@ -19,8 +19,8 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 import           Data.Text.Prettyprint.Doc ((<+>), parens, indent, pretty, Pretty)
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text          as ST
-import Data.String ()
-import Data.Monoid ()
+import           Data.String ()
+import           Data.Monoid ()
 
 type TableAlias = HSql.Doc
 type Doc = HSql.Doc
