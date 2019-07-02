@@ -22,7 +22,7 @@ import qualified Data.Text          as ST
 import           Data.String ()
 import           Data.Monoid ((<>))
 
-type TableAlias = HSql.Doc
+type TableAlias = String
 type Doc = HSql.Doc
 
 -- convenience definitions/aliases
@@ -91,7 +91,8 @@ ppSelectLabel :: Label -> Doc
 ppSelectLabel l = text "/*" <+> text (defuseComments (Sql.lLabel l)) <+> text "*/"
                   $$ ppSql (Sql.lSelect l)
   where
-    defuseComments = ST.replace (ST.pack "--") (ST.pack " - - ")
+    defuseComments = ST.unpack
+                   . ST.replace (ST.pack "--") (ST.pack " - - ")
                    . ST.replace (ST.pack "/*") (ST.pack " / * ")
                    . ST.replace (ST.pack "*/") (ST.pack " * / ")
                    . ST.pack
@@ -120,14 +121,14 @@ ppAttrs (Sql.SelectAttrsStar xs) =
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
 nameAs (expr, name) = HPrint.ppAs (fmap unColumn name) (HPrint.ppSqlExpr expr)
-  where unColumn (HSql.SqlColumn s) = pretty s
+  where unColumn (HSql.SqlColumn s) = s
 
 ppTables :: [Select] -> Doc
 ppTables [] = empty
 ppTables ts = text "FROM" <+> HPrint.commaV ppTable (zipWith tableAlias [1..] ts)
 
 tableAlias :: Int -> Select -> (TableAlias, Select)
-tableAlias i select = (text "T" ++ pretty i, select)
+tableAlias i select = ("T" ++ show i, select)
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
@@ -147,14 +148,14 @@ ppGroupBy (Just xs) = HPrint.ppGroupBy (NEL.toList xs)
 
 ppLimit :: Maybe Int -> Doc
 ppLimit Nothing = empty
-ppLimit (Just n) = text "LIMIT " ++ pretty n
+ppLimit (Just n) = text ("LIMIT " ++ show n)
 
 ppOffset :: Maybe Int -> Doc
 ppOffset Nothing = empty
-ppOffset (Just n) = text "OFFSET " ++ pretty n
+ppOffset (Just n) = text ("OFFSET " ++ show n)
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = HPrint.ppAs (Just (pretty "V")) (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
+ppValues v = HPrint.ppAs (Just "V") (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
 
 ppValuesRow :: [HSql.SqlExpr] -> Doc
 ppValuesRow = parens . HPrint.commaH HPrint.ppSqlExpr

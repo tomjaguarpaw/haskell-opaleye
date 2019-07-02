@@ -94,9 +94,9 @@ ppSqlDistinct :: Sql.SqlDistinct -> Doc
 ppSqlDistinct Sql.SqlDistinct = text "DISTINCT"
 ppSqlDistinct Sql.SqlNotDistinct = empty
 
-ppAs :: Maybe Doc -> Doc -> Doc
+ppAs :: Maybe String -> Doc -> Doc
 ppAs Nothing      expr = expr
-ppAs (Just alias) expr = expr <+> hsep [text "as", doubleQuotes alias]
+ppAs (Just alias) expr = expr <+> hsep [text "as", doubleQuotes (text alias)]
 
 
 ppUpdate :: SqlUpdate -> Doc
