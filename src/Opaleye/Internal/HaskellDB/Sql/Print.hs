@@ -23,15 +23,30 @@ import Prelude hiding ((<>))
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
                                SqlUpdate(..), SqlTable(..), SqlRangeBound(..),
-                               OnConflict(..))
+                               OnConflict(..), Doc)
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 
 import Data.List (intersperse)
 import qualified Data.List.NonEmpty as NEL
-import Text.PrettyPrint.HughesPJ (Doc, (<+>), ($$), (<>), comma, doubleQuotes,
-                                  empty, equals, hcat, hsep, parens, punctuate,
-                                  text, vcat, brackets)
+import Data.Text.Prettyprint.Doc ((<+>), (<>), comma, dquotes,
+                                  equals, hcat, hsep, parens, punctuate,
+                                  vcat, brackets, indent, Pretty(..))
 import Data.Foldable (toList)
+import Data.Monoid ()
+
+($$) :: Doc -> Doc -> Doc
+a $$ b = a <> indent 4 b
+infixl 5 $$
+
+empty :: Monoid m => m
+empty = mempty
+
+-- these decrease the diff size, but aren't strictly necessary for new code
+text :: (Pretty a) => a -> Doc
+text = pretty
+
+doubleQuotes :: Doc -> Doc
+doubleQuotes = dquotes
 
 -- Silliness to avoid "ORDER BY 1" etc. meaning order by the first
 -- column.  We need an identity function, but due to

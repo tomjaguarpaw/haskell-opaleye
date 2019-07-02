@@ -1,6 +1,6 @@
 module Opaleye.Internal.Print where
 
-import           Prelude hiding (product)
+import           Prelude hiding (product, (++))
 
 import qualified Opaleye.Internal.Sql as Sql
 import           Opaleye.Internal.Sql (Select(SelectFrom,
@@ -16,12 +16,28 @@ import           Opaleye.Internal.Sql (Select(SelectFrom,
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 
-import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
-                                            parens)
+import           Data.Text.Prettyprint.Doc ((<+>), parens, indent, pretty, Pretty)
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text          as ST
+import Data.String ()
+import Data.Monoid ()
 
 type TableAlias = String
+type Doc = HSql.Doc
+
+-- convenience definitions/aliases
+($$) :: Doc -> Doc -> Doc
+a $$ b = a <> indent 4 b -- possibly use 'fuse'
+infixl 5 $$
+
+text :: Pretty a => a -> Doc
+text = pretty
+
+empty :: Monoid m => m
+empty = mempty
+
+(++) :: Monoid m => m -> m -> m
+(++) = (<>)
 
 ppSql :: Select -> Doc
 ppSql (SelectFrom s)   = ppSelectFrom s
@@ -75,8 +91,7 @@ ppSelectLabel :: Label -> Doc
 ppSelectLabel l = text "/*" <+> text (defuseComments (Sql.lLabel l)) <+> text "*/"
                   $$ ppSql (Sql.lSelect l)
   where
-    defuseComments = ST.unpack
-                   . ST.replace (ST.pack "--") (ST.pack " - - ")
+    defuseComments = ST.replace (ST.pack "--") (ST.pack " - - ")
                    . ST.replace (ST.pack "/*") (ST.pack " / * ")
                    . ST.replace (ST.pack "*/") (ST.pack " * / ")
                    . ST.pack
@@ -132,11 +147,11 @@ ppGroupBy (Just xs) = HPrint.ppGroupBy (NEL.toList xs)
 
 ppLimit :: Maybe Int -> Doc
 ppLimit Nothing = empty
-ppLimit (Just n) = text ("LIMIT " ++ show n)
+ppLimit (Just n) = text "LIMIT " ++ pretty n
 
 ppOffset :: Maybe Int -> Doc
 ppOffset Nothing = empty
-ppOffset (Just n) = text ("OFFSET " ++ show n)
+ppOffset (Just n) = text "OFFSET " ++ pretty n
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
 ppValues v = HPrint.ppAs (Just "V") (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
@@ -170,4 +185,3 @@ ppDeleteReturning (Sql.Returning delete returnExprs) =
   HPrint.ppDelete delete
   $$ text "RETURNING"
   <+> HPrint.commaV HPrint.ppSqlExpr (NEL.toList returnExprs)
-

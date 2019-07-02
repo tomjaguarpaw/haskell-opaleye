@@ -6,6 +6,7 @@ module Opaleye.Internal.HaskellDB.Sql where
 
 
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Text.Prettyprint.Doc (Doc)
 
 -----------------------------------------------------------
 -- * SQL data type
@@ -69,3 +70,7 @@ data OnConflict = DoNothing
 
 --- | Data type for SQL INSERT statements.
 data SqlInsert  = SqlInsert SqlTable [SqlColumn] (NEL.NonEmpty [SqlExpr]) (Maybe OnConflict)
+
+-- type use purely for annotating Docs in the print function
+data SqlStatement
+type Doc = Data.Text.Prettyprint.Doc.Doc SqlStatement
