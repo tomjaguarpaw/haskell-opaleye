@@ -20,7 +20,7 @@ import           Data.Text.Prettyprint.Doc ((<+>), parens, indent, pretty, Prett
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text          as ST
 import           Data.String ()
-import           Data.Monoid ()
+import           Data.Monoid ((<>))
 
 type TableAlias = HSql.Doc
 type Doc = HSql.Doc
