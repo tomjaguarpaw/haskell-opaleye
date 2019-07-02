@@ -30,7 +30,7 @@ import Data.List (intersperse)
 import qualified Data.List.NonEmpty as NEL
 import Data.Text.Prettyprint.Doc ((<+>), (<>), comma, dquotes,
                                   equals, hcat, hsep, parens, punctuate,
-                                  vcat, brackets, indent, Pretty(..))
+                                  vcat, brackets, indent, pretty, Pretty())
 import Data.Foldable (toList)
 import Data.Monoid ()
 
@@ -94,9 +94,9 @@ ppSqlDistinct :: Sql.SqlDistinct -> Doc
 ppSqlDistinct Sql.SqlDistinct = text "DISTINCT"
 ppSqlDistinct Sql.SqlNotDistinct = empty
 
-ppAs :: Maybe String -> Doc -> Doc
+ppAs :: Maybe Doc -> Doc -> Doc
 ppAs Nothing      expr = expr
-ppAs (Just alias) expr = expr <+> hsep [text "as", doubleQuotes (text alias)]
+ppAs (Just alias) expr = expr <+> hsep [text "as", doubleQuotes alias]
 
 
 ppUpdate :: SqlUpdate -> Doc

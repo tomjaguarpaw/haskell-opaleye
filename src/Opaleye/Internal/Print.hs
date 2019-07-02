@@ -22,7 +22,7 @@ import qualified Data.Text          as ST
 import Data.String ()
 import Data.Monoid ()
 
-type TableAlias = String
+type TableAlias = HSql.Doc
 type Doc = HSql.Doc
 
 -- convenience definitions/aliases
@@ -120,14 +120,14 @@ ppAttrs (Sql.SelectAttrsStar xs) =
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
 nameAs (expr, name) = HPrint.ppAs (fmap unColumn name) (HPrint.ppSqlExpr expr)
-  where unColumn (HSql.SqlColumn s) = s
+  where unColumn (HSql.SqlColumn s) = pretty s
 
 ppTables :: [Select] -> Doc
 ppTables [] = empty
 ppTables ts = text "FROM" <+> HPrint.commaV ppTable (zipWith tableAlias [1..] ts)
 
 tableAlias :: Int -> Select -> (TableAlias, Select)
-tableAlias i select = ("T" ++ show i, select)
+tableAlias i select = (text "T" ++ pretty i, select)
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
@@ -154,7 +154,7 @@ ppOffset Nothing = empty
 ppOffset (Just n) = text "OFFSET " ++ pretty n
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = HPrint.ppAs (Just "V") (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
+ppValues v = HPrint.ppAs (Just (pretty "V")) (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
 
 ppValuesRow :: [HSql.SqlExpr] -> Doc
 ppValuesRow = parens . HPrint.commaH HPrint.ppSqlExpr
