@@ -1,15 +1,15 @@
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
-module Main where
+module TypeFamilyTH where
 
-import           Opaleye.Internal.TypeFamilies
-import           Opaleye.Internal.TypeFamiliesTH
-import           Opaleye.SqlTypes
+import Opaleye.Internal.TypeFamilies
+import Opaleye.Internal.TypeFamiliesTH
+import Opaleye.SqlTypes
 
 
 data UserP f = UserP
@@ -27,8 +27,3 @@ data ResultP f = Result
     }
 
 makeTableAdaptorInstanceMap "pResult" ''ResultP
-
-
--- If this compiles, this works
-main :: IO ()
-main = return ()
