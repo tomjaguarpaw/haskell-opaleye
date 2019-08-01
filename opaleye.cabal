@@ -149,3 +149,13 @@ test-suite tutorial
     time,
     opaleye
   ghc-options: -Wall
+
+Benchmark bench-querygen
+  type: exitcode-stdio-1.0
+  hs-source-dirs: benchmarks/querygen
+  main-is: bench.hs
+  other-modules: TestTable
+  build-depends: base >= 4 && < 5,
+                 opaleye,
+                 product-profunctors >= 0.6,
+                 criterion >= 1.5.5 && < 1.6
