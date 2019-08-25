@@ -127,6 +127,11 @@ optional columnName = TableProperties
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
+-- | 'readOnly' is for columns that you must omit on writes, such as
+--  SERIAL columns intended to auto-increment only.
+readOnly :: String -> TableColumns () (Column a)
+readOnly = lmap (const Nothing) . optional
+
 class TableColumn writeType sqlType | writeType -> sqlType where
     -- | Do not use.  Use 'tableField' instead.  Will be deprecated in
     -- 0.7.
