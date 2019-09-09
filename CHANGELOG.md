@@ -1,3 +1,9 @@
+## 0.6.7004.1
+
+* Fixed quadratic slowdown in `removeEmpty`.
+
+* Fixed `read` compatibility with time-1.9 in test suite.
+
 ## 0.6.7004.0
 
 * Many changes to the documentation that use the new names.  See entry
