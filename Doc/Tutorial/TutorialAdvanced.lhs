@@ -5,7 +5,7 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye (Select, Field, Table, table, tableField,
->                           queryTable, SqlText, SqlInt4, Aggregator,
+>                           selectTable, SqlText, SqlInt4, Aggregator,
 >                           aggregate)
 > import qualified Opaleye.Aggregate as A
 > import           Opaleye.Aggregate ()
@@ -43,7 +43,7 @@ people's names along with the age of their children.
 >                                       , tableField "child_age" ))
 
 > rangeOfChildrensAges :: Select (Field SqlText, Field SqlInt4)
-> rangeOfChildrensAges = aggregate (p2 (A.groupBy, range)) (queryTable personTable)
+> rangeOfChildrensAges = aggregate (p2 (A.groupBy, range)) (selectTable personTable)
 
 
 TutorialAdvanced> printSql rangeOfChildrensAges
