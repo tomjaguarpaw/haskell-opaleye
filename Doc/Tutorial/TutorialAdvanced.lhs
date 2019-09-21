@@ -7,15 +7,21 @@
 > import           Opaleye (Select, Field, Table, table, tableField,
 >                           selectTable, SqlText, SqlInt4, Aggregator,
 >                           aggregate)
+> import qualified Opaleye as O
 > import qualified Opaleye.Aggregate as A
 > import           Opaleye.Aggregate ()
 >
 > import qualified Opaleye.Sql as Sql
+> import           Opaleye.Internal.Dynamic (stringUnpackspec, SqlDynamic)
 > import qualified Opaleye.Internal.Unpackspec as U
+> import qualified Opaleye.Internal.Table as T
 >
 > import           Data.Profunctor.Product.Default (Default)
+> import qualified Data.Profunctor.Product.Default as D
 > import           Data.Profunctor (dimap)
 > import           Data.Profunctor.Product ((***!), p2)
+> import qualified Data.Profunctor.Product as PP
+> import           Data.Void as V
 
 
 Combining Aggregators
@@ -68,8 +74,35 @@ FROM personTable
 GROUP BY name
 
 
+Dynamic types
+=============
+
+Opaleye can select from tables even if you only know the names of the
+ fields at run time.
+
+> dynamicTable :: Table V.Void [(String, Field SqlDynamic)]
+> dynamicTable =
+>     table "dynamicTable"
+>           (T.fromDynamicTableFields
+>              ((traverse._2) T.dynamic
+>                 [ ("foo", "foo"), ("bar", "bar") ]))
+>   where _2 f (a, b) = fmap (\b' -> (a, b')) (f b)
+
+> dynamicTableExample :: IO ()
+> dynamicTableExample = printSqlExplicit listOfPairs foo
+>   where foo = O.selectTableExplicit listOfPairs dynamicTable
+>         matchType :: p a a -> p a a
+>         matchType = id
+>         listOfPairs :: U.Unpackspec [(String, O.Column SqlDynamic)]
+>                                     [(String, O.Column SqlDynamic)]
+>         listOfPairs = matchType (PP.list (p2 (stringUnpackspec, D.def)))
+
 Helper function
 ===============
 
 > printSql :: Default U.Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . Sql.showSqlForPostgres
+> printSql = printSqlExplicit D.def
+
+> printSqlExplicit :: U.Unpackspec a a -> Select a -> IO ()
+> printSqlExplicit u =
+>   putStrLn . maybe "Empty query" id . Sql.showSqlForPostgresExplicit u

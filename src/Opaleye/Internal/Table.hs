@@ -20,6 +20,7 @@ import qualified Data.Profunctor.Product as PP
 import qualified Data.List.NonEmpty as NEL
 import           Data.Monoid (Monoid, mempty, mappend)
 import           Data.Semigroup (Semigroup, (<>))
+import qualified Data.Void as V
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Arrow as Arr
 
@@ -77,6 +78,9 @@ data TableProperties writeColumns viewColumns = TableProperties
    { tablePropertiesWriter :: Writer writeColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
 
+data DynamicTableFields ignored viewColumns =
+  DynamicTableFields { fromDynamicTableFields :: TableFields V.Void viewColumns }
+
 -- | Use 'TableFields' instead. 'TableColumns' will be deprecated in
 -- version 0.7.
 type TableColumns = TableProperties
@@ -131,6 +135,11 @@ optional columnName = TableProperties
 --  SERIAL columns intended to auto-increment only.
 readOnly :: String -> TableFields () (Column a)
 readOnly = lmap (const Nothing) . optional
+
+-- We didn't really need required here.  We could have implemented it
+-- directly.  But it was convenient.
+dynamic :: String -> DynamicTableFields V.Void (Column a)
+dynamic = DynamicTableFields . lmap V.absurd . required
 
 class TableColumn writeType sqlType | writeType -> sqlType where
     -- | Do not use.  Use 'tableField' instead.  Will be deprecated in
@@ -249,5 +258,19 @@ instance Functor (Table a) where
 instance Profunctor Table where
   dimap f g (Table t tp) = Table t (dimap f g tp)
   dimap f g (TableWithSchema s t tp) = TableWithSchema s t (dimap f g tp)
+
+instance Functor (DynamicTableFields a) where
+  fmap f = DynamicTableFields . fmap f . fromDynamicTableFields
+
+instance Applicative (DynamicTableFields a) where
+  pure = DynamicTableFields . pure
+  f <*> x = DynamicTableFields (fromDynamicTableFields f <*> fromDynamicTableFields x)
+
+instance Profunctor DynamicTableFields where
+  dimap _ f = DynamicTableFields . fmap f . fromDynamicTableFields
+
+instance ProductProfunctor DynamicTableFields where
+  empty = PP.defaultEmpty
+  (***!) = PP.defaultProfunctorProduct
 
 -- }
