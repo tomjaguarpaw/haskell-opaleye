@@ -3,3 +3,6 @@ extra-deps:
 - aeson-1.2.4.0
 - multiset-0.3.4.1
 - base-compat-0.9.3
+flags:
+  opaleye:
+    test-with-postgres: true

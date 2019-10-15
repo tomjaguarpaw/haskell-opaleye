@@ -24,6 +24,11 @@ source-repository head
   type:     git
   location: https://github.com/tomjaguarpaw/haskell-opaleye.git
 
+flag test-with-postgres
+  Description: Run tests that require a running PostgreSQL server
+  Default:     False
+  Manual:      True
+
 library
   default-language: Haskell2010
   hs-source-dirs: src
@@ -129,6 +134,8 @@ test-suite test
     hspec-discover,
     opaleye
   ghc-options: -Wall
+  if flag(test-with-postgres)
+    CPP-Options: -DTEST_WITH_POSTGRES
 
 test-suite tutorial
   default-language: Haskell2010
