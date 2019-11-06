@@ -1090,12 +1090,12 @@ testLiterals = do
   it "sqlBool" $ testLiteral O.sqlBool True
   it "sqlUUID" $ testLiteral O.sqlUUID (read "c2cc10e1-57d6-4b6f-9899-38d972112d8c")
   it "sqlDay" $ testLiteral O.sqlDay (read "2018-11-29")
-  it "sqlUTCTime" $ testLiteral O.sqlUTCTime (read "2018-11-29 11:22:33")
+  it "sqlUTCTime" $ testLiteral O.sqlUTCTime (read "2018-11-29 11:22:33 UTC")
   it "sqlLocalTime" $ testLiteral O.sqlLocalTime (read "2018-11-29 11:22:33")
 
   -- ZonedTime has no Eq instance, so we compare on the result of 'zonedTimeToUTC'
   it "sqlZonedTime" $
-    let value = read "2018-11-29 11:22:33" :: Time.ZonedTime in
+    let value = read "2018-11-29 11:22:33 UTC" :: Time.ZonedTime in
     testH (pure (O.sqlZonedTime value))
           (\r -> map Time.zonedTimeToUTC r `shouldBe` [Time.zonedTimeToUTC value])
 

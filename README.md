@@ -15,6 +15,9 @@ Patterson, [Position Development](http://positiondev.com/)
   Bergmark](http://ircbrowse.net/browse/haskell?id=22634197&timestamp=1460980502#t1460980502),
   [Silk.co](http://www.silk.co/)
 
+> "Opaleye is absolutely fantastic. It has been solid in production
+  for years!" &ndash; [Matt Wraith](https://github.com/wraithm)
+
 Opaleye allows you to define your database tables and write queries
 against them in Haskell code, and aims to be typesafe in the sense
 that if your code compiles then the generated SQL query will not fail
