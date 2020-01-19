@@ -44,6 +44,10 @@ Please get started with Opaleye by referring to these two tutorials
 * [Basic tutorial](https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialBasic.lhs)
 * [Manipulation tutorial](https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialManipulation.lhs)
 
+### Advanced
+
+* [Abstracting out common columns in Opaleye](https://www.williamyaoh.com/posts/2019-12-28-abstracting-out-common-columns-opaleye.html)
+
 # Contact
 
 ## Contact the author
