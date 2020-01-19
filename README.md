@@ -56,10 +56,12 @@ email](http://web.jaguarpaw.co.uk/~tom/contact/).
 Please file bugs on the [Opaleye GitHub issue tracking
 page](https://github.com/tomjaguarpaw/haskell-opaleye/issues/).
 
-## Mailing list
+## Discuss and ask questions about Opaleye
 
-Please join the [opaleye-users mailing
-list](https://lists.sourceforge.net/lists/listinfo/opaleye-users).
+You are welcome to use the [Opaleye GitHub issue tracking
+page](https://github.com/tomjaguarpaw/haskell-opaleye/issues/) for
+discussion of or questions about Opaleye even if they don't relate to
+a bug or issue.
 
 # `Internal` modules
 
