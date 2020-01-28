@@ -59,7 +59,7 @@ type instance A ('H HT) ('C '(h, o, NN)) = h
 type instance A ('H HT) ('C '(h, o, N))  = Maybe h
 type instance A ('H OT) ('C '(h, o, NN)) = Column o
 type instance A ('H OT) ('C '(h, o, N))  = Column (Nullable o)
-type instance A ('H NullsT) ('C '(h, o, NN)) = Column (Nullable o)
+type instance A ('H NullsT) ('C '(h, o, n)) = Column (Nullable o)
 
 type instance A ('H HT) ('TC '(t, b)) = A ('H HT) ('C t)
 type instance A ('H OT) ('TC '(t, b)) = A ('H OT) ('C t)
