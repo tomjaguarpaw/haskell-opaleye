@@ -93,6 +93,7 @@ library
                    Opaleye.Internal.TableMaker,
                    Opaleye.Internal.Tag,
                    Opaleye.Internal.TypeFamilies,
+                   Opaleye.Internal.TypeFamilies2,
                    Opaleye.Internal.Unpackspec,
                    Opaleye.Internal.Values
                    Opaleye.Internal.HaskellDB.PrimQuery,
