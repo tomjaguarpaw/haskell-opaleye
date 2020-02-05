@@ -32,15 +32,15 @@ data Optionality = OReq | OOpt
 type Req = 'OReq
 type Opt = 'OOpt
 
-type family A (a :: Arr h k1 k2) (b :: k1) :: k2
+type family A (a :: Arr h k2) (b :: k1) :: k2
 
-data Arr h k1 k2 where
-  K     :: k1 -> Arr h k2 k1
-  S     :: Arr h k1 (k2 -> k3)
-        -> Arr h k1 k2
-        -> Arr h k1 k3
-  I     :: Arr h k1 k1
-  H     :: h -> Arr h k2 k3
+data Arr h k2 where
+  K     :: k1 -> Arr h k1
+  S     :: Arr h (k2 -> k3)
+        -> Arr h k2
+        -> Arr h k3
+  I     :: Arr h k1
+  H     :: h -> Arr h k3
 
 type (:<*>) = 'S
 type Pure = 'K
