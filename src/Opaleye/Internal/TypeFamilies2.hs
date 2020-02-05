@@ -11,22 +11,6 @@ data ArrowType a =
     BasicType a
   | (:->) (ArrowType a) (ArrowType a)
 
-data ToArrow l a where
-  TABasicType :: a -> ToArrow '[] a
-  TAArrowType :: ToArrow as (a -> k)
-              -> ToArrow (a ': as) k
-
-data FromArrow l a where
-  FromArrow :: ToArrow as k
-            -> FromArrow as ('BasicType k)
-  PullArrow :: FromArrow (a ': as) k
-            -> FromArrow as ('BasicType a ':-> k)
-
-example :: FromArrow '[] ('BasicType a1 ':-> 'BasicType a2 ':-> 'BasicType ())
-example =
-  PullArrow (PullArrow (FromArrow (TAArrowType (TAArrowType (TABasicType (\_ _ -> ()))))))
-
-
 infixr :->
 infixl :*
 
@@ -40,33 +24,39 @@ data Combinator a where
        -> Combinator b
 
   B0 :: a -> Combinator ('BasicType a)
-  B1 :: (a -> b) -> Combinator ('BasicType a ':-> 'BasicType b)
 
-  BA :: FromArrow '[] a -> Combinator a
+  E :: Combinator ('BasicType (a -> b) ':-> 'BasicType a ':-> 'BasicType b)
 
-data Step a = Step a | Done a
+type B1 a = 'E ':* 'B0 a
 
-type family Reduce (arg1 :: Combinator a) :: (Combinator a)
+type B1' a b = ('E ':* 'B0 a) ':* b
+
+type family Reduce (arg1 :: Combinator a) :: Combinator a
 
 type instance Reduce ('B0 a) = 'B0 a
 
 type instance Reduce 'I = 'I
 type instance Reduce 'K = 'K
 type instance Reduce 'S = 'S
+type instance Reduce 'E = 'E
 
 type instance Reduce ('I ':* a) = Reduce a
 type instance Reduce ('K ':* a) = 'K ':* a
 type instance Reduce ('S ':* a) = 'S ':* a
+type instance Reduce ('E ':* a) = 'E ':* a
 
-type instance Reduce ('B1 f ':* 'B0 b) = 'B0 (f b)
-type instance Reduce ('B1 f ':* (a ':* b)) = Reduce ('B1 f ':* Reduce (a ':* b))
-
-type instance Reduce ('I ':* a ':* b) = Reduce (a ':* b)
-type instance Reduce ('K ':* a ':* b) = Reduce b
+type instance Reduce ('I ':* a ':* b) = Reduce (Reduce ('I ':* a) ':* b)
+type instance Reduce ('K ':* a ':* b) = Reduce a
 type instance Reduce ('S ':* a ':* b) = 'S ':* a ':* b
-type instance Reduce ('I ':* a ':* b ':* c) = Reduce (a ':* b ':* c)
-type instance Reduce ('K ':* a ':* b ':* c) = Reduce (a ':* c)
-type instance Reduce ('S ':* a ':* b ':* c) = Reduce ((a ':* c) ':* (b ':* c))
+type instance Reduce ('E ':* a ':* b) = 'B0 (Basic (Reduce a) (Basic (Reduce b)))
+
+type instance Reduce ('I ':* a ':* b ':* c) =
+  Reduce (Reduce ('I ':* a) ':* b ':* c)
+type instance Reduce ('K ':* a ':* b ':* c) =
+  Reduce (Reduce ('K ':* a ':* b) ':* c)
+type instance Reduce ('S ':* a ':* b ':* c) =
+  Reduce ((a ':* c) ':* (b ':* c))
+
 type instance Reduce (a ':* b ':* c ':* d ':* e) =
   Reduce (Reduce (Reduce (Reduce (a ':* b) ':* c) ':* d) ':* e)
 
@@ -80,7 +70,10 @@ data (:~:) a b where
 basic :: Basic ('B0 a) :~: a
 basic = Refl
 
-kT :: Basic (Reduce ('K ':* 'B1 a ':* b ':* 'B0 c)) :~: a c
+kT1 :: Basic (Reduce ('K ':* 'B0 a ':* b)) :~: a
+kT1 = Refl
+
+kT :: Basic (Reduce ('K ':* B1 a ':* b ':* 'B0 c)) :~: a c
 kT = Refl
 
 i :: a -> a
@@ -91,3 +84,20 @@ k a _b = a
 
 s :: (a -> b -> c) -> (a -> b) -> a -> c
 s f g a = f a (g a)
+
+
+
+data ToArrow l a where
+  TABasicType :: a -> ToArrow '[] a
+  TAArrowType :: ToArrow as (a -> k)
+              -> ToArrow (a ': as) k
+
+data FromArrow l a where
+  FromArrow :: ToArrow as k
+            -> FromArrow as ('BasicType k)
+  PullArrow :: FromArrow (a ': as) k
+            -> FromArrow as ('BasicType a ':-> k)
+
+example :: ToArrow '[a1, a2] ()
+example =
+  (TAArrowType (TAArrowType (TABasicType (\_ _ -> ()))))
