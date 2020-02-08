@@ -37,11 +37,15 @@ data Combinator a where
 
 infixl :*
 
-type B0 = 'B
+type B0   = 'B
 type B1 a = 'E ':* 'B a
 type B2 a = Fmap 'E ':* B1 a
 type B3 a = Fmap (Fmap 'E) ':* B2 a
 type B4 a = Fmap (Fmap (Fmap 'E)) ':* B3 a
+
+type UB0   = B0
+type UB1 a = Fmap 'U ':* B1 a
+type UB2 a = Fmap (Fmap 'U) ':* B2 a
 
 type Pure a = 'K ':* a
 type f :<*> x = 'S ':* f ':* x
@@ -92,8 +96,8 @@ data SndG a where SndG :: (a, b) -> SndG b
 type instance Unwrap ('FstG '(a, b)) = a
 type instance Unwrap ('SndG '(a, b)) = b
 
-type Fst = UnwrapF (B1 'FstG)
-type Snd = UnwrapF (B1 'SndG)
+type Fst = UB1 'FstG
+type Snd = UB1 'SndG
 
 type UnwrapF a = Fmap 'U ':* a
 
@@ -135,12 +139,11 @@ type instance Unwrap ('CSelectG ('TC c o)) = c
 type instance Unwrap ('OptionalityG ('TC c Req)) = Unwrap ('OpaleyeTypeG c)
 type instance Unwrap ('OptionalityG ('TC c Opt)) = Maybe (Unwrap ('OpaleyeTypeG c))
 
-data MapOf b where
-  MapOf :: f -> a -> MapOf b
+data MapOfG b where MapOfG :: f -> a -> MapOfG b
 
-type instance Unwrap ('MapOf f a) = Opaleye.Map.Map f a
+type instance Unwrap ('MapOfG f a) = Opaleye.Map.Map f a
 
-type MapTF = Fmap (Fmap 'U) ':* B2 'MapOf
+type MapTF = UB2 'MapOfG
 type MapTFF g f = Compose ':* (MapTF ':* 'B g) ':* f
 
 type RecordField a b c = 'B ('C a b c)
@@ -148,12 +151,12 @@ type TableRecordField a b c o = 'B ('TC ('C a b c) o)
 
 type f :** x = Basic (Reduce (f ':* x))
 
-type CSelect = UnwrapF (B1 'CSelectG)
+type CSelect = UB1 'CSelectG
 
-type H = Compose ':* UnwrapF (B1 'HaskellTypeG) ':* CSelect
-type O = Compose ':* UnwrapF (B1 'OpaleyeTypeG) ':* CSelect
-type W = UnwrapF (B1 'OptionalityG)
-type Nulls = Compose ':* UnwrapF (B1 'OpaleyeNullsTypeG) ':* CSelect
+type H = Compose ':* UB1 'HaskellTypeG ':* CSelect
+type O = Compose ':* UB1 'OpaleyeTypeG ':* CSelect
+type W = UB1 'OptionalityG
+type Nulls = Compose ':* UB1 'OpaleyeNullsTypeG ':* CSelect
 
 i :: a -> a
 i a = a
