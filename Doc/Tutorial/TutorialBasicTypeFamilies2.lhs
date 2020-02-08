@@ -25,6 +25,8 @@
 > import qualified Opaleye              as O
 > import qualified Opaleye.Map          as M
 > import           Opaleye.Internal.TypeFamilies2
+>   ((:**),TableRecordField,NN,Req,B2,O,W,(:<*>),(:<$>),Nulls,H,MapTF,MapTFF,
+>    Combinator((:*), B), Compose)
 >
 > import qualified Data.Profunctor         as P
 > import qualified Data.Profunctor.Product as PP
@@ -153,16 +155,10 @@ Please volunteer to do that if you can.
 > pBirthday b = Birthday PP.***$ P.lmap bdName (bdName b)
 >                        PP.**** P.lmap bdDay  (bdDay b)
 >
-> {-
-
-> type instance M.Map g (Birthday f) = Birthday (F (JMap g) :<$> f)
-
-> -}
+> type instance M.Map g (Birthday f) = Birthday (MapTFF g f)
 
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
-
-> {-
 
 > birthdayTable :: Table (Birthday W) (Birthday O)
 > birthdayTable = table "birthdayTable" $ pBirthday $ Birthday {
@@ -201,28 +197,29 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data Widget f = Widget { style    :: TableRecordField f String SqlText   NN Req
->                        , color    :: TableRecordField f String SqlText   NN Req
->                        , location :: TableRecordField f String SqlText   NN Req
->                        , quantity :: TableRecordField f Int    SqlInt4   NN Req
->                        , radius   :: TableRecordField f Double SqlFloat8 NN Req
->                        }
+> data Widget f = Widget {
+>   style    :: f :** TableRecordField String SqlText   NN Req
+> , color    :: f :** TableRecordField String SqlText   NN Req
+> , location :: f :** TableRecordField String SqlText   NN Req
+> , quantity :: f :** TableRecordField Int    SqlInt4   NN Req
+> , radius   :: f :** TableRecordField Double SqlFloat8 NN Req
+> }
 
 This instance, adaptor and type family are fully derivable but no
 one's implemented the Template Haskell or generics to do that yet.
 
 > instance ( PP.ProductProfunctor p
->          , Default p (TableRecordField a String SqlText NN Req)
->                      (TableRecordField b String SqlText NN Req)
->          , Default p (TableRecordField a Int    SqlInt4 NN Req)
->                      (TableRecordField b Int    SqlInt4 NN Req)
->          , Default p (TableRecordField a Double SqlFloat8 NN Req)
->                      (TableRecordField b Double SqlFloat8 NN Req)) =>
+>          , Default p (a :** TableRecordField String SqlText NN Req)
+>                      (b :** TableRecordField String SqlText NN Req)
+>          , Default p (a :** TableRecordField Int    SqlInt4 NN Req)
+>                      (b :** TableRecordField Int    SqlInt4 NN Req)
+>          , Default p (a :** TableRecordField Double SqlFloat8 NN Req)
+>                      (b :** TableRecordField Double SqlFloat8 NN Req)) =>
 >   Default p (Widget a) (Widget b) where
 >   def = pWidget (Widget D.def D.def D.def D.def D.def)
 >
 > pWidget :: PP.ProductProfunctor p
->         => Widget (p :<$> a :<*> b)
+>         => Widget (B2 p :<$> a :<*> b)
 >         -> p (Widget a) (Widget b)
 > pWidget w = Widget PP.***$ P.lmap style    (style w)
 >                    PP.**** P.lmap color    (color w)
@@ -230,7 +227,8 @@ one's implemented the Template Haskell or generics to do that yet.
 >                    PP.**** P.lmap quantity (quantity w)
 >                    PP.**** P.lmap radius   (radius w)
 >
-> type instance M.Map g (Widget (F f)) = Widget (F (IMap g f))
+
+> type instance M.Map g (Widget f) = Widget (MapTFF g f)
 
 For the purposes of this example the style, color and location will be
 strings, but in practice they might have been a different data type.
@@ -388,8 +386,10 @@ minimize the number of confusing error messages!
 The type of selects can be inferred if you use the `runSelectTF`
 function.
 
+> {-
 > -- printNames :: PGS.Connection -> Select (Birthday O) -> IO ()
 > printNames conn select = mapM_ (print . bdName) =<< runSelectTF conn select
+> -}
 
 Conclusion
 ==========
@@ -403,5 +403,3 @@ This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Select a -> IO ()
 > printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres
-
-> -}

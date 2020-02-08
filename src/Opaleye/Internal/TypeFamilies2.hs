@@ -12,6 +12,9 @@ where
 import           Opaleye.Column (Column, Nullable)
 import qualified Opaleye.Field as F
 import           Opaleye.Internal.TypeFamilies (N, NN,Optionality, Opt, Req)
+import qualified Opaleye.Map
+import Opaleye.Internal.Join (Nulled)
+import Opaleye (PGText)
 
 data ArrowType a =
     BasicType a
@@ -121,23 +124,49 @@ data CSelector a where
   OpaleyeType      :: C a -> CSelector a
   OpaleyeNullsType :: C a -> CSelector a
 
-data TCSelector a where
-  CSelect      :: TC a -> TCSelector (C a)
-  OptionalityS :: TC a -> TCSelector a
-
 type instance Unwrap ('HaskellType ('C h o NN)) = h
 type instance Unwrap ('HaskellType ('C h o N)) =  Maybe h
 type instance Unwrap ('OpaleyeType ('C h o NN)) = Column o
 type instance Unwrap ('OpaleyeType ('C h o N)) =  Column (Nullable o)
 type instance Unwrap ('OpaleyeNullsType ('C h o n)) = Column (Nullable o)
 
+data TCSelector a where
+  CSelect      :: TC a -> TCSelector (C a)
+  OptionalityS :: TC a -> TCSelector a
+
 type instance Unwrap ('CSelect ('TC c o)) = c
-type instance Unwrap ('OptionalityS ('TC c o)) = o
+type instance Unwrap ('OptionalityS ('TC c Req)) = Unwrap ('OpaleyeType c)
+type instance Unwrap ('OptionalityS ('TC c Opt)) = Maybe (Unwrap ('OpaleyeType c))
+
+data MapOf b where
+  MapOf :: f -> a -> MapOf b
+
+type instance Unwrap ('MapOf f a) = Opaleye.Map.Map f a
+
+type MapTF = Fmap (Fmap 'U) ':* B2 'MapOf
+type MapTFF g f = Compose ':* (MapTF ':* 'B g) ':* f
 
 type RecordField a b c = 'B ('C a b c)
 type TableRecordField a b c o = 'B ('TC ('C a b c) o)
 
 type f :** x = Basic (Reduce (f ':* x))
+
+type H = Compose ':* (Fmap 'U ':* B1 'HaskellType) ':* (Fmap 'U ':* B1 'CSelect)
+type O = Compose ':* (Fmap 'U ':* B1 'OpaleyeType) ':* (Fmap 'U ':* B1 'CSelect)
+type W = Fmap 'U ':* B1 'OptionalityS
+type Nulls = Compose
+  ':* (Fmap 'U ':* B1 'OpaleyeNullsType)
+  ':* (Fmap 'U ':* B1 'CSelect)
+
+
+type Blah g f = Compose ':* (MapTF ':* 'B g) ':* f
+
+type Blag g f = Blah g f :** TableRecordField String PGText NN Req
+
+type Blor = Blag Nulled O
+
+testBlor :: Blor :~: Column (Nullable PGText)
+testBlor = Refl
 
 i :: a -> a
 i a = a
