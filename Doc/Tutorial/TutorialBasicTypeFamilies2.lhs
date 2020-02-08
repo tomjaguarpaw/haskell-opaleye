@@ -227,7 +227,6 @@ one's implemented the Template Haskell or generics to do that yet.
 >                    PP.**** P.lmap quantity (quantity w)
 >                    PP.**** P.lmap radius   (radius w)
 >
-
 > type instance M.Map g (Widget f) = Widget (MapTFF g f)
 
 For the purposes of this example the style, color and location will be
