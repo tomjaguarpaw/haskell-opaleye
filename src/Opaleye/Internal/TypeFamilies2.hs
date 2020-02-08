@@ -48,6 +48,7 @@ type instance Reduce 'E = 'E
 type instance Reduce ('I ':* a) = Reduce a
 type instance Reduce ('K ':* a) = 'K ':* a
 type instance Reduce ('S ':* a) = 'S ':* a
+type instance Reduce ('U ':* a) = 'B (Unwrap (Basic (Reduce a)))
 type instance Reduce ('E ':* a) = 'E ':* a
 
 type instance Reduce ('I ':* a ':* b) = Reduce (Reduce ('I ':* a) ':* b)
@@ -69,6 +70,15 @@ type family Basic (arg1 :: Combinator ('BasicType a)) :: a
 
 type instance Basic ('B a) = a
 
+type family Unwrap (arg1 :: w a) :: a
+
+data TupleSelector a where
+  Fst :: (a, b) -> TupleSelector a
+  Snd :: (a, b) -> TupleSelector b
+
+type instance Unwrap ('Fst '(a, b)) = a
+type instance Unwrap ('Snd '(a, b)) = b
+
 data (:~:) a b where
   Refl :: a :~: a
 
@@ -80,6 +90,9 @@ kT1 = Refl
 
 kT :: Basic (Reduce ('K ':* B1 a ':* b ':* 'B c)) :~: a c
 kT = Refl
+
+kTuple :: Basic (Reduce ('U ':* (B1 'Fst ':* 'B '(a, b)))) :~: a
+kTuple = Refl
 
 i :: a -> a
 i a = a
