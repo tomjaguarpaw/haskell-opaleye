@@ -23,21 +23,26 @@ data Combinator a where
        -> Combinator a
        -> Combinator b
 
-  B0 :: a -> Combinator ('BasicType a)
+  B :: a -> Combinator ('BasicType a)
+
+  U :: Combinator ('BasicType (w a) ':-> 'BasicType a)
 
   E :: Combinator ('BasicType (a -> b) ':-> 'BasicType a ':-> 'BasicType b)
 
-type B1 a = 'E ':* 'B0 a
+type B0 = 'B
 
-type B1' a b = ('E ':* 'B0 a) ':* b
+type B1 a = 'E ':* 'B a
+
+type B1' a b = B1 a ':* b
 
 type family Reduce (arg1 :: Combinator a) :: Combinator a
 
-type instance Reduce ('B0 a) = 'B0 a
+type instance Reduce ('B a) = 'B a
 
 type instance Reduce 'I = 'I
 type instance Reduce 'K = 'K
 type instance Reduce 'S = 'S
+type instance Reduce 'U = 'U
 type instance Reduce 'E = 'E
 
 type instance Reduce ('I ':* a) = Reduce a
@@ -48,7 +53,7 @@ type instance Reduce ('E ':* a) = 'E ':* a
 type instance Reduce ('I ':* a ':* b) = Reduce (Reduce ('I ':* a) ':* b)
 type instance Reduce ('K ':* a ':* b) = Reduce a
 type instance Reduce ('S ':* a ':* b) = 'S ':* a ':* b
-type instance Reduce ('E ':* a ':* b) = 'B0 (Basic (Reduce a) (Basic (Reduce b)))
+type instance Reduce ('E ':* a ':* b) = 'B (Basic (Reduce a) (Basic (Reduce b)))
 
 type instance Reduce ('I ':* a ':* b ':* c) =
   Reduce (Reduce ('I ':* a) ':* b ':* c)
@@ -62,18 +67,18 @@ type instance Reduce (a ':* b ':* c ':* d ':* e) =
 
 type family Basic (arg1 :: Combinator ('BasicType a)) :: a
 
-type instance Basic ('B0 a) = a
+type instance Basic ('B a) = a
 
 data (:~:) a b where
   Refl :: a :~: a
 
-basic :: Basic ('B0 a) :~: a
+basic :: Basic ('B a) :~: a
 basic = Refl
 
-kT1 :: Basic (Reduce ('K ':* 'B0 a ':* b)) :~: a
+kT1 :: Basic (Reduce ('K ':* 'B a ':* b)) :~: a
 kT1 = Refl
 
-kT :: Basic (Reduce ('K ':* B1 a ':* b ':* 'B0 c)) :~: a c
+kT :: Basic (Reduce ('K ':* B1 a ':* b ':* 'B c)) :~: a c
 kT = Refl
 
 i :: a -> a
