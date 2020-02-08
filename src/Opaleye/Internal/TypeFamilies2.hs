@@ -33,7 +33,10 @@ type B0 = 'B
 
 type B1 a = 'E ':* 'B a
 
-type B1' a b = B1 a ':* b
+type Pure a = 'K ':* a
+type f :<*> x = 'S ':* f ':* x
+type Fmap f x = Pure f :<*> x
+type f :<$> x = Fmap f x
 
 type family Reduce (arg1 :: Combinator a) :: Combinator a
 
