@@ -86,15 +86,16 @@ type instance Basic ('B a) = a
 
 type family Unwrap (arg1 :: w a) :: a
 
-data TupleSelector a where
-  FstG :: (a, b) -> TupleSelector a
-  SndG :: (a, b) -> TupleSelector b
+data FstG a where FstG :: (a, b) -> FstG a
+data SndG a where SndG :: (a, b) -> SndG b
 
 type instance Unwrap ('FstG '(a, b)) = a
 type instance Unwrap ('SndG '(a, b)) = b
 
-type Fst = Fmap 'U ':* B1 'FstG
-type Snd = Fmap 'U ':* B1 'SndG
+type Fst = UnwrapF (B1 'FstG)
+type Snd = UnwrapF (B1 'SndG)
+
+type UnwrapF a = Fmap 'U ':* a
 
 data (:~:) a b where
   Refl :: a :~: a
@@ -117,24 +118,22 @@ kT4 = Refl
 data C a  = C a a F.Nullability
 data TC a = TC (C a) Optionality
 
-data CSelector a where
-  HaskellType      :: C a -> CSelector a
-  OpaleyeType      :: C a -> CSelector a
-  OpaleyeNullsType :: C a -> CSelector a
+data HaskellTypeG a      where HaskellTypeG      :: C a -> HaskellTypeG a
+data OpaleyeTypeG a      where OpaleyeTypeG      :: C a -> OpaleyeTypeG a
+data OpaleyeNullsTypeG a where OpaleyeNullsTypeG :: C a -> OpaleyeNullsTypeG a
 
-type instance Unwrap ('HaskellType ('C h o NN)) = h
-type instance Unwrap ('HaskellType ('C h o N)) =  Maybe h
-type instance Unwrap ('OpaleyeType ('C h o NN)) = Column o
-type instance Unwrap ('OpaleyeType ('C h o N)) =  Column (Nullable o)
-type instance Unwrap ('OpaleyeNullsType ('C h o n)) = Column (Nullable o)
+type instance Unwrap ('HaskellTypeG ('C h o NN)) = h
+type instance Unwrap ('HaskellTypeG ('C h o N)) =  Maybe h
+type instance Unwrap ('OpaleyeTypeG ('C h o NN)) = Column o
+type instance Unwrap ('OpaleyeTypeG ('C h o N)) =  Column (Nullable o)
+type instance Unwrap ('OpaleyeNullsTypeG ('C h o n)) = Column (Nullable o)
 
-data TCSelector a where
-  CSelect      :: TC a -> TCSelector (C a)
-  OptionalityS :: TC a -> TCSelector a
+data CSelectG a     where CSelectG     :: TC a -> CSelectG (C a)
+data OptionalityG a where OptionalityG :: TC a -> OptionalityG a
 
-type instance Unwrap ('CSelect ('TC c o)) = c
-type instance Unwrap ('OptionalityS ('TC c Req)) = Unwrap ('OpaleyeType c)
-type instance Unwrap ('OptionalityS ('TC c Opt)) = Maybe (Unwrap ('OpaleyeType c))
+type instance Unwrap ('CSelectG ('TC c o)) = c
+type instance Unwrap ('OptionalityG ('TC c Req)) = Unwrap ('OpaleyeTypeG c)
+type instance Unwrap ('OptionalityG ('TC c Opt)) = Maybe (Unwrap ('OpaleyeTypeG c))
 
 data MapOf b where
   MapOf :: f -> a -> MapOf b
@@ -149,12 +148,12 @@ type TableRecordField a b c o = 'B ('TC ('C a b c) o)
 
 type f :** x = Basic (Reduce (f ':* x))
 
-type H = Compose ':* (Fmap 'U ':* B1 'HaskellType) ':* (Fmap 'U ':* B1 'CSelect)
-type O = Compose ':* (Fmap 'U ':* B1 'OpaleyeType) ':* (Fmap 'U ':* B1 'CSelect)
-type W = Fmap 'U ':* B1 'OptionalityS
-type Nulls = Compose
-  ':* (Fmap 'U ':* B1 'OpaleyeNullsType)
-  ':* (Fmap 'U ':* B1 'CSelect)
+type CSelect = UnwrapF (B1 'CSelectG)
+
+type H = Compose ':* UnwrapF (B1 'HaskellTypeG) ':* CSelect
+type O = Compose ':* UnwrapF (B1 'OpaleyeTypeG) ':* CSelect
+type W = UnwrapF (B1 'OptionalityG)
+type Nulls = Compose ':* UnwrapF (B1 'OpaleyeNullsTypeG) ':* CSelect
 
 i :: a -> a
 i a = a
