@@ -80,11 +80,14 @@ type instance Basic ('B a) = a
 type family Unwrap (arg1 :: w a) :: a
 
 data TupleSelector a where
-  Fst :: (a, b) -> TupleSelector a
-  Snd :: (a, b) -> TupleSelector b
+  FstG :: (a, b) -> TupleSelector a
+  SndG :: (a, b) -> TupleSelector b
 
-type instance Unwrap ('Fst '(a, b)) = a
-type instance Unwrap ('Snd '(a, b)) = b
+type instance Unwrap ('FstG '(a, b)) = a
+type instance Unwrap ('SndG '(a, b)) = b
+
+type Fst = Fmap 'U ':* B1 'FstG
+type Snd = Fmap 'U ':* B1 'SndG
 
 data (:~:) a b where
   Refl :: a :~: a
@@ -98,7 +101,7 @@ kT1 = Refl
 kT :: Basic (Reduce ('K ':* B1 f ':* b ':* 'B c)) :~: f c
 kT = Refl
 
-kTuple :: Basic (Reduce ('U ':* (B1 'Fst ':* 'B '(a, b)))) :~: a
+kTuple :: Basic (Reduce (Fst ':* 'B '(a, b))) :~: a
 kTuple = Refl
 
 kT4 :: Basic (Reduce (B4 f ':* 'B a ':* 'B b ':* 'B c ':* 'B d)) :~: f a b c d
