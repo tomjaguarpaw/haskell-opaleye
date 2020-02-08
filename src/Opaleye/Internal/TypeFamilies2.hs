@@ -91,7 +91,7 @@ basic = Refl
 kT1 :: Basic (Reduce ('K ':* 'B a ':* b)) :~: a
 kT1 = Refl
 
-kT :: Basic (Reduce ('K ':* B1 a ':* b ':* 'B c)) :~: a c
+kT :: Basic (Reduce ('K ':* B1 f ':* b ':* 'B c)) :~: f c
 kT = Refl
 
 kTuple :: Basic (Reduce ('U ':* (B1 'Fst ':* 'B '(a, b)))) :~: a
