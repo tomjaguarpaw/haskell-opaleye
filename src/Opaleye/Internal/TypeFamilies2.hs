@@ -13,8 +13,6 @@ import           Opaleye.Column (Column, Nullable)
 import qualified Opaleye.Field as F
 import           Opaleye.Internal.TypeFamilies (N, NN,Optionality, Opt, Req)
 import qualified Opaleye.Map
-import Opaleye.Internal.Join (Nulled)
-import Opaleye (PGText)
 
 data ArrowType a =
     BasicType a
