@@ -94,6 +94,11 @@ kT = Refl
 kTuple :: Basic (Reduce ('U ':* (B1 'Fst ':* 'B '(a, b)))) :~: a
 kTuple = Refl
 
+
+
+
+
+
 i :: a -> a
 i a = a
 
@@ -102,8 +107,6 @@ k a _b = a
 
 s :: (a -> b -> c) -> (a -> b) -> a -> c
 s f g a = f a (g a)
-
-
 
 data ToArrow l a where
   TABasicType :: a -> ToArrow '[] a
