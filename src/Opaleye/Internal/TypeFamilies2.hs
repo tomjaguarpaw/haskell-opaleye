@@ -32,11 +32,15 @@ data Combinator a where
 type B0 = 'B
 
 type B1 a = 'E ':* 'B a
+type B2 a = Fmap 'E ':* B1 a
+type B3 a = Fmap (Fmap 'E) ':* B2 a
+type B4 a = Fmap (Fmap (Fmap 'E)) ':* B3 a
 
 type Pure a = 'K ':* a
 type f :<*> x = 'S ':* f ':* x
-type Fmap f x = Pure f :<*> x
-type f :<$> x = Fmap f x
+type Compose = 'S ':* ('K ':* 'S) ':* 'K
+type Fmap f = Compose ':* f
+type f :<$> x = Fmap f ':* x
 
 type family Reduce (arg1 :: Combinator a) :: Combinator a
 
@@ -97,6 +101,8 @@ kT = Refl
 kTuple :: Basic (Reduce ('U ':* (B1 'Fst ':* 'B '(a, b)))) :~: a
 kTuple = Refl
 
+kT4 :: Basic (Reduce (B4 f ':* 'B a ':* 'B b ':* 'B c ':* 'B d)) :~: f a b c d
+kT4 = Refl
 
 
 
