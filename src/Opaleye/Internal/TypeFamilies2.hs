@@ -21,7 +21,6 @@ data ArrowType a =
   | (:->) (ArrowType a) (ArrowType a)
 
 infixr :->
-infixl :*
 
 data Combinator a where
   I :: Combinator (a ':-> a)
@@ -38,8 +37,9 @@ data Combinator a where
 
   E :: Combinator ('BasicType (a -> b) ':-> 'BasicType a ':-> 'BasicType b)
 
-type B0 = 'B
+infixl :*
 
+type B0 = 'B
 type B1 a = 'E ':* 'B a
 type B2 a = Fmap 'E ':* B1 a
 type B3 a = Fmap (Fmap 'E) ':* B2 a
@@ -158,16 +158,6 @@ type Nulls = Compose
   ':* (Fmap 'U ':* B1 'OpaleyeNullsType)
   ':* (Fmap 'U ':* B1 'CSelect)
 
-
-type Blah g f = Compose ':* (MapTF ':* 'B g) ':* f
-
-type Blag g f = Blah g f :** TableRecordField String PGText NN Req
-
-type Blor = Blag Nulled O
-
-testBlor :: Blor :~: Column (Nullable PGText)
-testBlor = Refl
-
 i :: a -> a
 i a = a
 
@@ -176,18 +166,3 @@ k a _b = a
 
 s :: (a -> b -> c) -> (a -> b) -> a -> c
 s f g a = f a (g a)
-
-data ToArrow l a where
-  TABasicType :: a -> ToArrow '[] a
-  TAArrowType :: ToArrow as (a -> k)
-              -> ToArrow (a ': as) k
-
-data FromArrow l a where
-  FromArrow :: ToArrow as k
-            -> FromArrow as ('BasicType k)
-  PullArrow :: FromArrow (a ': as) k
-            -> FromArrow as ('BasicType a ':-> k)
-
-example :: ToArrow '[a1, a2] ()
-example =
-  (TAArrowType (TAArrowType (TABasicType (\_ _ -> ()))))
