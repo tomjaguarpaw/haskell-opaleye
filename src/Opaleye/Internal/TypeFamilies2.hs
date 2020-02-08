@@ -5,7 +5,13 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeInType #-}
 
-module Opaleye.Internal.TypeFamilies2 where
+module Opaleye.Internal.TypeFamilies2
+  (module Opaleye.Internal.TypeFamilies2, NN, N, Req, Opt)
+where
+
+import           Opaleye.Column (Column, Nullable)
+import qualified Opaleye.Field as F
+import           Opaleye.Internal.TypeFamilies (N, NN,Optionality, Opt, Req)
 
 data ArrowType a =
     BasicType a
@@ -107,9 +113,31 @@ kTuple = Refl
 kT4 :: Basic (Reduce (B4 f ':* 'B a ':* 'B b ':* 'B c ':* 'B d)) :~: f a b c d
 kT4 = Refl
 
+data C a  = C a a F.Nullability
+data TC a = TC (C a) Optionality
 
+data CSelector a where
+  HaskellType      :: C a -> CSelector a
+  OpaleyeType      :: C a -> CSelector a
+  OpaleyeNullsType :: C a -> CSelector a
 
+data TCSelector a where
+  CSelect      :: TC a -> TCSelector (C a)
+  OptionalityS :: TC a -> TCSelector a
 
+type instance Unwrap ('HaskellType ('C h o NN)) = h
+type instance Unwrap ('HaskellType ('C h o N)) =  Maybe h
+type instance Unwrap ('OpaleyeType ('C h o NN)) = Column o
+type instance Unwrap ('OpaleyeType ('C h o N)) =  Column (Nullable o)
+type instance Unwrap ('OpaleyeNullsType ('C h o n)) = Column (Nullable o)
+
+type instance Unwrap ('CSelect ('TC c o)) = c
+type instance Unwrap ('OptionalityS ('TC c o)) = o
+
+type RecordField a b c = 'B ('C a b c)
+type TableRecordField a b c o = 'B ('TC ('C a b c) o)
+
+type f :** x = Basic (Reduce (f ':* x))
 
 i :: a -> a
 i a = a
