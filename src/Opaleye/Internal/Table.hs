@@ -51,11 +51,11 @@ import qualified Control.Arrow as Arr
 --
 -- The constructors of Table are internal only and will be
 -- deprecated in version 0.7.
-data Table writerColumns viewColumns
-  = Table String (TableFields writerColumns viewColumns)
+data Table writeFields viewFields
+  = Table String (TableFields writeFields viewFields)
     -- ^ For unqualified table names. Do not use the constructor.  It
     -- is internal and will be deprecated in version 0.7.
-  | TableWithSchema String String (TableFields writerColumns viewColumns)
+  | TableWithSchema String String (TableFields writeFields viewFields)
     -- ^ Schema name, table name, table properties.  Do not use the
     -- constructor.  It is internal and will be deprecated in version 0.7.
 
@@ -113,19 +113,24 @@ newtype Writer columns dummy =
   Writer (forall f. Functor f =>
           PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
 
--- | 'required' is for columns which are not 'optional'.  You must
+-- | 'required' is for fields which are not 'optional'.  You must
 -- provide them on writes.
 required :: String -> TableFields (Column a) (Column a)
 required columnName = TableProperties
   (requiredW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
--- | 'optional' is for columns that you can omit on writes, such as
+-- | 'optional' is for fields that you can omit on writes, such as
 --  columns which have defaults or which are SERIAL.
 optional :: String -> TableFields (Maybe (Column a)) (Column a)
 optional columnName = TableProperties
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
+
+-- | 'readOnly' is for fields that you must omit on writes, such as
+--  SERIAL columns intended to auto-increment only.
+readOnly :: String -> TableFields () (Column a)
+readOnly = lmap (const Nothing) . optional
 
 class TableColumn writeType sqlType | writeType -> sqlType where
     -- | Do not use.  Use 'tableField' instead.  Will be deprecated in

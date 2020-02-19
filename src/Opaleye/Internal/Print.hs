@@ -170,4 +170,3 @@ ppDeleteReturning (Sql.Returning delete returnExprs) =
   HPrint.ppDelete delete
   $$ text "RETURNING"
   <+> HPrint.commaV HPrint.ppSqlExpr (NEL.toList returnExprs)
-

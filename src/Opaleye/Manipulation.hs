@@ -498,4 +498,3 @@ runDelete :: PGS.Connection
           -> IO Int64
           -- ^ The number of rows deleted
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
-

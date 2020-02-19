@@ -15,6 +15,13 @@ Patterson, [Position Development](http://positiondev.com/)
   Bergmark](http://ircbrowse.net/browse/haskell?id=22634197&timestamp=1460980502#t1460980502),
   [Silk.co](http://www.silk.co/)
 
+> "Opaleye is absolutely fantastic. It has been solid in production
+  for years!" &ndash; [Matt Wraith](https://github.com/wraithm)
+
+> "Opaleye just works, and it’s my personal recommendation ... I like
+  it a lot" &ndash; [William
+  Yao](https://www.williamyaoh.com/posts/2019-12-14-typesafe-db-libraries.html)
+
 Opaleye allows you to define your database tables and write queries
 against them in Haskell code, and aims to be typesafe in the sense
 that if your code compiles then the generated SQL query will not fail
@@ -37,6 +44,10 @@ Please get started with Opaleye by referring to these two tutorials
 * [Basic tutorial](https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialBasic.lhs)
 * [Manipulation tutorial](https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/TutorialManipulation.lhs)
 
+### Advanced
+
+* [Abstracting out common columns in Opaleye](https://www.williamyaoh.com/posts/2019-12-28-abstracting-out-common-columns-opaleye.html)
+
 # Contact
 
 ## Contact the author
@@ -49,10 +60,12 @@ email](http://web.jaguarpaw.co.uk/~tom/contact/).
 Please file bugs on the [Opaleye GitHub issue tracking
 page](https://github.com/tomjaguarpaw/haskell-opaleye/issues/).
 
-## Mailing list
+## Discuss and ask questions about Opaleye
 
-Please join the [opaleye-users mailing
-list](https://lists.sourceforge.net/lists/listinfo/opaleye-users).
+You are welcome to use the [Opaleye GitHub issue tracking
+page](https://github.com/tomjaguarpaw/haskell-opaleye/issues/) for
+discussion of or questions about Opaleye even if they don't relate to
+a bug or issue.
 
 # `Internal` modules
 

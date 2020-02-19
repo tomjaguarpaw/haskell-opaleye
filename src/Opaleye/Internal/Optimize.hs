@@ -37,8 +37,7 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
     PQ.unit      = return PQ.Unit
   , PQ.empty     = const Nothing
   , PQ.baseTable = return .: PQ.BaseTable
-  , PQ.product   = \x y -> PQ.Product <$> (T.traverse removeEmpty
-                                               =<< T.sequence x)
+  , PQ.product   = \x y -> PQ.Product <$> T.sequence x
                                       <*> pure y
   , PQ.aggregate = fmap . PQ.Aggregate
   , PQ.distinctOnOrderBy = \mDistinctOns -> fmap . PQ.DistinctOnOrderBy mDistinctOns

@@ -54,17 +54,17 @@ there is no support for creating databases or tables, though these
 features may be added later according to demand.
 
 A table is defined with the `table` function.  The syntax is
-simple.  You specify the types of the columns, the name of the table
-and the names of the columns in the underlying database.
+simple.  You specify the types of the fields, the name of the table
+and the names of the fields in the underlying database.
 
 (Note: This simple syntax is supported by an extra combinator that
-describes the shape of the container that you are storing the columns
+describes the shape of the container that you are storing the fields
 in.  In the first example we are using a tuple of size 3 and the
 combinator is called `p3`.  We'll see examples of others later.)
 
 The `Table` type constructor has two arguments.  The first one tells
-us what columns we can write to the table and the second what columns
-we can read from the table.  In this case all columns are required, so
+us what fields we can write to the table and the second what fields
+we can read from the table.  In this case all fields are required, so
 the write and read types will be the same.
 
 > personTable :: Table (Field SqlText, Field SqlInt4, Field SqlText)
@@ -288,7 +288,7 @@ Idealized SQL:
 
 Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
-"adaptor" to specify how columns are aggregated.
+"adaptor" to specify how fields are aggregated.
 
 Outer join
 ==========
@@ -367,9 +367,9 @@ Opaleye provides simple facilities for running queries on Postgres.
 the following type
 
 > -- runSelect :: Database.PostgreSQL.Simple.Connection
-> --          -> Select columns -> IO [haskells]
+> --          -> Select fields -> IO [haskells]
 
-It converts a "record" of Opaleye columns to a list of "records" of
+It converts a "record" of Opaleye fields to a list of "records" of
 Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!

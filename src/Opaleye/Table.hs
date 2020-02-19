@@ -67,6 +67,7 @@ module Opaleye.Table (-- * Defining tables
                       T.Table,
                       T.tableField,
                       T.optional,
+                      T.readOnly,
                       T.required,
                       -- * Querying tables
                       selectTable,

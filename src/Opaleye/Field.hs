@@ -22,7 +22,7 @@ data Nullability = NonNullable | Nullable
 
 type instance Field_ 'NonNullable a = C.Column a
 type instance Field_ 'Nullable a = C.Column (C.Nullable a)
-  
+
 type FieldNullable  a = Field_ 'Nullable a
 type Field a = Field_ 'NonNullable a
 
