@@ -65,7 +65,7 @@ data Binary = Binary {
   bSelect2 :: Select
 } deriving Show
 
-data JoinType = LeftJoin | RightJoin | FullJoin deriving Show
+data JoinType = LeftJoin | RightJoin | FullJoin | LeftJoinLateral deriving Show
 data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
 
 data Label = Label {
@@ -219,6 +219,7 @@ joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
 joinType PQ.RightJoin = RightJoin
 joinType PQ.FullJoin = FullJoin
+joinType PQ.LeftJoinLateral = LeftJoinLateral
 
 binOp :: PQ.BinOp -> BinOp
 binOp o = case o of

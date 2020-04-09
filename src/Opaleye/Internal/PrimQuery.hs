@@ -18,7 +18,7 @@ data BinOp = Except
            | IntersectAll
              deriving Show
 
-data JoinType = LeftJoin | RightJoin | FullJoin deriving Show
+data JoinType = LeftJoin | RightJoin | FullJoin | LeftJoinLateral deriving Show
 
 data TableIdentifier = TableIdentifier
   { tiSchemaName :: Maybe String
