@@ -95,6 +95,7 @@ ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 ppJoinType Sql.RightJoin = text "RIGHT OUTER JOIN"
 ppJoinType Sql.FullJoin = text "FULL OUTER JOIN"
+ppJoinType Sql.LeftJoinLateral = text "LEFT OUTER JOIN LATERAL"
 
 ppAttrs :: Sql.SelectAttrs -> Doc
 ppAttrs Sql.Star                 = text "*"
