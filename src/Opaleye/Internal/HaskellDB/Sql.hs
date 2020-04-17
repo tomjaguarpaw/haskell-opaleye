@@ -65,6 +65,7 @@ data SqlUpdate  = SqlUpdate SqlTable [(SqlColumn,SqlExpr)] [SqlExpr]
 data SqlDelete  = SqlDelete SqlTable [SqlExpr]
 
 data OnConflict = DoNothing
+                | DoUpdate
                 -- ^ @ON CONFLICT DO NOTHING@
 
 --- | Data type for SQL INSERT statements.
