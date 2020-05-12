@@ -97,8 +97,6 @@ ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 ppJoinType Sql.RightJoin = text "RIGHT OUTER JOIN"
 ppJoinType Sql.FullJoin = text "FULL OUTER JOIN"
-ppJoinType Sql.InnerJoinLateral = text "INNER JOIN LATERAL"
-ppJoinType Sql.LeftJoinLateral = text "LEFT OUTER JOIN LATERAL"
 
 ppAttrs :: Sql.SelectAttrs -> Doc
 ppAttrs Sql.Star                 = text "*"
@@ -123,12 +121,14 @@ ppTable :: (TableAlias, Select) -> Doc
 ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
   Table table           -> HPrint.ppTable table
   RelExpr expr          -> HPrint.ppSqlExpr expr
-  SelectFrom selectFrom -> parens (ppSelectFrom selectFrom)
-  SelectJoin slj        -> parens (ppSelectJoin slj)
-  SelectValues slv      -> parens (ppSelectValues slv)
-  SelectBinary slb      -> parens (ppSelectBinary slb)
-  SelectLabel sll       -> parens (ppSelectLabel sll)
-  SelectExists saj      -> parens (ppSelectExists saj)
+  SelectFrom selectFrom -> lateral (ppSelectFrom selectFrom)
+  SelectJoin slj        -> lateral (ppSelectJoin slj)
+  SelectValues slv      -> lateral (ppSelectValues slv)
+  SelectBinary slb      -> lateral (ppSelectBinary slb)
+  SelectLabel sll       -> lateral (ppSelectLabel sll)
+  SelectExists saj      -> lateral (ppSelectExists saj)
+  where
+    lateral a = text "LATERAL" $$ parens a
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
