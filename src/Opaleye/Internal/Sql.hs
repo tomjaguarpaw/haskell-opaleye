@@ -129,12 +129,26 @@ aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
                                                (ensureColumns (map attr aggrs))
                                            , tables = [s]
                                            , groupBy = (Just . groupBy') aggrs }
-  where --- Grouping by an empty list is not the identity function!
-        --- In fact it forms one single group.  Syntactically one
-        --- cannot group by nothing in SQL, so we just group by a
-        --- constant instead.  Because "GROUP BY 0" means group by the
-        --- zeroth column, we instead use an expression rather than a
-        --- constant.
+  where --- Although in the presence of an aggregation function,
+        --- grouping by an empty list is equivalent to omitting group
+        --- by, the equivalence does not hold in the absence of an
+        --- aggregation function.  In the absence of an aggregation
+        --- function, group by of an empty list will return a single
+        --- row (if there are any and zero rows otherwise).  A query
+        --- without group by will return all rows.  This is a weakness
+        --- of SQL.  Really there ought to be a separate SELECT
+        --- AGGREGATE operation.
+        ---
+        --- Syntactically one cannot group by an empty list in SQL.
+        --- We take the conservative approach of explicitly grouping
+        --- by a constant if we are provided with an empty list of
+        --- group bys.  This yields a single group.  (Alternatively,
+        --- we could check whether any aggregation functions have been
+        --- applied and only group by a constant in the case where
+        --- none have.  That would make the generated SQL less noisy.)
+        ---
+        --- "GROUP BY 0" means group by the zeroth column so we
+        --- instead use an expression rather than a constant.
         handleEmpty :: [HSql.SqlExpr] -> NEL.NonEmpty HSql.SqlExpr
         handleEmpty =
           M.fromMaybe (return (SP.deliteral (HSql.ConstSqlExpr "0")))
