@@ -37,6 +37,10 @@
 >
 > import qualified Database.PostgreSQL.Simple as PGS
 
+> import Opaleye.Internal.Column
+> import Opaleye.Internal.TypeFamilies
+> import Opaleye.Internal.Table
+
 Introduction
 ============
 
@@ -158,7 +162,17 @@ Please volunteer to do that if you can.
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
 
-> birthdayTable :: Table (Birthday W) (Birthday O)
+> birthdayTable :: ((Opaleye.Internal.Table.TableColumn
+>                          (Opaleye.Internal.TypeFamilies.A
+>                             a0
+>                             ('Opaleye.Internal.TypeFamilies.TC
+>                                '( '(String, SqlText, NN), Req)))
+>                          O.PGText,
+>                        Opaleye.Internal.Table.TableColumn
+>                          (Opaleye.Internal.TypeFamilies.A
+>                             a0
+>                             ('Opaleye.Internal.TypeFamilies.TC '( '(Day, SqlDate, NN), Req)))
+>                          O.PGDate)) => Table (Birthday a0) (Birthday O)
 > birthdayTable = table "birthdayTable" $ pBirthday $ Birthday {
 >     bdName = tableField "name"
 >   , bdDay  = tableField "birthday"

@@ -16,6 +16,7 @@ import qualified Opaleye.Column as C
 import qualified Opaleye.Select as S
 import qualified Opaleye.RunQuery          as RQ
 import qualified Opaleye.TypeFamilies as TF
+import qualified Opaleye.Internal.TypeFamilies2 as TF2
 import           Opaleye.Internal.RunQuery (FromFields)
 import qualified Opaleye.Internal.RunQuery as IRQ
 
@@ -57,6 +58,16 @@ runSelectTF :: D.Default FromFields (rec TF.O) (rec TF.H)
             -- ^
             -> IO [rec TF.H]
 runSelectTF = RQ.runQuery
+
+-- | 'runSelectTF' has better type inference than 'runSelect' but only
+-- works with "higher-kinded data" types.
+runSelectTF2 :: D.Default FromFields (rec TF2.O) (rec TF2.H)
+             => PGS.Connection
+             -- ^
+             -> S.Select (rec TF2.O)
+             -- ^
+             -> IO [rec TF2.H]
+runSelectTF2 = RQ.runQuery
 
 -- | @runSelectFold@ streams the results of a query incrementally and consumes
 -- the results with a left fold.

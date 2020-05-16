@@ -1,15 +1,17 @@
+> {-# LANGUAGE RankNTypes #-}
 > {-# LANGUAGE FlexibleContexts #-}
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE UndecidableInstances #-}
 >
 > {-# LANGUAGE TypeFamilies #-}
-> {-# LANGUAGE EmptyDataDecls #-}
-> {-# LANGUAGE FunctionalDependencies #-}
 > {-# LANGUAGE NoMonomorphismRestriction #-}
 > {-# LANGUAGE DataKinds #-}
 > {-# LANGUAGE TypeOperators #-}
 > {-# LANGUAGE TypeInType #-}
+> {-# LANGUAGE PolyKinds #-}
+> {-# LANGUAGE TypeOperators #-}
+>
 >
 > module TutorialBasicTypeFamilies where
 >
@@ -18,15 +20,14 @@
 > import           Opaleye (Field,
 >                          Table, table, tableField, selectTable,
 >                          Select, (.==), aggregate, groupBy,
->                          count, avg, sum, leftJoin, runSelect, runSelectTF,
+>                          count, avg, sum, leftJoin, runSelect, runSelectTF2,
 >                          showSqlForPostgres, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
 > import qualified Opaleye              as O
 > import qualified Opaleye.Map          as M
 > import           Opaleye.Internal.TypeFamilies2
->   ((:**),TableRecordField,NN,Req,B2,O,W,(:<*>),(:<$>),Nulls,H,MapTF,MapTFF,
->    Combinator((:*), B), Compose)
+>   ((:**),TableRecordField,NN,Req,B2,O,W,(:<*>),(:<$>),Nulls,H,MapTFF)
 >
 > import qualified Data.Profunctor         as P
 > import qualified Data.Profunctor.Product as PP
@@ -37,6 +38,9 @@
 > import           Data.Time.Calendar (Day)
 >
 > import qualified Database.PostgreSQL.Simple as PGS
+>
+> import Opaleye.Internal.Join
+> import Opaleye.Internal.TypeFamilies2
 
 Introduction
 ============
@@ -353,8 +357,27 @@ Idealized SQL:
 Types of joins are inferrable in new versions of Opaleye.  Here is a
 (rather silly) example.
 
+> kTest :: (Unwrap
+>   ('MapOfG Nulled (Unwrap ('MapOfG Nulled (O.Column O.PGDate)))))
+>   :~:
+>   O.Column (O.Nullable O.PGDate)
+> kTest = Refl
+
+> typeInferred :: Select
+>                         ((Birthday
+>                             (MapTFF
+>                                Nulled
+>                                ((Compose ':* (MapTF ':* 'B Nulled))
+>                                 ':* ((Compose ':* UB1 'OpaleyeTypeG) ':* CSelect))),
+>                           Widget
+>                             (MapTFF
+>                                Nulled
+>                                ((Compose ':* (MapTF ':* 'B Nulled))
+>                                 ':* ((Compose ':* UB1 'OpaleyeTypeG) ':* CSelect)))),
+>                          Birthday
+>                            (MapTFF Nulled ((Compose ':* UB1 'OpaleyeTypeG) ':* CSelect)))
 > typeInferred =
->     O.fullJoinInferrable (O.fullJoinInferrable
+>     O.fullJoin (O.fullJoinInferrable
 >                     birthdaySelect
 >                     (selectTable widgetTable)
 >                     (const (O.pgBool True)))
@@ -385,10 +408,8 @@ minimize the number of confusing error messages!
 The type of selects can be inferred if you use the `runSelectTF`
 function.
 
-> {-
 > -- printNames :: PGS.Connection -> Select (Birthday O) -> IO ()
-> printNames conn select = mapM_ (print . bdName) =<< runSelectTF conn select
-> -}
+> printNames conn select = mapM_ (print . bdName) =<< runSelectTF2 conn select
 
 Conclusion
 ==========

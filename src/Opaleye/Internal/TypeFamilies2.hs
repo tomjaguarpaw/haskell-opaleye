@@ -119,6 +119,8 @@ kTuple = Refl
 kT4 :: Basic (Reduce (B4 f ':* 'B a ':* 'B b ':* 'B c ':* 'B d)) :~: f a b c d
 kT4 = Refl
 
+data Rec a
+
 data C a  = C a a F.Nullability
 data TC a = TC (C a) Optionality
 

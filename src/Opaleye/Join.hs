@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds #-}
 -- | Left, right, and full outer joins.
 --
 -- "Opaleye.FunctionalJoin" provides a much nicer, Haskelly, interface
@@ -24,6 +26,10 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 
+--{-# LANGUAGE PolyKinds #-}
+--  ^ Would rather not have this.
+--    Can I add a kind signature instead?
+
 module Opaleye.Join where
 
 import qualified Opaleye.Field               as F
@@ -33,6 +39,9 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Map as Map
 import qualified Opaleye.Select   as S
 import qualified Opaleye.SqlTypes as T
+
+import qualified Opaleye.Internal.TypeFamilies2 as TF2
+import           Opaleye.Column
 
 import qualified Data.Profunctor.Product.Default as D
 
@@ -161,3 +170,34 @@ fullJoinInferrable  :: (D.Default U.Unpackspec fieldsL fieldsL,
                     -> S.Select (nullableFieldsL, nullableFieldsR)
                     -- ^ Full outer join
 fullJoinInferrable = fullJoin
+
+{-
+fullJoinInferrableTF2  :: (D.Default U.Unpackspec fieldsL fieldsL,
+                           D.Default U.Unpackspec fieldsR fieldsR,
+                           D.Default J.NullMaker fieldsL nullableFieldsL,
+                           D.Default J.NullMaker fieldsR nullableFieldsR,
+                           (fieldsL :: *) ~
+                           rec_ (hL :: TF2.Combinator (a20 'TF2.:-> 'TF2.BasicType a30)),
+                           (fieldsR :: *) ~
+                           rec_ (hR :: TF2.Combinator (a20 'TF2.:-> 'TF2.BasicType a30)),
+                           (nullableFieldsL :: *) ~
+                           rec_ (TF2.MapTFF J.Nulled hL),
+                           (nullableFieldsR :: *) ~
+                           rec_ (TF2.MapTFF J.Nulled hR))
+                       => S.Select fieldsL
+                       -- ^ Left query
+                       -> S.Select fieldsR
+                       -- ^ Right query
+                       -> ((fieldsL, fieldsR) -> F.Field T.SqlBool)
+                       -- ^ Condition on which to join
+                       -> S.Select (nullableFieldsL, nullableFieldsR)
+                       -- ^ Full outer join
+fullJoinInferrableTF2 = fullJoin
+-}
+
+example :: (TF2.MapTFF J.Nulled TF2.O
+           TF2.:**
+           TF2.TableRecordField a T.SqlText TF2.NN TF2.Req)
+           TF2.:~:
+           Column (Nullable T.SqlText)
+example = TF2.Refl
