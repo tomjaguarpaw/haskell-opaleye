@@ -34,8 +34,8 @@ newtype Aggregator a b =
                          a b)
 
 makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
-makeAggr' m = Aggregator (PM.PackMap
-  (\f (C.Column e) -> fmap C.Column (f (fmap (, [], HPQ.AggrAll) m, e))))
+makeAggr' mAggrOp = Aggregator (PM.PackMap
+  (\f (C.Column e) -> fmap C.Column (f (fmap (, [], HPQ.AggrAll) mAggrOp, e))))
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr = makeAggr' . Just
