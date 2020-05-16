@@ -46,7 +46,8 @@ data PrimQuery' a = Unit
                   | Aggregate (Bindings (Maybe (HPQ.AggrOp,
                                                 [HPQ.OrderExpr],
                                                 HPQ.AggrDistinct),
-                                          HPQ.PrimExpr))
+                                          HPQ.Symbol))
+                              (Bindings HPQ.PrimExpr)
                               (PrimQuery' a)
                   -- | Represents both @DISTINCT ON@ and @ORDER BY@
                   --   clauses. In order to represent valid SQL only,
@@ -83,7 +84,8 @@ data PrimQueryFold' a p = PrimQueryFold
   , product           :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
   , aggregate         :: Bindings (Maybe
                              (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                                   HPQ.PrimExpr)
+                                   HPQ.Symbol)
+                      -> Bindings HPQ.PrimExpr
                       -> p
                       -> p
   , distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr)
@@ -134,7 +136,7 @@ foldPrimQuery f = fix fold
           Empty a                     -> empty             f a
           BaseTable ti syms           -> baseTable         f ti syms
           Product qs pes              -> product           f (fmap self qs) pes
-          Aggregate aggrs q           -> aggregate         f aggrs (self q)
+          Aggregate aggrs inners q    -> aggregate         f aggrs inners (self q)
           DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs (self q)
           Limit op q                  -> limit             f op (self q)
           Join j cond pe1 pe2 q1 q2   -> join              f j cond pe1 pe2 (self q1) (self q2)

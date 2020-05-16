@@ -126,13 +126,18 @@ product ss pes = SelectFrom $
 
 aggregate :: [(Symbol,
                (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                HPQ.PrimExpr))]
+                Symbol))]
+          -> [(Symbol, HPQ.PrimExpr)]
           -> Select
           -> Select
-aggregate aggrs s =
-  SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (map attr aggrs))
-                         , tables = [s]
-                         , groupBy = (Just . groupBy') aggrs }
+aggregate aggrs inners s =
+  SelectFrom $ newSelect {
+    attrs = SelectAttrs (ensureColumns (map attr aggrs'))
+  , tables = [SelectFrom $ newSelect {
+                 attrs  = SelectAttrsStar innerAttrs
+               , tables = [s]
+               }]
+  , groupBy = (Just . groupBy') aggrs' }
   where --- Although in the presence of an aggregation function,
         --- grouping by an empty list is equivalent to omitting group
         --- by, the equivalence does not hold in the absence of an
@@ -167,6 +172,10 @@ aggregate aggrs s =
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
         expr (_, (_, e)) = e
         aggrOp (_, (x, _)) = x
+
+        innerAttrs = ensureColumns (map sqlBinding inners)
+
+        aggrs' = (map . Arr.second . Arr.second) HPQ.AttrExpr aggrs
 
 
 aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct) -> HPQ.PrimExpr -> HPQ.PrimExpr

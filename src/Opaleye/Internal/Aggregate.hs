@@ -88,18 +88,30 @@ runAggregator (Aggregator a) = PM.traversePM a
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
 aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
-  where (c1, projPEs) =
+  where (c1, projPEs_inners) =
           PM.run (runAggregator agg (extractAggregateFields t0) c0)
 
-        primQ' = PQ.Aggregate projPEs primQ
+        projPEs = map fst projPEs_inners
+        inners  = map snd projPEs_inners
+
+        primQ' = PQ.Aggregate projPEs inners primQ
 
 extractAggregateFields
   :: T.Tag
-  -> (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)
-  -> PM.PM [(HPQ.Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                          HPQ.PrimExpr))]
+  -> (m, HPQ.PrimExpr)
+  -> PM.PM [((HPQ.Symbol,
+              (m, HPQ.Symbol)),
+              (HPQ.Symbol, HPQ.PrimExpr))]
            HPQ.PrimExpr
-extractAggregateFields = PM.extractAttr "result"
+extractAggregateFields tag (m, pe) = do
+  i <- PM.new
+
+  let souter = HPQ.Symbol ("result" ++ i) tag
+      sinner = HPQ.Symbol ("inner" ++ i) tag
+
+  PM.write ((souter, (m, sinner)), (sinner, pe))
+
+  pure (HPQ.AttrExpr souter)
 
 -- { Boilerplate instances
 
