@@ -1,10 +1,12 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE Arrows #-}
 
 module QuickCheck where
 
 import qualified Opaleye as O
+import qualified Opaleye.Lateral as OL
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Test.QuickCheck as TQ
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
@@ -69,6 +71,14 @@ aggregateColumns =
   --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/117
   PP.list (P.rmap (O.unsafeCast "int4") O.sum PP.+++! O.boolAnd)
 
+aggregateLaterally :: O.Aggregator b b'
+                   -> O.Query (a, b)
+                   -> O.Query (a, b')
+aggregateLaterally agg q = proc () -> do
+  (a, b) <- q -< ()
+  b' <- OL.laterally (O.aggregate agg) Arrow.returnA -< b
+  Arrow.returnA -< (a, b')
+
 -- This is taking liberties.  Firstly it errors out when two fields
 -- are of different types.  It should probably return a Maybe or an
 -- Either.  Secondly, it doesn't detect when lists are the same
@@ -130,6 +140,18 @@ instance TQ.Arbitrary ArbitraryQuery where
         ArbitraryQuery q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
         aq (O.label thisLabel q)
+    , -- This is stupidly simple way of generating lateral subqueries.
+      -- All it does is run a lateral aggregation.  Ideally we would
+      -- put much more functionality inside the lateral subquery but
+      -- that would require generating arbitrary 'QueryArr Columns
+      -- Columns' rather than just arbitrary 'Query Columns'.  That
+      -- would be a good idea in general but I can't be bothered to do
+      -- it yet.
+      do
+        ArbitraryQuery q <- TQ.arbitrary
+        aq ((fmap unpairColums
+             . aggregateLaterally aggregateColumns
+             . fmap pairColumns) q)
     ]
     where aq = return . ArbitraryQuery
 
@@ -165,6 +187,12 @@ odds (x:xs) = x : evens xs
 evens :: [a] -> [a]
 evens []     = []
 evens (_:xs) = odds xs
+
+pairColumns :: [a] -> ([a], [a])
+pairColumns cs = (evens cs, odds cs)
+
+unpairColums :: ([a], [a]) -> [a]
+unpairColums = uncurry (++)
 
 instance TQ.Arbitrary ArbitraryGarble where
   arbitrary = do
@@ -382,6 +410,10 @@ label conn comment (ArbitraryQuery q) =
   * Left join
   * Operators (mathematical, logical, etc.)
   * >>>?
+
+  * The denotation of lateral subqueries (at the moment we just
+    generate subqueries containing them, but we don't check their
+    behaviour)
 
 -}
 

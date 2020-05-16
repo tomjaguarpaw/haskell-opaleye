@@ -85,21 +85,47 @@ runAggregator
   -> a -> f b
 runAggregator (Aggregator a) = PM.traversePM a
 
+-- In Postgres (and, I believe, standard SQL) "aggregate functions are
+-- not allowed in FROM clause of their own query level".  There
+-- doesn't seem to be any fundamental reason for this, but we are
+-- stuck with it.  That means that in a lateral subquery containing an
+-- aggregation over a column C from a previous subquery we have to
+-- create a new column name for C before we are allowed to aggregate it!
+-- For more information see
+--
+--     https://www.postgresql.org/message-id/20200513110251.GC24083%40cloudinit-builder
+--
+--     https://github.com/tomjaguarpaw/haskell-opaleye/pull/460#issuecomment-626716160
+-- Instead of detecting when we are aggregating over a column from a
+-- previous query we just create new names for all columns before we
+-- aggregate.
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
 aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
-  where (c1, projPEs) =
+  where (c1, projPEs_inners) =
           PM.run (runAggregator agg (extractAggregateFields t0) c0)
 
-        primQ' = PQ.Aggregate projPEs primQ
+        projPEs = map fst projPEs_inners
+        inners  = map snd projPEs_inners
+
+        primQ' = PQ.Aggregate projPEs inners primQ
 
 extractAggregateFields
   :: T.Tag
-  -> (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)
-  -> PM.PM [(HPQ.Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                          HPQ.PrimExpr))]
+  -> (m, HPQ.PrimExpr)
+  -> PM.PM [((HPQ.Symbol,
+              (m, HPQ.Symbol)),
+              (HPQ.Symbol, HPQ.PrimExpr))]
            HPQ.PrimExpr
-extractAggregateFields = PM.extractAttr "result"
+extractAggregateFields tag (m, pe) = do
+  i <- PM.new
+
+  let souter = HPQ.Symbol ("result" ++ i) tag
+      sinner = HPQ.Symbol ("inner" ++ i) tag
+
+  PM.write ((souter, (m, sinner)), (sinner, pe))
+
+  pure (HPQ.AttrExpr souter)
 
 -- { Boilerplate instances
 
