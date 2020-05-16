@@ -129,7 +129,8 @@ boolAnd = A.makeAggr HPQ.AggrBoolAnd
 arrayAgg :: Aggregator (C.Column a) (C.Column (T.SqlArray a))
 arrayAgg = A.makeAggr HPQ.AggrArr
 
-stringAgg :: C.Column T.SqlText -> Aggregator (C.Column T.SqlText) (C.Column T.SqlText)
+stringAgg :: C.Column T.SqlText
+          -> Aggregator (C.Column T.SqlText) (C.Column T.SqlText)
 stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 
 -- | Count the number of rows in a query.  This is different from

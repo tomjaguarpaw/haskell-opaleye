@@ -27,14 +27,15 @@ An 'Aggregator' corresponds closely to a 'Control.Foldl.Fold' from the
 type @a@ to a single row of type @b@, a 'Control.Foldl.Fold' @a@ @b@
 takes a list of @a@ and returns a single value of type @b@.
 -}
-newtype Aggregator a b = Aggregator
-                         (PM.PackMap (Maybe (HPQ.AggrOp, [HPQ.OrderExpr],HPQ.AggrDistinct), HPQ.PrimExpr)
-                                     HPQ.PrimExpr
-                                     a b)
+newtype Aggregator a b =
+  Aggregator (PM.PackMap (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
+                          HPQ.PrimExpr)
+                         HPQ.PrimExpr
+                         a b)
 
 makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr' m = Aggregator (PM.PackMap
-                          (\f (C.Column e) -> fmap C.Column (f (fmap (,[],HPQ.AggrAll) m, e))))
+  (\f (C.Column e) -> fmap C.Column (f (fmap (, [], HPQ.AggrAll) m, e))))
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr = makeAggr' . Just
@@ -73,12 +74,15 @@ makeAggr = makeAggr' . Just
 -- @
 
 orderAggregate :: O.Order a -> Aggregator a b -> Aggregator a b
-orderAggregate o (Aggregator (PM.PackMap pm)) =
-  Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap ((\f' (a,b,c') -> (a,f' b,c')) (const $ O.orderExprs c o)))) c))
+orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
+  (\f c -> pm (f . P.first' (fmap ((\f' (a,b,c') -> (a,f' b,c')) (const $ O.orderExprs c o)))) c))
 
-runAggregator :: Applicative f => Aggregator a b
-              -> ((Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr) -> f HPQ.PrimExpr)
-              -> a -> f b
+runAggregator
+  :: Applicative f
+  => Aggregator a b
+  -> ((Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)
+     -> f HPQ.PrimExpr)
+  -> a -> f b
 runAggregator (Aggregator a) = PM.traversePM a
 
 aggregateU :: Aggregator a b
@@ -89,8 +93,12 @@ aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
 
         primQ' = PQ.Aggregate projPEs primQ
 
-extractAggregateFields :: T.Tag -> (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)
-      -> PM.PM [(HPQ.Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr))] HPQ.PrimExpr
+extractAggregateFields
+  :: T.Tag
+  -> (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)
+  -> PM.PM [(HPQ.Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
+                          HPQ.PrimExpr))]
+           HPQ.PrimExpr
 extractAggregateFields = PM.extractAttr "result"
 
 -- { Boilerplate instances

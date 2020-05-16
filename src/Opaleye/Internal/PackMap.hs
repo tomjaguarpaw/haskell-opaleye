@@ -40,7 +40,8 @@ import qualified Data.Functor.Identity as I
 -- 'ProductProfunctor') in @s@ and @t@.  It is unclear at this point
 -- whether we want the same @Traversal@ laws to hold or not.  Our use
 -- cases may be much more general.
-newtype PackMap a b s t = PackMap (forall f. Applicative f => (a -> f b) -> s -> f t)
+newtype PackMap a b s t =
+  PackMap (forall f. Applicative f => (a -> f b) -> s -> f t)
 
 -- | Replaces the targeted occurences of @a@ in @s@ with @b@ (changing
 -- the @s@ to a @t@ in the process).  This can be done via an
@@ -91,8 +92,10 @@ run m = (r, as)
 --
 -- Add the fresh name and the input value it refers to to the list in
 -- the state parameter.
-extractAttrPE :: (primExpr -> String -> String) -> T.Tag -> primExpr
-               -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
+extractAttrPE :: (primExpr -> String -> String)
+              -> T.Tag
+              -> primExpr
+              -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractAttrPE mkName t pe = do
   i <- new
   let s = HPQ.Symbol (mkName pe i) t
@@ -101,8 +104,10 @@ extractAttrPE mkName t pe = do
 
 -- | As 'extractAttrPE' but ignores the 'primExpr' when making the
 -- fresh column name and just uses the supplied 'String' and 'T.Tag'.
-extractAttr :: String -> T.Tag -> primExpr
-               -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
+extractAttr :: String
+            -> T.Tag
+            -> primExpr
+            -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractAttr s = extractAttrPE (const (s ++))
 
 -- }

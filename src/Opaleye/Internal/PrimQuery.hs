@@ -43,13 +43,20 @@ data PrimQuery' a = Unit
                   | Empty     a
                   | BaseTable TableIdentifier (Bindings HPQ.PrimExpr)
                   | Product   (NEL.NonEmpty (PrimQuery' a)) [HPQ.PrimExpr]
-                  | Aggregate (Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr))
+                  | Aggregate (Bindings (Maybe (HPQ.AggrOp,
+                                                [HPQ.OrderExpr],
+                                                HPQ.AggrDistinct),
+                                          HPQ.PrimExpr))
                               (PrimQuery' a)
-                  -- | Represents both @DISTINCT ON@ and @ORDER BY@ clauses. In order to represent valid
-                  --   SQL only, @DISTINCT ON@ expressions are always interpreted as the first @ORDER BY@s
-                  --   when present, preceding any in the provided list.
+                  -- | Represents both @DISTINCT ON@ and @ORDER BY@
+                  --   clauses. In order to represent valid SQL only,
+                  --   @DISTINCT ON@ expressions are always
+                  --   interpreted as the first @ORDER BY@s when
+                  --   present, preceding any in the provided list.
                   --   See 'Opaleye.Internal.Sql.distinctOnOrderBy'.
-                  | DistinctOnOrderBy (Maybe (NEL.NonEmpty HPQ.PrimExpr)) [HPQ.OrderExpr] (PrimQuery' a)
+                  | DistinctOnOrderBy (Maybe (NEL.NonEmpty HPQ.PrimExpr))
+                                      [HPQ.OrderExpr]
+                                      (PrimQuery' a)
                   | Limit     LimitOp (PrimQuery' a)
                   | Join      JoinType
                               HPQ.PrimExpr
@@ -74,8 +81,15 @@ data PrimQueryFold' a p = PrimQueryFold
   , empty             :: a -> p
   , baseTable         :: TableIdentifier -> Bindings HPQ.PrimExpr -> p
   , product           :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-  , aggregate         :: Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr) -> p -> p
-  , distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr) -> [HPQ.OrderExpr] -> p -> p
+  , aggregate         :: Bindings (Maybe
+                             (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
+                                   HPQ.PrimExpr)
+                      -> p
+                      -> p
+  , distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr)
+                      -> [HPQ.OrderExpr]
+                      -> p
+                      -> p
   , limit             :: LimitOp -> p -> p
   , join              :: JoinType
                       -> HPQ.PrimExpr
@@ -86,7 +100,10 @@ data PrimQueryFold' a p = PrimQueryFold
                       -> p
   , existsf           :: Bool -> p -> p -> p
   , values            :: [Symbol] -> NEL.NonEmpty [HPQ.PrimExpr] -> p
-  , binary            :: BinOp -> Bindings (HPQ.PrimExpr, HPQ.PrimExpr) -> (p, p) -> p
+  , binary            :: BinOp
+                      -> Bindings (HPQ.PrimExpr, HPQ.PrimExpr)
+                      -> (p, p)
+                      -> p
   , label             :: String -> p -> p
   , relExpr           :: HPQ.PrimExpr -> Bindings HPQ.PrimExpr -> p
     -- ^ A relation-valued expression

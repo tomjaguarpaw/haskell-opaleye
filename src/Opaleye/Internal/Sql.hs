@@ -124,11 +124,15 @@ product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
 
-aggregate :: [(Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr))] -> Select -> Select
-aggregate aggrs s = SelectFrom $ newSelect { attrs = SelectAttrs
-                                               (ensureColumns (map attr aggrs))
-                                           , tables = [s]
-                                           , groupBy = (Just . groupBy') aggrs }
+aggregate :: [(Symbol,
+               (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
+                HPQ.PrimExpr))]
+          -> Select
+          -> Select
+aggregate aggrs s =
+  SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (map attr aggrs))
+                         , tables = [s]
+                         , groupBy = (Just . groupBy') aggrs }
   where --- Although in the presence of an aggregation function,
         --- grouping by an empty list is equivalent to omitting group
         --- by, the equivalence does not hold in the absence of an
