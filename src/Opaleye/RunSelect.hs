@@ -9,10 +9,8 @@ module Opaleye.RunSelect
    IRQ.FromFields,
    IRQ.FromField) where
 
-import qualified Data.Profunctor            as P
 import qualified Database.PostgreSQL.Simple as PGS
 
-import qualified Opaleye.Column as C
 import qualified Opaleye.Select as S
 import qualified Opaleye.RunQuery          as RQ
 import qualified Opaleye.TypeFamilies as TF
@@ -127,11 +125,9 @@ foldForward = RQ.foldForward
 unsafeFromField :: (b -> b')
                 -> IRQ.FromField sqlType b
                 -> IRQ.FromField sqlType' b'
-unsafeFromField haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
-                                                     (fmapFP haskellF fp)
-  where IRQ.QueryRunnerColumn u fp = qrc
+unsafeFromField haskellF qrc = IRQ.QueryRunnerColumn (fmapFP haskellF fp)
+  where IRQ.QueryRunnerColumn fp = qrc
         fmapFP = fmap . fmap . fmap
-        colF = C.unsafeCoerceColumn
 
 -- * Explicit versions
 
