@@ -340,7 +340,7 @@ testSelect :: Test
 testSelect = it "selects" $ table1Q `queryShouldReturnSorted` table1data
 
 testProduct :: Test
-testProduct = it "joins tables" $ query `queryShouldReturnSorted` (A.liftA2 (,) table1data table2data)
+testProduct = it "joins tables" $ query `queryShouldReturnSorted` A.liftA2 (,) table1data table2data
   where query = table1Q &&& table2Q
 
 testRestrict :: Test
@@ -377,7 +377,7 @@ testIn = it "restricts values to a range" $ query `queryShouldReturnSorted` filt
           Arr.returnA -< t
 
 testNum :: Test
-testNum = it "" $ query `queryShouldReturnSorted` (map op table1data)
+testNum = it "" $ query `queryShouldReturnSorted` map op table1data
   where query :: Query (Column O.SqlInt4)
         query = proc () -> do
           t <- table1Q -< ()
@@ -386,7 +386,7 @@ testNum = it "" $ query `queryShouldReturnSorted` (map op table1data)
         op (x, y) = abs (x - 5) * signum (x - 4) * (y * y + 1)
 
 testDiv :: Test
-testDiv = it "" $ query `queryShouldReturnSorted` (map (op . toDoubles) table1data)
+testDiv = it "" $ query `queryShouldReturnSorted` map (op . toDoubles) table1data
   where query :: Query (Column O.SqlFloat8)
         query = proc () -> do
           t <- Arr.arr (O.doubleOfInt *** O.doubleOfInt) <<< table1Q -< ()
@@ -418,7 +418,7 @@ testCaseEmpty = it "" $ q `queryShouldReturnSorted` expected
         expected = [33, 33, 33, 33]
 
 testDistinct :: Test
-testDistinct = it "" $ O.distinct table1Q `queryShouldReturnSorted` (L.nub table1data)
+testDistinct = it "" $ O.distinct table1Q `queryShouldReturnSorted` L.nub table1data
 
 
 testDistinctOn :: Test
@@ -902,7 +902,7 @@ testJsonGetFieldValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
             Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "c"
         expected :: [Maybe Json.Value]
-        expected = [Just $ Json.Number $ fromInteger 21]
+        expected = [Just $ Json.Number 21]
 
 -- Test opaleye's equivalent of c1->>'c'
 testJsonGetFieldText :: (O.SqlIsJson a) => Query (Column a) -> Test
@@ -926,7 +926,7 @@ testJsonGetArrayValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
             Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "a" O..-> O.pgInt4 2
         expected :: [Maybe Json.Value]
-        expected = [Just $ Json.Number $ fromInteger 30]
+        expected = [Just $ Json.Number 30]
 
 -- Test opaleye's equivalent of c1->'a'->>2
 testJsonGetArrayText :: (O.SqlIsJson a) => Query (Column a) -> Test
@@ -951,7 +951,7 @@ testJsonGetPathValue dataQuery = it "" $ testH q (`shouldBe` expected)
   where q = dataQuery >>> proc c1 -> do
               Arr.returnA -< O.toNullable c1 O..#> O.pgArray O.pgStrictText ["b", "x"]
         expected :: [Maybe Json.Value]
-        expected = [Just $ Json.Number $ fromInteger 42]
+        expected = [Just $ Json.Number 42]
 
 -- Test opaleye's equivalent of c1#>>'{b,x}'
 testJsonGetPathText :: (O.SqlIsJson a) => Query (Column a) -> Test
@@ -1002,7 +1002,7 @@ testRangeOverlap :: Test
 testRangeOverlap = it "generates overlap" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
-        q = A.pure $ (range 3 7) `O.overlap` (range 4 12)
+        q = A.pure (range 3 7 `O.overlap` range 4 12)
 
 testRangeDateOverlap :: Test
 testRangeDateOverlap = it "generates time overlap" $ \conn -> do
@@ -1022,31 +1022,31 @@ testRangeLeftOf :: Test
 testRangeLeftOf = it "generates 'left of'" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
-        q = A.pure $ (range 1 10) O..<< (range 100 110)
+        q = A.pure (range 1 10 O..<< range 100 110)
 
 testRangeRightOf :: Test
 testRangeRightOf = it "generates 'right of'" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
-        q = A.pure $ (range 50 60) O..>> (range 20 30)
+        q = A.pure (range 50 60 O..>> range 20 30)
 
 testRangeRightExtension :: Test
 testRangeRightExtension = it "generates right extension" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
-        q = A.pure $ (range 1 20) O..&< (range 18 20)
+        q = A.pure (range 1 20 O..&< range 18 20)
 
 testRangeLeftExtension :: Test
 testRangeLeftExtension = it "generates left extension" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
-        q = A.pure $ (range 7 20) O..&> (range 5 10)
+        q = A.pure (range 7 20 O..&> range 5 10)
 
 testRangeAdjacency :: Test
 testRangeAdjacency = it "generates adjacency" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Column (O.PGRange O.SqlInt4)
         range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Exclusive b)
-        q = A.pure $ (range 1 2) O..-|- (range 2 3)
+        q = A.pure (range 1 2 O..-|- range 2 3)
 
 testRangeBoundsEnum :: forall a b.
     ( Show a, Eq a, Enum a, O.IsRangeType b

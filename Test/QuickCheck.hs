@@ -28,7 +28,7 @@ table1 :: O.Table (O.Column O.SqlInt4, O.Column O.SqlInt4)
                   (O.Column O.SqlInt4, O.Column O.SqlInt4)
 table1 = twoIntTable "table1"
 
-data QueryDenotation a =
+newtype QueryDenotation a =
   QueryDenotation { unQueryDenotation :: PGS.Connection -> IO [a] }
 
 onList :: ([a] -> [b]) -> QueryDenotation a -> QueryDenotation b
@@ -159,8 +159,8 @@ arbitraryOrder :: ArbitraryOrder -> O.Order Columns
 arbitraryOrder = Monoid.mconcat
                  . map (\(direction, index) ->
                          (case direction of
-                             Asc  -> (\f -> Divisible.choose  f (O.asc id) (O.asc id))
-                             Desc -> (\f -> Divisible.choose  f (O.desc id) (O.desc id)))
+                             Asc  -> \f -> Divisible.choose  f (O.asc id) (O.asc id)
+                             Desc -> \f -> Divisible.choose  f (O.desc id) (O.desc id))
                          -- If the list is empty we have to conjure up
                          -- an arbitrary value of type Column
                          (\l -> let len = length l

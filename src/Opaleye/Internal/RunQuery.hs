@@ -3,7 +3,8 @@
 
 module Opaleye.Internal.RunQuery where
 
-import           Control.Applicative (Applicative, pure, (*>), (<*>), liftA2)
+import           Control.Applicative
+  (Applicative, pure, (<$>), (*>), (<*>), liftA2)
 
 import qualified Database.PostgreSQL.Simple.Cursor  as PGSC (Cursor)
 import           Database.PostgreSQL.Simple.Internal (RowParser)
@@ -41,7 +42,6 @@ import           GHC.Int (Int32, Int64)
 
 -- { Only needed for postgresql-simple FieldParsers
 
-import           Control.Applicative ((<$>))
 import           Database.PostgreSQL.Simple.FromField
   (ResultError(UnexpectedNull, Incompatible), typeInfo, returnError)
 import qualified Database.PostgreSQL.Simple.TypeInfo as TI

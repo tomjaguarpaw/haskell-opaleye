@@ -50,7 +50,7 @@ To perform a delete we provide an expression from our read type to
 > delete :: Delete Int64
 > delete = Delete
 >   { dTable     = myTable
->   , dWhere     = (\(_, x, y, _) -> x .< y)
+>   , dWhere     = \(_, x, y, _) -> x .< y
 >   , dReturning = rCount
 >   }
 
@@ -133,7 +133,7 @@ according to the update function.
 > update = Update
 >   { uTable      = myTable
 >   , uUpdateWith = updateEasy (\(id_, x, y, s) -> (id_, x + y, x - y, s))
->   , uWhere      = (\(id_, _, _, _) -> id_ .== 5)
+>   , uWhere      = \(id_, _, _, _) -> id_ .== 5
 >   , uReturning  = rCount
 >   }
 
