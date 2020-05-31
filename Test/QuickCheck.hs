@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE Rank2Types #-}
 
@@ -67,6 +68,17 @@ aggregateColumns =
   --
   --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/117
   PP.list (P.rmap (O.unsafeCast "int4") O.sum PP.+++! O.boolAnd)
+
+-- This is taking liberties.  Firstly it errors out when two fields
+-- are of different types.  It should probably return a Maybe or an
+-- Either.  Secondly, it doesn't detect when lists are the same
+-- length and it probably should.
+aggregateDenotation :: [Haskells] -> [Haskells]
+aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
+  where combine = zipWith (curry (\case
+          (Left  i1, Left i2)  -> Left (i1 + i2)
+          (Right b1, Right b2) -> Right (b1 && b2)
+          _ -> error "Impossible"))
 
 instance Show ArbitraryQuery where
   show (ArbitraryQuery q) = maybe "Empty query" id
@@ -341,9 +353,14 @@ values conn (ArbitraryColumnsList l) =
   compareNoSort conn (denotation' (fmap columnsList (O.values (fmap O.constant l))))
                      (pureList (fmap columnsList l))
 
+aggregate :: PGS.Connection -> ArbitraryQuery -> IO Bool
+aggregate conn (ArbitraryQuery q) =
+  compareNoSort conn (denotation' (O.aggregate aggregateColumns q))
+                     (onList aggregateDenotation (denotation' q))
+
+
 {- TODO
 
-  * Aggregation
   * Binary operations
       * union
       * unionAll
@@ -395,6 +412,7 @@ run conn = do
   test1 distinct
   test1 restrict
   test1 values
+  test1 aggregate
 
 -- }
 
