@@ -167,38 +167,40 @@ instance TQ.Arbitrary ArbitraryGarble where
           odds xs))
 
 arbitraryOrder :: ArbitraryOrder -> O.Order Columns
-arbitraryOrder = Monoid.mconcat
-                 . map (\(direction, index) ->
-                         (case direction of
-                             Asc  -> \f -> Divisible.choose  f (O.asc id) (O.asc id)
-                             Desc -> \f -> Divisible.choose  f (O.desc id) (O.desc id))
-                         -- If the list is empty we have to conjure up
-                         -- an arbitrary value of type Column
-                         (\l -> let len = length l
-                                in if len > 0 then
-                                     l !! (index `mod` length l)
-                                   else
-                                     Left 0))
-                 . unArbitraryOrder
+arbitraryOrder =
+  Monoid.mconcat
+  . map (\(direction, index) ->
+           (case direction of
+              Asc  -> \f -> Divisible.choose  f (O.asc id) (O.asc id)
+              Desc -> \f -> Divisible.choose  f (O.desc id) (O.desc id))
+           -- If the list is empty we have to conjure up
+           -- an arbitrary value of type Column
+           (\l -> let len = length l
+                  in if len > 0 then
+                       l !! (index `mod` length l)
+                  else
+                       Left 0))
+  . unArbitraryOrder
 
 arbitraryOrdering :: ArbitraryOrder -> Haskells -> Haskells -> Ord.Ordering
-arbitraryOrdering = Monoid.mconcat
-                    . map (\(direction, index) ->
-                            (case direction of
-                                Asc  -> id
-                                Desc -> flip)
-                         -- If the list is empty we have to conjure up
-                         -- an arbitrary value of type Column
-                         --
-                         -- Note that this one will compare Left Int
-                         -- to Right Bool, but it never gets asked to
-                         -- do so, so we don't care.
-                            (Ord.comparing (\l -> let len = length l
-                                                  in if len > 0 then
-                                                        l !! (index `mod` length l)
-                                                     else
-                                                        Left 0)))
-                    . unArbitraryOrder
+arbitraryOrdering =
+  Monoid.mconcat
+  . map (\(direction, index) ->
+            (case direction of
+                Asc  -> id
+                Desc -> flip)
+            -- If the list is empty we have to conjure up
+            -- an arbitrary value of type Column
+            --
+            -- Note that this one will compare Left Int
+            -- to Right Bool, but it never gets asked to
+            -- do so, so we don't care.
+            (Ord.comparing (\l -> let len = length l
+                                  in if len > 0 then
+                                       l !! (index `mod` length l)
+                                  else
+                                       Left 0)))
+  . unArbitraryOrder
 
 instance Functor QueryDenotation where
   fmap f = QueryDenotation . (fmap . fmap . fmap) f .unQueryDenotation
