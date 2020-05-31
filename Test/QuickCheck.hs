@@ -126,6 +126,10 @@ instance TQ.Arbitrary ArbitraryQuery where
     , do
         ArbitraryQuery q <- TQ.arbitrary
         aq (O.aggregate aggregateColumns q)
+    , do
+        ArbitraryQuery q <- TQ.arbitrary
+        thisLabel        <- TQ.arbitrary
+        aq (O.label thisLabel q)
     ]
     where aq = return . ArbitraryQuery
 
@@ -359,6 +363,12 @@ aggregate conn (ArbitraryQuery q) =
                      (onList aggregateDenotation (denotation' q))
 
 
+label :: PGS.Connection -> String -> ArbitraryQuery -> IO Bool
+label conn comment (ArbitraryQuery q) =
+  compareNoSort conn (denotation' (O.label comment q))
+                     (denotation' q)
+
+
 {- TODO
 
   * Binary operations
@@ -370,7 +380,6 @@ aggregate conn (ArbitraryQuery q) =
       * exceptAll
   * Nullability
   * Left join
-  * Label (check it has no effect)
   * Operators (mathematical, logical, etc.)
   * >>>?
 
@@ -413,6 +422,7 @@ run conn = do
   test1 restrict
   test1 values
   test1 aggregate
+  test2 label
 
 -- }
 

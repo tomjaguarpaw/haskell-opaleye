@@ -18,6 +18,7 @@ import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
 
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)
+import qualified Data.Char
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text          as ST
 
@@ -75,7 +76,7 @@ ppSelectLabel :: Label -> Doc
 ppSelectLabel l = text "/*" <+> text (preprocess (Sql.lLabel l)) <+> text "*/"
                   $$ ppSql (Sql.lSelect l)
   where
-    preprocess = defuseComments
+    preprocess = defuseComments . filter Data.Char.isPrint
     defuseComments = ST.unpack
                    . ST.replace (ST.pack "--") (ST.pack " - - ")
                    . ST.replace (ST.pack "/*") (ST.pack " / * ")
