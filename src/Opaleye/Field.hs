@@ -80,3 +80,6 @@ toNullable = C.unsafeCoerceColumn
 maybeToNullable :: Maybe (Field_ 'NonNullable a)
                 -> Field_ 'Nullable a
 maybeToNullable = C.maybeToNullable
+
+unsafeCoerceField :: C.Column a -> C.Column b
+unsafeCoerceField = C.unsafeCoerceColumn
