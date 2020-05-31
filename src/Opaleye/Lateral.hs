@@ -11,14 +11,7 @@ import           Control.Category ( (<<<) )
 --
 -- You might find 'laterally' and 'bilaterally' more convenient to use.
 lateral :: (i -> Select a) -> SelectArr i a
-lateral transform = O.QueryArr qa
-  where
-    qa (i, primQueryL, tag) = (b, primQueryJoin, tag')
-      where
-        (b, primQueryR, tag') = O.runSimpleQueryArr (transform i) ((), tag)
-        primQueryJoin = O.Join O.InnerJoinLateral true [] [] primQueryL primQueryR
-
-    true = O.ConstExpr (O.BoolLit True)
+lateral = O.lateral
 
 
 -- | Allows to lift operations like 'Opaleye.Aggregate.aggregate',

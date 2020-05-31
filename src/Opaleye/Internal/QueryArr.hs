@@ -17,6 +17,9 @@ import           Control.Applicative (Applicative, pure, (<*>))
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 
+import           Opaleye.Internal.PrimQuery as O
+import           Opaleye.Internal.HaskellDB.PrimQuery as O
+
 -- Ideally this should be wrapped in a monad which automatically
 -- increments the Tag, but I couldn't be bothered to do that.
 newtype QueryArr a b = QueryArr ((a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag))
@@ -45,6 +48,17 @@ runQueryArrUnpack unpackspec q = (primExprs, primQ, endTag)
 
 first3 :: (a1 -> b) -> (a1, a2, a3) -> (b, a2, a3)
 first3 f (a1, a2, a3) = (f a1, a2, a3)
+
+lateral :: (i -> Query a) -> QueryArr i a
+lateral transform = QueryArr qa
+  where
+    qa (i, primQueryL, tag) = (b, primQueryJoin, tag')
+      where
+        (b, primQueryR, tag') = runSimpleQueryArr (transform i) ((), tag)
+        primQueryJoin = O.Join O.InnerJoinLateral true [] [] primQueryL primQueryR
+
+    true = O.ConstExpr (BoolLit True)
+
 
 instance C.Category QueryArr where
   id = QueryArr id
