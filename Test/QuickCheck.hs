@@ -11,6 +11,7 @@ import qualified Data.Profunctor.Product.Default as D
 import           Data.List (sort)
 import qualified Data.List as List
 import qualified Data.MultiSet as MultiSet
+import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Monoid as Monoid
@@ -60,6 +61,13 @@ data Order = Asc | Desc deriving Show
 unpackColumns :: O.Unpackspec Columns Columns
 unpackColumns = eitherPP
 
+aggregateColumns :: O.Aggregator Columns Columns
+aggregateColumns =
+  -- The requirement to cast to int4 is silly, but we still have a bug
+  --
+  --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/117
+  PP.list (P.rmap (O.unsafeCast "int4") O.sum PP.+++! O.boolAnd)
+
 instance Show ArbitraryQuery where
   show (ArbitraryQuery q) = maybe "Empty query" id
                               (O.showSqlForPostgresExplicit unpackColumns q)
@@ -103,6 +111,9 @@ instance TQ.Arbitrary ArbitraryQuery where
     , do
         ArbitraryColumnsList l <- TQ.arbitrary
         aq (fmap columnsList (O.values (fmap O.constant l)))
+    , do
+        ArbitraryQuery q <- TQ.arbitrary
+        aq (O.aggregate aggregateColumns q)
     ]
     where aq = return . ArbitraryQuery
 
