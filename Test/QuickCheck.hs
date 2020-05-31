@@ -22,12 +22,12 @@ import qualified Data.Maybe as Maybe
 import qualified Control.Arrow as Arrow
 
 twoIntTable :: String
-            -> O.Table (O.Column O.SqlInt4, O.Column O.SqlInt4)
-                       (O.Column O.SqlInt4, O.Column O.SqlInt4)
+            -> O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
+                       (O.Field O.SqlInt4, O.Field O.SqlInt4)
 twoIntTable n = O.Table n (PP.p2 (O.required "column1", O.required "column2"))
 
-table1 :: O.Table (O.Column O.SqlInt4, O.Column O.SqlInt4)
-                  (O.Column O.SqlInt4, O.Column O.SqlInt4)
+table1 :: O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
+                  (O.Field O.SqlInt4, O.Field O.SqlInt4)
 table1 = twoIntTable "table1"
 
 newtype QueryDenotation a =
@@ -36,19 +36,19 @@ newtype QueryDenotation a =
 onList :: ([a] -> [b]) -> QueryDenotation a -> QueryDenotation b
 onList f = QueryDenotation . (fmap . fmap) f . unQueryDenotation
 
-type Columns = [Either (O.Column O.SqlInt4) (O.Column O.SqlBool)]
+type Fields = [Either (O.Field O.SqlInt4) (O.Field O.SqlBool)]
 type Haskells = [Either Int Bool]
 
-columnsOfHaskells :: Haskells -> Columns
-columnsOfHaskells = O.constantExplicit eitherPP
+fieldsOfHaskells :: Haskells -> Fields
+fieldsOfHaskells = O.constantExplicit eitherPP
 
-columnsList :: (a, b) -> [Either a b]
-columnsList (x, y) = [Left x, Right y]
+fieldsList :: (a, b) -> [Either a b]
+fieldsList (x, y) = [Left x, Right y]
 
-newtype ArbitraryQuery   = ArbitraryQuery (O.Query Columns)
-newtype ArbitraryColumns = ArbitraryColumns { unArbitraryColumns :: Haskells }
+newtype ArbitraryQuery   = ArbitraryQuery (O.Query Fields)
+newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Haskells }
                         deriving Show
-newtype ArbitraryColumnsList = ArbitraryColumnsList { unArbitraryColumnsList :: [(Int, Bool)] }
+newtype ArbitraryFieldsList = ArbitraryFieldsList { unArbitraryFieldsList :: [(Int, Bool)] }
                              deriving Show
 newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
@@ -59,11 +59,11 @@ newtype ArbitraryGarble =
 
 data Order = Asc | Desc deriving Show
 
-unpackColumns :: O.Unpackspec Columns Columns
-unpackColumns = eitherPP
+unpackFields :: O.Unpackspec Fields Fields
+unpackFields = eitherPP
 
-aggregateColumns :: O.Aggregator Columns Columns
-aggregateColumns =
+aggregateFields :: O.Aggregator Fields Fields
+aggregateFields =
   -- The requirement to cast to int4 is silly, but we still have a bug
   --
   --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/117
@@ -82,14 +82,14 @@ aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
 
 instance Show ArbitraryQuery where
   show (ArbitraryQuery q) = maybe "Empty query" id
-                              (O.showSqlForPostgresExplicit unpackColumns q)
+                              (O.showSqlForPostgresExplicit unpackFields q)
 
 instance Show ArbitraryGarble where
   show = const "A permutation"
 
 instance TQ.Arbitrary ArbitraryQuery where
   arbitrary = TQ.oneof [
-      (ArbitraryQuery . pure . columnsOfHaskells . unArbitraryColumns)
+      (ArbitraryQuery . pure . fieldsOfHaskells . unArbitraryFields)
         <$> TQ.arbitrary
     , do
         ArbitraryQuery q1 <- TQ.arbitrary
@@ -121,11 +121,11 @@ instance TQ.Arbitrary ArbitraryQuery where
         ArbitraryQuery q <- TQ.arbitrary
         aq (restrictFirstBool Arrow.<<< q)
     , do
-        ArbitraryColumnsList l <- TQ.arbitrary
-        aq (fmap columnsList (O.values (fmap O.constant l)))
+        ArbitraryFieldsList l <- TQ.arbitrary
+        aq (fmap fieldsList (O.values (fmap O.constant l)))
     , do
         ArbitraryQuery q <- TQ.arbitrary
-        aq (O.aggregate aggregateColumns q)
+        aq (O.aggregate aggregateFields q)
     , do
         ArbitraryQuery q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
@@ -134,20 +134,20 @@ instance TQ.Arbitrary ArbitraryQuery where
     where aq = return . ArbitraryQuery
 
 
-instance TQ.Arbitrary ArbitraryColumns where
+instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
       l <- TQ.listOf (TQ.oneof (map (return . Left) [-1, 0, 1]
                                ++ map (return . Right) [False, True]))
-      return (ArbitraryColumns l)
+      return (ArbitraryFields l)
 
-instance TQ.Arbitrary ArbitraryColumnsList where
+instance TQ.Arbitrary ArbitraryFieldsList where
   -- We don't want to choose very big lists because we take
   -- products of queries and so their sizes are going to end up
   -- multiplying.
   arbitrary = do
     k <- TQ.choose (0, 5)
     l <- TQ.vectorOf k TQ.arbitrary
-    return (ArbitraryColumnsList l)
+    return (ArbitraryFieldsList l)
 
 instance TQ.Arbitrary ArbitraryPositiveInt where
   arbitrary = fmap ArbitraryPositiveInt (TQ.choose (0, 100))
@@ -182,7 +182,7 @@ instance TQ.Arbitrary ArbitraryGarble where
         else
           odds xs))
 
-arbitraryOrder :: ArbitraryOrder -> O.Order Columns
+arbitraryOrder :: ArbitraryOrder -> O.Order Fields
 arbitraryOrder =
   Monoid.mconcat
   . map (\(direction, index) ->
@@ -190,7 +190,7 @@ arbitraryOrder =
               Asc  -> \f -> Divisible.choose  f (O.asc id) (O.asc id)
               Desc -> \f -> Divisible.choose  f (O.desc id) (O.desc id))
            -- If the list is empty we have to conjure up
-           -- an arbitrary value of type Column
+           -- an arbitrary value of type Field
            (\l -> let len = length l
                   in if len > 0 then
                        l !! (index `mod` length l)
@@ -206,7 +206,7 @@ arbitraryOrdering =
                 Asc  -> id
                 Desc -> flip)
             -- If the list is empty we have to conjure up
-            -- an arbitrary value of type Column
+            -- an arbitrary value of type Field
             --
             -- Note that this one will compare Left Int
             -- to Right Bool, but it never gets asked to
@@ -229,13 +229,13 @@ instance Applicative QueryDenotation where
   f <*> x = QueryDenotation ((liftA2 . liftA2 . liftA2) ($)
                                 (unQueryDenotation f) (unQueryDenotation x))
 
-denotation :: O.QueryRunner columns a -> O.Query columns -> QueryDenotation a
+denotation :: O.QueryRunner fields a -> O.Query fields -> QueryDenotation a
 denotation qr q = QueryDenotation (\conn -> O.runQueryExplicit qr conn q)
 
-denotation' :: O.Query Columns -> QueryDenotation Haskells
+denotation' :: O.Query Fields -> QueryDenotation Haskells
 denotation' = denotation eitherPP
 
-denotation2 :: O.Query (Columns, Columns)
+denotation2 :: O.Query (Fields, Fields)
             -> QueryDenotation (Haskells, Haskells)
 denotation2 = denotation (eitherPP PP.***! eitherPP)
 
@@ -278,9 +278,9 @@ compareSortedBy o conn one two = do
 
 -- { The tests
 
-columns :: PGS.Connection -> ArbitraryColumns -> IO Bool
-columns conn (ArbitraryColumns c) =
-  compareNoSort conn (denotation' (pure (columnsOfHaskells c)))
+fields :: PGS.Connection -> ArbitraryFields -> IO Bool
+fields conn (ArbitraryFields c) =
+  compareNoSort conn (denotation' (pure (fieldsOfHaskells c)))
                      (pure c)
 
 fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitraryQuery -> IO Bool
@@ -352,14 +352,14 @@ restrict conn (ArbitraryQuery q) =
   compare' conn (denotation' (restrictFirstBool Arrow.<<< q))
                 (onList restrictFirstBoolList (denotation' q))
 
-values :: PGS.Connection -> ArbitraryColumnsList -> IO Bool
-values conn (ArbitraryColumnsList l) =
-  compareNoSort conn (denotation' (fmap columnsList (O.values (fmap O.constant l))))
-                     (pureList (fmap columnsList l))
+values :: PGS.Connection -> ArbitraryFieldsList -> IO Bool
+values conn (ArbitraryFieldsList l) =
+  compareNoSort conn (denotation' (fmap fieldsList (O.values (fmap O.constant l))))
+                     (pureList (fmap fieldsList l))
 
 aggregate :: PGS.Connection -> ArbitraryQuery -> IO Bool
 aggregate conn (ArbitraryQuery q) =
-  compareNoSort conn (denotation' (O.aggregate aggregateColumns q))
+  compareNoSort conn (denotation' (O.aggregate aggregateFields q))
                      (onList aggregateDenotation (denotation' q))
 
 
@@ -412,7 +412,7 @@ run conn = do
 
       t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
-  test1 columns
+  test1 fields
   test2 fmap'
   test2 apply
   test3 limit
@@ -455,7 +455,7 @@ isBool :: Either a b
 isBool (Left _)  = Nothing
 isBool (Right l) = Just l
 
-restrictFirstBool :: O.QueryArr Columns Columns
+restrictFirstBool :: O.QueryArr Fields Fields
 restrictFirstBool = Arrow.arr snd
       Arrow.<<< Arrow.first O.restrict
       Arrow.<<< Arrow.arr (firstBoolOrTrue (O.pgBool True))
