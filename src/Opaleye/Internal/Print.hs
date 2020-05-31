@@ -72,9 +72,10 @@ ppSelectBinary b = ppSql (Sql.bSelect1 b)
                    $$ ppSql (Sql.bSelect2 b)
 
 ppSelectLabel :: Label -> Doc
-ppSelectLabel l = text "/*" <+> text (defuseComments (Sql.lLabel l)) <+> text "*/"
+ppSelectLabel l = text "/*" <+> text (preprocess (Sql.lLabel l)) <+> text "*/"
                   $$ ppSql (Sql.lSelect l)
   where
+    preprocess = defuseComments
     defuseComments = ST.unpack
                    . ST.replace (ST.pack "--") (ST.pack " - - ")
                    . ST.replace (ST.pack "/*") (ST.pack " / * ")
