@@ -30,11 +30,11 @@ table1 :: O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
                   (O.Field O.SqlInt4, O.Field O.SqlInt4)
 table1 = twoIntTable "table1"
 
-newtype QueryDenotation a =
-  QueryDenotation { unQueryDenotation :: PGS.Connection -> IO [a] }
+newtype SelectDenotation a =
+  SelectDenotation { unSelectDenotation :: PGS.Connection -> IO [a] }
 
-onList :: ([a] -> [b]) -> QueryDenotation a -> QueryDenotation b
-onList f = QueryDenotation . (fmap . fmap) f . unQueryDenotation
+onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
+onList f = SelectDenotation . (fmap . fmap) f . unSelectDenotation
 
 type Fields = [Either (O.Field O.SqlInt4) (O.Field O.SqlBool)]
 type Haskells = [Either Int Bool]
@@ -45,7 +45,7 @@ fieldsOfHaskells = O.constantExplicit eitherPP
 fieldsList :: (a, b) -> [Either a b]
 fieldsList (x, y) = [Left x, Right y]
 
-newtype ArbitraryQuery   = ArbitraryQuery (O.Query Fields)
+newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Haskells }
                         deriving Show
 newtype ArbitraryFieldsList = ArbitraryFieldsList { unArbitraryFieldsList :: [(Int, Bool)] }
@@ -80,58 +80,58 @@ aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
           (Right b1, Right b2) -> Right (b1 && b2)
           _ -> error "Impossible"))
 
-instance Show ArbitraryQuery where
-  show (ArbitraryQuery q) = maybe "Empty query" id
+instance Show ArbitrarySelect where
+  show (ArbitrarySelect q) = maybe "Empty query" id
                               (O.showSqlForPostgresExplicit unpackFields q)
 
 instance Show ArbitraryGarble where
   show = const "A permutation"
 
-instance TQ.Arbitrary ArbitraryQuery where
+instance TQ.Arbitrary ArbitrarySelect where
   arbitrary = TQ.oneof [
-      (ArbitraryQuery . pure . fieldsOfHaskells . unArbitraryFields)
+      (ArbitrarySelect . pure . fieldsOfHaskells . unArbitraryFields)
         <$> TQ.arbitrary
     , do
-        ArbitraryQuery q1 <- TQ.arbitrary
-        ArbitraryQuery q2 <- TQ.arbitrary
+        ArbitrarySelect q1 <- TQ.arbitrary
+        ArbitrarySelect q2 <- TQ.arbitrary
         aq ((++) <$> q1 <*> q2)
-    , return (ArbitraryQuery (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
+    , return (ArbitrarySelect (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
     , do
-        ArbitraryQuery q <- TQ.arbitrary
+        ArbitrarySelect q <- TQ.arbitrary
         aq (O.distinctExplicit eitherPP q)
     , do
-        ArbitraryQuery q <- TQ.arbitrary
+        ArbitrarySelect q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
         aq (O.limit l q)
     , do
-        ArbitraryQuery q <- TQ.arbitrary
+        ArbitrarySelect q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
         aq (O.offset l q)
     , do
-        ArbitraryQuery q <- TQ.arbitrary
+        ArbitrarySelect q <- TQ.arbitrary
         o                <- TQ.arbitrary
         aq (O.orderBy (arbitraryOrder o) q)
 
     , do
-        ArbitraryQuery q <- TQ.arbitrary
+        ArbitrarySelect q <- TQ.arbitrary
         f                <- TQ.arbitrary
         aq (fmap (unArbitraryGarble f) q)
 
     , do
-        ArbitraryQuery q <- TQ.arbitrary
+        ArbitrarySelect q <- TQ.arbitrary
         aq (restrictFirstBool Arrow.<<< q)
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
         aq (fmap fieldsList (O.values (fmap O.constant l)))
     , do
-        ArbitraryQuery q <- TQ.arbitrary
+        ArbitrarySelect q <- TQ.arbitrary
         aq (O.aggregate aggregateFields q)
     , do
-        ArbitraryQuery q <- TQ.arbitrary
+        ArbitrarySelect q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
         aq (O.label thisLabel q)
     ]
-    where aq = return . ArbitraryQuery
+    where aq = return . ArbitrarySelect
 
 
 instance TQ.Arbitrary ArbitraryFields where
@@ -218,25 +218,25 @@ arbitraryOrdering =
                                        Left 0)))
   . unArbitraryOrder
 
-instance Functor QueryDenotation where
-  fmap f = QueryDenotation . (fmap . fmap . fmap) f .unQueryDenotation
+instance Functor SelectDenotation where
+  fmap f = SelectDenotation . (fmap . fmap . fmap) f .unSelectDenotation
 
-pureList :: [a] -> QueryDenotation a
-pureList = QueryDenotation . pure . pure
+pureList :: [a] -> SelectDenotation a
+pureList = SelectDenotation . pure . pure
 
-instance Applicative QueryDenotation where
-  pure    = QueryDenotation . pure . pure . pure
-  f <*> x = QueryDenotation ((liftA2 . liftA2 . liftA2) ($)
-                                (unQueryDenotation f) (unQueryDenotation x))
+instance Applicative SelectDenotation where
+  pure    = SelectDenotation . pure . pure . pure
+  f <*> x = SelectDenotation ((liftA2 . liftA2 . liftA2) ($)
+                                (unSelectDenotation f) (unSelectDenotation x))
 
-denotation :: O.QueryRunner fields a -> O.Query fields -> QueryDenotation a
-denotation qr q = QueryDenotation (\conn -> O.runQueryExplicit qr conn q)
+denotation :: O.FromFields fields a -> O.Select fields -> SelectDenotation a
+denotation qr q = SelectDenotation (\conn -> O.runSelectExplicit qr conn q)
 
-denotation' :: O.Query Fields -> QueryDenotation Haskells
+denotation' :: O.Select Fields -> SelectDenotation Haskells
 denotation' = denotation eitherPP
 
-denotation2 :: O.Query (Fields, Fields)
-            -> QueryDenotation (Haskells, Haskells)
+denotation2 :: O.Select (Fields, Fields)
+            -> SelectDenotation (Haskells, Haskells)
 denotation2 = denotation (eitherPP PP.***! eitherPP)
 
 -- { Comparing the results
@@ -244,33 +244,33 @@ denotation2 = denotation (eitherPP PP.***! eitherPP)
 -- compareNoSort is stronger than compare' so prefer to use it where possible
 compareNoSort :: Eq a
               => PGS.Connection
-              -> QueryDenotation a
-              -> QueryDenotation a
+              -> SelectDenotation a
+              -> SelectDenotation a
               -> IO Bool
 compareNoSort conn one two = do
-  one' <- unQueryDenotation one conn
-  two' <- unQueryDenotation two conn
+  one' <- unSelectDenotation one conn
+  two' <- unSelectDenotation two conn
   return (one' == two')
 
 compare' :: Ord a
          => PGS.Connection
-         -> QueryDenotation a
-         -> QueryDenotation a
+         -> SelectDenotation a
+         -> SelectDenotation a
          -> IO Bool
 compare' conn one two = do
-  one' <- unQueryDenotation one conn
-  two' <- unQueryDenotation two conn
+  one' <- unSelectDenotation one conn
+  two' <- unSelectDenotation two conn
   return (sort one' == sort two')
 
 compareSortedBy :: Ord a
                 => (a -> a -> Ord.Ordering)
                 -> PGS.Connection
-                -> QueryDenotation a
-                -> QueryDenotation a
+                -> SelectDenotation a
+                -> SelectDenotation a
                 -> IO Bool
 compareSortedBy o conn one two = do
-  one' <- unQueryDenotation one conn
-  two' <- unQueryDenotation two conn
+  one' <- unSelectDenotation one conn
+  two' <- unSelectDenotation two conn
   return ((sort one' == sort two')
           && isSortedBy o one')
 
@@ -283,13 +283,13 @@ fields conn (ArbitraryFields c) =
   compareNoSort conn (denotation' (pure (fieldsOfHaskells c)))
                      (pure c)
 
-fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitraryQuery -> IO Bool
-fmap' conn f (ArbitraryQuery q) =
+fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitrarySelect -> IO Bool
+fmap' conn f (ArbitrarySelect q) =
   compareNoSort conn (denotation' (fmap (unArbitraryGarble f) q))
                      (onList (fmap (unArbitraryGarble f)) (denotation' q))
 
-apply :: PGS.Connection -> ArbitraryQuery -> ArbitraryQuery -> IO Bool
-apply conn (ArbitraryQuery q1) (ArbitraryQuery q2) =
+apply :: PGS.Connection -> ArbitrarySelect -> ArbitrarySelect -> IO Bool
+apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
   compare' conn (denotation2 ((,) <$> q1 <*> q2))
                 ((,) <$> denotation' q1 <*> denotation' q2)
 
@@ -303,14 +303,14 @@ apply conn (ArbitraryQuery q1) (ArbitraryQuery q2) =
 -- Strangely the same caveat doesn't apply to offset.
 limit :: PGS.Connection
       -> ArbitraryPositiveInt
-      -> ArbitraryQuery
+      -> ArbitrarySelect
       -> ArbitraryOrder
       -> IO Bool
-limit conn (ArbitraryPositiveInt l) (ArbitraryQuery q) o = do
+limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
   let q' = O.limit l (O.orderBy (arbitraryOrder o) q)
 
-  one' <- unQueryDenotation (denotation' q') conn
-  two' <- unQueryDenotation (denotation' q) conn
+  one' <- unSelectDenotation (denotation' q') conn
+  two' <- unSelectDenotation (denotation' q) conn
 
   let remainder = MultiSet.fromList two'
                   `MultiSet.difference`
@@ -327,28 +327,28 @@ limit conn (ArbitraryPositiveInt l) (ArbitraryQuery q) o = do
   return ((length one' == min l (length two'))
           && condBool)
 
-offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitraryQuery -> IO Bool
-offset conn (ArbitraryPositiveInt l) (ArbitraryQuery q) =
+offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect -> IO Bool
+offset conn (ArbitraryPositiveInt l) (ArbitrarySelect q) =
   compareNoSort conn (denotation' (O.offset l q))
                      (onList (drop l) (denotation' q))
 
-order :: PGS.Connection -> ArbitraryOrder -> ArbitraryQuery -> IO Bool
-order conn o (ArbitraryQuery q) =
+order :: PGS.Connection -> ArbitraryOrder -> ArbitrarySelect -> IO Bool
+order conn o (ArbitrarySelect q) =
   compareSortedBy (arbitraryOrdering o)
                   conn
                   (denotation' (O.orderBy (arbitraryOrder o) q))
                   (denotation' q)
 
-distinct :: PGS.Connection -> ArbitraryQuery -> IO Bool
-distinct conn (ArbitraryQuery q) =
+distinct :: PGS.Connection -> ArbitrarySelect -> IO Bool
+distinct conn (ArbitrarySelect q) =
   compare' conn (denotation' (O.distinctExplicit eitherPP q))
                 (onList nub (denotation' q))
 
 -- When we added <*> to the arbitrary queries we started getting some
 -- consequences to do with the order of the returned rows and so
 -- restrict had to start being compared sorted.
-restrict :: PGS.Connection -> ArbitraryQuery -> IO Bool
-restrict conn (ArbitraryQuery q) =
+restrict :: PGS.Connection -> ArbitrarySelect -> IO Bool
+restrict conn (ArbitrarySelect q) =
   compare' conn (denotation' (restrictFirstBool Arrow.<<< q))
                 (onList restrictFirstBoolList (denotation' q))
 
@@ -357,14 +357,14 @@ values conn (ArbitraryFieldsList l) =
   compareNoSort conn (denotation' (fmap fieldsList (O.values (fmap O.constant l))))
                      (pureList (fmap fieldsList l))
 
-aggregate :: PGS.Connection -> ArbitraryQuery -> IO Bool
-aggregate conn (ArbitraryQuery q) =
+aggregate :: PGS.Connection -> ArbitrarySelect -> IO Bool
+aggregate conn (ArbitrarySelect q) =
   compareNoSort conn (denotation' (O.aggregate aggregateFields q))
                      (onList aggregateDenotation (denotation' q))
 
 
-label :: PGS.Connection -> String -> ArbitraryQuery -> IO Bool
-label conn comment (ArbitraryQuery q) =
+label :: PGS.Connection -> String -> ArbitrarySelect -> IO Bool
+label conn comment (ArbitrarySelect q) =
   compareNoSort conn (denotation' (O.label comment q))
                      (denotation' q)
 
@@ -455,7 +455,7 @@ isBool :: Either a b
 isBool (Left _)  = Nothing
 isBool (Right l) = Just l
 
-restrictFirstBool :: O.QueryArr Fields Fields
+restrictFirstBool :: O.SelectArr Fields Fields
 restrictFirstBool = Arrow.arr snd
       Arrow.<<< Arrow.first O.restrict
       Arrow.<<< Arrow.arr (firstBoolOrTrue (O.pgBool True))
