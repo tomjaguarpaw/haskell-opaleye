@@ -22,7 +22,7 @@ import           Data.Profunctor.Product.Default (Default, def)
 -- product type @Foo@:
 --
 -- @
--- selectTable :: [Foo (Field a) (Field b) (Field c)] -> S.Select (Foo (Field a) (Field b) (Field c))
+-- values :: [Foo (Field a) (Field b) (Field c)] -> S.Select (Foo (Field a) (Field b) (Field c))
 -- @
 values :: (Default V.Valuesspec fields fields,
            Default U.Unpackspec fields fields) =>
