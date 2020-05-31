@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveFunctor #-}
+
 module Opaleye.Internal.PrimQuery where
 
 import           Prelude hiding (product)
@@ -31,6 +33,19 @@ tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
 
 type Bindings a = [(Symbol, a)]
 
+data Aggregate q = Aggregate {
+    aggregateOperations ::
+        Bindings (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
+                  HPQ.Symbol)
+  -- Because of the pointless syntactic restriction that "aggregate
+  -- functions are not allowed in FROM clause of their own query
+  -- level" we explicitly create a subquery to give the columns that
+  -- we're aggregating over new names.
+  , aggregateProjections :: Bindings HPQ.PrimExpr
+  , aggregateSubquery :: q
+  }
+  deriving (Show, Functor)
+
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
 
@@ -43,12 +58,7 @@ data PrimQuery' a = Unit
                   | Empty     a
                   | BaseTable TableIdentifier (Bindings HPQ.PrimExpr)
                   | Product   (NEL.NonEmpty (PrimQuery' a)) [HPQ.PrimExpr]
-                  | Aggregate (Bindings (Maybe (HPQ.AggrOp,
-                                                [HPQ.OrderExpr],
-                                                HPQ.AggrDistinct),
-                                          HPQ.Symbol))
-                              (Bindings HPQ.PrimExpr)
-                              (PrimQuery' a)
+                  | PQAggregate (Aggregate (PrimQuery' a))
                   -- | Represents both @DISTINCT ON@ and @ORDER BY@
                   --   clauses. In order to represent valid SQL only,
                   --   @DISTINCT ON@ expressions are always
@@ -82,12 +92,7 @@ data PrimQueryFold' a p = PrimQueryFold
   , empty             :: a -> p
   , baseTable         :: TableIdentifier -> Bindings HPQ.PrimExpr -> p
   , product           :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
-  , aggregate         :: Bindings (Maybe
-                             (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                                   HPQ.Symbol)
-                      -> Bindings HPQ.PrimExpr
-                      -> p
-                      -> p
+  , aggregate         :: Aggregate p -> p
   , distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr)
                       -> [HPQ.OrderExpr]
                       -> p
@@ -118,7 +123,7 @@ primQueryFoldDefault = PrimQueryFold
   , empty             = Empty
   , baseTable         = BaseTable
   , product           = Product
-  , aggregate         = Aggregate
+  , aggregate         = PQAggregate
   , distinctOnOrderBy = DistinctOnOrderBy
   , limit             = Limit
   , join              = Join
@@ -136,7 +141,7 @@ foldPrimQuery f = fix fold
           Empty a                     -> empty             f a
           BaseTable ti syms           -> baseTable         f ti syms
           Product qs pes              -> product           f (fmap self qs) pes
-          Aggregate aggrs inners q    -> aggregate         f aggrs inners (self q)
+          PQAggregate aggr            -> aggregate         f (fmap self aggr)
           DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs (self q)
           Limit op q                  -> limit             f op (self q)
           Join j cond pe1 pe2 q1 q2   -> join              f j cond pe1 pe2 (self q1) (self q2)

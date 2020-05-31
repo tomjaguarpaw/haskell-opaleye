@@ -108,7 +108,11 @@ aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
         projPEs = map fst projPEs_inners
         inners  = map snd projPEs_inners
 
-        primQ' = PQ.Aggregate projPEs inners primQ
+        primQ' = PQ.PQAggregate PQ.Aggregate {
+            PQ.aggregateOperations  = projPEs
+          , PQ.aggregateProjections = inners
+          , PQ.aggregateSubquery    = primQ
+          }
 
 extractAggregateFields
   :: T.Tag

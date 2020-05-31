@@ -124,13 +124,11 @@ product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
 
-aggregate :: [(Symbol,
-               (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                Symbol))]
-          -> [(Symbol, HPQ.PrimExpr)]
+aggregate :: PQ.Aggregate Select
           -> Select
-          -> Select
-aggregate aggrs inners s =
+aggregate PQ.Aggregate { PQ.aggregateOperations  = aggrs
+                       , PQ.aggregateProjections = inners
+                       , PQ.aggregateSubquery    = s } =
   SelectFrom $ newSelect {
     attrs = SelectAttrs (ensureColumns (map attr aggrs'))
   , tables = [SelectFrom $ newSelect {

@@ -39,7 +39,8 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
   , PQ.baseTable = return .: PQ.BaseTable
   , PQ.product   = \x y -> PQ.Product <$> T.sequence x
                                       <*> pure y
-  , PQ.aggregate = \a i -> fmap (PQ.Aggregate a i)
+  , PQ.aggregate = \aggregate@PQ.Aggregate{ PQ.aggregateSubquery = q } ->
+      fmap (\q' -> PQ.PQAggregate (aggregate { PQ.aggregateSubquery = q' })) q
   , PQ.distinctOnOrderBy = \mDistinctOns -> fmap . PQ.DistinctOnOrderBy mDistinctOns
   , PQ.limit     = fmap . PQ.Limit
   , PQ.join      = \jt pe pes1 pes2 pq1 pq2 -> PQ.Join jt pe pes1 pes2 <$> pq1 <*> pq2
