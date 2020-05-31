@@ -124,7 +124,7 @@ offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 -- * Distinct on
 
 -- | Keep a row from each set where the given function returns the same result. No
---   ordering is guaranteed. Mutliple fields may be distinguished by projecting out
+--   ordering is guaranteed. Multiple fields may be distinguished by projecting out
 --   tuples of 'Opaleye.Field.Field_'s. Use 'distinctOnBy' to control how the rows
 --   are chosen.
 distinctOn :: D.Default U.Unpackspec b b => (a -> b) -> S.Select a -> S.Select a
