@@ -1,9 +1,9 @@
 module Opaleye.Lateral where
 
 import           Opaleye.Select ( Select, SelectArr )
-import           Opaleye.Internal.QueryArr as O
-import           Opaleye.Internal.PrimQuery as O
-import           Opaleye.Internal.HaskellDB.PrimQuery as O
+import qualified Opaleye.Internal.QueryArr as O
+import qualified Opaleye.Internal.PrimQuery as O
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as O
 import           Control.Category ( (<<<) )
 
 
@@ -15,10 +15,10 @@ lateral transform = O.QueryArr qa
   where
     qa (i, primQueryL, tag) = (b, primQueryJoin, tag')
       where
-        (b, primQueryR, tag') = runSimpleQueryArr (transform i) ((), tag)
+        (b, primQueryR, tag') = O.runSimpleQueryArr (transform i) ((), tag)
         primQueryJoin = O.Join O.InnerJoinLateral true [] [] primQueryL primQueryR
 
-    true = O.ConstExpr (BoolLit True)
+    true = O.ConstExpr (O.BoolLit True)
 
 
 -- | Allows to lift operations like 'Opaleye.Aggregate.aggregate',
