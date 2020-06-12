@@ -91,8 +91,8 @@ data QueryRunner columns haskells =
               (columns -> RowParser haskells)
               -- We never actually look at the columns except to see
               -- its "type" in the case of a sum profunctor
-              (columns -> Bool)
-              -- Have we actually requested any columns?  If we
+              (columns -> Int)
+              -- How many columns have we requested?  If we
               -- asked for zero columns then the SQL generator will
               -- have to put a dummy 0 into the SELECT statement,
               -- since we can't select zero columns.  In that case we
@@ -120,7 +120,7 @@ fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
 fromPGSFieldParser = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
 
 queryRunner :: FromField a b -> FromFields (Column a) b
-queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const True)
+queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const 1)
     where QueryRunnerColumn u fp = qrc
 
 queryRunnerColumnNullable :: FromField a b
@@ -287,11 +287,11 @@ instance Functor (FromFields c) where
 
 -- TODO: Seems like this one should be simpler!
 instance Applicative (FromFields c) where
-  pure = flip (QueryRunner (P.lmap (const ()) PP.empty)) (const False)
+  pure = flip (QueryRunner (P.lmap (const ()) PP.empty)) (const 0)
          . pure
          . pure
   QueryRunner uf rf bf <*> QueryRunner ux rx bx =
-    QueryRunner (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) ((<*>) <$> rf <*> rx) (liftA2 (||) bf bx)
+    QueryRunner (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) ((<*>) <$> rf <*> rx) (liftA2 (+) bf bx)
 
 instance P.Profunctor FromFields where
   dimap f g (QueryRunner u r b) =
@@ -336,8 +336,8 @@ jsonFieldTypeParser jsonTypeName field mData = do
 -- }
 
 prepareRowParser :: FromFields columns haskells -> columns -> RowParser haskells
-prepareRowParser (QueryRunner _ rowParser nonZeroColumns) cols =
-  if nonZeroColumns cols
+prepareRowParser (QueryRunner _ rowParser numColumns) cols =
+  if numColumns cols > 0
   then rowParser cols
   else (fromRow :: RowParser (Only Int)) *> rowParser cols
      -- If we are selecting zero columns then the SQL
