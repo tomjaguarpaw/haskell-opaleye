@@ -8,6 +8,7 @@ module QuickCheck where
 import           Prelude hiding (compare, (.), id)
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
+import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
 import qualified Opaleye.ToFields as O
 import qualified Rectangular as R
@@ -72,9 +73,14 @@ fieldsOfHaskells = O.toFieldsExplicit defChoicesPP
 fieldsList :: (a, b) -> [Choice a b s]
 fieldsList (x, y) = [CInt x, CBool y]
 
+listFieldsG :: [Choice i b s] -> i -> b -> (i, b)
+listFieldsG f i b = (fst (firstIntOr i f), fst (firstBoolOrTrue b f))
+
 listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
-listFields f = (fst (firstIntOr 1 f),
-                fst (firstBoolOrTrue (O.sqlBool True) f))
+listFields f = listFieldsG f 1 (O.sqlBool True)
+
+listHaskells :: Haskells -> (Int, Bool)
+listHaskells f = listFieldsG f 1 True
 
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
@@ -129,6 +135,11 @@ aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
           (CBool b1, CBool b2) -> CBool (b1 && b2)
           (CString s1, CString s2) -> CString (s1 ++ ", " ++ s2)
           _ -> error "Impossible"))
+
+optionalDenotation :: [Haskells] -> [Maybe Haskells]
+optionalDenotation = \case
+  [] -> [Nothing]
+  xs -> map Just xs
 
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
@@ -220,6 +231,12 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aqArg ((fmap unpairColums
                 . aggregateLaterally aggregateFields
                 . fmap pairColumns) q)
+    , do
+        ArbitrarySelectArr q <- TQ.arbitrary
+        aqArg (fmap (fieldsList
+                     . O.fromMaybeFields (0, O.sqlBool True)
+                     . fmap listFields)
+                    (OM.optional q))
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
@@ -373,6 +390,10 @@ denotationArr q =
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
 denotation2 = denotationExplicit (defChoicesPP PP.***! defChoicesPP)
+
+denotationMaybeFields :: O.Select (O.MaybeFields Fields)
+                      -> SelectDenotation (Maybe Haskells)
+denotationMaybeFields = denotationExplicit (O.fromFieldsMaybeFields defChoicesPP)
 
 -- { Comparing the results
 
@@ -538,16 +559,16 @@ label conn comment (ArbitrarySelect q) =
   compareNoSort conn (denotation (O.label comment q))
                      (denotation q)
 
+optional :: PGS.Connection -> ArbitrarySelect -> IO Bool
+optional conn (ArbitrarySelect q) =
+  compare conn (denotationMaybeFields (OM.optional q))
+               (onList optionalDenotation (denotation q))
+
 
 {- TODO
 
   * Nullability
-  * Left join
   * Operators (mathematical, logical, etc.)
-
-  * The denotation of lateral subqueries (at the moment we just
-    generate subqueries containing them, but we don't check their
-    behaviour)
 
 -}
 
@@ -593,6 +614,7 @@ run conn = do
   test1 valuesEmpty
   test1 aggregate
   test2 label
+  test1 optional
 
 -- }
 
