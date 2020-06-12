@@ -1,3 +1,5 @@
+* Add `Opaleye.MaybeFields`
+
 * Add `optionalTableField`, `readOnlyTableField`,
   `requiredTableField`, to replace `optional`, `readOnly` and
   `required` in a later version.
