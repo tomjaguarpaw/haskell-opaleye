@@ -142,7 +142,9 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         thisLabel        <- TQ.arbitrary
         aq (O.label thisLabel) q
     ]
-    where aq qf = return
+    where -- Applies qf to the query, but uses [] for the input of
+          -- query, and ignores the input of the result.
+          aq qf = return
                   . ArbitrarySelectArr
                   . P.lmap (const ())
                   . qf
