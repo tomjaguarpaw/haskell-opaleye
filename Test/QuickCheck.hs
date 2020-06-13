@@ -105,7 +105,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
-        aq id ((++) <$> q1 <*> q2)
+        aqArg ((++) <$> q1 <*> q2)
     , return (ArbitrarySelectArr (P.lmap (const ()) (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1))))
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
@@ -126,11 +126,11 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         f                <- TQ.arbitrary
-        aq (fmap (unArbitraryGarble f)) q
+        aqArg (fmap (unArbitraryGarble f) q)
 
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
-        aq (restrictFirstBool Arrow.<<<) q
+        aqArg (restrictFirstBool Arrow.<<< q)
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
         return (ArbitrarySelectArr (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.constant l)))))
@@ -140,7 +140,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
-        aq (O.label thisLabel) q
+        aqArg (O.label thisLabel q)
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
@@ -150,6 +150,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                   . qf
                   . (Arrow.<<< pure [])
 
+          aqArg = return . ArbitrarySelectArr
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
