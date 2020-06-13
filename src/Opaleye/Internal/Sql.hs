@@ -96,6 +96,7 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.label             = label
   , PQ.relExpr           = relExpr
   , PQ.existsf           = exists
+  , PQ.rebind            = rebind
   }
 
 exists :: Bool -> Select -> Select -> Select
@@ -220,18 +221,12 @@ values columns pes = SelectValues Values { vAttrs  = SelectAttrs (mkColumns colu
   where mkColumns = ensureColumns . zipWith (flip (curry (sqlBinding . Arr.second mkColumn))) [1..]
         mkColumn i = (HPQ.BaseTableAttrExpr . ("column" ++) . show) (i::Int)
 
-binary :: PQ.BinOp -> [(Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
-       -> (Select, Select) -> Select
-binary op pes (select1, select2) = SelectBinary Binary {
+binary :: PQ.BinOp -> (Select, Select) -> Select
+binary op (select1, select2) = SelectBinary Binary {
   bOp = binOp op,
-  bSelect1 = SelectFrom newSelect { attrs = SelectAttrs
-                                      (ensureColumns (map (mkColumn fst) pes)),
-                                    tables = [select1] },
-  bSelect2 = SelectFrom newSelect { attrs = SelectAttrs
-                                      (ensureColumns (map (mkColumn snd) pes)),
-                                    tables = [select2] }
+  bSelect1 = select1,
+  bSelect2 = select2
   }
-  where mkColumn e = sqlBinding . Arr.second e
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
@@ -288,3 +283,9 @@ relExpr pe columns = SelectFrom $
     newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
               , tables = [RelExpr (sqlExpr pe)]
               }
+
+rebind :: [(Symbol, HPQ.PrimExpr)] -> Select -> Select
+rebind pes select = SelectFrom newSelect
+  { attrs = SelectAttrs (ensureColumns (map sqlBinding pes))
+  , tables = [select]
+  }

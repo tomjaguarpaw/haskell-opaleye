@@ -47,7 +47,10 @@ sameTypeBinOpHelper binop binaryspec q1 q2 = Q.simpleQueryArr q where
             PM.run (runBinaryspec binaryspec (extractBinaryFields endTag)
                                     (columns1, columns2))
 
-          newPrimQuery = PQ.Binary binop pes (primQuery1, primQuery2)
+          newPrimQuery = PQ.Binary binop
+            ( PQ.Rebind (map (fmap fst) pes) primQuery1
+            , PQ.Rebind (map (fmap snd) pes) primQuery2
+            )
 
 instance Default Binaryspec (Column a) (Column a) where
   def = binaryspecColumn

@@ -67,10 +67,11 @@ data PrimQuery' a = Unit
                   | Exists    Bool (PrimQuery' a) (PrimQuery' a)
                   | Values    [Symbol] (NEL.NonEmpty [HPQ.PrimExpr])
                   | Binary    BinOp
-                              (Bindings (HPQ.PrimExpr, HPQ.PrimExpr))
                               (PrimQuery' a, PrimQuery' a)
                   | Label     String (PrimQuery' a)
                   | RelExpr   HPQ.PrimExpr (Bindings HPQ.PrimExpr)
+                  | Rebind    (Bindings HPQ.PrimExpr)
+                              (PrimQuery' a)
                  deriving Show
 
 type PrimQuery = PrimQuery' ()
@@ -101,12 +102,12 @@ data PrimQueryFold' a p = PrimQueryFold
   , existsf           :: Bool -> p -> p -> p
   , values            :: [Symbol] -> NEL.NonEmpty [HPQ.PrimExpr] -> p
   , binary            :: BinOp
-                      -> Bindings (HPQ.PrimExpr, HPQ.PrimExpr)
                       -> (p, p)
                       -> p
   , label             :: String -> p -> p
   , relExpr           :: HPQ.PrimExpr -> Bindings HPQ.PrimExpr -> p
     -- ^ A relation-valued expression
+  , rebind            :: Bindings HPQ.PrimExpr -> p -> p
   }
 
 
@@ -125,6 +126,7 @@ primQueryFoldDefault = PrimQueryFold
   , label             = Label
   , relExpr           = RelExpr
   , existsf           = Exists
+  , rebind            = Rebind
   }
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
@@ -139,10 +141,11 @@ foldPrimQuery f = fix fold
           Limit op q                  -> limit             f op (self q)
           Join j cond pe1 pe2 q1 q2   -> join              f j cond pe1 pe2 (self q1) (self q2)
           Values ss pes               -> values            f ss pes
-          Binary binop pes (q1, q2)   -> binary            f binop pes (self q1, self q2)
+          Binary binop (q1, q2)   -> binary                f binop (self q1, self q2)
           Label l pq                  -> label             f l (self pq)
           RelExpr pe syms             -> relExpr           f pe syms
           Exists b q1 q2              -> existsf           f b (self q1) (self q2)
+          Rebind pes q                -> rebind            f pes (self q)
         fix g = let x = g x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
