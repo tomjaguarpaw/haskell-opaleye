@@ -149,10 +149,10 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , do
         binaryOperation <- TQ.elements [ O.intersect
                                        , O.intersectAll
-                                       -- , O.union
-                                       -- , O.unionAll
-                                       -- , O.except
-                                       -- , O.exceptAll
+                                       , O.union
+                                       , O.unionAll
+                                       , O.except
+                                       , O.exceptAll
                                        ]
         q <- arbitraryBinary binaryOperation
         aqArg q
@@ -416,11 +416,6 @@ label conn comment (ArbitrarySelect q) =
 
 {- TODO
 
-  * Binary operations
-      * union
-      * unionAll
-      * except
-      * exceptAll
   * Nullability
   * Left join
   * Operators (mathematical, logical, etc.)
