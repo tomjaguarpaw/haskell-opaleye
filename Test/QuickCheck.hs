@@ -99,44 +99,44 @@ instance TQ.Arbitrary ArbitrarySelect where
     , do
         ArbitrarySelect q1 <- TQ.arbitrary
         ArbitrarySelect q2 <- TQ.arbitrary
-        aq ((++) <$> q1 <*> q2)
+        aq id ((++) <$> q1 <*> q2)
     , return (ArbitrarySelect (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
     , do
         ArbitrarySelect q <- TQ.arbitrary
-        aq (O.distinctExplicit eitherPP q)
+        aq (O.distinctExplicit eitherPP) q
     , do
         ArbitrarySelect q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
-        aq (O.limit l q)
+        aq (O.limit l) q
     , do
         ArbitrarySelect q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
-        aq (O.offset l q)
+        aq (O.offset l) q
     , do
         ArbitrarySelect q <- TQ.arbitrary
         o                <- TQ.arbitrary
-        aq (O.orderBy (arbitraryOrder o) q)
+        aq (O.orderBy (arbitraryOrder o)) q
 
     , do
         ArbitrarySelect q <- TQ.arbitrary
         f                <- TQ.arbitrary
-        aq (fmap (unArbitraryGarble f) q)
+        aq (fmap (unArbitraryGarble f)) q
 
     , do
         ArbitrarySelect q <- TQ.arbitrary
-        aq (restrictFirstBool Arrow.<<< q)
+        aq (restrictFirstBool Arrow.<<<) q
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
-        aq (fmap fieldsList (O.values (fmap O.constant l)))
+        aq id (fmap fieldsList (O.values (fmap O.constant l)))
     , do
         ArbitrarySelect q <- TQ.arbitrary
-        aq (O.aggregate aggregateFields q)
+        aq (O.aggregate aggregateFields) q
     , do
         ArbitrarySelect q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
-        aq (O.label thisLabel q)
+        aq (O.label thisLabel) q
     ]
-    where aq = return . ArbitrarySelect
+    where aq qf = return . ArbitrarySelect . qf
 
 
 instance TQ.Arbitrary ArbitraryFields where
