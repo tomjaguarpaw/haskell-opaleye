@@ -50,6 +50,10 @@ fieldsOfHaskells = O.constantExplicit eitherPP
 fieldsList :: (a, b) -> [Either a b]
 fieldsList (x, y) = [Left x, Right y]
 
+listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
+listFields f = (fst (firstIntOr 1 f),
+                fst (firstBoolOrTrue (O.sqlBool True) f))
+
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
 newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Haskells }
@@ -141,6 +145,16 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         ArbitrarySelectArr q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
         aqArg (O.label thisLabel q)
+    , do
+        binaryOperation <- TQ.elements [ O.intersect
+                                       , O.intersectAll
+                                       -- , O.union
+                                       -- , O.unionAll
+                                       -- , O.except
+                                       -- , O.exceptAll
+                                       ]
+        q <- arbitraryBinary binaryOperation
+        aqArg q
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
@@ -150,6 +164,16 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                   . (Arrow.<<< pure [])
 
           aqArg = return . ArbitrarySelectArr
+
+arbitraryBinary binaryOperation = do
+  ArbitrarySelectArr q1 <- TQ.arbitrary
+  ArbitrarySelectArr q2 <- TQ.arbitrary
+
+  return (P.lmap (const ())
+          (fmap fieldsList
+            (binaryOperation
+              (fmap listFields (q1 Arrow.<<< pure []))
+              (fmap listFields (q2 Arrow.<<< pure [])))))
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
@@ -394,8 +418,6 @@ label conn comment (ArbitrarySelect q) =
   * Binary operations
       * union
       * unionAll
-      * intersect
-      * intersectAll
       * except
       * exceptAll
   * Nullability
@@ -470,10 +492,20 @@ firstBoolOrTrue true c = (b, c)
           []    -> true
           (x:_) -> x
 
+firstIntOr :: a -> [Either a b] -> (a, [Either a b])
+firstIntOr else_ c = (b, c)
+  where b = case Maybe.mapMaybe isInt c of
+          []    -> else_
+          (x:_) -> x
+
 isBool :: Either a b
        -> Maybe b
 isBool (Left _)  = Nothing
 isBool (Right l) = Just l
+
+isInt :: Either a b -> Maybe a
+isInt (Left a)  = Just a
+isInt (Right _) = Nothing
 
 restrictFirstBool :: O.SelectArr Fields Fields
 restrictFirstBool = Arrow.arr snd
