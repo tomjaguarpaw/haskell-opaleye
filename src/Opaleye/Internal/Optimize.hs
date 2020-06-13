@@ -56,11 +56,12 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
       PQ.IntersectAll -> binary (const Nothing) (const Nothing) PQ.IntersectAll
   , PQ.label     = fmap . PQ.Label
   , PQ.relExpr   = return .: PQ.RelExpr
+  , PQ.rebind    = fmap . PQ.Rebind
   }
   where -- If only the first argument is Just, do n1 on it
         -- If only the second argument is Just, do n2 on it
-        binary n1 n2 jj exprs = \case
+        binary n1 n2 jj = \case
           (Nothing, Nothing)   -> Nothing
           (Nothing, Just pq2)  -> n2 pq2
           (Just pq1, Nothing)  -> n1 pq1
-          (Just pq1, Just pq2) -> Just (PQ.Binary jj exprs (pq1, pq2))
+          (Just pq1, Just pq2) -> Just (PQ.Binary jj (pq1, pq2))
