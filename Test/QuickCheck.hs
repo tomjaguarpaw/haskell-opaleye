@@ -166,15 +166,15 @@ instance TQ.Arbitrary ArbitrarySelectArr where
 
           aqArg = return . ArbitrarySelectArr
 
-arbitraryBinary binaryOperation = do
-  ArbitrarySelectArr q1 <- TQ.arbitrary
-  ArbitrarySelectArr q2 <- TQ.arbitrary
+          arbitraryBinary binaryOperation = do
+            ArbitrarySelectArr q1 <- TQ.arbitrary
+            ArbitrarySelectArr q2 <- TQ.arbitrary
 
-  return (P.lmap (const ())
-          (fmap fieldsList
-            (binaryOperation
-              (fmap listFields (q1 Arrow.<<< pure []))
-              (fmap listFields (q2 Arrow.<<< pure [])))))
+            return (P.lmap (const ())
+                    (fmap fieldsList
+                     (binaryOperation
+                      (fmap listFields (q1 Arrow.<<< pure []))
+                      (fmap listFields (q2 Arrow.<<< pure [])))))
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
