@@ -144,8 +144,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
-          aq qf = return
-                  . ArbitrarySelectArr
+          aq qf = aqArg
                   . P.lmap (const ())
                   . qf
                   . (Arrow.<<< pure [])
