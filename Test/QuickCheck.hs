@@ -102,11 +102,14 @@ instance TQ.Arbitrary ArbitrarySelectArr where
   arbitrary = TQ.oneof [
       (ArbitrarySelectArr . pure . fieldsOfHaskells . unArbitraryFields)
         <$> TQ.arbitrary
+    , return (ArbitrarySelectArr (P.lmap (const ()) (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1))))
+    , do
+        ArbitraryFieldsList l <- TQ.arbitrary
+        return (ArbitrarySelectArr (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.constant l)))))
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
         aqArg ((++) <$> q1 <*> q2)
-    , return (ArbitrarySelectArr (P.lmap (const ()) (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1))))
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.distinctExplicit eitherPP) q
@@ -131,9 +134,6 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aqArg (restrictFirstBool Arrow.<<< q)
-    , do
-        ArbitraryFieldsList l <- TQ.arbitrary
-        return (ArbitrarySelectArr (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.constant l)))))
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.aggregate aggregateFields) q
