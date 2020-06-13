@@ -30,11 +30,16 @@ table1 :: O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
                   (O.Field O.SqlInt4, O.Field O.SqlInt4)
 table1 = twoIntTable "table1"
 
-newtype SelectDenotation a =
-  SelectDenotation { unSelectDenotation :: PGS.Connection -> IO [a] }
+newtype SelectArrDenotation a b =
+  SelectArrDenotation { unSelectArrDenotation :: PGS.Connection -> a -> IO [b] }
+
+type SelectDenotation = SelectArrDenotation ()
+
+unSelectDenotation :: SelectDenotation b -> PGS.Connection -> IO [b]
+unSelectDenotation sa conn = unSelectArrDenotation sa conn ()
 
 onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
-onList f = SelectDenotation . (fmap . fmap) f . unSelectDenotation
+onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
 
 type Fields = [Either (O.Field O.SqlInt4) (O.Field O.SqlBool)]
 type Haskells = [Either Int Bool]
@@ -218,19 +223,22 @@ arbitraryOrdering =
                                        Left 0)))
   . unArbitraryOrder
 
-instance Functor SelectDenotation where
-  fmap f = SelectDenotation . (fmap . fmap . fmap) f .unSelectDenotation
+instance Functor (SelectArrDenotation a) where
+  fmap f = SelectArrDenotation
+           . (fmap . fmap . fmap . fmap) f
+           . unSelectArrDenotation
 
 pureList :: [a] -> SelectDenotation a
-pureList = SelectDenotation . pure . pure
+pureList = SelectArrDenotation . pure . pure . pure
 
-instance Applicative SelectDenotation where
-  pure    = SelectDenotation . pure . pure . pure
-  f <*> x = SelectDenotation ((liftA2 . liftA2 . liftA2) ($)
-                                (unSelectDenotation f) (unSelectDenotation x))
+instance Applicative (SelectArrDenotation a) where
+  pure    = SelectArrDenotation . pure . pure . pure . pure
+  f <*> x = SelectArrDenotation ((liftA2 . liftA2 . liftA2 . liftA2) ($)
+                                   (unSelectArrDenotation f)
+                                   (unSelectArrDenotation x))
 
 denotation :: O.FromFields fields a -> O.Select fields -> SelectDenotation a
-denotation qr q = SelectDenotation (\conn -> O.runSelectExplicit qr conn q)
+denotation qr q = SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
 
 denotation' :: O.Select Fields -> SelectDenotation Haskells
 denotation' = denotation eitherPP
