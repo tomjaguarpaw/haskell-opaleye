@@ -51,6 +51,7 @@ fieldsList :: (a, b) -> [Either a b]
 fieldsList (x, y) = [Left x, Right y]
 
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
+newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
 newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Haskells }
                         deriving Show
 newtype ArbitraryFieldsList = ArbitraryFieldsList { unArbitraryFieldsList :: [(Int, Bool)] }
@@ -93,50 +94,59 @@ instance Show ArbitraryGarble where
   show = const "A permutation"
 
 instance TQ.Arbitrary ArbitrarySelect where
+  arbitrary = do
+    ArbitrarySelectArr q <- TQ.arbitrary
+    return (ArbitrarySelect (q Arrow.<<< pure []))
+
+instance TQ.Arbitrary ArbitrarySelectArr where
   arbitrary = TQ.oneof [
-      (ArbitrarySelect . pure . fieldsOfHaskells . unArbitraryFields)
+      (ArbitrarySelectArr . pure . fieldsOfHaskells . unArbitraryFields)
         <$> TQ.arbitrary
     , do
-        ArbitrarySelect q1 <- TQ.arbitrary
-        ArbitrarySelect q2 <- TQ.arbitrary
+        ArbitrarySelectArr q1 <- TQ.arbitrary
+        ArbitrarySelectArr q2 <- TQ.arbitrary
         aq id ((++) <$> q1 <*> q2)
-    , return (ArbitrarySelect (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
+    , return (ArbitrarySelectArr (P.lmap (const ()) (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1))))
     , do
-        ArbitrarySelect q <- TQ.arbitrary
+        ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.distinctExplicit eitherPP) q
     , do
-        ArbitrarySelect q <- TQ.arbitrary
+        ArbitrarySelectArr q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
         aq (O.limit l) q
     , do
-        ArbitrarySelect q <- TQ.arbitrary
+        ArbitrarySelectArr q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
         aq (O.offset l) q
     , do
-        ArbitrarySelect q <- TQ.arbitrary
+        ArbitrarySelectArr q <- TQ.arbitrary
         o                <- TQ.arbitrary
         aq (O.orderBy (arbitraryOrder o)) q
 
     , do
-        ArbitrarySelect q <- TQ.arbitrary
+        ArbitrarySelectArr q <- TQ.arbitrary
         f                <- TQ.arbitrary
         aq (fmap (unArbitraryGarble f)) q
 
     , do
-        ArbitrarySelect q <- TQ.arbitrary
+        ArbitrarySelectArr q <- TQ.arbitrary
         aq (restrictFirstBool Arrow.<<<) q
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
-        aq id (fmap fieldsList (O.values (fmap O.constant l)))
+        return (ArbitrarySelectArr (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.constant l)))))
     , do
-        ArbitrarySelect q <- TQ.arbitrary
+        ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.aggregate aggregateFields) q
     , do
-        ArbitrarySelect q <- TQ.arbitrary
+        ArbitrarySelectArr q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
         aq (O.label thisLabel) q
     ]
-    where aq qf = return . ArbitrarySelect . qf
+    where aq qf = return
+                  . ArbitrarySelectArr
+                  . P.lmap (const ())
+                  . qf
+                  . (Arrow.<<< pure [])
 
 
 instance TQ.Arbitrary ArbitraryFields where
