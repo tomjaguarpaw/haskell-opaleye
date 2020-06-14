@@ -142,8 +142,8 @@ instance P.Profunctor Aggregator where
   dimap f g (Aggregator q) = Aggregator (P.dimap f g q)
 
 instance PP.ProductProfunctor Aggregator where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance PP.SumProfunctor Aggregator where
   Aggregator x1 +++! Aggregator x2 = Aggregator (x1 PP.+++! x2)

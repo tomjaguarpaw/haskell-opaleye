@@ -118,8 +118,8 @@ instance Profunctor Updater where
   dimap f g (Updater h) = Updater (dimap f g h)
 
 instance PP.ProductProfunctor Updater where
-  empty  = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 --
 

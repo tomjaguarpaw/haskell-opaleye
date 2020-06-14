@@ -106,8 +106,8 @@ instance Profunctor NullMaker where
   dimap f g (NullMaker h) = NullMaker (dimap f g h)
 
 instance PP.ProductProfunctor NullMaker where
-  empty  = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 --
 

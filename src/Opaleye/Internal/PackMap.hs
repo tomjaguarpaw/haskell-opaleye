@@ -9,7 +9,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Monad.Trans.State as State
 import           Data.Profunctor (Profunctor, dimap, rmap)
-import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
+import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Functor.Identity as I
 
@@ -139,8 +139,8 @@ instance Profunctor (PackMap a b) where
   dimap f g (PackMap q) = PackMap (fmap (dimap f (fmap g)) q)
 
 instance ProductProfunctor (PackMap a b) where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance PP.SumProfunctor (PackMap a b) where
   PackMap f +++! PackMap g = PackMap (\x -> eitherFunction (f x) (g x))

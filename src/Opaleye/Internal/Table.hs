@@ -15,7 +15,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Functor.Identity as I
 import           Data.Profunctor (Profunctor, dimap, lmap)
-import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
+import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import qualified Data.List.NonEmpty as NEL
 import           Data.Monoid (Monoid, mempty, mappend)
@@ -224,8 +224,8 @@ instance Profunctor Writer where
   dimap f _ (Writer h) = Writer (lmap (fmap f) h)
 
 instance ProductProfunctor Writer where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance Functor (TableProperties a) where
   fmap f (TableProperties w (View v)) = TableProperties (fmap f w) (View (f v))
@@ -239,8 +239,8 @@ instance Profunctor TableProperties where
   dimap f g (TableProperties w (View v)) = TableProperties (dimap f g w)
                                                             (View (g v))
 instance ProductProfunctor TableProperties where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance Functor (Table a) where
   fmap f (Table t tp) = Table t (fmap f tp)

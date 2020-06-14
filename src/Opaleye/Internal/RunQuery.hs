@@ -25,7 +25,6 @@ import qualified Opaleye.Internal.PGTypes as IPT (strictDecodeUtf8)
 import qualified Data.Profunctor as P
 import           Data.Profunctor (dimap)
 import qualified Data.Profunctor.Product as PP
-import           Data.Profunctor.Product (empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
 
 import qualified Data.Aeson as Ae
@@ -299,8 +298,8 @@ instance P.Profunctor FromFields where
     QueryRunner (P.lmap f u) (P.dimap f (fmap g) r) (P.lmap f b)
 
 instance PP.ProductProfunctor FromFields where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance PP.SumProfunctor FromFields where
   f +++! g = QueryRunner (P.rmap (const ()) (fu PP.+++! gu))

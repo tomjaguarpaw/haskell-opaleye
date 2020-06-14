@@ -38,8 +38,8 @@ instance P.Profunctor Distinctspec where
   dimap f g (Distinctspec q) = Distinctspec (P.dimap f g q)
 
 instance PP.ProductProfunctor Distinctspec where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance PP.SumProfunctor Distinctspec where
   Distinctspec x1 +++! Distinctspec x2 = Distinctspec (x1 PP.+++! x2)
