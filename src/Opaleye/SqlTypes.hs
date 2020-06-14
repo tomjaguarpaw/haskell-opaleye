@@ -1,5 +1,5 @@
 -- | SQL types and functions to create 'Opaleye.Field.Field_'s of
--- those types.  You may find it more convenient to use
+-- those types.  To create fields you may find it more convenient to use
 -- "Opaleye.ToFields" instead.
 
 module Opaleye.SqlTypes (module Opaleye.SqlTypes,
