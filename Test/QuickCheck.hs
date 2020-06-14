@@ -2,10 +2,12 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE Arrows #-}
 
 module QuickCheck where
 
 import qualified Opaleye as O
+import qualified Opaleye.Internal.Lateral as OL
 import           Wrapped (constructor, asSumProfunctor,
                           constructorDecidable, asDecidable)
 import qualified Database.PostgreSQL.Simple as PGS
@@ -93,6 +95,20 @@ aggregateFields =
                     O.boolAnd
                     (O.stringAgg (O.sqlString ", ")))
 
+aggregateLaterally :: O.Aggregator b b'
+                   -> O.SelectArr i (Fields, b)
+                   -> O.SelectArr i (Fields, b')
+aggregateLaterally agg q = proc i -> do
+  (a, b) <- q -< i
+
+  b' <- OL.lateral
+    (\(a, b) ->
+        let aLateralInt :: O.Field O.SqlInt4
+            aLateralInt = fst (firstIntOr 0 a)
+        in (O.aggregateOrdered (O.asc (const aLateralInt)) agg) (pure b))
+            -< (a, b)
+  Arrow.returnA -< (a, b')
+
 -- This is taking liberties.  Firstly it errors out when two fields
 -- are of different types.  It should probably return a Maybe or an
 -- Either.  Secondly, it doesn't detect when lists are the same
@@ -171,6 +187,13 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                                        ]
         q <- arbitraryBinary binaryOperation
         aqArg q
+    , -- This is stupidly simple way of generating lateral subqueries.
+      -- All it does is run a lateral aggregation.
+      do
+        ArbitrarySelectArr q <- TQ.arbitrary
+        aqArg ((fmap unpairColums
+                . aggregateLaterally aggregateFields
+                . fmap pairColumns) q)
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
@@ -229,6 +252,12 @@ odds (x:xs) = x : evens xs
 evens :: [a] -> [a]
 evens []     = []
 evens (_:xs) = odds xs
+
+pairColumns :: [a] -> ([a], [a])
+pairColumns cs = (evens cs, odds cs)
+
+unpairColums :: ([a], [a]) -> [a]
+unpairColums = uncurry (++)
 
 instance TQ.Arbitrary ArbitraryGarble where
   arbitrary = do
@@ -442,6 +471,10 @@ label conn comment (ArbitrarySelect q) =
   * Left join
   * Operators (mathematical, logical, etc.)
   * >>>?
+
+  * The denotation of lateral subqueries (at the moment we just
+    generate subqueries containing them, but we don't check their
+    behaviour)
 
 -}
 

@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Opaleye.Internal.Print where
 
 import           Prelude hiding (product)
@@ -97,8 +99,6 @@ ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 ppJoinType Sql.RightJoin = text "RIGHT OUTER JOIN"
 ppJoinType Sql.FullJoin = text "FULL OUTER JOIN"
-ppJoinType Sql.InnerJoinLateral = text "INNER JOIN LATERAL"
-ppJoinType Sql.LeftJoinLateral = text "LEFT OUTER JOIN LATERAL"
 
 ppAttrs :: Sql.SelectAttrs -> Doc
 ppAttrs Sql.Star                 = text "*"
@@ -111,9 +111,15 @@ nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
 nameAs (expr, name) = HPrint.ppAs (fmap unColumn name) (HPrint.ppSqlExpr expr)
   where unColumn (HSql.SqlColumn s) = s
 
-ppTables :: [Select] -> Doc
+ppTables :: [(Sql.Lateral, Select)] -> Doc
 ppTables [] = empty
-ppTables ts = text "FROM" <+> HPrint.commaV ppTable (zipWith tableAlias [1..] ts)
+ppTables ts = text "FROM" <+> HPrint.commaV ppTable_tableAlias (zip [1..] ts)
+  where ppTable_tableAlias :: (Int, (Sql.Lateral, Select)) -> Doc
+        ppTable_tableAlias (i, (lat, select)) =
+          lateral lat $ ppTable (tableAlias i select)
+        lateral = \case
+            Sql.NonLateral -> id
+            Sql.Lateral -> (text "LATERAL" $$)
 
 tableAlias :: Int -> Select -> (TableAlias, Select)
 tableAlias i select = ("T" ++ show i, select)

@@ -78,6 +78,7 @@ library
                    Opaleye.Internal.Helpers,
                    Opaleye.Internal.Join,
                    Opaleye.Internal.Label,
+                   Opaleye.Internal.Lateral,
                    Opaleye.Internal.Manipulation,
                    Opaleye.Internal.Order,
                    Opaleye.Internal.Operators,
