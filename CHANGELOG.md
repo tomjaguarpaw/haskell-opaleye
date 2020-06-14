@@ -22,7 +22,7 @@ S.SelectArr a b`
 
 ## 0.6.7004.1
 
-* Fixed quadratic slowdown in `removeEmpty`.
+* Fixed exponential slowdown in `removeEmpty`.
 
 * Fixed `read` compatibility with time-1.9 in test suite.
 
