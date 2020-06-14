@@ -1,9 +1,6 @@
--- | Do not use.  Use "Opaleye.ToFields" instead.  Will be deprecated
--- in version 0.7.
-
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 
-module Opaleye.Constant where
+module Opaleye.Constant {-# DEPRECATED "Use \"Opaleye.ToFields\" instead.  Will be removed in version 0.8." #-} where
 
 import           Opaleye.Column                  (Column)
 import qualified Opaleye.Column                  as C
@@ -54,25 +51,24 @@ toFields :: D.Default ToFields haskells fields
          => haskells -> fields
 toFields = constantExplicit D.def
 
--- | Do not use.  Use 'toFields' instead.  Will be deprecated in version 0.7.
+{-# DEPRECATED constant "Use 'toFields' instead.  Will be removed in version 0.8." #-}
 constant :: D.Default ToFields haskells fields
          => haskells -> fields
 constant = constantExplicit D.def
 
--- | Do not use the name @Constant@.  Use 'ToFields' instead.  Will be
--- deprecated in version 0.7.
-newtype Constant haskells fields =
-  Constant { constantExplicit :: haskells -> fields }
+newtype ToFields haskells fields =
+  ToFields { constantExplicit :: haskells -> fields }
 
-type ToFields = Constant
+{-# DEPRECATED Constant "Use 'ToFields' instead.  Will be removed in version 0.8." #-}
+type Constant = ToFields
 
 instance D.Default ToFields haskell (Column sql)
          => D.Default ToFields (Maybe haskell) (Column (C.Nullable sql)) where
-  def = Constant (C.maybeToNullable . fmap f)
-    where Constant f = D.def
+  def = ToFields (C.maybeToNullable . fmap f)
+    where ToFields f = D.def
 
 toToField :: (haskells -> fields) -> Constant haskells fields
-toToField = Constant
+toToField = ToFields
 
 instance D.Default ToFields (Column a) (Column a) where
   def = Constant id
@@ -179,21 +175,21 @@ instance D.Default ToFields (R.PGRange Time.Day) (Column (T.SqlRange T.SqlDate))
 
 -- { Boilerplate instances
 
-instance Functor (Constant a) where
-  fmap f (Constant g) = Constant (fmap f g)
+instance Functor (ToFields a) where
+  fmap f (ToFields g) = ToFields (fmap f g)
 
-instance Applicative (Constant a) where
-  pure = Constant . pure
-  Constant f <*> Constant x = Constant (f <*> x)
+instance Applicative (ToFields a) where
+  pure = ToFields . pure
+  ToFields f <*> ToFields x = ToFields (f <*> x)
 
-instance P.Profunctor Constant where
-  dimap f g (Constant h) = Constant (P.dimap f g h)
+instance P.Profunctor ToFields where
+  dimap f g (ToFields h) = ToFields (P.dimap f g h)
 
-instance PP.ProductProfunctor Constant where
-  empty = Constant empty
-  Constant f ***! Constant g = Constant (f ***! g)
+instance PP.ProductProfunctor ToFields where
+  empty = ToFields empty
+  ToFields f ***! ToFields g = ToFields (f ***! g)
 
-instance PP.SumProfunctor Constant where
-  Constant f +++! Constant g = Constant (f +++! g)
+instance PP.SumProfunctor ToFields where
+  ToFields f +++! ToFields g = ToFields (f +++! g)
 
 -- }

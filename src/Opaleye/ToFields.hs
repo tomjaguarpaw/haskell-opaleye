@@ -11,7 +11,7 @@ toFieldsExplicit :: C.ToFields haskells fields -> haskells -> fields
 toFieldsExplicit = C.constantExplicit
 
 toToFields :: (haskells -> fields) -> C.ToFields haskells fields
-toToFields = C.Constant
+toToFields = C.ToFields
 
 -- | Version of 'C.toFields' with better type inference
 toFieldsI :: (D.Default (Inferrable C.ToFields) haskells fields)
