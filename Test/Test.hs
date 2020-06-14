@@ -390,7 +390,7 @@ testDiv :: Test
 testDiv = it "" $ select `selectShouldReturnSorted` map (op . toDoubles) table1data
   where select :: Select (Field O.SqlFloat8)
         select = proc () -> do
-          t <- Arr.arr (O.doubleOfInt *** O.doubleOfInt) <<< table1Q -< ()
+          t <- Arr.arr (doubleOfInt *** doubleOfInt) <<< table1Q -< ()
           Arr.returnA -< op t
         op :: Fractional a => (a, a) -> a
         -- Choosing 0.5 here as it should be exactly representable in
@@ -398,6 +398,8 @@ testDiv = it "" $ select `selectShouldReturnSorted` map (op . toDoubles) table1d
         op (x, y) = y / x * 0.5
         toDoubles :: (Int, Int) -> (Double, Double)
         toDoubles = fromIntegral *** fromIntegral
+
+        doubleOfInt = O.unsafeCast "float8"
 
 -- TODO: need to implement and test case_ returning tuples
 testCase :: Test
@@ -744,8 +746,14 @@ testUpdate = it "" $ \conn -> do
   resultD <- runSelectTable4 conn
   resultD `shouldBe` expectedD
 
-  returned <- O.runInsertManyReturning conn table4 insertT returning
-  _ <- O.runInsertMany conn table4 insertTMany
+  returned <- O.runInsert_ conn O.Insert { O.iTable = table4
+                                         , O.iRows = insertT
+                                         , O.iReturning = O.rReturning returning
+                                         , O.iOnConflict = Nothing }
+  _ <- O.runInsert_ conn O.Insert { O.iTable = table4
+                                  , O.iRows = insertTMany
+                                  , O.iReturning = O.rCount
+                                  , O.iOnConflict = Nothing }
   resultI <- runSelectTable4 conn
 
   resultI `shouldBe` expectedI
@@ -788,8 +796,14 @@ testInsertConflict :: Test
 testInsertConflict = it "inserts with conflicts" $ \conn -> do
   _ <- O.runDelete conn table10 (const $ O.constant True)
   returned <- O.runInsertManyReturning conn table10 insertT id
-  extras <- O.runInsertManyReturningOnConflictDoNothing conn table10 conflictsT id
-  moreExtras <- O.runInsertManyOnConflictDoNothing conn table10 moreConflictsT
+  extras <- O.runInsert_ conn O.Insert { O.iTable = table10
+                                       , O.iRows = conflictsT
+                                       , O.iReturning = O.rReturning id
+                                       , O.iOnConflict = Just O.DoNothing }
+  moreExtras <- O.runInsert_ conn O.Insert { O.iTable = table10
+                                           , O.iRows = moreConflictsT
+                                           , O.iReturning = O.rCount
+                                           , O.iOnConflict = Just O.DoNothing }
 
   returned `shouldBe` afterInsert
   extras `shouldBe` afterConflicts
