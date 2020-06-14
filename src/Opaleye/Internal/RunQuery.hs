@@ -187,10 +187,6 @@ class DefaultFromField sqlType haskellType where
 
 type QueryRunnerColumnDefault = DefaultFromField
 
-instance DefaultFromField sqlType haskellType
-    => D.Default FromField sqlType haskellType where
-  def = defaultFromField
-
 instance DefaultFromField T.PGNumeric Sci.Scientific where
   defaultFromField = fromPGSFromField
 
