@@ -398,21 +398,15 @@ timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
 
 -- * Deprecated
 
-{-# DEPRECATED doubleOfInt
-    "Use 'C.unsafeCast' instead. \
-    \Will be removed in version 0.7." #-}
-doubleOfInt :: F.Field T.SqlInt4 -> F.Field T.SqlFloat8
-doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
-
--- | Identical to 'restrictExists'.  Will be deprecated in version 0.7.
+{-# DEPRECATED exists "Identical to 'restrictExists'.  Will be deprecated in version 0.8." #-}
 exists :: QueryArr a b -> QueryArr a ()
 exists = restrictExists
 
--- | Identical to 'restrictNotExists'.  Will be deprecated in version 0.7.
+{-# DEPRECATED notExists "Identical to 'restrictNotExists'.  Will be removed in version 0.8." #-}
 notExists :: QueryArr a b -> QueryArr a ()
 notExists = restrictNotExists
 
--- | Identical to 'inSelect'.  Will be deprecated in version 0.7.
+{-# DEPRECATED inQuery "Identical to 'inSelect'.  Will be deprecated in version 0.8." #-}
 inQuery :: D.Default O.EqPP fields fields
         => fields -> Query fields -> S.Select (F.Field T.SqlBool)
 inQuery = inSelect
