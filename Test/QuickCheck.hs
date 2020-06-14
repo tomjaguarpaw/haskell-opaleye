@@ -8,6 +8,7 @@ module QuickCheck where
 
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
+import qualified Opaleye.ToFields as O
 import           Wrapped (constructor, asSumProfunctor,
                           constructorDecidable, asDecidable)
 import qualified Database.PostgreSQL.Simple as PGS
@@ -59,7 +60,7 @@ type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText
 type Haskells = [Choice Int Bool String]
 
 fieldsOfHaskells :: Haskells -> Fields
-fieldsOfHaskells = O.constantExplicit defChoicesPP
+fieldsOfHaskells = O.toFieldsExplicit defChoicesPP
 
 fieldsList :: (a, b) -> [Choice a b s]
 fieldsList (x, y) = [CInt x, CBool y]
@@ -141,7 +142,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.selectTable table1)))
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
-        aqArg (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.constant l))))
+        aqArg (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.toFields l))))
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
@@ -450,7 +451,7 @@ restrict conn (ArbitrarySelect q) =
 
 values :: PGS.Connection -> ArbitraryFieldsList -> IO Bool
 values conn (ArbitraryFieldsList l) =
-  compareNoSort conn (denotation' (fmap fieldsList (O.values (fmap O.constant l))))
+  compareNoSort conn (denotation' (fmap fieldsList (O.values (fmap O.toFields l))))
                      (pureList (fmap fieldsList l))
 
 aggregate :: PGS.Connection -> ArbitrarySelect -> IO Bool
