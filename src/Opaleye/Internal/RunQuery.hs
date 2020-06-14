@@ -360,7 +360,7 @@ data Cursor haskells = EmptyCursor | Cursor (RowParser haskells) PGSC.Cursor
 prepareQuery :: FromFields fields haskells -> S.Select fields -> (Maybe PGS.Query, RowParser haskells)
 prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
   where sql :: Maybe PGS.Query
-        sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
+        sql = fmap String.fromString (S.showSqlExplicit u q)
         -- FIXME: We're doing work twice here
         (b, _, _) = Q.runSimpleQueryArrStart q ()
         parser = prepareRowParser qr b
