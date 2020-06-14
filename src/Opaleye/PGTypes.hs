@@ -110,7 +110,8 @@ pgCiStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack . CI.original
 pgCiLazyText :: CI.CI LText.Text -> Column PGCitext
 pgCiLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack . CI.original
 
--- No CI String instance since postgresql-simple doesn't define FromField (CI String)
+-- No CI String instance since postgresql-simple doesn't define
+-- FromField (CI String)
 
 -- The json data type was introduced in PostgreSQL version 9.2
 -- JSON values must be SQL string quoted
@@ -143,15 +144,19 @@ pgLazyJSONB = pgJSONB . IPT.lazyDecodeUtf8
 pgValueJSONB :: Ae.ToJSON a => a -> Column PGJsonb
 pgValueJSONB = pgLazyJSONB . Ae.encode
 
-pgArray :: forall a b. IsSqlType b => (a -> C.Column b) -> [a] -> C.Column (PGArray b)
+pgArray :: forall a b. IsSqlType b
+        => (a -> C.Column b) -> [a] -> C.Column (PGArray b)
 pgArray pgEl xs = C.unsafeCast arrayTy $
   C.Column (HPQ.ArrayExpr (map oneEl xs))
   where
     oneEl = C.unColumn . pgEl
     arrayTy = showSqlType ([] :: [PGArray b])
 
-pgRange :: forall a b. IsRangeType b => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a -> C.Column (PGRange b)
-pgRange pgEl start end = C.Column (HPQ.RangeExpr (showRangeType ([] :: [b])) (oneEl start) (oneEl end))
+pgRange :: forall a b. IsRangeType b
+        => (a -> C.Column b) -> R.RangeBound a -> R.RangeBound a
+        -> C.Column (PGRange b)
+pgRange pgEl start end =
+  C.Column (HPQ.RangeExpr (showRangeType ([] :: [b])) (oneEl start) (oneEl end))
   where oneEl (R.Inclusive a) = HPQ.Inclusive . C.unColumn $ pgEl a
         oneEl (R.Exclusive a) = HPQ.Exclusive . C.unColumn $ pgEl a
         oneEl R.NegInfinity   = HPQ.NegInfinity
