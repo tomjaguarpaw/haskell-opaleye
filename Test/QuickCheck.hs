@@ -194,7 +194,8 @@ instance TQ.Arbitrary ArbitrarySelectArr where
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
       l <- TQ.listOf (TQ.oneof (map (return . CInt) [-1, 0, 1]
-                               ++ map (return . CBool) [False, True]))
+                               ++ map (return . CBool) [False, True]
+                               ++ map (return . CString) ["hello", "world"]))
       return (ArbitraryFields l)
 
 instance TQ.Arbitrary ArbitraryFieldsList where
