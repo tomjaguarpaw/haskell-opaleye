@@ -289,8 +289,8 @@ instance PP.SumProfunctor p => PP.SumProfunctor (WithNulls p) where
                   MaybeFields b (Left l)  -> Left  (MaybeFields b l)
                   MaybeFields b (Right r) -> Right (MaybeFields b r))
 
-instance PP.Default RQ.QueryRunner fields haskells
-  => PP.Default RQ.QueryRunner (MaybeFields fields) (Maybe haskells) where
+instance PP.Default RQ.FromFields fields haskells
+  => PP.Default RQ.FromFields (MaybeFields fields) (Maybe haskells) where
   def = fromFieldsMaybeFields PP.def
 
 instance PP.Default U.Unpackspec a b
