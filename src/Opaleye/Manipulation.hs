@@ -29,24 +29,17 @@ module Opaleye.Manipulation (module Opaleye.Manipulation,
                              HSql.OnConflict(..)) where
 
 import qualified Opaleye.Field        as F
-import qualified Opaleye.Internal.Sql as Sql
-import qualified Opaleye.Internal.Print as Print
 import qualified Opaleye.RunSelect as RS
 import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
-import           Opaleye.Internal.Column (Column(Column))
-import           Opaleye.Internal.Helpers ((.:), (.:.), (.::.))
+import           Opaleye.Internal.Column (Column)
+import           Opaleye.Internal.Helpers ((.:), (.:.))
 import           Opaleye.Internal.Manipulation (Updater(Updater))
 import qualified Opaleye.Internal.Manipulation as MI
-import qualified Opaleye.Internal.PrimQuery as PQ
-import qualified Opaleye.Internal.Unpackspec as U
 import           Opaleye.SqlTypes (SqlBool)
 
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
-import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
-import qualified Opaleye.Internal.HaskellDB.Sql.Default as SD
-import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
 
 import qualified Database.PostgreSQL.Simple as PGS
 
