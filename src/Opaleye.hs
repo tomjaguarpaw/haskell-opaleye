@@ -34,6 +34,7 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.SqlTypes
                , module Opaleye.Table
                , module Opaleye.Values
+               , module Opaleye.Unpackspec
                ) where
 
 import Opaleye.Aggregate
@@ -67,3 +68,4 @@ import Opaleye.Sql
 import Opaleye.SqlTypes
 import Opaleye.Table
 import Opaleye.Values
+import Opaleye.Unpackspec

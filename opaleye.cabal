@@ -71,6 +71,7 @@ library
                    Opaleye.ToFields,
                    Opaleye.TypeFamilies,
                    Opaleye.Values,
+                   Opaleye.Unpackspec,
                    Opaleye.Internal.Aggregate,
                    Opaleye.Internal.Binary,
                    Opaleye.Internal.Column,
