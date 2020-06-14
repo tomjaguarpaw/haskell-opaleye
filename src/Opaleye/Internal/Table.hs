@@ -71,19 +71,15 @@ tableColumns (TableWithSchema _ _ p) = p
 tableProperties :: Table writeColumns viewColumns -> TableFields writeColumns viewColumns
 tableProperties = tableColumns
 
--- | Use 'TableFields' instead. 'TableProperties' will be deprecated
--- in version 0.7.
-data TableProperties writeColumns viewColumns = TableProperties
+data TableFields writeColumns viewColumns = TableFields
    { tablePropertiesWriter :: Writer writeColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
 
--- | Use 'TableFields' instead. 'TableColumns' will be deprecated in
--- version 0.7.
-type TableColumns = TableProperties
+{-# DEPRECATED TableColumns "Use 'TableFields' instead. 'TableColumns' will be removed in  version 0.8." #-}
+type TableColumns = TableFields
 
--- | The new name for 'TableColumns' and 'TableProperties' which will
--- replace them in version 0.7.
-type TableFields = TableProperties
+{-# DEPRECATED TableProperties "Use 'TableFields' instead. 'TableProperties' will be removed in  version 0.8." #-}
+type TableProperties = TableFields
 
 tableColumnsWriter :: TableFields writeColumns viewColumns
                    -> Writer writeColumns viewColumns
@@ -116,14 +112,15 @@ newtype Writer columns dummy =
 -- | 'requiredTableField' is for fields which are not optional.  You
 -- must provide them on writes.
 requiredTableField :: String -> TableFields (Column a) (Column a)
-requiredTableField columnName = TableProperties
+requiredTableField columnName = TableFields
   (requiredW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
+
 
 -- | 'optionalTableField' is for fields that you can omit on writes, such as
 --  fields which have defaults or which are SERIAL.
 optionalTableField :: String -> TableFields (Maybe (Column a)) (Column a)
-optionalTableField columnName = TableProperties
+optionalTableField columnName = TableFields
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
@@ -243,18 +240,18 @@ instance ProductProfunctor Writer where
   purePP = pure
   (****) = (<*>)
 
-instance Functor (TableProperties a) where
-  fmap f (TableProperties w (View v)) = TableProperties (fmap f w) (View (f v))
+instance Functor (TableFields a) where
+  fmap f (TableFields w (View v)) = TableFields (fmap f w) (View (f v))
 
-instance Applicative (TableProperties a) where
-  pure x = TableProperties (pure x) (View x)
-  TableProperties fw (View fv) <*> TableProperties xw (View xv) =
-    TableProperties (fw <*> xw) (View (fv xv))
+instance Applicative (TableFields a) where
+  pure x = TableFields (pure x) (View x)
+  TableFields fw (View fv) <*> TableFields xw (View xv) =
+    TableFields (fw <*> xw) (View (fv xv))
 
-instance Profunctor TableProperties where
-  dimap f g (TableProperties w (View v)) = TableProperties (dimap f g w)
+instance Profunctor TableFields where
+  dimap f g (TableFields w (View v)) = TableFields (dimap f g w)
                                                             (View (g v))
-instance ProductProfunctor TableProperties where
+instance ProductProfunctor TableFields where
   purePP = pure
   (****) = (<*>)
 

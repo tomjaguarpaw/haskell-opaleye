@@ -235,7 +235,7 @@ arrangeUpdate t update cond =
   SG.sqlUpdate SD.defaultSqlGenerator
                (PQ.tiToSqlTable (TI.tableIdentifier t))
                [condExpr] (update' tableCols)
-  where TI.TableProperties writer (TI.View tableCols) = TI.tableColumns t
+  where TI.TableFields writer (TI.View tableCols) = TI.tableColumns t
         update' = map (\(x, y) -> (y, x)) . TI.runWriter writer . update
         Column condExpr = cond tableCols
 
