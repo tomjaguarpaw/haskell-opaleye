@@ -184,9 +184,8 @@ instance DefaultFromField a b =>
 -- 3. If you have a more complicated case, but not a 'PGS.FromField' instance,
 -- write a 'FieldParser' for your type and use 'fromPGSFieldParser'.
 -- You can also add a 'FromField' instance using this.
+{-# DEPRECATED queryRunnerColumnDefault "Use defaultFromField instead.  It will be removed in 0.8" #-}
 class QueryRunnerColumnDefault sqlType haskellType where
-  -- | Do not use @queryRunnerColumnDefault@.  It will be deprecated
-  -- in version 0.7.
   queryRunnerColumnDefault :: FromField sqlType haskellType
   queryRunnerColumnDefault = defaultFromField
   defaultFromField         :: FromField sqlType haskellType
