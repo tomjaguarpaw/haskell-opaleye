@@ -59,6 +59,8 @@ runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
+-- For 0.7 put an `IsSqlType a` constraint on here, so that we can
+-- later use it without breaking the API
 instance Default Valuesspec (Column a) (Column a) where
   def = Valuesspec (PM.iso id Column)
 
