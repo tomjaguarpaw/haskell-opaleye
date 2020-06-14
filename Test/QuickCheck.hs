@@ -88,7 +88,7 @@ aggregateFields =
   -- The requirement to cast to int4 is silly, but we still have a bug
   --
   --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/117
-  PP.list (P.rmap (O.unsafeCast "int4") O.sum `choicePP` O.boolAnd)
+  PP.list (choicePP (P.rmap (O.unsafeCast "int4") O.sum) O.boolAnd)
 
 -- This is taking liberties.  Firstly it errors out when two fields
 -- are of different types.  It should probably return a Maybe or an
@@ -490,7 +490,7 @@ choicePP p1 p2 = asSumProfunctor $ proc choice -> do
 defChoicesPP :: (D.Default p a a', D.Default p b b',
                  PP.SumProfunctor p, PP.ProductProfunctor p)
              => p [Choice a b] [Choice a' b']
-defChoicesPP = PP.list (D.def `choicePP` D.def)
+defChoicesPP = PP.list (choicePP D.def D.def)
 
 -- Replace this with `isSuccess` when the following issue is fixed
 --
