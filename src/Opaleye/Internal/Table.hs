@@ -50,14 +50,15 @@ import qualified Control.Arrow as Arr
 -- @
 --
 -- The constructors of Table are internal only and will be
--- deprecated in version 0.7.
+-- removed in version 0.8.
 data Table writeFields viewFields
   = Table String (TableFields writeFields viewFields)
     -- ^ For unqualified table names. Do not use the constructor.  It
-    -- is internal and will be deprecated in version 0.7.
+    -- is considered deprecated and will be removed in version 0.8.
   | TableWithSchema String String (TableFields writeFields viewFields)
     -- ^ Schema name, table name, table properties.  Do not use the
-    -- constructor.  It is internal and will be deprecated in version 0.7.
+    -- constructor.  It is considered deprecated and will be removed
+    -- in version 0.8.
 
 tableIdentifier :: Table writeColumns viewColumns -> PQ.TableIdentifier
 tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
@@ -89,12 +90,12 @@ tableColumnsView :: TableFields writeColumns viewColumns
                  -> View viewColumns
 tableColumnsView = tablePropertiesView
 
+{-# DEPRECATED View "Internal only.  Do not use.  'View' will be removed in version 0.8." #-}
 -- | Internal only.  Do not use.  'View' will be deprecated in version
 -- 0.7.
 newtype View columns = View columns
 
--- | Internal only.  Do not use.  'Writer' will be deprecated in
--- version 0.7.
+{-# DEPRECATED Writer "Internal only.  Do not use.  'Writer' will be removed in 0.8." #-}
 
 -- There's no reason the second parameter should exist except that we
 -- use ProductProfunctors more than ProductContravariants so it makes
@@ -144,9 +145,9 @@ optional = optionalTableField
 readOnly :: String -> TableFields () (Column a)
 readOnly = readOnlyTableField
 
+{-# DEPRECATED tableColumn "Use 'tableField' instead.  Will be removed in 0.8." #-}
+
 class TableColumn writeType sqlType | writeType -> sqlType where
-    -- | Do not use.  Use 'tableField' instead.  Will be deprecated in
-    -- 0.7.
     tableColumn :: String -> TableFields writeType (Column sqlType)
     tableColumn = tableField
     -- | Infer either a required ('requiredTableField') or optional
