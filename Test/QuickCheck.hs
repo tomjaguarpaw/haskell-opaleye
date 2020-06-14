@@ -6,7 +6,8 @@
 module QuickCheck where
 
 import qualified Opaleye as O
-import           Wrapped (constructor, asSumProfunctor)
+import           Wrapped (constructor, asSumProfunctor,
+                          constructorDecidable, asDecidable)
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Test.QuickCheck as TQ
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
@@ -16,7 +17,6 @@ import qualified Data.List as List
 import qualified Data.MultiSet as MultiSet
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
-import           Data.Functor.Contravariant (Contravariant, contramap)
 import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Monoid as Monoid
 import qualified Data.Ord as Ord
@@ -46,23 +46,11 @@ onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
 
 data Choice i b = CInt i | CBool b deriving (Show, Eq, Ord)
 
--- These are really hard to write
---
--- See http://h2.jaguarpaw.co.uk/posts/mysterious-incomposability-of-decidable/
 chooseChoice :: Divisible.Decidable f => (a -> Choice i b) -> f i -> f b -> f a
-chooseChoice choose fi fb = choose -$- (f -$- (fb -*- fi))
-  where f = \case
-          CInt i  -> Right i
-          CBool b -> Left b
-
-        (-$-) :: Contravariant f => (a -> b) -> f b -> f a
-        (-$-) = contramap
-
-        (-*-) :: Divisible.Decidable f => f a -> f b -> f (Either a b)
-        (-*-) = Divisible.chosen
-
-        infixl -*-
-        infixr -$-
+chooseChoice choose fi fb = asDecidable $ proc a -> do
+  case choose a of
+    CInt i  -> constructorDecidable fi -< i
+    CBool b -> constructorDecidable fb -< b
 
 type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool)]
 type Haskells = [Choice Int Bool]
