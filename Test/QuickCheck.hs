@@ -571,7 +571,7 @@ isInt (CString _) = Nothing
 restrictFirstBool :: O.SelectArr Fields Fields
 restrictFirstBool = Arrow.arr snd
       Arrow.<<< Arrow.first O.restrict
-      Arrow.<<< Arrow.arr (firstBoolOrTrue (O.pgBool True))
+      Arrow.<<< Arrow.arr (firstBoolOrTrue (O.sqlBool True))
 
 restrictFirstBoolList :: [Haskells] -> [Haskells]
 restrictFirstBoolList = map snd

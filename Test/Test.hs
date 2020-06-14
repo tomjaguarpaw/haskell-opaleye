@@ -213,13 +213,13 @@ table6data :: [(String, String)]
 table6data = [("xy", "a"), ("z", "a"), ("more text", "a")]
 
 table6fielddata :: [(Field O.SqlText, Field O.SqlText)]
-table6fielddata = map (\(field1, field2) -> (O.pgString field1, O.pgString field2)) table6data
+table6fielddata = map (\(field1, field2) -> (O.sqlString field1, O.sqlString field2)) table6data
 
 table7data :: [(String, String)]
 table7data = [("foo", "c"), ("bar", "a"), ("baz", "b")]
 
 table7fielddata :: [(Field O.SqlText, Field O.SqlText)]
-table7fielddata = map (O.pgString *** O.pgString) table7data
+table7fielddata = map (O.sqlString *** O.sqlString) table7data
 
 table8data :: [Json.Value]
 table8data = [ Json.object
@@ -230,10 +230,10 @@ table8data = [ Json.object
              ]
 
 table8fielddata :: [Field O.SqlJson]
-table8fielddata = map O.pgValueJSON table8data
+table8fielddata = map O.sqlValueJSON table8data
 
 table9fielddata :: [Field O.SqlJsonb]
-table9fielddata = map O.pgValueJSONB table8data
+table9fielddata = map O.sqlValueJSONB table8data
 
 -- We have to quote the table names here because upper case letters in
 -- table names are treated as lower case unless the name is quoted!
@@ -373,7 +373,7 @@ testIn :: Test
 testIn = it "restricts values to a range" $ select `selectShouldReturnSorted` filter (flip elem [100, 200] . snd) (L.sort table1data)
   where select = proc () -> do
           t <- table1Q -< ()
-          O.restrict -< O.in_ [O.pgInt4 100, O.pgInt4 200] (snd t)
+          O.restrict -< O.in_ [O.sqlInt4 100, O.sqlInt4 200] (snd t)
           O.restrict -< O.not (O.in_ [] (fst t)) -- Making sure empty lists work.
           Arr.returnA -< t
 
@@ -461,7 +461,7 @@ testDistinctOn = do
     where
 
         pgTriples :: [(O.Field O.PGInt8, O.Field O.PGInt8, O.Field O.PGText)]
-        pgTriples = (\(x,y,z) -> (O.pgInt8 x, O.pgInt8 y, O.pgStrictText z)) <$> triples
+        pgTriples = (\(x,y,z) -> (O.sqlInt8 x, O.sqlInt8 y, O.sqlStrictText z)) <$> triples
 
         triples :: [(Int64, Int64, T.Text)]
         triples =
@@ -492,7 +492,7 @@ testAggregate = it "" $ (Arr.second aggregateCoerceFIXME
 testAggregate0 :: Test
 testAggregate0 = it "" $ (Arr.second aggregateCoerceFIXME
                         <<< O.aggregate (PP.p2 (O.sum, O.sum))
-                                        (O.keepWhen (const (O.pgBool False))
+                                        (O.keepWhen (const (O.sqlBool False))
                                          <<< table1Q)) `selectShouldReturnSorted` ([] :: [(Int, Int64)])
 
 testAggregateFunction :: Test
@@ -514,7 +514,7 @@ testStringArrayAggregate = it "" $ q `selectShouldReturnSorted` [(map fst table6
 
 testStringAggregate :: Test
 testStringAggregate = it "" $ q `selectShouldReturnSorted` expected
-  where q = O.aggregate (PP.p2 ((O.stringAgg . O.pgString) "_", O.groupBy)) table6Q
+  where q = O.aggregate (PP.p2 ((O.stringAgg . O.sqlString) "_", O.groupBy)) table6Q
         expected = [(
           (foldl1 (\x y -> x ++ "_" ++ y) . map fst) table6data ,
           head (map snd table6data))]
@@ -523,7 +523,7 @@ testStringAggregate = it "" $ q `selectShouldReturnSorted` expected
 
 testStringArrayAggregateOrdered :: Test
 testStringArrayAggregateOrdered = it "" $ q `selectShouldReturnSorted` expected
-  where q = O.aggregateOrdered (O.asc snd) (PP.p2 (O.arrayAgg, O.stringAgg . O.pgString $ ",")) table7Q
+  where q = O.aggregateOrdered (O.asc snd) (PP.p2 (O.arrayAgg, O.stringAgg . O.sqlString $ ",")) table7Q
         expected = [( map fst sortedData
                       , L.intercalate "," . map snd $ sortedData
                       )
@@ -538,7 +538,7 @@ testMultipleAggregateOrdered = it "" $ q `selectShouldReturnSorted` expected
   where q = O.aggregate ((,) <$> IA.orderAggregate (O.asc snd)
                                                    (P.lmap fst O.arrayAgg)
                              <*> IA.orderAggregate (O.desc snd)
-                                                   (P.lmap snd (O.stringAgg . O.pgString $ ","))
+                                                   (P.lmap snd (O.stringAgg . O.sqlString $ ","))
                         ) table7Q
         expected = [( map fst . L.sortBy (Ord.comparing snd) $ table7data
                       , L.intercalate "," . map snd . L.sortBy (Ord.comparing (Ord.Down . snd)) $ table7data
@@ -561,7 +561,7 @@ testOverwriteAggregateOrdered = it "" $ q `selectShouldReturnSorted` expected
 
 testCountRows0 :: Test
 testCountRows0 = it "" $ q `selectShouldReturnSorted` [0 :: Int64]
-  where q        = O.countRows (O.keepWhen (const (O.pgBool False)) <<< table7Q)
+  where q        = O.countRows (O.keepWhen (const (O.sqlBool False)) <<< table7Q)
 
 testCountRows3 :: Test
 testCountRows3 = it "" $ q `selectShouldReturnSorted` [3 :: Int64]
@@ -853,47 +853,47 @@ testInSelect = it "" $ \conn -> do
   -- and r && and s `shouldBe` True
 
 testAtTimeZone :: Test
-testAtTimeZone = it "" $ testH (A.pure (O.timestamptzAtTimeZone t (O.pgString "CET"))) (`shouldBe` [t'])
-  where t = O.pgUTCTime (Time.UTCTime d (Time.secondsToDiffTime 3600))
+testAtTimeZone = it "" $ testH (A.pure (O.timestamptzAtTimeZone t (O.sqlString "CET"))) (`shouldBe` [t'])
+  where t = O.sqlUTCTime (Time.UTCTime d (Time.secondsToDiffTime 3600))
         t' = Time.LocalTime d (Time.TimeOfDay 2 0 0)
         d = Time.fromGregorian 2015 1 1
 
 testArrayLiterals :: Test
-testArrayLiterals = it "" $ testH (A.pure $ O.pgArray O.pgInt4 vals) (`shouldBe` [vals])
+testArrayLiterals = it "" $ testH (A.pure $ O.sqlArray O.sqlInt4 vals) (`shouldBe` [vals])
   where vals = [1,2,3]
 
 -- This test fails without the explicit cast in pgArray since postgres
 -- can't determine the type of the array.
 
 testEmptyArray :: Test
-testEmptyArray = it "" $ testH (A.pure $ O.pgArray O.pgInt4 []) (`shouldBe` [[] :: [Int]])
+testEmptyArray = it "" $ testH (A.pure $ O.sqlArray O.sqlInt4 []) (`shouldBe` [[] :: [Int]])
 
 -- This test fails without the explicit cast in pgArray since postgres
 -- defaults the numbers to 'integer' but postgresql-simple expects 'float8'.
 
 testFloatArray :: Test
-testFloatArray = it "" $ testH (A.pure $ O.pgArray O.pgDouble doubles) (`shouldBe` [doubles])
+testFloatArray = it "" $ testH (A.pure $ O.sqlArray O.sqlDouble doubles) (`shouldBe` [doubles])
   where
     doubles = [1 :: Double, 2]
 
 testArrayIndex :: Test
 testArrayIndex = it "correctly indexes an array" $
-  testH (A.pure $ O.pgArray O.pgInt4 [5,6,7] `O.index` O.pgInt4 3)
+  testH (A.pure $ O.sqlArray O.sqlInt4 [5,6,7] `O.index` O.sqlInt4 3)
         (`shouldBe` ([Just 7] :: [Maybe Int]))
 
 testArrayIndexOOB :: Test
 testArrayIndexOOB = it "returns Nothing when the index is out of bounds" $
-  testH (A.pure $ O.pgArray O.pgInt4 [5,6,7] `O.index` O.pgInt4 8)
+  testH (A.pure $ O.sqlArray O.sqlInt4 [5,6,7] `O.index` O.sqlInt4 8)
         (`shouldBe` ([Nothing] :: [Maybe Int]))
 
 testSingletonArray :: Test
 testSingletonArray = it "constructs a singleton PGInt8 array" $
-  testH (A.pure $ O.singletonArray (O.pgInt8 1))
+  testH (A.pure $ O.singletonArray (O.sqlInt8 1))
         (`shouldBe` ([[1]] :: [[Int64]]))
 
 testArrayAppend :: Test
 testArrayAppend = it "appends two arrays" $
-  testH (A.pure $ O.pgArray O.pgInt4 [5,6,7] `O.arrayAppend` O.pgArray O.pgInt4 [1,2,3])
+  testH (A.pure $ O.sqlArray O.sqlInt4 [5,6,7] `O.arrayAppend` O.sqlArray O.sqlInt4 [1,2,3])
         (`shouldBe` ([[5,6,7,1,2,3]] :: [[Int]]))
 
 type JsonTest a = SpecWith (Select (Field a) -> PGS.Connection -> Expectation)
@@ -901,7 +901,7 @@ type JsonTest a = SpecWith (Select (Field a) -> PGS.Connection -> Expectation)
 testJsonGetFieldValue :: (O.SqlIsJson a, DefaultFromField a Json.Value) => Select (Field a) -> Test
 testJsonGetFieldValue dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "c"
+            Arr.returnA -< O.toNullable c1 O..-> O.sqlStrictText "c"
         expected :: [Maybe Json.Value]
         expected = [Just $ Json.Number 21]
 
@@ -909,7 +909,7 @@ testJsonGetFieldValue dataSelect = it "" $ testH q (`shouldBe` expected)
 testJsonGetFieldText :: (O.SqlIsJson a) => Select (Field a) -> Test
 testJsonGetFieldText dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "c"
+            Arr.returnA -< O.toNullable c1 O..->> O.sqlStrictText "c"
         expected :: [Maybe T.Text]
         expected = [Just "21"]
 
@@ -918,14 +918,14 @@ testRestrictWithJsonOp :: (O.SqlIsJson a) => Select (Field a) -> Test
 testRestrictWithJsonOp dataSelect = it "restricts the rows returned by checking equality with a value extracted using JSON operator" $ testH select (`shouldBe` table8data)
   where select = dataSelect >>> proc col1 -> do
           t <- table8Q -< ()
-          O.restrict -< (O.toNullable col1 O..->> O.pgStrictText "c") .== O.toNullable (O.pgStrictText "21")
+          O.restrict -< (O.toNullable col1 O..->> O.sqlStrictText "c") .== O.toNullable (O.sqlStrictText "21")
           Arr.returnA -< t
 
 -- Test opaleye's equivalent of c1->'a'->2
 testJsonGetArrayValue :: (O.SqlIsJson a, DefaultFromField a Json.Value) => Select (Field a) -> Test
 testJsonGetArrayValue dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "a" O..-> O.pgInt4 2
+            Arr.returnA -< O.toNullable c1 O..-> O.sqlStrictText "a" O..-> O.sqlInt4 2
         expected :: [Maybe Json.Value]
         expected = [Just $ Json.Number 30]
 
@@ -933,7 +933,7 @@ testJsonGetArrayValue dataSelect = it "" $ testH q (`shouldBe` expected)
 testJsonGetArrayText :: (O.SqlIsJson a) => Select (Field a) -> Test
 testJsonGetArrayText dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..-> O.pgStrictText "a" O..->> O.pgInt4 2
+            Arr.returnA -< O.toNullable c1 O..-> O.sqlStrictText "a" O..->> O.sqlInt4 2
         expected :: [Maybe T.Text]
         expected = [Just "30"]
 
@@ -942,7 +942,7 @@ testJsonGetArrayText dataSelect = it "" $ testH q (`shouldBe` expected)
 testJsonGetMissingField :: (O.SqlIsJson a) => Select (Field a) -> Test
 testJsonGetMissingField dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
-            Arr.returnA -< O.toNullable c1 O..->> O.pgStrictText "missing"
+            Arr.returnA -< O.toNullable c1 O..->> O.sqlStrictText "missing"
         expected :: [Maybe T.Text]
         expected = [Nothing]
 
@@ -950,7 +950,7 @@ testJsonGetMissingField dataSelect = it "" $ testH q (`shouldBe` expected)
 testJsonGetPathValue :: (O.SqlIsJson a, DefaultFromField a Json.Value) => Select (Field a) -> Test
 testJsonGetPathValue dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
-              Arr.returnA -< O.toNullable c1 O..#> O.pgArray O.pgStrictText ["b", "x"]
+              Arr.returnA -< O.toNullable c1 O..#> O.sqlArray O.sqlStrictText ["b", "x"]
         expected :: [Maybe Json.Value]
         expected = [Just $ Json.Number 42]
 
@@ -958,7 +958,7 @@ testJsonGetPathValue dataSelect = it "" $ testH q (`shouldBe` expected)
 testJsonGetPathText :: (O.SqlIsJson a) => Select (Field a) -> Test
 testJsonGetPathText dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
-              Arr.returnA -< O.toNullable c1 O..#>> O.pgArray O.pgStrictText ["b", "x"]
+              Arr.returnA -< O.toNullable c1 O..#>> O.sqlArray O.sqlStrictText ["b", "x"]
         expected :: [Maybe T.Text]
         expected = [Just "42"]
 
@@ -966,43 +966,43 @@ testJsonGetPathText dataSelect = it "" $ testH q (`shouldBe` expected)
 testJsonbRightInLeft :: Test
 testJsonbRightInLeft = it "" $ testH q (`shouldBe` [True])
   where q = table9Q >>> proc c1 -> do
-              Arr.returnA -< c1 O..@> O.pgJSONB "{\"c\":21}"
+              Arr.returnA -< c1 O..@> O.sqlJSONB "{\"c\":21}"
 
 -- Test opaleye's equivalent of '{"c":21}'::jsonb <@ c1
 testJsonbLeftInRight :: Test
 testJsonbLeftInRight = it "" $ testH q (`shouldBe` [True])
   where q = table9Q >>> proc c1 -> do
-              Arr.returnA -< O.pgJSONB "{\"c\":21}" O..<@ c1
+              Arr.returnA -< O.sqlJSONB "{\"c\":21}" O..<@ c1
 
 -- Test opaleye's equivalent of c1 ? 'b'
 testJsonbContains :: Test
 testJsonbContains = it "" $ testH q (`shouldBe` [True])
   where q = table9Q >>> proc c1 -> do
-              Arr.returnA -< c1 O..? O.pgStrictText "c"
+              Arr.returnA -< c1 O..? O.sqlStrictText "c"
 
 -- Test opaleye's equivalent of c1 ? 'missing'
 -- Note that the missing field does not exist.
 testJsonbContainsMissing :: Test
 testJsonbContainsMissing = it "" $ testH q (`shouldBe` [False])
   where q = table9Q >>> proc c1 -> do
-              Arr.returnA -< c1 O..? O.pgStrictText "missing"
+              Arr.returnA -< c1 O..? O.sqlStrictText "missing"
 
 -- Test opaleye's equivalent of c1 ?| array['b', 'missing']
 testJsonbContainsAny :: Test
 testJsonbContainsAny = it "" $ testH q (`shouldBe` [True])
   where q = table9Q >>> proc c1 -> do
-              Arr.returnA -< c1 O..?| O.pgArray O.pgStrictText ["b", "missing"]
+              Arr.returnA -< c1 O..?| O.sqlArray O.sqlStrictText ["b", "missing"]
 
 -- Test opaleye's equivalent of c1 ?& array['a', 'b', 'c']
 testJsonbContainsAll :: Test
 testJsonbContainsAll = it "" $ testH q (`shouldBe` [True])
   where q = table9Q >>> proc c1 -> do
-              Arr.returnA -< c1 O..?& O.pgArray O.pgStrictText ["a", "b", "c"]
+              Arr.returnA -< c1 O..?& O.sqlArray O.sqlStrictText ["a", "b", "c"]
 
 testRangeOverlap :: Test
 testRangeOverlap = it "generates overlap" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
-        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 3 7 `O.overlap` range 4 12)
 
 testRangeDateOverlap :: Test
@@ -1010,43 +1010,43 @@ testRangeDateOverlap = it "generates time overlap" $ \conn -> do
     let date       = Time.fromGregorian 2015 1 1
         now        = Time.UTCTime date (Time.secondsToDiffTime 3600)
         later      = Time.addUTCTime 10 now
-        range1     = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Exclusive later)
-        range2     = O.pgRange O.pgUTCTime R.NegInfinity R.PosInfinity
-        rangeNow   = O.pgRange O.pgUTCTime (R.Inclusive now) (R.Inclusive now)
+        range1     = O.sqlRange O.sqlUTCTime (R.Inclusive now) (R.Exclusive later)
+        range2     = O.sqlRange O.sqlUTCTime R.NegInfinity R.PosInfinity
+        rangeNow   = O.sqlRange O.sqlUTCTime (R.Inclusive now) (R.Inclusive now)
         qOverlap r = A.pure $ r `O.overlap` rangeNow
     testH (qOverlap range1) (`shouldBe` [True]) conn
     testH (qOverlap range2) (`shouldBe` [True]) conn
-    testH (A.pure $ O.pgUTCTime now   `O.liesWithin` range1) (`shouldBe` [True]) conn
-    testH (A.pure $ O.pgUTCTime later `O.liesWithin` range1) (`shouldBe` [False]) conn
+    testH (A.pure $ O.sqlUTCTime now   `O.liesWithin` range1) (`shouldBe` [True]) conn
+    testH (A.pure $ O.sqlUTCTime later `O.liesWithin` range1) (`shouldBe` [False]) conn
 
 testRangeLeftOf :: Test
 testRangeLeftOf = it "generates 'left of'" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
-        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 1 10 O..<< range 100 110)
 
 testRangeRightOf :: Test
 testRangeRightOf = it "generates 'right of'" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
-        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 50 60 O..>> range 20 30)
 
 testRangeRightExtension :: Test
 testRangeRightExtension = it "generates right extension" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
-        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 1 20 O..&< range 18 20)
 
 testRangeLeftExtension :: Test
 testRangeLeftExtension = it "generates left extension" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
-        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Inclusive b)
+        range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 7 20 O..&> range 5 10)
 
 testRangeAdjacency :: Test
 testRangeAdjacency = it "generates adjacency" $ testH q (`shouldBe` [True])
   where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
-        range a b = O.pgRange O.pgInt4 (R.Inclusive a) (R.Exclusive b)
+        range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Exclusive b)
         q = A.pure (range 1 2 O..-|- range 2 3)
 
 testRangeBoundsEnum :: forall a b.
@@ -1055,7 +1055,7 @@ testRangeBoundsEnum :: forall a b.
         => String -> (a -> Field b) -> a -> a -> Test
 testRangeBoundsEnum msg mkCol x y = it msg $ \conn -> do
     -- bound functions for discrete range types return fields as from the form [x,y)
-    let pgr = O.pgRange mkCol
+    let pgr = O.sqlRange mkCol
         ranges_expecteds =
           [ (pgr (R.Inclusive x) R.PosInfinity,   (Just x, Nothing))
           , (pgr R.NegInfinity   (R.Inclusive y), (Nothing, Just $ succ y))
@@ -1227,8 +1227,8 @@ main = do
         testRangeLeftExtension
         testRangeAdjacency
         testRangeBoundsEnum "can access bounds from an Int8 range"
-            O.pgInt8 10 26
+            O.sqlInt8 10 26
         testRangeBoundsEnum "can access bounds from a date range"
-            O.pgDay (read "2018-01-01") (read "2018-01-12")
+            O.sqlDay (read "2018-01-01") (read "2018-01-12")
       describe "literals" $ do
         testLiterals
