@@ -14,6 +14,7 @@ import qualified Data.List as List
 import qualified Data.MultiSet as MultiSet
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
+import           Data.Functor.Contravariant (Contravariant, contramap)
 import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Monoid as Monoid
 import qualified Data.Ord as Ord
@@ -41,7 +42,25 @@ unSelectDenotation sa conn = unSelectArrDenotation sa conn ()
 onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
 
-type Choice = Either
+data Choice i b = CInt i | CBool b deriving (Show, Eq, Ord)
+
+-- These are really hard to write
+--
+-- See http://h2.jaguarpaw.co.uk/posts/mysterious-incomposability-of-decidable/
+chooseChoice :: Divisible.Decidable f => (a -> Choice i b) -> f i -> f b -> f a
+chooseChoice choose fi fb = choose -$- (f -$- (fb -*- fi))
+  where f = \case
+          CInt i  -> Right i
+          CBool b -> Left b
+
+        (-$-) :: Contravariant f => (a -> b) -> f b -> f a
+        (-$-) = contramap
+
+        (-*-) :: Divisible.Decidable f => f a -> f b -> f (Either a b)
+        (-*-) = Divisible.chosen
+
+        infixl -*-
+        infixr -$-
 
 type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool)]
 type Haskells = [Choice Int Bool]
@@ -50,7 +69,7 @@ fieldsOfHaskells :: Haskells -> Fields
 fieldsOfHaskells = O.constantExplicit defChoicesPP
 
 fieldsList :: (a, b) -> [Choice a b]
-fieldsList (x, y) = [Left x, Right y]
+fieldsList (x, y) = [CInt x, CBool y]
 
 listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
 listFields f = (fst (firstIntOr 1 f),
@@ -79,7 +98,7 @@ aggregateFields =
   -- The requirement to cast to int4 is silly, but we still have a bug
   --
   --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/117
-  PP.list (P.rmap (O.unsafeCast "int4") O.sum PP.+++! O.boolAnd)
+  PP.list (P.rmap (O.unsafeCast "int4") O.sum `choicePP` O.boolAnd)
 
 -- This is taking liberties.  Firstly it errors out when two fields
 -- are of different types.  It should probably return a Maybe or an
@@ -88,8 +107,8 @@ aggregateFields =
 aggregateDenotation :: [Haskells] -> [Haskells]
 aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
   where combine = zipWith (curry (\case
-          (Left  i1, Left i2)  -> Left (i1 + i2)
-          (Right b1, Right b2) -> Right (b1 && b2)
+          (CInt  i1, CInt i2)  -> CInt (i1 + i2)
+          (CBool b1, CBool b2) -> CBool (b1 && b2)
           _ -> error "Impossible"))
 
 instance Show ArbitrarySelect where
@@ -109,7 +128,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
       do
         arbitraryFields <- TQ.arbitrary
         aqArg ((pure . fieldsOfHaskells . unArbitraryFields) arbitraryFields)
-    , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [Left x, Left y]) (O.queryTable table1)))
+    , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.queryTable table1)))
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
         return (ArbitrarySelectArr (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.constant l)))))
@@ -180,8 +199,8 @@ instance TQ.Arbitrary ArbitrarySelectArr where
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
-      l <- TQ.listOf (TQ.oneof (map (return . Left) [-1, 0, 1]
-                               ++ map (return . Right) [False, True]))
+      l <- TQ.listOf (TQ.oneof (map (return . CInt) [-1, 0, 1]
+                               ++ map (return . CBool) [False, True]))
       return (ArbitraryFields l)
 
 instance TQ.Arbitrary ArbitraryFieldsList where
@@ -231,15 +250,15 @@ arbitraryOrder =
   Monoid.mconcat
   . map (\(direction, index) ->
            (case direction of
-              Asc  -> \f -> Divisible.choose  f (O.asc id) (O.asc id)
-              Desc -> \f -> Divisible.choose  f (O.desc id) (O.desc id))
+              Asc  -> \f -> chooseChoice f (O.asc id) (O.asc id)
+              Desc -> \f -> chooseChoice f (O.desc id) (O.desc id))
            -- If the list is empty we have to conjure up
            -- an arbitrary value of type Field
            (\l -> let len = length l
                   in if len > 0 then
                        l !! (index `mod` length l)
                   else
-                       Left 0))
+                       CInt 0))
   . unArbitraryOrder
 
 arbitraryOrdering :: ArbitraryOrder -> Haskells -> Haskells -> Ord.Ordering
@@ -252,14 +271,14 @@ arbitraryOrdering =
             -- If the list is empty we have to conjure up
             -- an arbitrary value of type Field
             --
-            -- Note that this one will compare Left Int
-            -- to Right Bool, but it never gets asked to
+            -- Note that this one will compare CInt Int
+            -- to CBool Bool, but it never gets asked to
             -- do so, so we don't care.
             (Ord.comparing (\l -> let len = length l
                                   in if len > 0 then
                                        l !! (index `mod` length l)
                                   else
-                                       Left 0)))
+                                       CInt 0)))
   . unArbitraryOrder
 
 instance Functor (SelectArrDenotation a) where
@@ -471,10 +490,20 @@ run conn = do
 nub :: Ord a => [a] -> [a]
 nub = Set.toList . Set.fromList
 
+choicePP :: PP.SumProfunctor p
+         => p i1 i2 -> p b1 b2 -> p (Choice i1 b1) (Choice i2 b2)
+choicePP p1 p2 = P.dimap toEither fromEither (p1 PP.+++! p2)
+  where toEither = \case
+          CInt i  -> Left i
+          CBool b -> Right b
+        fromEither = \case
+          Left i  -> CInt i
+          Right b -> CBool b
+
 defChoicesPP :: (D.Default p a a', D.Default p b b',
-             PP.SumProfunctor p, PP.ProductProfunctor p)
-         => p [Choice a b] [Choice a' b']
-defChoicesPP = PP.list (D.def PP.+++! D.def)
+                 PP.SumProfunctor p, PP.ProductProfunctor p)
+             => p [Choice a b] [Choice a' b']
+defChoicesPP = PP.list (D.def `choicePP` D.def)
 
 -- Replace this with `isSuccess` when the following issue is fixed
 --
@@ -498,12 +527,12 @@ firstIntOr else_ c = (b, c)
 
 isBool :: Choice a b
        -> Maybe b
-isBool (Left _)  = Nothing
-isBool (Right l) = Just l
+isBool (CInt _)  = Nothing
+isBool (CBool l) = Just l
 
 isInt :: Choice a b -> Maybe a
-isInt (Left a)  = Just a
-isInt (Right _) = Nothing
+isInt (CInt a)  = Just a
+isInt (CBool _) = Nothing
 
 restrictFirstBool :: O.SelectArr Fields Fields
 restrictFirstBool = Arrow.arr snd
