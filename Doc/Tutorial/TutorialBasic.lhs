@@ -14,7 +14,7 @@
 >                          (.===),
 >                          (.++), ifThenElse, sqlString, aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runSelect,
->                          showSqlForPostgres, Unpackspec,
+>                          showSql, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8, SqlBool)
 >
 > import           Data.Profunctor.Product (p2, p3)
@@ -857,4 +857,4 @@ Utilities
 This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres
+> printSql = putStrLn . maybe "Empty query" id . showSql

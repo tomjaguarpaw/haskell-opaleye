@@ -123,7 +123,7 @@ aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
 
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
-                              (O.showSqlForPostgresExplicit unpackFields q)
+                              (O.showSqlExplicit unpackFields q)
 
 instance Show ArbitraryGarble where
   show = const "A permutation"
@@ -138,7 +138,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
       do
         arbitraryFields <- TQ.arbitrary
         aqArg ((pure . fieldsOfHaskells . unArbitraryFields) arbitraryFields)
-    , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.queryTable table1)))
+    , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.selectTable table1)))
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
         aqArg (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.constant l))))

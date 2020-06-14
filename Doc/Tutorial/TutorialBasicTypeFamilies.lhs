@@ -18,7 +18,7 @@
 >                          Table, table, tableField, selectTable,
 >                          Select, (.==), aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runSelect, runSelectTF,
->                          showSqlForPostgres, Unpackspec,
+>                          showSql, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
 > import qualified Opaleye              as O
@@ -354,9 +354,9 @@ Types of joins are inferrable in new versions of Opaleye.  Here is a
 >     O.fullJoinInferrable (O.fullJoinInferrable
 >                     birthdaySelect
 >                     (selectTable widgetTable)
->                     (const (O.pgBool True)))
+>                     (const (O.sqlBool True)))
 >                birthdaySelect
->                (const (O.pgBool True))
+>                (const (O.sqlBool True))
 
 Running queries on Postgres
 ===========================
@@ -396,4 +396,4 @@ Utilities
 This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres
+> printSql = putStrLn . maybe "Empty query" id . showSql
