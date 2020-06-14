@@ -196,7 +196,6 @@ runInsertReturning :: (D.Default RQ.QueryRunner fieldsReturned haskells)
                    -> IO [haskells]
 runInsertReturning = runInsertReturningExplicit D.def
 
-{-# DEPRECATED runInsertReturningExplicit "Use 'runInsert_' instead. Will be removed in version 0.8." #-}
 runInsertReturningExplicit :: RQ.QueryRunner columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
@@ -206,7 +205,6 @@ runInsertReturningExplicit :: RQ.QueryRunner columnsReturned haskells
 runInsertReturningExplicit qr conn t =
   runInsertManyReturningExplicitI qr conn t . return
 
-{-# DEPRECATED runInsertManyReturningExplicit "Use 'runInsert_' instead.  Will be removed in version 0.8." #-}
 runInsertManyReturningExplicitI :: RQ.QueryRunner columnsReturned haskells
                                 -> PGS.Connection
                                 -> T.Table columnsW columnsR
