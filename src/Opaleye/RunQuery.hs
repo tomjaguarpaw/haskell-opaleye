@@ -16,8 +16,6 @@ module Opaleye.RunQuery {-# DEPRECATED "Use 'Opaleye.RunSelect' instead." #-}
 import           Control.Applicative (pure, (<$>))
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Cursor  as PGSC
-import qualified Database.PostgreSQL.Simple.FromRow as FR
-import qualified Data.String as String
 
 import           Opaleye.Column (Column)
 import qualified Opaleye.Select as S
