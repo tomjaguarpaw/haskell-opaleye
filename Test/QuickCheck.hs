@@ -48,11 +48,10 @@ data Choice i b s = CInt i | CBool b | CString s deriving (Show, Eq, Ord)
 
 chooseChoice :: Divisible.Decidable f
              => (a -> Choice i b s) -> f i -> f b -> f s -> f a
-chooseChoice choose fi fb fs = asDecidable $ proc a -> do
-  case choose a of
-    CInt i    -> constructorDecidable fi -< i
-    CBool b   -> constructorDecidable fb -< b
-    CString s -> constructorDecidable fs -< s
+chooseChoice choose fi fb fs = asDecidable $ proc a -> case choose a of
+  CInt i    -> constructorDecidable fi -< i
+  CBool b   -> constructorDecidable fb -< b
+  CString s -> constructorDecidable fs -< s
 
 type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText)]
 type Haskells = [Choice Int Bool String]
@@ -495,11 +494,10 @@ nub = Set.toList . Set.fromList
 choicePP :: PP.SumProfunctor p
          => p i1 i2 -> p b1 b2 -> p s1 s2
          -> p (Choice i1 b1 s1) (Choice i2 b2 s2)
-choicePP p1 p2 p3 = asSumProfunctor $ proc choice -> do
-  case choice of
-    CInt i    -> constructor CInt    p1 -< i
-    CBool b   -> constructor CBool   p2 -< b
-    CString s -> constructor CString p3 -< s
+choicePP p1 p2 p3 = asSumProfunctor $ proc choice -> case choice of
+  CInt i    -> constructor CInt    p1 -< i
+  CBool b   -> constructor CBool   p2 -< b
+  CString s -> constructor CString p3 -< s
 
 defChoicesPP :: (D.Default p a a', D.Default p b b', D.Default p s s',
                  PP.SumProfunctor p, PP.ProductProfunctor p)
