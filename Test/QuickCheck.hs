@@ -47,7 +47,7 @@ type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool)]
 type Haskells = [Choice Int Bool]
 
 fieldsOfHaskells :: Haskells -> Fields
-fieldsOfHaskells = O.constantExplicit choicePP
+fieldsOfHaskells = O.constantExplicit defChoicesPP
 
 fieldsList :: (a, b) -> [Choice a b]
 fieldsList (x, y) = [Left x, Right y]
@@ -72,7 +72,7 @@ newtype ArbitraryGarble =
 data Order = Asc | Desc deriving Show
 
 unpackFields :: O.Unpackspec Fields Fields
-unpackFields = choicePP
+unpackFields = defChoicesPP
 
 aggregateFields :: O.Aggregator Fields Fields
 aggregateFields =
@@ -119,7 +119,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aqArg ((++) <$> q1 <*> q2)
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
-        aq (O.distinctExplicit choicePP) q
+        aq (O.distinctExplicit defChoicesPP) q
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
@@ -280,11 +280,11 @@ denotation :: O.FromFields fields a -> O.Select fields -> SelectDenotation a
 denotation qr q = SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
 
 denotation' :: O.Select Fields -> SelectDenotation Haskells
-denotation' = denotation choicePP
+denotation' = denotation defChoicesPP
 
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
-denotation2 = denotation (choicePP PP.***! choicePP)
+denotation2 = denotation (defChoicesPP PP.***! defChoicesPP)
 
 -- { Comparing the results
 
@@ -388,7 +388,7 @@ order conn o (ArbitrarySelect q) =
 
 distinct :: PGS.Connection -> ArbitrarySelect -> IO Bool
 distinct conn (ArbitrarySelect q) =
-  compare' conn (denotation' (O.distinctExplicit choicePP q))
+  compare' conn (denotation' (O.distinctExplicit defChoicesPP q))
                 (onList nub (denotation' q))
 
 -- When we added <*> to the arbitrary queries we started getting some
@@ -471,10 +471,10 @@ run conn = do
 nub :: Ord a => [a] -> [a]
 nub = Set.toList . Set.fromList
 
-choicePP :: (D.Default p a a', D.Default p b b',
+defChoicesPP :: (D.Default p a a', D.Default p b b',
              PP.SumProfunctor p, PP.ProductProfunctor p)
          => p [Choice a b] [Choice a' b']
-choicePP = PP.list (D.def PP.+++! D.def)
+defChoicesPP = PP.list (D.def PP.+++! D.def)
 
 -- Replace this with `isSuccess` when the following issue is fixed
 --
