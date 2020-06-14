@@ -103,6 +103,7 @@ aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
   where combine = zipWith (curry (\case
           (CInt  i1, CInt i2)  -> CInt (i1 + i2)
           (CBool b1, CBool b2) -> CBool (b1 && b2)
+          (CString s1, CString s2) -> CString (s1 ++ ", " ++ s2)
           _ -> error "Impossible"))
 
 instance Show ArbitrarySelect where
@@ -193,9 +194,15 @@ instance TQ.Arbitrary ArbitrarySelectArr where
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
-      l <- TQ.listOf (TQ.oneof (map (return . CInt) [-1, 0, 1]
-                               ++ map (return . CBool) [False, True]
-                               ++ map (return . CString) ["hello", "world"]))
+      -- Postgres strings cannot contain the zero codepoint.  See
+      --
+      -- https://www.postgresql.org/message-id/1171970019.3101.328.camel@coppola.muc.ecircle.de
+      let arbitraryPGString = filter (/= '\0') <$> TQ.arbitrary
+
+      l <- TQ.listOf (TQ.oneof [ CInt    <$> TQ.arbitrary
+                               , CBool   <$> TQ.arbitrary
+                               , CString <$> arbitraryPGString ])
+
       return (ArbitraryFields l)
 
 instance TQ.Arbitrary ArbitraryFieldsList where
