@@ -19,11 +19,8 @@ import qualified Database.PostgreSQL.Simple.Cursor  as PGSC
 
 import           Opaleye.Column (Column)
 import qualified Opaleye.Select as S
-import qualified Opaleye.Sql as S
-import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner),
-                                            prepareQuery)
+import           Opaleye.Internal.RunQuery (QueryRunner, prepareQuery)
 import qualified Opaleye.Internal.RunQuery as IRQ
-import qualified Opaleye.Internal.QueryArr as Q
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
