@@ -21,7 +21,7 @@ import qualified Opaleye.Internal.PackMap as PackMap
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
-import qualified Opaleye.PGTypes as T
+import qualified Opaleye.Internal.PGTypesExternal as T
 import qualified Opaleye.Internal.PGTypes as IPT (strictDecodeUtf8)
 import qualified Opaleye.Select as S
 import qualified Opaleye.Sql as S

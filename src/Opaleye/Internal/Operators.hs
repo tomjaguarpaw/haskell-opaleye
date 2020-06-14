@@ -13,7 +13,7 @@ import qualified Opaleye.Internal.Table as Table
 import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
-import qualified Opaleye.PGTypes as T
+import qualified Opaleye.Internal.PGTypesExternal as T
 import qualified Opaleye.SqlTypes as T
 import qualified Opaleye.Field as F
 import qualified Opaleye.Select as S

@@ -9,7 +9,7 @@
 module Opaleye.Field where
 
 import qualified Opaleye.Column   as C
-import qualified Opaleye.PGTypes  as T
+import qualified Opaleye.Internal.PGTypesExternal  as T
 
 -- | The name @Column@ will be replaced by @Field@ in version 0.7.
 -- The @Field_@, @Field@ and @FieldNullable@ types exist to help

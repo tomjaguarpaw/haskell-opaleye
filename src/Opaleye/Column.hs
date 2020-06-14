@@ -31,7 +31,7 @@ import           Opaleye.Internal.Column (Column, Nullable, unsafeCoerceColumn,
                                           unsafeCast, unsafeCompositeField)
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
-import qualified Opaleye.PGTypes as T
+import qualified Opaleye.Internal.PGTypesExternal as T
 import           Prelude hiding (null)
 
 -- | A NULL of any type

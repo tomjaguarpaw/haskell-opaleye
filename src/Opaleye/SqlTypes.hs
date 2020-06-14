@@ -7,8 +7,8 @@ module Opaleye.SqlTypes (module Opaleye.SqlTypes,
                          P.IsRangeType) where
 
 import qualified Opaleye.Field   as F
-import qualified Opaleye.PGTypes as P
-import           Opaleye.PGTypes (IsSqlType, IsRangeType)
+import qualified Opaleye.Internal.PGTypesExternal as P
+import           Opaleye.Internal.PGTypesExternal (IsSqlType, IsRangeType)
 
 import qualified Data.Aeson as Ae
 import qualified Data.ByteString as SByteString

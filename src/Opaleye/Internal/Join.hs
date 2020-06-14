@@ -12,7 +12,7 @@ import           Opaleye.Internal.Column (Column(Column), Nullable)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Operators as Op
 import qualified Opaleye.Internal.PrimQuery as PQ
-import qualified Opaleye.PGTypes as T
+import qualified Opaleye.Internal.PGTypesExternal as T
 import qualified Opaleye.SqlTypes as T
 import qualified Opaleye.Column as C
 import           Opaleye.Field   (Field)
