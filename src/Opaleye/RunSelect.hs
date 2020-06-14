@@ -9,6 +9,7 @@ module Opaleye.RunSelect
    IRQ.FromFields,
    IRQ.FromField,
    IRQ.DefaultFromField,
+   IRQ.defaultFromField,
    -- * Helper functions
    IRQ.fromPGSFromField,
    IRQ.fromPGSFieldParser) where
