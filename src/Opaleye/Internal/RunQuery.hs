@@ -6,21 +6,26 @@ module Opaleye.Internal.RunQuery where
 import           Control.Applicative
   (Applicative, pure, (<$>), (*>), (<*>), liftA2)
 
+import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Cursor  as PGSC (Cursor)
 import           Database.PostgreSQL.Simple.Internal (RowParser)
 import qualified Database.PostgreSQL.Simple.FromField as PGS
 import           Database.PostgreSQL.Simple.FromField
   (FieldParser, fromField, pgArrayFieldParser)
-import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
+import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith,
+                                                     RowParser)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
 import           Opaleye.Column (Column)
 import           Opaleye.Internal.Column (Nullable)
 import qualified Opaleye.Internal.PackMap as PackMap
+import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.PGTypes as T
 import qualified Opaleye.Internal.PGTypes as IPT (strictDecodeUtf8)
+import qualified Opaleye.Select as S
+import qualified Opaleye.Sql as S
 
 import qualified Data.Profunctor as P
 import           Data.Profunctor (dimap)
@@ -353,3 +358,11 @@ prepareRowParser (QueryRunner _ rowParser numColumns) cols =
 
 -- | Cursor within a transaction.
 data Cursor haskells = EmptyCursor | Cursor (RowParser haskells) PGSC.Cursor
+
+prepareQuery :: FromFields fields haskells -> S.Select fields -> (Maybe PGS.Query, RowParser haskells)
+prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
+  where sql :: Maybe PGS.Query
+        sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
+        -- FIXME: We're doing work twice here
+        (b, _, _) = Q.runSimpleQueryArrStart q ()
+        parser = prepareRowParser qr b

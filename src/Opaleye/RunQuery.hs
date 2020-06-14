@@ -23,7 +23,8 @@ import qualified Data.String as String
 import           Opaleye.Column (Column)
 import qualified Opaleye.Select as S
 import qualified Opaleye.Sql as S
-import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
+import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner),
+                                            prepareQuery)
 import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Internal.QueryArr as Q
 
@@ -71,7 +72,7 @@ runQueryExplicit :: IRQ.FromFields fields haskells
                  -> S.Select fields
                  -> IO [haskells]
 runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
-  where (sql, parser) = prepareQuery qr q
+  where (sql, parser) = IRQ.prepareQuery qr q
 
 -- | Use 'Opaleye.RunSelect.runSelectFoldExplict' instead.  Will be
 -- deprecated in 0.7.
@@ -129,14 +130,3 @@ foldForward
 foldForward IRQ.EmptyCursor              _chunkSize _f z = pure $ Left z
 foldForward (IRQ.Cursor rowParser cursor) chunkSize  f z =
     PGSC.foldForwardWithParser cursor rowParser chunkSize f z
-
--- * Deprecated functions
-
-{-# DEPRECATED prepareQuery "Will be removed in version 0.7" #-}
-prepareQuery :: IRQ.FromFields fields haskells -> S.Select fields -> (Maybe PGS.Query, FR.RowParser haskells)
-prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
-  where sql :: Maybe PGS.Query
-        sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
-        -- FIXME: We're doing work twice here
-        (b, _, _) = Q.runSimpleQueryArrStart q ()
-        parser = IRQ.prepareRowParser qr b
