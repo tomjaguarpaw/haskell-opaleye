@@ -16,7 +16,7 @@ import           Opaleye.Internal.Helpers        ((.:), (.:.), (.::.), (.::))
 import qualified Opaleye.Internal.PrimQuery      as PQ
 import qualified Opaleye.Internal.Print          as Print
 import qualified Opaleye.Internal.RunQuery       as IRQ
-import qualified Opaleye.RunQuery                as RQ
+import qualified Opaleye.RunSelect               as RS
 import qualified Opaleye.Internal.Sql            as Sql
 import qualified Opaleye.Internal.Table          as TI
 import qualified Opaleye.Internal.Unpackspec     as U
@@ -38,7 +38,7 @@ data Returning a b where
   Count
     :: Returning a Int64
   ReturningExplicit
-    :: RQ.QueryRunner b c -> (a -> b) -> Returning a [c]
+    :: RS.FromFields b c -> (a -> b) -> Returning a [c]
 
 arrangeInsertMany :: T.Table columns a
                   -> NEL.NonEmpty columns
@@ -82,7 +82,7 @@ arrangeInsertManySql =
   show . HPrint.ppInsert .:. arrangeInsertMany
 
 runInsertManyReturningExplicit
-  :: RQ.QueryRunner columnsReturned haskells
+  :: RS.FromFields columnsReturned haskells
   -> PGS.Connection
   -> T.Table columnsW columnsR
   -> [columnsW]
@@ -151,7 +151,7 @@ arrangeDeleteReturningSql =
   show . Print.ppDeleteReturning .:: arrangeDeleteReturning
 
 
-runDeleteReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
+runDeleteReturning :: (D.Default RS.FromFields columnsReturned haskells)
                    => PGS.Connection
                    -- ^
                    -> T.Table a columnsR
@@ -166,7 +166,7 @@ runDeleteReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
                    -- ^ Returned rows which have been deleted
 runDeleteReturning = runDeleteReturningExplicit D.def
 
-runDeleteReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+runDeleteReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table a columnsR
                            -> (columnsR -> Column SqlBool)
@@ -188,7 +188,7 @@ arrangeDelete t cond =
 runInsert :: PGS.Connection -> T.Table fields fields' -> fields -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
-runInsertReturning :: (D.Default RQ.QueryRunner fieldsReturned haskells)
+runInsertReturning :: (D.Default RS.FromFields fieldsReturned haskells)
                    => PGS.Connection
                    -> T.Table fieldsW fieldsR
                    -> fieldsW
@@ -196,7 +196,7 @@ runInsertReturning :: (D.Default RQ.QueryRunner fieldsReturned haskells)
                    -> IO [haskells]
 runInsertReturning = runInsertReturningExplicit D.def
 
-runInsertReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+runInsertReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
                            -> columnsW
@@ -205,7 +205,7 @@ runInsertReturningExplicit :: RQ.QueryRunner columnsReturned haskells
 runInsertReturningExplicit qr conn t =
   runInsertManyReturningExplicitI qr conn t . return
 
-runInsertManyReturningExplicitI :: RQ.QueryRunner columnsReturned haskells
+runInsertManyReturningExplicitI :: RS.FromFields columnsReturned haskells
                                 -> PGS.Connection
                                 -> T.Table columnsW columnsR
                                 -> [columnsW]

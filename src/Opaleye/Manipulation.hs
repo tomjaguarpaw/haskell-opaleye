@@ -31,7 +31,7 @@ module Opaleye.Manipulation (module Opaleye.Manipulation,
 import qualified Opaleye.Field        as F
 import qualified Opaleye.Internal.Sql as Sql
 import qualified Opaleye.Internal.Print as Print
-import qualified Opaleye.RunQuery as RQ
+import qualified Opaleye.RunSelect as RS
 import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
@@ -170,7 +170,7 @@ rCount = MI.Count
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- 'rReturning'.
-rReturning :: D.Default RQ.FromFields fields haskells
+rReturning :: D.Default RS.FromFields fields haskells
            => (fieldsR -> fields)
            -- ^
            -> MI.Returning fieldsR [haskells]
@@ -178,7 +178,7 @@ rReturning = rReturningExplicit D.def
 
 -- | Return a function of the inserted or updated rows.  Explicit
 -- version.  You probably just want to use 'rReturning' instead.
-rReturningExplicit :: RQ.FromFields fields haskells
+rReturningExplicit :: RS.FromFields fields haskells
                    -- ^
                    -> (fieldsR -> fields)
                    -- ^
@@ -213,7 +213,7 @@ runInsertManyOnConflictDoNothing conn table_ columns =
 -- type signatures when using it.
 {-# DEPRECATED runInsertManyReturningOnConflictDoNothing "Use 'runInsert_'. Will be removed in version 0.8." #-}
 runInsertManyReturningOnConflictDoNothing
-  :: (D.Default RQ.QueryRunner columnsReturned haskells)
+  :: (D.Default RS.FromFields columnsReturned haskells)
   => PGS.Connection
   -- ^
   -> T.Table columnsW columnsR
@@ -242,7 +242,7 @@ runInsertMany conn t columns = case NEL.nonEmpty columns of
   Just columns' -> (PGS.execute_ conn . fromString .: MI.arrangeInsertManySqlI) t columns'
 
 {-# DEPRECATED runInsertManyReturning "Use 'runInsert_' instead.   Will be removed in version 0.8." #-}
-runInsertManyReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
+runInsertManyReturning :: (D.Default RS.FromFields columnsReturned haskells)
                        => PGS.Connection
                        -- ^
                        -> T.Table columnsW columnsR
@@ -256,7 +256,7 @@ runInsertManyReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
 runInsertManyReturning = runInsertManyReturningExplicit D.def
 
 {-# DEPRECATED runInsertReturningExplicit "Use 'runInsert_' instead. Will be removed in version 0.8." #-}
-runInsertReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+runInsertReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
                            -> columnsW
@@ -265,7 +265,7 @@ runInsertReturningExplicit :: RQ.QueryRunner columnsReturned haskells
 runInsertReturningExplicit = MI.runInsertReturningExplicit
 
 {-# DEPRECATED runInsertManyReturningExplicit "Use 'runInsert_' instead.  Will be removed in version 0.8." #-}
-runInsertManyReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+runInsertManyReturningExplicit :: RS.FromFields columnsReturned haskells
                                -> PGS.Connection
                                -> T.Table columnsW columnsR
                                -> [columnsW]
@@ -275,7 +275,7 @@ runInsertManyReturningExplicit = MI.runInsertManyReturningExplicitI
 
 {-# DEPRECATED runInsertManyReturningOnConflictDoNothingExplicit "Use 'runInsert_' instead.  Will be removed in version 0.8." #-}
 runInsertManyReturningOnConflictDoNothingExplicit
-  :: RQ.QueryRunner columnsReturned haskells
+  :: RS.FromFields columnsReturned haskells
   -> PGS.Connection
   -> T.Table columnsW columnsR
   -> [columnsW]
@@ -315,7 +315,7 @@ runUpdate :: PGS.Connection
 runUpdate conn = PGS.execute_ conn . fromString .:. MI.arrangeUpdateSql
 
 {-# DEPRECATED runUpdateReturning "Use 'runUpdate_' instead.  Will be removed in version 0.8." #-}
-runUpdateReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
+runUpdateReturning :: (D.Default RS.FromFields columnsReturned haskells)
                    => PGS.Connection
                    -- ^
                    -> T.Table columnsW columnsR
@@ -334,7 +334,7 @@ runUpdateReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
 runUpdateReturning = runUpdateReturningExplicit D.def
 
 {-# DEPRECATED runUpdateReturningExplicit "Use 'runUpdate_' instead.  Will be removed in version 0.8." #-}
-runUpdateReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+runUpdateReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
                            -> (columnsR -> columnsW)
