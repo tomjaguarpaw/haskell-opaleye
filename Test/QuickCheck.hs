@@ -44,21 +44,23 @@ unSelectDenotation sa conn = unSelectArrDenotation sa conn ()
 onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
 
-data Choice i b = CInt i | CBool b deriving (Show, Eq, Ord)
+data Choice i b s = CInt i | CBool b | CString s deriving (Show, Eq, Ord)
 
-chooseChoice :: Divisible.Decidable f => (a -> Choice i b) -> f i -> f b -> f a
-chooseChoice choose fi fb = asDecidable $ proc a -> do
+chooseChoice :: Divisible.Decidable f
+             => (a -> Choice i b s) -> f i -> f b -> f s -> f a
+chooseChoice choose fi fb fs = asDecidable $ proc a -> do
   case choose a of
-    CInt i  -> constructorDecidable fi -< i
-    CBool b -> constructorDecidable fb -< b
+    CInt i    -> constructorDecidable fi -< i
+    CBool b   -> constructorDecidable fb -< b
+    CString s -> constructorDecidable fs -< s
 
-type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool)]
-type Haskells = [Choice Int Bool]
+type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText)]
+type Haskells = [Choice Int Bool String]
 
 fieldsOfHaskells :: Haskells -> Fields
 fieldsOfHaskells = O.constantExplicit defChoicesPP
 
-fieldsList :: (a, b) -> [Choice a b]
+fieldsList :: (a, b) -> [Choice a b s]
 fieldsList (x, y) = [CInt x, CBool y]
 
 listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
@@ -88,7 +90,9 @@ aggregateFields =
   -- The requirement to cast to int4 is silly, but we still have a bug
   --
   --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/117
-  PP.list (choicePP (P.rmap (O.unsafeCast "int4") O.sum) O.boolAnd)
+  PP.list (choicePP (P.rmap (O.unsafeCast "int4") O.sum)
+                    O.boolAnd
+                    (O.stringAgg (O.sqlString ", ")))
 
 -- This is taking liberties.  Firstly it errors out when two fields
 -- are of different types.  It should probably return a Maybe or an
@@ -240,8 +244,8 @@ arbitraryOrder =
   Monoid.mconcat
   . map (\(direction, index) ->
            (case direction of
-              Asc  -> \f -> chooseChoice f (O.asc id) (O.asc id)
-              Desc -> \f -> chooseChoice f (O.desc id) (O.desc id))
+              Asc  -> \f -> chooseChoice f (O.asc id) (O.asc id) (O.asc id)
+              Desc -> \f -> chooseChoice f (O.desc id) (O.desc id) (O.desc id))
            -- If the list is empty we have to conjure up
            -- an arbitrary value of type Field
            (\l -> let len = length l
@@ -481,16 +485,18 @@ nub :: Ord a => [a] -> [a]
 nub = Set.toList . Set.fromList
 
 choicePP :: PP.SumProfunctor p
-         => p i1 i2 -> p b1 b2 -> p (Choice i1 b1) (Choice i2 b2)
-choicePP p1 p2 = asSumProfunctor $ proc choice -> do
+         => p i1 i2 -> p b1 b2 -> p s1 s2
+         -> p (Choice i1 b1 s1) (Choice i2 b2 s2)
+choicePP p1 p2 p3 = asSumProfunctor $ proc choice -> do
   case choice of
     CInt i    -> constructor CInt    p1 -< i
     CBool b   -> constructor CBool   p2 -< b
+    CString s -> constructor CString p3 -< s
 
-defChoicesPP :: (D.Default p a a', D.Default p b b',
+defChoicesPP :: (D.Default p a a', D.Default p b b', D.Default p s s',
                  PP.SumProfunctor p, PP.ProductProfunctor p)
-             => p [Choice a b] [Choice a' b']
-defChoicesPP = PP.list (choicePP D.def D.def)
+             => p [Choice a b s] [Choice a' b' s']
+defChoicesPP = PP.list (choicePP D.def D.def D.def)
 
 -- Replace this with `isSuccess` when the following issue is fixed
 --
@@ -500,26 +506,28 @@ errorIfNotSuccess r = case r of
   TQ.Success {} -> return ()
   _             -> error "Failed"
 
-firstBoolOrTrue :: b -> [Choice a b] -> (b, [Choice a b])
+firstBoolOrTrue :: b -> [Choice a b s] -> (b, [Choice a b s])
 firstBoolOrTrue true c = (b, c)
   where b = case Maybe.mapMaybe isBool c of
           []    -> true
           (x:_) -> x
 
-firstIntOr :: a -> [Choice a b] -> (a, [Choice a b])
+firstIntOr :: a -> [Choice a b s] -> (a, [Choice a b s])
 firstIntOr else_ c = (b, c)
   where b = case Maybe.mapMaybe isInt c of
           []    -> else_
           (x:_) -> x
 
-isBool :: Choice a b
+isBool :: Choice a b s
        -> Maybe b
 isBool (CInt _)  = Nothing
 isBool (CBool l) = Just l
+isBool (CString _) = Nothing
 
-isInt :: Choice a b -> Maybe a
+isInt :: Choice a b s -> Maybe a
 isInt (CInt a)  = Just a
 isInt (CBool _) = Nothing
+isInt (CString _) = Nothing
 
 restrictFirstBool :: O.SelectArr Fields Fields
 restrictFirstBool = Arrow.arr snd
