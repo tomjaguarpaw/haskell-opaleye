@@ -1,3 +1,8 @@
+* Add `Opaleye.Unpackspec` as the forward-compatible place to import
+  `Unpackspec` from
+
+* Unicode characters are escaped properly in `sqlString`/`toFields`
+
 * Add `inSelect`, to replace `inQuery` in a future version.
 
 * Add `unsafeCoerceField`, to replace `unsafeCoerceColumn` in a future
