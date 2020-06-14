@@ -56,6 +56,7 @@ library
                    Opaleye.FunctionalJoin,
                    Opaleye.Join,
                    Opaleye.Label,
+                   Opaleye.Lateral,
                    Opaleye.Manipulation,
                    Opaleye.Map,
                    Opaleye.Operators,

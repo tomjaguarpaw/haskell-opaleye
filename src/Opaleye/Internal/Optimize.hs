@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Opaleye.Internal.Optimize where
@@ -10,26 +11,28 @@ import           Opaleye.Internal.Helpers   ((.:))
 import qualified Data.List.NonEmpty as NEL
 
 import           Control.Applicative ((<$>), (<*>), pure)
+import           Control.Arrow (first)
 import qualified Data.Traversable    as T
+
 
 optimize :: PQ.PrimQuery' a -> PQ.PrimQuery' a
 optimize = mergeProduct . removeUnit
 
 removeUnit :: PQ.PrimQuery' a -> PQ.PrimQuery' a
 removeUnit = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
-  where product pqs pes = PQ.Product pqs' pes
-          where pqs' = case NEL.nonEmpty (NEL.filter (not . PQ.isUnit) pqs) of
-                         Nothing -> return PQ.Unit
-                         Just xs -> xs
+  where product pq pqs pes =
+          case NEL.nonEmpty (filter (not . PQ.isUnit . snd) (pure pq : pqs)) of
+            Nothing -> PQ.Unit
+            Just ((_, pq') NEL.:| pqs') -> PQ.Product pq' pqs' pes
 
 mergeProduct :: PQ.PrimQuery' a -> PQ.PrimQuery' a
 mergeProduct = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
-  where product pqs pes = PQ.Product pqs' (pes ++ pes')
-          where pqs' = pqs >>= queries
-                queries (PQ.Product qs _) = qs
-                queries q = return q
-                pes' = NEL.toList pqs >>= conds
-                conds (PQ.Product _ cs) = cs
+  where product pq pqs pes = PQ.Product pq' pqs' (pes ++ pes')
+          where (_, pq') NEL.:| pqs' = pure pq NEL.:| pqs >>= queries
+                queries (lat, PQ.Product q qs _) = (lat, q) NEL.:| map (first (lat <>)) qs
+                queries q = pure q
+                pes' = pq : fmap snd pqs >>= conds
+                conds (PQ.Product _ _ cs) = cs
                 conds _ = []
 
 removeEmpty :: PQ.PrimQuery' a -> Maybe (PQ.PrimQuery' b)
@@ -37,8 +40,7 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
     PQ.unit      = return PQ.Unit
   , PQ.empty     = const Nothing
   , PQ.baseTable = return .: PQ.BaseTable
-  , PQ.product   = \x y -> PQ.Product <$> T.sequence x
-                                      <*> pure y
+  , PQ.product   = \q qs cs -> PQ.Product <$> q <*> traverse sequence qs <*> pure cs
   , PQ.aggregate = fmap . PQ.Aggregate
   , PQ.distinctOnOrderBy = \mDistinctOns -> fmap . PQ.DistinctOnOrderBy mDistinctOns
   , PQ.limit     = fmap . PQ.Limit

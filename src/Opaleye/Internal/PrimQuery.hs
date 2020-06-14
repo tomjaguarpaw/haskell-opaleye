@@ -18,7 +18,7 @@ data BinOp = Except
            | IntersectAll
              deriving Show
 
-data JoinType = LeftJoin | RightJoin | FullJoin | InnerJoinLateral | LeftJoinLateral deriving Show
+data JoinType = LeftJoin | RightJoin | FullJoin deriving Show
 
 data TableIdentifier = TableIdentifier
   { tiSchemaName :: Maybe String
@@ -31,8 +31,15 @@ tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
 
 type Bindings a = [(Symbol, a)]
 
--- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
--- for emptiness explicity in the SQL generation phase.
+data Lateral = NonLateral | Lateral
+  deriving Show
+
+instance Semigroup Lateral where
+  NonLateral <> NonLateral = NonLateral
+  _ <> _ = Lateral
+
+instance Monoid Lateral where
+  mempty = NonLateral
 
 -- The type parameter 'a' is used to control whether the 'Empty'
 -- constructor can appear.  If 'a' = '()' then it can appear.  If 'a'
@@ -42,7 +49,7 @@ type Bindings a = [(Symbol, a)]
 data PrimQuery' a = Unit
                   | Empty     a
                   | BaseTable TableIdentifier (Bindings HPQ.PrimExpr)
-                  | Product   (NEL.NonEmpty (PrimQuery' a)) [HPQ.PrimExpr]
+                  | Product   (PrimQuery' a) [(Lateral, PrimQuery' a)] [HPQ.PrimExpr]
                   | Aggregate (Bindings (Maybe (HPQ.AggrOp,
                                                 [HPQ.OrderExpr],
                                                 HPQ.AggrDistinct),
@@ -81,7 +88,7 @@ data PrimQueryFold' a p = PrimQueryFold
   { unit              :: p
   , empty             :: a -> p
   , baseTable         :: TableIdentifier -> Bindings HPQ.PrimExpr -> p
-  , product           :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
+  , product           :: p -> [(Lateral, p)] -> [HPQ.PrimExpr] -> p
   , aggregate         :: Bindings (Maybe
                              (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
                                    HPQ.PrimExpr)
@@ -135,13 +142,13 @@ foldPrimQuery f = fix fold
           Unit                        -> unit              f
           Empty a                     -> empty             f a
           BaseTable ti syms           -> baseTable         f ti syms
-          Product qs pes              -> product           f (fmap self qs) pes
+          Product q qs pes            -> product           f (self q) (map (fmap self) qs) pes
           Aggregate aggrs q           -> aggregate         f aggrs (self q)
           DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs (self q)
           Limit op q                  -> limit             f op (self q)
           Join j cond pe1 pe2 q1 q2   -> join              f j cond pe1 pe2 (self q1) (self q2)
           Values ss pes               -> values            f ss pes
-          Binary binop (q1, q2)   -> binary                f binop (self q1, self q2)
+          Binary binop (q1, q2)       -> binary                f binop (self q1, self q2)
           Label l pq                  -> label             f l (self pq)
           RelExpr pe syms             -> relExpr           f pe syms
           Exists b q1 q2              -> existsf           f b (self q1) (self q2)
@@ -149,10 +156,10 @@ foldPrimQuery f = fix fold
         fix g = let x = g x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
-times q q' = Product (q NEL.:| [q']) []
+times q q' = Product q [pure q'] []
 
 restrict :: HPQ.PrimExpr -> PrimQuery -> PrimQuery
-restrict cond primQ = Product (return primQ) [cond]
+restrict cond primQ = Product primQ [] [cond]
 
 exists :: PrimQuery -> PrimQuery -> PrimQuery
 exists = Exists True

@@ -2,6 +2,7 @@ module Opaleye.Internal.Print where
 
 import           Prelude hiding (product)
 
+import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Sql as Sql
 import           Opaleye.Internal.Sql (Select(SelectFrom,
                                               Table,
@@ -54,9 +55,9 @@ ppSelectFrom s = text "SELECT"
 ppSelectJoin :: Join -> Doc
 ppSelectJoin j = text "SELECT *"
                  $$  text "FROM"
-                 $$  ppTable (tableAlias 1 s1)
+                 $$  ppTable (tableAlias 1 (pure s1))
                  $$  ppJoinType (Sql.jJoinType j)
-                 $$  ppTable (tableAlias 2 s2)
+                 $$  ppTable (tableAlias 2 (pure s2))
                  $$  text "ON"
                  $$  HPrint.ppSqlExpr (Sql.jCond j)
   where (s1, s2) = Sql.jTables j
@@ -87,7 +88,7 @@ ppSelectExists :: Exists -> Doc
 ppSelectExists v =
   text "SELECT *"
   $$ text "FROM"
-  $$ ppTable (tableAlias 1 (Sql.existsTable v))
+  $$ ppTable (tableAlias 1 (pure (Sql.existsTable v)))
   $$ case Sql.existsBool v of
        True -> text "WHERE EXISTS"
        False -> text "WHERE NOT EXISTS"
@@ -97,8 +98,6 @@ ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 ppJoinType Sql.RightJoin = text "RIGHT OUTER JOIN"
 ppJoinType Sql.FullJoin = text "FULL OUTER JOIN"
-ppJoinType Sql.InnerJoinLateral = text "INNER JOIN LATERAL"
-ppJoinType Sql.LeftJoinLateral = text "LEFT OUTER JOIN LATERAL"
 
 ppAttrs :: Sql.SelectAttrs -> Doc
 ppAttrs Sql.Star                 = text "*"
@@ -111,24 +110,28 @@ nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
 nameAs (expr, name) = HPrint.ppAs (fmap unColumn name) (HPrint.ppSqlExpr expr)
   where unColumn (HSql.SqlColumn s) = s
 
-ppTables :: [Select] -> Doc
+ppTables :: [(PQ.Lateral, Select)] -> Doc
 ppTables [] = empty
 ppTables ts = text "FROM" <+> HPrint.commaV ppTable (zipWith tableAlias [1..] ts)
 
-tableAlias :: Int -> Select -> (TableAlias, Select)
+tableAlias :: Int -> (PQ.Lateral, Select) -> (TableAlias, (PQ.Lateral, Select))
 tableAlias i select = ("T" ++ show i, select)
 
 -- TODO: duplication with ppSql
-ppTable :: (TableAlias, Select) -> Doc
-ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
+ppTable :: (TableAlias, (PQ.Lateral, Select)) -> Doc
+ppTable (alias, (lat, select)) = HPrint.ppAs (Just alias) $ case select of
   Table table           -> HPrint.ppTable table
   RelExpr expr          -> HPrint.ppSqlExpr expr
-  SelectFrom selectFrom -> parens (ppSelectFrom selectFrom)
-  SelectJoin slj        -> parens (ppSelectJoin slj)
-  SelectValues slv      -> parens (ppSelectValues slv)
-  SelectBinary slb      -> parens (ppSelectBinary slb)
-  SelectLabel sll       -> parens (ppSelectLabel sll)
-  SelectExists saj      -> parens (ppSelectExists saj)
+  SelectFrom selectFrom -> lateral $ parens (ppSelectFrom selectFrom)
+  SelectJoin slj        -> lateral $ parens (ppSelectJoin slj)
+  SelectValues slv      -> lateral $ parens (ppSelectValues slv)
+  SelectBinary slb      -> lateral $ parens (ppSelectBinary slb)
+  SelectLabel sll       -> lateral $ parens (ppSelectLabel sll)
+  SelectExists saj      -> lateral $ parens (ppSelectExists saj)
+  where
+    lateral = case lat of
+      PQ.NonLateral -> id
+      PQ.Lateral -> (text "LATERAL" $$)
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty

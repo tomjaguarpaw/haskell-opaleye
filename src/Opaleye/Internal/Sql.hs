@@ -37,7 +37,7 @@ data SelectAttrs =
 
 data From = From {
   attrs      :: SelectAttrs,
-  tables     :: [Select],
+  tables     :: [(PQ.Lateral, Select)],
   criteria   :: [HSql.SqlExpr],
   groupBy    :: Maybe (NEL.NonEmpty HSql.SqlExpr),
   orderBy    :: [(HSql.SqlExpr, HSql.SqlOrder)],
@@ -65,7 +65,7 @@ data Binary = Binary {
   bSelect2 :: Select
 } deriving Show
 
-data JoinType = LeftJoin | RightJoin | FullJoin | InnerJoinLateral | LeftJoinLateral deriving Show
+data JoinType = LeftJoin | RightJoin | FullJoin deriving Show
 data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
 
 data Label = Label {
@@ -104,7 +104,7 @@ exists b q1 q2 = SelectExists (Exists b q1 q2)
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery' V.Void, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
-                                          , tables = [pqSelect] }
+                                          , tables = [pure pqSelect] }
   where pqSelect = PQ.foldPrimQuery sqlQueryGenerator pq
         makeAttrs = flip (zipWith makeAttr) [1..]
         makeAttr pe i = sqlBinding (Symbol ("result" ++ show (i :: Int)) t, pe)
@@ -118,11 +118,11 @@ empty = V.absurd
 baseTable :: PQ.TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> Select
 baseTable ti columns = SelectFrom $
     newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
-              , tables = [Table (HSql.SqlTable (PQ.tiSchemaName ti) (PQ.tiTableName ti))] }
+              , tables = [pure (Table (HSql.SqlTable (PQ.tiSchemaName ti) (PQ.tiTableName ti)))] }
 
-product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
-product ss pes = SelectFrom $
-    newSelect { tables = NEL.toList ss
+product :: Select -> [(PQ.Lateral, Select)] -> [HPQ.PrimExpr] -> Select
+product s ss pes = SelectFrom $
+    newSelect { tables = pure s : ss
               , criteria = map sqlExpr pes }
 
 aggregate :: [(Symbol,
@@ -132,7 +132,7 @@ aggregate :: [(Symbol,
           -> Select
 aggregate aggrs s =
   SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (map attr aggrs))
-                         , tables = [s]
+                         , tables = [pure s]
                          , groupBy = (Just . groupBy') aggrs }
   where --- Although in the presence of an aggregation function,
         --- grouping by an empty list is equivalent to omitting group
@@ -175,7 +175,7 @@ aggrExpr = maybe id (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord)
 
 distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr) -> [HPQ.OrderExpr] -> Select -> Select
 distinctOnOrderBy distinctExprs orderExprs s = SelectFrom $ newSelect
-    { tables     = [s]
+    { tables     = [pure s]
     , distinctOn = fmap (SG.sqlExpr SD.defaultSqlGenerator) <$> distinctExprs
     , orderBy    = map (SD.toSqlOrder SD.defaultSqlGenerator) $
         -- Postgres requires all 'DISTINCT ON' expressions to appear before any other
@@ -188,7 +188,7 @@ distinctOnOrderBy distinctExprs orderExprs s = SelectFrom $ newSelect
             , HPQ.orderNulls     = HPQ.NullsLast }
 
 limit_ :: PQ.LimitOp -> Select -> Select
-limit_ lo s = SelectFrom $ newSelect { tables = [s]
+limit_ lo s = SelectFrom $ newSelect { tables = [pure s]
                                      , limit = limit'
                                      , offset = offset' }
   where (limit', offset') = case lo of
@@ -209,7 +209,7 @@ join j cond pes1 pes2 s1 s2 =
                   , jCond     = sqlExpr cond }
   where selectFrom pes s = SelectFrom $ newSelect {
             attrs  = SelectAttrsStar (ensureColumns (map sqlBinding pes))
-          , tables = [s]
+          , tables = [pure s]
           }
 
 -- Postgres seems to name columns of VALUES clauses "column1",
@@ -232,8 +232,6 @@ joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
 joinType PQ.RightJoin = RightJoin
 joinType PQ.FullJoin = FullJoin
-joinType PQ.InnerJoinLateral = InnerJoinLateral
-joinType PQ.LeftJoinLateral = LeftJoinLateral
 
 binOp :: PQ.BinOp -> BinOp
 binOp o = case o of
@@ -281,11 +279,11 @@ label l s = SelectLabel (Label l s)
 relExpr :: HPQ.PrimExpr -> [(Symbol, HPQ.PrimExpr)] -> Select
 relExpr pe columns = SelectFrom $
     newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
-              , tables = [RelExpr (sqlExpr pe)]
+              , tables = [pure (RelExpr (sqlExpr pe))]
               }
 
 rebind :: [(Symbol, HPQ.PrimExpr)] -> Select -> Select
 rebind pes select = SelectFrom newSelect
   { attrs = SelectAttrs (ensureColumns (map sqlBinding pes))
-  , tables = [select]
+  , tables = [pure select]
   }
