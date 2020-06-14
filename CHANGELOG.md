@@ -1,3 +1,20 @@
+* Add `inSelect`, to replace `inQuery` in a future version.
+
+* Add `unsafeCoerceField`, to replace `unsafeCoerceColumn` in a future
+  version.
+
+* Generalise label to type `label :: String -> S.SelectArr a b ->
+S.SelectArr a b`
+
+* [Fix invalid queries
+  bug](https://github.com/tomjaguarpaw/haskell-opaleye/pull/468) in
+  `union`, `unionAll`, `except` and `exceptAll` where one side was
+  empty.
+
+## 0.6.7004.2
+
+* No user-visible changes
+
 ## 0.6.7004.1
 
 * Fixed quadratic slowdown in `removeEmpty`.
