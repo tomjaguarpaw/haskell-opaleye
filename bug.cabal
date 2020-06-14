@@ -1,152 +1,19 @@
-name:            opaleye
-copyright:       Copyright (c) 2014-2018 Purely Agile Limited; 2019-2020 Tom Ellis
-version:         0.6.7004.2
-synopsis:        An SQL-generating DSL targeting PostgreSQL
-description:     An SQL-generating DSL targeting PostgreSQL.  Allows
-                 Postgres queries to be written within Haskell in a
-                 typesafe and composable fashion.
-homepage:        https://github.com/tomjaguarpaw/haskell-opaleye
-bug-reports:     https://github.com/tomjaguarpaw/haskell-opaleye/issues
-license:         BSD3
-license-file:    LICENSE
-author:          Purely Agile
-maintainer:      Purely Agile
-category:        Database
+name:            bug
+version:         0
 build-type:      Simple
 cabal-version:   >= 1.18
-extra-doc-files: README.md
-                 CHANGELOG.md
-                 *.md
-                 Doc/*.md
-tested-with:     GHC==8.10.1, GHC==8.8.3, GHC==8.6.5, GHC==8.4.4, GHC==8.2.2, GHC==8.0.2
-
-source-repository head
-  type:     git
-  location: https://github.com/tomjaguarpaw/haskell-opaleye.git
 
 library
   default-language: Haskell2010
-  hs-source-dirs: src
-  build-depends:
-      aeson               >= 0.6     && < 1.6
-    , base                >= 4.9     && < 5
-    , base16-bytestring   >= 0.1.1.6 && < 0.2
-    , case-insensitive    >= 1.2     && < 1.3
-    , bytestring          >= 0.10    && < 0.11
-    , contravariant       >= 1.2     && < 1.6
-    , postgresql-simple   >= 0.5.3   && < 0.7
-    , pretty              >= 1.1.1.0 && < 1.2
-    , product-profunctors >= 0.6.2   && < 0.11
-    , profunctors         >= 4.0     && < 5.6
-    , scientific          >= 0.3     && < 0.4
-    , semigroups          >= 0.13    && < 0.20
-    , text                >= 0.11    && < 1.3
-    , transformers        >= 0.3     && < 0.6
-    , time                >= 1.4     && < 1.10
-    , time-locale-compat  >= 0.1     && < 0.2
-    , uuid                >= 1.3     && < 1.4
-    , void                >= 0.4     && < 0.8
-  exposed-modules: Opaleye,
-                   Opaleye.Aggregate,
-                   Opaleye.Binary,
-                   Opaleye.Column,
-                   Opaleye.Constant,
-                   Opaleye.Distinct,
-                   Opaleye.Field,
-                   Opaleye.FunctionalJoin,
-                   Opaleye.Join,
-                   Opaleye.Label,
-                   Opaleye.Manipulation,
-                   Opaleye.Map,
-                   Opaleye.Operators,
-                   Opaleye.Order,
-                   Opaleye.PGTypes,
-                   Opaleye.QueryArr,
-                   Opaleye.RunQuery,
-                   Opaleye.RunSelect,
-                   Opaleye.Select,
-                   Opaleye.Sql,
-                   Opaleye.SqlTypes,
-                   Opaleye.Table,
-                   Opaleye.ToFields,
-                   Opaleye.TypeFamilies,
-                   Opaleye.Values,
-                   Opaleye.Internal.Aggregate,
-                   Opaleye.Internal.Binary,
-                   Opaleye.Internal.Column,
-                   Opaleye.Internal.Distinct,
-                   Opaleye.Internal.Helpers,
-                   Opaleye.Internal.Join,
-                   Opaleye.Internal.Label,
-                   Opaleye.Internal.Manipulation,
-                   Opaleye.Internal.Order,
-                   Opaleye.Internal.Operators,
-                   Opaleye.Internal.Optimize,
-                   Opaleye.Internal.PackMap,
-                   Opaleye.Internal.PGTypes,
-                   Opaleye.Internal.PrimQuery,
-                   Opaleye.Internal.Print,
-                   Opaleye.Internal.QueryArr,
-                   Opaleye.Internal.RunQuery,
-                   Opaleye.Internal.Sql,
-                   Opaleye.Internal.Table,
-                   Opaleye.Internal.TableMaker,
-                   Opaleye.Internal.Tag,
-                   Opaleye.Internal.TypeFamilies,
-                   Opaleye.Internal.Unpackspec,
-                   Opaleye.Internal.Values
-                   Opaleye.Internal.HaskellDB.PrimQuery,
-                   Opaleye.Internal.HaskellDB.Sql,
-                   Opaleye.Internal.HaskellDB.Sql.Default,
-                   Opaleye.Internal.HaskellDB.Sql.Generate,
-                   Opaleye.Internal.HaskellDB.Sql.Print
-  ghc-options:     -Wall -Wcompat
+  hs-source-dirs: .
+  build-depends: base
+  exposed-modules: Bug
 
 test-suite test
   default-language: Haskell2010
   type: exitcode-stdio-1.0
-  main-is: Test.hs
-  other-modules: QuickCheck,
-                 TypeFamilies,
-                 Wrapped
-  hs-source-dirs: Test
-  build-depends:
-    aeson >= 0.6 && < 1.5,
-    base >= 4 && < 5,
-    containers,
-    contravariant,
-    dotenv >= 0.3.1,
-    multiset,
-    postgresql-simple,
-    profunctors,
-    product-profunctors,
-    QuickCheck,
-    semigroups,
-    text >= 0.11 && < 1.3,
-    time,
-    uuid,
-    transformers,
-    hspec,
-    hspec-discover,
-    opaleye
-  ghc-options: -Wall
-
-test-suite tutorial
-  default-language: Haskell2010
-  type: exitcode-stdio-1.0
-  main-is: Main.hs
-  other-modules: TutorialAdvanced,
-                 TutorialBasic,
-                 TutorialManipulation,
-                 TutorialBasicMonomorphic,
-                 TutorialBasicTypeFamilies,
-                 DefaultExplanation
-  hs-source-dirs: Doc/Tutorial
+  main-is: BugTest.hs
+  hs-source-dirs: .
   build-depends:
     base >= 4 && < 5,
-    postgresql-simple,
-    profunctors,
-    product-profunctors >= 0.6,
-    time,
-    opaleye
-  ghc-options: -Wall
+    product-profunctors
