@@ -1,6 +1,3 @@
--- | Use "Opaleye.Select" instead.  This module will be deprecated in
--- 0.7.
-
-module Opaleye.QueryArr (Query, QueryArr) where
+module Opaleye.QueryArr {-# DEPRECATED "Use \"Opaleye.Select\" instead.  This module will be removed in 0.8." #-} (Query, QueryArr) where
 
 import           Opaleye.Internal.QueryArr (QueryArr, Query)
