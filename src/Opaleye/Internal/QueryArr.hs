@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Opaleye.Internal.QueryArr where
 
@@ -22,9 +23,15 @@ import qualified Data.Profunctor.Product as PP
 
 -- Ideally this should be wrapped in a monad which automatically
 -- increments the Tag, but I couldn't be bothered to do that.
-newtype QueryArr a b = QueryArr ((a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag))
 
-type Query = QueryArr ()
+-- | A parametrised 'Select'.  A @SelectArr a b@ accepts an argument
+-- of type @a@.
+--
+-- @SelectArr a b@ is analogous to a Haskell function @a -> [b]@.
+newtype SelectArr a b = QueryArr ((a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag))
+
+type QueryArr = SelectArr
+type Query = SelectArr ()
 
 productQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
 productQueryArr f = QueryArr g
@@ -58,12 +65,6 @@ first3 f (a1, a2, a3) = (f a1, a2, a3)
 --
 -- @Select a@ is analogous to a Haskell value @[a]@.
 type Select = SelectArr ()
-
--- | A parametrised 'Select'.  A @SelectArr a b@ accepts an argument
--- of type @a@.
---
--- @SelectArr a b@ is analogous to a Haskell function @a -> [b]@.
-type SelectArr = QueryArr
 
 -- | Implements @LATERAL@ subqueries.
 --

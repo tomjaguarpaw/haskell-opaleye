@@ -16,7 +16,8 @@ import qualified Opaleye.Field as F
 import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
                                           unsafeIfThenElse, unsafeGt)
 import qualified Opaleye.Internal.Column as C
-import           Opaleye.Internal.QueryArr (QueryArr(QueryArr), Query, runSimpleQueryArr)
+import           Opaleye.Internal.QueryArr (SelectArr(QueryArr),
+                                            Query, QueryArr, runSimpleQueryArr)
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Operators as O
 import           Opaleye.Internal.Helpers   ((.:))
