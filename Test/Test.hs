@@ -355,7 +355,7 @@ testExists :: Test
 testExists = it "restricts the rows returned with EXISTS" $ select `selectShouldReturnSorted` filter ((== 1) . fst) (L.sort table1data)
   where select = proc () -> do
           t <- table1Q -< ()
-          () <- O.exists (proc t -> do
+          () <- O.restrictExists (proc t -> do
                             t' <- table1Q -< ()
                             O.restrict -< fst t' .> fst t) -< t
           Arr.returnA -< t
@@ -364,7 +364,7 @@ testNotExists :: Test
 testNotExists = it "restricts the rows returned with NOT EXISTS" $ select `selectShouldReturnSorted` filter ((== 2) . fst)  (L.sort table1data)
   where select = proc () -> do
           t <- table1Q -< ()
-          () <- O.notExists (proc t -> do
+          () <- O.restrictNotExists (proc t -> do
                                t' <- table1Q -< ()
                                O.restrict -< fst t' .> fst t) -< t
           Arr.returnA -< t
@@ -589,7 +589,7 @@ testOrderBySame = it "" $ selectShouldReturnSortBy (O.desc fst <> O.asc fst)
 
 testOrderExact :: Test
 testOrderExact = it "" $ testH (O.orderBy (O.exact cols snd) table1Q) (result `shouldBe`)
-  where cols   = map O.constant [300,200::Int]
+  where cols   = map O.toFields [300,200::Int]
         result = [ (2::Int, 300::Int)
                  , (1, 200)
                  , (1, 100)
@@ -738,11 +738,16 @@ testTableFunctor = it "" $ testH (O.selectTable table1F) (result `shouldBe`)
 -- TODO: This is getting too complicated
 testUpdate :: Test
 testUpdate = it "" $ \conn -> do
-  _ <- O.runUpdate conn table4 update cond
+  _ <- O.runUpdate_ conn O.Update { O.uTable = table4
+                                  , O.uUpdateWith = update
+                                  , O.uWhere = cond
+                                  , O.uReturning = O.rCount }
   result <- runSelectTable4 conn
   result `shouldBe` expected
 
-  _ <- O.runDelete conn table4 condD
+  _ <- O.runDelete_ conn O.Delete { O.dTable = table4
+                                  , O.dWhere = condD
+                                  , O.dReturning = O.rCount }
   resultD <- runSelectTable4 conn
   resultD `shouldBe` expectedD
 
@@ -784,7 +789,10 @@ testUpdate = it "" $ \conn -> do
 testDeleteReturning :: Test
 testDeleteReturning = it "" $ \conn -> do
   result <- O.runDelete_ conn delete
-  _ <- O.runInsertMany conn table4 ([(40,50)] :: [(Field O.SqlInt4, Field O.SqlInt4)]) :: IO Int64
+  _ <- O.runInsert_ conn O.Insert { O.iTable = table4
+                                  , O.iRows = ([(40,50)] :: [(Field O.SqlInt4, Field O.SqlInt4)])
+                                  , O.iReturning = O.rCount
+                                  , O.iOnConflict = Nothing } :: IO Int64
   result `shouldBe` expected
   where delete = Delete table cond returning
         table = table4
@@ -794,8 +802,13 @@ testDeleteReturning = it "" $ \conn -> do
 
 testInsertConflict :: Test
 testInsertConflict = it "inserts with conflicts" $ \conn -> do
-  _ <- O.runDelete conn table10 (const $ O.constant True)
-  returned <- O.runInsertManyReturning conn table10 insertT id
+  _ <- O.runDelete_ conn O.Delete { O.dTable = table10
+                                  , O.dWhere = (const $ O.toFields True)
+                                  , O.dReturning = O.rCount }
+  returned <- O.runInsert_ conn O.Insert { O.iTable = table10
+                                         , O.iRows = insertT
+                                         , O.iReturning = O.rReturning id
+                                         , O.iOnConflict = Nothing }
   extras <- O.runInsert_ conn O.Insert { O.iTable = table10
                                        , O.iRows = conflictsT
                                        , O.iReturning = O.rReturning id
@@ -810,7 +823,11 @@ testInsertConflict = it "inserts with conflicts" $ \conn -> do
   moreExtras `shouldBe` 1
   runSelectTable10 conn `shouldReturn` allRows
 
-  O.runInsertMany conn table10 insertT `shouldThrow` (\ (_ :: PGS.SqlError) -> True)
+  O.runInsert_ conn O.Insert { O.iTable = table10
+                             , O.iRows = insertT
+                             , O.iReturning = O.rCount
+                             , O.iOnConflict = Nothing }
+    `shouldThrow` (\ (_ :: PGS.SqlError) -> True)
 
   where insertT :: [Field O.SqlInt4]
         insertT = [1, 2]
@@ -855,7 +872,11 @@ testInsertSerial = it "" $ \conn -> do
                    , (30, 1)
                    , (1, 2)
                    , (2, 40) ]
-        runInsert conn table row = O.runInsertMany conn table [row]
+        runInsert conn table row =
+          O.runInsert_ conn O.Insert { O.iTable = table
+                                     , O.iRows = [row]
+                                     , O.iReturning = O.rCount
+                                     , O.iOnConflict = Nothing }
 
 testInSelect :: Test
 testInSelect = it "" $ \conn -> do
@@ -1136,7 +1157,12 @@ main = do
 
   dropAndCreateDB conn
 
-  let insert (t, d) = do { _ <- O.runInsertMany conn t d; return () }
+  let insert (t, d) = do {
+     _ <- O.runInsert_ conn O.Insert { O.iTable = t
+                                     , O.iRows = d
+                                     , O.iReturning = O.rCount
+                                     , O.iOnConflict = Nothing }
+   ; return () }
 
   mapM_ insert [ (table1, table1fielddata)
                , (table2, table2fielddata)
