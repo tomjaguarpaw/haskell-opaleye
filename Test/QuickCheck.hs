@@ -41,13 +41,15 @@ unSelectDenotation sa conn = unSelectArrDenotation sa conn ()
 onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
 
-type Fields = [Either (O.Field O.SqlInt4) (O.Field O.SqlBool)]
-type Haskells = [Either Int Bool]
+type Choice = Either
+
+type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool)]
+type Haskells = [Choice Int Bool]
 
 fieldsOfHaskells :: Haskells -> Fields
-fieldsOfHaskells = O.constantExplicit eitherPP
+fieldsOfHaskells = O.constantExplicit choicePP
 
-fieldsList :: (a, b) -> [Either a b]
+fieldsList :: (a, b) -> [Choice a b]
 fieldsList (x, y) = [Left x, Right y]
 
 listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
@@ -70,7 +72,7 @@ newtype ArbitraryGarble =
 data Order = Asc | Desc deriving Show
 
 unpackFields :: O.Unpackspec Fields Fields
-unpackFields = eitherPP
+unpackFields = choicePP
 
 aggregateFields :: O.Aggregator Fields Fields
 aggregateFields =
@@ -117,7 +119,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aqArg ((++) <$> q1 <*> q2)
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
-        aq (O.distinctExplicit eitherPP) q
+        aq (O.distinctExplicit choicePP) q
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
@@ -278,11 +280,11 @@ denotation :: O.FromFields fields a -> O.Select fields -> SelectDenotation a
 denotation qr q = SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
 
 denotation' :: O.Select Fields -> SelectDenotation Haskells
-denotation' = denotation eitherPP
+denotation' = denotation choicePP
 
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
-denotation2 = denotation (eitherPP PP.***! eitherPP)
+denotation2 = denotation (choicePP PP.***! choicePP)
 
 -- { Comparing the results
 
@@ -386,7 +388,7 @@ order conn o (ArbitrarySelect q) =
 
 distinct :: PGS.Connection -> ArbitrarySelect -> IO Bool
 distinct conn (ArbitrarySelect q) =
-  compare' conn (denotation' (O.distinctExplicit eitherPP q))
+  compare' conn (denotation' (O.distinctExplicit choicePP q))
                 (onList nub (denotation' q))
 
 -- When we added <*> to the arbitrary queries we started getting some
@@ -469,10 +471,10 @@ run conn = do
 nub :: Ord a => [a] -> [a]
 nub = Set.toList . Set.fromList
 
-eitherPP :: (D.Default p a a', D.Default p b b',
+choicePP :: (D.Default p a a', D.Default p b b',
              PP.SumProfunctor p, PP.ProductProfunctor p)
-         => p [Either a b] [Either a' b']
-eitherPP = PP.list (D.def PP.+++! D.def)
+         => p [Choice a b] [Choice a' b']
+choicePP = PP.list (D.def PP.+++! D.def)
 
 -- Replace this with `isSuccess` when the following issue is fixed
 --
@@ -482,24 +484,24 @@ errorIfNotSuccess r = case r of
   TQ.Success {} -> return ()
   _             -> error "Failed"
 
-firstBoolOrTrue :: b -> [Either a b] -> (b, [Either a b])
+firstBoolOrTrue :: b -> [Choice a b] -> (b, [Choice a b])
 firstBoolOrTrue true c = (b, c)
   where b = case Maybe.mapMaybe isBool c of
           []    -> true
           (x:_) -> x
 
-firstIntOr :: a -> [Either a b] -> (a, [Either a b])
+firstIntOr :: a -> [Choice a b] -> (a, [Choice a b])
 firstIntOr else_ c = (b, c)
   where b = case Maybe.mapMaybe isInt c of
           []    -> else_
           (x:_) -> x
 
-isBool :: Either a b
+isBool :: Choice a b
        -> Maybe b
 isBool (Left _)  = Nothing
 isBool (Right l) = Just l
 
-isInt :: Either a b -> Maybe a
+isInt :: Choice a b -> Maybe a
 isInt (Left a)  = Just a
 isInt (Right _) = Nothing
 
