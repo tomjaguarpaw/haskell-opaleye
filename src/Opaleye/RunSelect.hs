@@ -8,7 +8,10 @@ module Opaleye.RunSelect
    IRQ.Cursor,
    IRQ.FromFields,
    IRQ.FromField,
-   IRQ.DefaultFromField) where
+   IRQ.DefaultFromField,
+   -- * Helper functions
+   IRQ.fromPGSFromField,
+   IRQ.fromPGSFieldParser) where
 
 import qualified Data.Profunctor            as P
 import qualified Database.PostgreSQL.Simple as PGS
