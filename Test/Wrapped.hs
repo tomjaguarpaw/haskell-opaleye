@@ -7,6 +7,8 @@ import           Control.Arrow (arr, (<<<))
 import qualified Control.Arrow as Arrow
 import qualified Control.Category
 import           Control.Category (Category)
+import qualified Data.Functor.Contravariant as C
+import qualified Data.Functor.Contravariant.Divisible as D
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 
@@ -22,9 +24,25 @@ data WrappedSumProfunctor p a b where
     -> WrappedSumProfunctor p b b'
     -> WrappedSumProfunctor p (Either a b) (Either a' b')
 
+newtype WrappedDecidable f a b =
+  WrappedDecidable { unWrappedDecidable :: f a }
+
+instance C.Contravariant f => P.Profunctor (WrappedDecidable f) where
+  dimap f _ = WrappedDecidable . C.contramap f . unWrappedDecidable
+
+instance D.Decidable f => PP.SumProfunctor (WrappedDecidable f) where
+  f1 +++! f2 =
+    WrappedDecidable (D.choose id (unWrappedDecidable f1)
+                                  (unWrappedDecidable f2))
+
 constructor :: P.Profunctor p
             => (b -> c) -> p a b -> WrappedSumProfunctor p a c
 constructor c p = P.rmap c (WrappedSumProfunctor p)
+
+constructorDecidable :: D.Decidable f
+                     => f a
+                     -> WrappedSumProfunctor (WrappedDecidable f) a c
+constructorDecidable f = WrappedSumProfunctor (WrappedDecidable f)
 
 asSumProfunctor :: PP.SumProfunctor p
                 => WrappedSumProfunctor p a b -> p a b

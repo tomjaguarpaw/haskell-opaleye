@@ -46,23 +46,11 @@ onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
 
 data Choice i b = CInt i | CBool b deriving (Show, Eq, Ord)
 
--- These are really hard to write
---
--- See http://h2.jaguarpaw.co.uk/posts/mysterious-incomposability-of-decidable/
 chooseChoice :: Divisible.Decidable f => (a -> Choice i b) -> f i -> f b -> f a
-chooseChoice choose fi fb = choose -$- (f -$- (fb -*- fi))
-  where f = \case
-          CInt i  -> Right i
-          CBool b -> Left b
-
-        (-$-) :: Contravariant f => (a -> b) -> f b -> f a
-        (-$-) = contramap
-
-        (-*-) :: Divisible.Decidable f => f a -> f b -> f (Either a b)
-        (-*-) = Divisible.chosen
-
-        infixl -*-
-        infixr -$-
+chooseChoice choose fi fb = _ $ proc a -> do
+  case choose a of
+    CInt i  -> fi -< i
+    CBool b -> fb -< ba
 
 type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool)]
 type Haskells = [Choice Int Bool]
