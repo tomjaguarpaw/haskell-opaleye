@@ -125,7 +125,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.queryTable table1)))
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
-        return (ArbitrarySelectArr (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.constant l)))))
+        aqArg (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.constant l))))
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
