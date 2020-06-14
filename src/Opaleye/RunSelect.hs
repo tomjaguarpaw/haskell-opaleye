@@ -85,8 +85,6 @@ runSelectFold = RQ.runQueryFold
 
 -- | Declare a temporary cursor. The cursor is given a unique name for the given
 -- connection.
---
--- Returns 'Nothing' when the query returns zero rows.
 declareCursor
     :: D.Default FromFields fields haskells
     => PGS.Connection
