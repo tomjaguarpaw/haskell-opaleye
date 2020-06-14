@@ -72,4 +72,4 @@ Helper function
 ===============
 
 > printSql :: Default U.Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . Sql.showSqlForPostgres
+> printSql = putStrLn . maybe "Empty query" id . Sql.showSql
