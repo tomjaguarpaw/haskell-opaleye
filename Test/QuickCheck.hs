@@ -1,3 +1,4 @@
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE Rank2Types #-}
@@ -5,6 +6,7 @@
 module QuickCheck where
 
 import qualified Opaleye as O
+import           Wrapped (constructor, asSumProfunctor)
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Test.QuickCheck as TQ
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
@@ -492,13 +494,10 @@ nub = Set.toList . Set.fromList
 
 choicePP :: PP.SumProfunctor p
          => p i1 i2 -> p b1 b2 -> p (Choice i1 b1) (Choice i2 b2)
-choicePP p1 p2 = P.dimap toEither fromEither (p1 PP.+++! p2)
-  where toEither = \case
-          CInt i  -> Left i
-          CBool b -> Right b
-        fromEither = \case
-          Left i  -> CInt i
-          Right b -> CBool b
+choicePP p1 p2 = asSumProfunctor $ proc choice -> do
+  case choice of
+    CInt i    -> constructor CInt    p1 -< i
+    CBool b   -> constructor CBool   p2 -< b
 
 defChoicesPP :: (D.Default p a a', D.Default p b b',
                  PP.SumProfunctor p, PP.ProductProfunctor p)

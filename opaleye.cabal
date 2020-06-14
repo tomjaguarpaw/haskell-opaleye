@@ -107,7 +107,8 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules: QuickCheck,
-                 TypeFamilies
+                 TypeFamilies,
+                 Wrapped
   hs-source-dirs: Test
   build-depends:
     aeson >= 0.6 && < 1.5,
