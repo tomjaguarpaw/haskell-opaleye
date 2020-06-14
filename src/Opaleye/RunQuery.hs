@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.RunQuery {-# DEPRECATED "Use 'Opaleye.RunSelect' instead." #-}
+module Opaleye.RunQuery {-# DEPRECATED "Use \"Opaleye.RunSelect\" instead." #-}
                  (module Opaleye.RunQuery,
                          -- * Datatypes
                          IRQ.Cursor,
