@@ -462,7 +462,7 @@ testDistinctOn = do
         testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
     where
 
-        pgTriples :: [(O.Field O.PGInt8, O.Field O.PGInt8, O.Field O.PGText)]
+        pgTriples :: [(O.Field O.SqlInt8, O.Field O.SqlInt8, O.Field O.SqlText)]
         pgTriples = (\(x,y,z) -> (O.sqlInt8 x, O.sqlInt8 y, O.sqlStrictText z)) <$> triples
 
         triples :: [(Int64, Int64, T.Text)]
@@ -1015,7 +1015,7 @@ testJsonbContainsAll = it "" $ testH q (`shouldBe` [True])
 
 testRangeOverlap :: Test
 testRangeOverlap = it "generates overlap" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
+  where range :: Int -> Int -> Field (O.SqlRange O.SqlInt4)
         range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 3 7 `O.overlap` range 4 12)
 
@@ -1035,31 +1035,31 @@ testRangeDateOverlap = it "generates time overlap" $ \conn -> do
 
 testRangeLeftOf :: Test
 testRangeLeftOf = it "generates 'left of'" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
+  where range :: Int -> Int -> Field (O.SqlRange O.SqlInt4)
         range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 1 10 O..<< range 100 110)
 
 testRangeRightOf :: Test
 testRangeRightOf = it "generates 'right of'" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
+  where range :: Int -> Int -> Field (O.SqlRange O.SqlInt4)
         range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 50 60 O..>> range 20 30)
 
 testRangeRightExtension :: Test
 testRangeRightExtension = it "generates right extension" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
+  where range :: Int -> Int -> Field (O.SqlRange O.SqlInt4)
         range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 1 20 O..&< range 18 20)
 
 testRangeLeftExtension :: Test
 testRangeLeftExtension = it "generates left extension" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
+  where range :: Int -> Int -> Field (O.SqlRange O.SqlInt4)
         range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 7 20 O..&> range 5 10)
 
 testRangeAdjacency :: Test
 testRangeAdjacency = it "generates adjacency" $ testH q (`shouldBe` [True])
-  where range :: Int -> Int -> Field (O.PGRange O.SqlInt4)
+  where range :: Int -> Int -> Field (O.SqlRange O.SqlInt4)
         range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Exclusive b)
         q = A.pure (range 1 2 O..-|- range 2 3)
 
