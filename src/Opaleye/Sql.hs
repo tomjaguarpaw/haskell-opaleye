@@ -56,20 +56,20 @@ showSqlUnoptExplicit = Pr.formatAndShowSQL .: Q.runQueryArrUnpack
 
 -- * Deprecated functions
 
--- | Will be deprecated in version 0.7.  Use 'showSql' instead.
+{-# DEPRECATED showSqlForPostgres "Will be removed in version 0.8.  Use 'showSql' instead." #-}
 showSqlForPostgres :: forall columns . D.Default U.Unpackspec columns columns =>
                       S.Select columns -> Maybe String
 showSqlForPostgres = showSql
 
--- | Will be deprecated in version 0.7.  Use 'showSqlUnopt' instead.
+{-# DEPRECATED showSqlForPostgresUnopt "Will be removed in version 0.8.  Use 'showSqlUnopt' instead." #-}
 showSqlForPostgresUnopt :: forall columns . D.Default U.Unpackspec columns columns =>
                            S.Select columns -> Maybe String
 showSqlForPostgresUnopt = showSqlUnopt
 
--- | Will be deprecated in version 0.7.  Use 'showSqlExplicit' instead.
+{-# DEPRECATED showSqlForPostgresExplicit "Will be removed in version 0.8.  Use 'showSqlExplicit' instead." #-}
 showSqlForPostgresExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
 showSqlForPostgresExplicit = showSqlExplicit
 
--- | Will be deprecated in version 0.7.  Use 'showSqlUnoptExplicit' instead.
+{-# DEPRECATED showSqlForPostgresUnoptExplicit "Will be removed in version 0.8.  Use 'showSqlUnoptExplicit' instead." #-}
 showSqlForPostgresUnoptExplicit :: U.Unpackspec columns b -> S.Select columns -> Maybe String
 showSqlForPostgresUnoptExplicit = showSqlUnoptExplicit
