@@ -12,8 +12,7 @@ import           Database.PostgreSQL.Simple.Internal (RowParser)
 import qualified Database.PostgreSQL.Simple.FromField as PGS
 import           Database.PostgreSQL.Simple.FromField
   (FieldParser, fromField, pgArrayFieldParser)
-import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith,
-                                                     RowParser)
+import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
 import           Opaleye.Column (Column)
