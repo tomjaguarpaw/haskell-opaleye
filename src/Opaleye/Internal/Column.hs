@@ -10,15 +10,12 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 -- @PGInt4@ is an @int4@ column and a 'Column' @PGText@ is a @text@
 -- column.
 --
--- Do not use the 'Show' instance of 'Column'.  It is considered
--- deprecated and will be removed in version 0.7.
---
 -- The name @Column@ will be replaced by @Field@ in version 0.7.
 -- There already exists a @Field@ type family to help smooth the
 -- transition.  We recommend that you use @Field_@, @Field@ or
 -- @FieldNullable@ instead of @Column@ everywhere that it is
 -- sufficient.
-newtype Column pgType = Column HPQ.PrimExpr deriving Show
+newtype Column pgType = Column HPQ.PrimExpr
 
 -- | Only used within a 'Column', to indicate that it can be @NULL@.
 -- For example, a 'Column' ('Nullable' @PGText@) can be @NULL@ but a
