@@ -1,9 +1,8 @@
--- | Use "Opaleye.SqlTypes" instead.  Will be deprecated in version 0.7.
-
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Opaleye.PGTypes (module Opaleye.PGTypes, IsSqlType(..)) where
+module Opaleye.PGTypes {-# DEPRECATED "Use \"Opaleye.SqlTypes\" instead." #-}
+  (module Opaleye.PGTypes, IsSqlType(..)) where
 
 import           Opaleye.Internal.Column (Column)
 import qualified Opaleye.Internal.Column as C
@@ -243,17 +242,3 @@ data PGBytea
 data PGJson
 data PGJsonb
 data PGRange a
-
--- * Deprecated functions
-
-literalColumn :: HPQ.Literal -> Column a
-literalColumn = C.Column . HPQ.ConstExpr
-{-# DEPRECATED literalColumn
-    "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be removed in version 0.7."
-  #-}
-
-unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
-unsafePgFormatTime = IPT.unsafePgFormatTime
-{-# DEPRECATED unsafePgFormatTime
-    "'unsafePgFormatTime' has been moved to Opaleye.Internal.PGTypes and will be removed in version 0.7."
-  #-}

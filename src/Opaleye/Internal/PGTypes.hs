@@ -33,17 +33,10 @@ strictDecodeUtf8 = SText.unpack . STextEncoding.decodeUtf8
 lazyDecodeUtf8 :: LByteString.ByteString -> String
 lazyDecodeUtf8 = LText.unpack . LTextEncoding.decodeUtf8
 
-{-# DEPRECATED showPGType
-    "Use 'showSqlType' instead. 'showPGType' will be removed \
-    \in version 0.7." #-}
 class IsSqlType sqlType where
-  showPGType :: proxy sqlType -> String
-  showPGType  = showSqlType
-
   showSqlType :: proxy sqlType -> String
-  showSqlType = showPGType
 
-  {-# MINIMAL showPGType | showSqlType #-}
+  {-# MINIMAL showSqlType #-}
 
 instance IsSqlType a => IsSqlType (C.Nullable a) where
   showSqlType _ = showSqlType (Proxy :: Proxy a)

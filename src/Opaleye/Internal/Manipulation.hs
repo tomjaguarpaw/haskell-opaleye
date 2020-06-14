@@ -12,7 +12,7 @@ import qualified Opaleye.Internal.HaskellDB.Sql  as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Default  as SD
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
 import qualified Opaleye.Internal.HaskellDB.Sql.Print    as HPrint
-import           Opaleye.Internal.Helpers        ((.:.), (.::.), (.::))
+import           Opaleye.Internal.Helpers        ((.:), (.:.), (.::.), (.::))
 import qualified Opaleye.Internal.PrimQuery      as PQ
 import qualified Opaleye.Internal.Print          as Print
 import qualified Opaleye.Internal.RunQuery       as IRQ
@@ -184,3 +184,103 @@ arrangeDelete t cond =
   SG.sqlDelete SD.defaultSqlGenerator (PQ.tiToSqlTable (TI.tableIdentifier t)) [condExpr]
   where Column condExpr = cond tableCols
         TI.View tableCols = TI.tableColumnsView (TI.tableColumns t)
+
+runInsert :: PGS.Connection -> T.Table fields fields' -> fields -> IO Int64
+runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
+
+runInsertReturning :: (D.Default RQ.QueryRunner fieldsReturned haskells)
+                   => PGS.Connection
+                   -> T.Table fieldsW fieldsR
+                   -> fieldsW
+                   -> (fieldsR -> fieldsReturned)
+                   -> IO [haskells]
+runInsertReturning = runInsertReturningExplicit D.def
+
+{-# DEPRECATED runInsertReturningExplicit "Use 'runInsert_' instead. Will be removed in version 0.8." #-}
+runInsertReturningExplicit :: RQ.QueryRunner columnsReturned haskells
+                           -> PGS.Connection
+                           -> T.Table columnsW columnsR
+                           -> columnsW
+                           -> (columnsR -> columnsReturned)
+                           -> IO [haskells]
+runInsertReturningExplicit qr conn t =
+  runInsertManyReturningExplicitI qr conn t . return
+
+{-# DEPRECATED runInsertManyReturningExplicit "Use 'runInsert_' instead.  Will be removed in version 0.8." #-}
+runInsertManyReturningExplicitI :: RQ.QueryRunner columnsReturned haskells
+                                -> PGS.Connection
+                                -> T.Table columnsW columnsR
+                                -> [columnsW]
+                                -> (columnsR -> columnsReturned)
+                                -> IO [haskells]
+runInsertManyReturningExplicitI qr conn t columns f =
+  runInsertManyReturningExplicit qr conn t columns f Nothing
+
+arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
+arrangeInsert t c = arrangeInsertManyI t (return c)
+
+arrangeInsertSql :: T.Table columns a -> columns -> String
+arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
+
+arrangeInsertManyI :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
+arrangeInsertManyI t columns = arrangeInsertMany t columns Nothing
+
+arrangeInsertManySqlI :: T.Table columns a -> NEL.NonEmpty columns -> String
+arrangeInsertManySqlI t c  = arrangeInsertManySql t c Nothing
+
+arrangeUpdate :: T.Table columnsW columnsR
+              -> (columnsR -> columnsW) -> (columnsR -> Column SqlBool)
+              -> HSql.SqlUpdate
+arrangeUpdate t update cond =
+  SG.sqlUpdate SD.defaultSqlGenerator
+               (PQ.tiToSqlTable (TI.tableIdentifier t))
+               [condExpr] (update' tableCols)
+  where TI.TableProperties writer (TI.View tableCols) = TI.tableColumns t
+        update' = map (\(x, y) -> (y, x)) . TI.runWriter writer . update
+        Column condExpr = cond tableCols
+
+arrangeUpdateSql :: T.Table columnsW columnsR
+              -> (columnsR -> columnsW) -> (columnsR -> Column SqlBool)
+              -> String
+arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
+
+arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column SqlBool) -> String
+arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
+
+arrangeInsertManyReturningI :: U.Unpackspec columnsReturned ignored
+                            -> T.Table columnsW columnsR
+                            -> NEL.NonEmpty columnsW
+                            -> (columnsR -> columnsReturned)
+                            -> Sql.Returning HSql.SqlInsert
+arrangeInsertManyReturningI unpackspec t columns returningf =
+  arrangeInsertManyReturning unpackspec t columns returningf Nothing
+
+arrangeInsertManyReturningSqlI :: U.Unpackspec columnsReturned ignored
+                               -> T.Table columnsW columnsR
+                               -> NEL.NonEmpty columnsW
+                               -> (columnsR -> columnsReturned)
+                               -> String
+arrangeInsertManyReturningSqlI u t c r =
+  arrangeInsertManyReturningSql u t c r Nothing
+
+arrangeUpdateReturning :: U.Unpackspec columnsReturned ignored
+                       -> T.Table columnsW columnsR
+                       -> (columnsR -> columnsW)
+                       -> (columnsR -> Column SqlBool)
+                       -> (columnsR -> columnsReturned)
+                       -> Sql.Returning HSql.SqlUpdate
+arrangeUpdateReturning unpackspec t updatef cond returningf =
+  Sql.Returning update returningSEs
+  where update = arrangeUpdate t updatef cond
+        TI.View columnsR = TI.tableColumnsView (TI.tableColumns t)
+        returningPEs = U.collectPEs unpackspec (returningf columnsR)
+        returningSEs = Sql.ensureColumnsGen id (map Sql.sqlExpr returningPEs)
+
+arrangeUpdateReturningSql :: U.Unpackspec columnsReturned ignored
+                          -> T.Table columnsW columnsR
+                          -> (columnsR -> columnsW)
+                          -> (columnsR -> Column SqlBool)
+                          -> (columnsR -> columnsReturned)
+                          -> String
+arrangeUpdateReturningSql =
+  show . Print.ppUpdateReturning .::. arrangeUpdateReturning
