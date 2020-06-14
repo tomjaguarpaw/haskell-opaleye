@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.Distinct where
 
-import           Opaleye.QueryArr (Query)
+import           Opaleye.Select (Select)
 import           Opaleye.Column (Column)
 import           Opaleye.Aggregate (Aggregator, groupBy, aggregate)
 
@@ -17,7 +17,7 @@ import           Data.Profunctor.Product.Default (Default, def)
 -- of something else that we already have is easier at this point.
 
 distinctExplicit :: Distinctspec fields fields'
-                 -> Query fields -> Query fields'
+                 -> Select fields -> Select fields'
 distinctExplicit (Distinctspec agg) = aggregate agg
 
 newtype Distinctspec a b = Distinctspec (Aggregator a b)
