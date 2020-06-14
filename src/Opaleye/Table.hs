@@ -145,13 +145,12 @@ selectTableExplicit cm table' = Q.productQueryArr f where
 
 -- * Deprecated versions
 
--- | Use 'selectTable' instead.  Will be deprecated in version 0.7.
+{-# DEPRECATED queryTable "Use 'selectTable' instead.  Will be removed in version 0.8." #-}
 queryTable :: D.Default U.Unpackspec fields fields =>
               Table a fields -> S.Select fields
 queryTable = selectTable
 
--- | Use 'selectTableExplicit' instead.  Will be deprecated in version
--- 0.7.
+{-# DEPRECATED queryTableExplicit "Use 'selectTableExplicit' instead.  Will be removed in version 0.8." #-}
 queryTableExplicit :: U.Unpackspec tablefields fields ->
                      Table a tablefields -> S.Select fields
 queryTableExplicit = selectTableExplicit
