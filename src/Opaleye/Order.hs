@@ -82,18 +82,18 @@ descNullsLast = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
 -- * Limit and offset
 
 {- |
-Limit the results of the given query to the given maximum number of
+Limit the results of the given 'S.Select' to the given maximum number of
 items.
 
 /WARNING:/ If you're planning on using limit/offset together please use
 'offset' /before/ you use 'limit', e.g.:
 
 @
-limit 10 (offset 50 yourQuery)
+limit 10 (offset 50 yourSelect)
 @
 
-This is because Opaleye applies OFFSET and LIMIT to the query separately.
-The result of the query given above is the following, which will return
+This is because Opaleye applies OFFSET and LIMIT to the @SELECT@ separately.
+The result of the 'S.Select' given above is the following, which will return
 10 rows after skipping the first 50 (probably what you want).
 
 @
@@ -112,7 +112,7 @@ limit :: Int -> S.Select a -> S.Select a
 limit n a = Q.simpleQueryArr (O.limit' n . Q.runSimpleQueryArr a)
 
 {- |
-Offset the results of the given query by the given amount, skipping
+Offset the results of the given 'S.Select' by the given amount, skipping
 that many result rows.
 
 /WARNING:/ Please read the documentation of 'limit' before combining

@@ -19,9 +19,9 @@ import qualified Data.Profunctor.Product.Default as D
 
 -- * Showing SQL
 
--- | Show the SQL query string generated from the query.
+-- | Show the SQL query string generated from the 'S.Select'.
 --
--- When 'Nothing' is returned it means that the 'Query' returns zero
+-- When 'Nothing' is returned it means that the 'S.Select' returns zero
 -- rows.
 --
 -- Example type specialization:
@@ -42,7 +42,7 @@ showSql :: forall fields.
         -> Maybe String
 showSql = showSqlExplicit (D.def :: U.Unpackspec fields fields)
 
--- | Show the unoptimized SQL query string generated from the query.
+-- | Show the unoptimized SQL query string generated from the 'S.Select'.
 showSqlUnopt :: forall fields.
                 D.Default U.Unpackspec fields fields
              => S.Select fields

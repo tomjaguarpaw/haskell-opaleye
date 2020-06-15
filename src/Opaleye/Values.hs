@@ -10,7 +10,7 @@ import qualified Opaleye.Select              as S
 import           Data.Profunctor.Product.Default (Default, def)
 
 -- | 'values' implements Postgres's @VALUES@ construct and allows you
--- to create a query that consists of the given rows.
+-- to create a @SELECT@ that consists of the given rows.
 --
 -- Example type specialization:
 --
