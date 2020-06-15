@@ -92,7 +92,7 @@ items.
 limit 10 (offset 50 yourSelect)
 @
 
-This is because Opaleye applies OFFSET and LIMIT to the @SELECT@ separately.
+This is because Opaleye applies @OFFSET@ and @LIMIT@ to the @SELECT@ separately.
 The result of the 'S.Select' given above is the following, which will return
 10 rows after skipping the first 50 (probably what you want).
 
