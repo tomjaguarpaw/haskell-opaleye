@@ -324,7 +324,7 @@ arrangeUpdateReturningSql =
   show . Print.ppUpdateReturning .::. arrangeUpdateReturning
 
 -- | Insert rows into a table with @ON CONFLICT DO NOTHING@
-{-# DEPRECATED runInsertManyOnConflictDoNothing "Use runInsert_" #-}
+{-# DEPRECATED runInsertManyOnConflictDoNothing "Use 'runInsert_'.  Will be removed in version 0.8." #-}
 runInsertManyOnConflictDoNothing :: PGS.Connection
                                  -- ^
                                  -> T.Table columns columns'
@@ -347,7 +347,7 @@ runInsertManyOnConflictDoNothing conn table_ columns =
 -- 'D.Default' typeclass means that the compiler will have trouble
 -- inferring types.  It is strongly recommended that you provide full
 -- type signatures when using it.
-{-# DEPRECATED runInsertManyReturningOnConflictDoNothing "Use runInsert_" #-}
+{-# DEPRECATED runInsertManyReturningOnConflictDoNothing "Use 'runInsert_'. Will be removed in version 0.8." #-}
 runInsertManyReturningOnConflictDoNothing
   :: (D.Default RQ.QueryRunner columnsReturned haskells)
   => PGS.Connection
