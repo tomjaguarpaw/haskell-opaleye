@@ -17,6 +17,7 @@ import           Opaleye.Test.TraverseA (traverseA1)
 
 import qualified Opaleye as O
 import qualified Opaleye.Join as OJ
+import qualified Opaleye.Exists as OE
 
 import qualified Database.PostgreSQL.Simple as PGS
 import           Control.Applicative (Applicative, pure, (<$>), (<*>))
@@ -499,6 +500,14 @@ lateral (ArbitraryKleisli f) =
   compareDenotation (O.lateral f) (lateralDenotation (denotation . f'))
   where f' = f . fieldsOfHaskells
 
+exists :: ArbitrarySelect -> Connection -> IO TQ.Property
+exists = compareDenotationNoSort' (existsQ OE.exists) (existsQ existsList)
+  where existsList l = [not (null l)]
+        existsQ existsf q = do
+          exists_ <- existsf q
+          pure (Choices [Left (CBool exists_)])
+
+
 {- TODO
 
   * Nullability
@@ -572,6 +581,7 @@ run conn = do
   test1 maybeFieldsToSelect
   test2 traverseMaybeFields
   test2 lateral
+  test1 exists
 
 -- }
 

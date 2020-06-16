@@ -53,6 +53,7 @@ library
                    Opaleye.Constant,
                    Opaleye.Distinct,
                    Opaleye.Experimental.Enum,
+                   Opaleye.Exists,
                    Opaleye.Field,
                    Opaleye.FunctionalJoin,
                    Opaleye.Join,

@@ -21,6 +21,8 @@ data BinOp = Except
 
 data JoinType = LeftJoin | RightJoin | FullJoin deriving Show
 
+data SemijoinType = Semi | Anti deriving Show
+
 data TableIdentifier = TableIdentifier
   { tiSchemaName :: Maybe String
   , tiTableName  :: String
@@ -78,7 +80,8 @@ data PrimQuery' a = Unit
                               (Bindings HPQ.PrimExpr)
                               (PrimQuery' a)
                               (PrimQuery' a)
-                  | Exists    Bool (PrimQuery' a) (PrimQuery' a)
+                  | Semijoin  SemijoinType (PrimQuery' a) (PrimQuery' a)
+                  | Exists    Symbol (PrimQuery' a)
                   | Values    [Symbol] (NEL.NonEmpty [HPQ.PrimExpr])
                   | Binary    BinOp
                               (PrimQuery' a, PrimQuery' a)
@@ -119,7 +122,8 @@ data PrimQueryFold' a p = PrimQueryFold
                       -> p
                       -> p
                       -> p
-  , existsf           :: Bool -> p -> p -> p
+  , semijoin          :: SemijoinType -> p -> p -> p
+  , exists            :: Symbol -> p -> p
   , values            :: [Symbol] -> NEL.NonEmpty [HPQ.PrimExpr] -> p
   , binary            :: BinOp
                       -> (p, p)
@@ -142,11 +146,12 @@ primQueryFoldDefault = PrimQueryFold
   , distinctOnOrderBy = DistinctOnOrderBy
   , limit             = Limit
   , join              = Join
+  , semijoin          = Semijoin
   , values            = Values
   , binary            = Binary
   , label             = Label
   , relExpr           = RelExpr
-  , existsf           = Exists
+  , exists            = Exists
   , rebind            = Rebind
   , forUpdate         = ForUpdate
   }
@@ -162,11 +167,12 @@ foldPrimQuery f = fix fold
           DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs (self q)
           Limit op q                  -> limit             f op (self q)
           Join j cond pe1 pe2 q1 q2   -> join              f j cond pe1 pe2 (self q1) (self q2)
+          Semijoin j q1 q2            -> semijoin          f j (self q1) (self q2)
           Values ss pes               -> values            f ss pes
           Binary binop (q1, q2)       -> binary            f binop (self q1, self q2)
           Label l pq                  -> label             f l (self pq)
           RelExpr pe syms             -> relExpr           f pe syms
-          Exists b q1 q2              -> existsf           f b (self q1) (self q2)
+          Exists s q                  -> exists            f s (self q)
           Rebind star pes q           -> rebind            f star pes (self q)
           ForUpdate q                 -> forUpdate         f (self q)
         fix g = let x = g x in x
@@ -176,12 +182,6 @@ times q q' = Product (pure q NEL.:| [pure q']) []
 
 restrict :: HPQ.PrimExpr -> PrimQuery -> PrimQuery
 restrict cond primQ = Product (return (pure primQ)) [cond]
-
-exists :: PrimQuery -> PrimQuery -> PrimQuery
-exists = Exists True
-
-notExists :: PrimQuery -> PrimQuery -> PrimQuery
-notExists = Exists False
 
 isUnit :: PrimQuery' a -> Bool
 isUnit Unit = True
