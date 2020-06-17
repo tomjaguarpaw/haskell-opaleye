@@ -70,7 +70,8 @@ data PrimQuery' a = Unit
                               (PrimQuery' a, PrimQuery' a)
                   | Label     String (PrimQuery' a)
                   | RelExpr   HPQ.PrimExpr (Bindings HPQ.PrimExpr)
-                  | Rebind    (Bindings HPQ.PrimExpr)
+                  | Rebind    Bool
+                              (Bindings HPQ.PrimExpr)
                               (PrimQuery' a)
                  deriving Show
 
@@ -107,7 +108,7 @@ data PrimQueryFold' a p = PrimQueryFold
   , label             :: String -> p -> p
   , relExpr           :: HPQ.PrimExpr -> Bindings HPQ.PrimExpr -> p
     -- ^ A relation-valued expression
-  , rebind            :: Bindings HPQ.PrimExpr -> p -> p
+  , rebind            :: Bool -> Bindings HPQ.PrimExpr -> p -> p
   }
 
 
@@ -145,7 +146,7 @@ foldPrimQuery f = fix fold
           Label l pq                  -> label             f l (self pq)
           RelExpr pe syms             -> relExpr           f pe syms
           Exists b q1 q2              -> existsf           f b (self q1) (self q2)
-          Rebind pes q                -> rebind            f pes (self q)
+          Rebind star pes q           -> rebind            f star pes (self q)
         fix g = let x = g x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery

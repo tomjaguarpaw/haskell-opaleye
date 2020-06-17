@@ -284,8 +284,11 @@ relExpr pe columns = SelectFrom $
               , tables = [RelExpr (sqlExpr pe)]
               }
 
-rebind :: [(Symbol, HPQ.PrimExpr)] -> Select -> Select
-rebind pes select = SelectFrom newSelect
-  { attrs = SelectAttrs (ensureColumns (map sqlBinding pes))
+rebind :: Bool -> [(Symbol, HPQ.PrimExpr)] -> Select -> Select
+rebind star pes select = SelectFrom newSelect
+  { attrs = selectAttrs (ensureColumns (map sqlBinding pes))
   , tables = [select]
   }
+  where selectAttrs = case star of
+          True  -> SelectAttrsStar
+          False -> SelectAttrs

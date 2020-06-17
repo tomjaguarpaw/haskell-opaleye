@@ -48,8 +48,8 @@ sameTypeBinOpHelper binop binaryspec q1 q2 = Q.simpleQueryArr q where
                                     (columns1, columns2))
 
           newPrimQuery = PQ.Binary binop
-            ( PQ.Rebind (map (fmap fst) pes) primQuery1
-            , PQ.Rebind (map (fmap snd) pes) primQuery2
+            ( PQ.Rebind False (map (fmap fst) pes) primQuery1
+            , PQ.Rebind False (map (fmap snd) pes) primQuery2
             )
 
 instance Default Binaryspec (Column a) (Column a) where
