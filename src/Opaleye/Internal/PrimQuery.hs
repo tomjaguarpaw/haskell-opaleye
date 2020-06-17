@@ -46,7 +46,7 @@ data PrimQuery' a = Unit
                   | Aggregate (Bindings (Maybe (HPQ.AggrOp,
                                                 [HPQ.OrderExpr],
                                                 HPQ.AggrDistinct),
-                                          HPQ.PrimExpr))
+                                          HPQ.Symbol))
                               (PrimQuery' a)
                   -- | Represents both @DISTINCT ON@ and @ORDER BY@
                   --   clauses. In order to represent valid SQL only,
@@ -85,7 +85,7 @@ data PrimQueryFold' a p = PrimQueryFold
   , product           :: NEL.NonEmpty p -> [HPQ.PrimExpr] -> p
   , aggregate         :: Bindings (Maybe
                              (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                                   HPQ.PrimExpr)
+                                   HPQ.Symbol)
                       -> p
                       -> p
   , distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr)

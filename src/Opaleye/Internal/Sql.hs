@@ -127,10 +127,10 @@ product ss pes = SelectFrom $
 
 aggregate :: [(Symbol,
                (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                HPQ.PrimExpr))]
+                HPQ.Symbol))]
           -> Select
           -> Select
-aggregate aggrs s =
+aggregate aggrs' s =
   SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (map attr aggrs))
                          , tables = [s]
                          , groupBy = (Just . groupBy') aggrs }
@@ -158,6 +158,8 @@ aggregate aggrs s =
         handleEmpty =
           M.fromMaybe (return (SP.deliteral (HSql.ConstSqlExpr "0")))
           . NEL.nonEmpty
+
+        aggrs = (map . Arr.second . Arr.second) HPQ.AttrExpr aggrs'
 
         groupBy' :: [(symbol, (Maybe aggrOp, HPQ.PrimExpr))]
                  -> NEL.NonEmpty HSql.SqlExpr
