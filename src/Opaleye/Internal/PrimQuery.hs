@@ -154,7 +154,7 @@ foldPrimQuery f = fix fold
           Limit op q                  -> limit             f op (self q)
           Join j cond pe1 pe2 q1 q2   -> join              f j cond pe1 pe2 (self q1) (self q2)
           Values ss pes               -> values            f ss pes
-          Binary binop (q1, q2)   -> binary                f binop (self q1, self q2)
+          Binary binop (q1, q2)       -> binary            f binop (self q1, self q2)
           Label l pq                  -> label             f l (self pq)
           RelExpr pe syms             -> relExpr           f pe syms
           Exists b q1 q2              -> existsf           f b (self q1) (self q2)
