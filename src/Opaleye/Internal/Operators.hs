@@ -78,7 +78,7 @@ relationValuedExprExplicit :: RelExprMaker strings columns
                            -> (a -> HPQ.PrimExpr)
                            -> QA.QueryArr a columns
 relationValuedExprExplicit rem_ strings pe =
-  QA.simpleQueryArr $ \(a, tag) ->
+  QA.productQueryArr $ \(a, tag) ->
     let (primExprs, projcols) = runRelExprMaker rem_ tag strings
         primQ :: PQ.PrimQuery
         primQ = PQ.RelExpr (pe a) projcols

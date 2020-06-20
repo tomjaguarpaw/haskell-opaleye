@@ -23,10 +23,14 @@ newtype QueryArr a b = QueryArr ((a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag
 
 type Query = QueryArr ()
 
-simpleQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
-simpleQueryArr f = QueryArr g
+productQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
+productQueryArr f = QueryArr g
   where g (a0, primQuery, t0) = (a1, PQ.times primQuery primQuery', t1)
           where (a1, primQuery', t1) = f (a0, t0)
+
+{-# DEPRECATED simpleQueryArr "Use 'productQueryArr' instead. Its name indicates better what it actually does" #-}
+simpleQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
+simpleQueryArr = productQueryArr
 
 runQueryArr :: QueryArr a b -> (a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag)
 runQueryArr (QueryArr f) = f
