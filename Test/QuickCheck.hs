@@ -348,6 +348,13 @@ compareNoSort :: (Ord a, Show a)
 compareNoSort conn one two = do
   one' <- unSelectDenotation one conn
   two' <- unSelectDenotation two conn
+
+  if (one' /= two')
+    then (putStrLn $ if (sort one' == sort two')
+                     then "[but they are equal sorted]"
+                     else "AND THEY'RE NOT EVEN EQUAL SORTED!")
+    else return ()
+
   return (one' === two')
 
 compare' :: Ord a
