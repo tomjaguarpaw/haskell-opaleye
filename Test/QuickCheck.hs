@@ -13,6 +13,7 @@ import           Wrapped (constructor, asSumProfunctor,
                           constructorDecidable, asDecidable)
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Test.QuickCheck as TQ
+import           Test.QuickCheck ((===))
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
 import qualified Data.Profunctor.Product.Default as D
 import           Data.List (sort)
@@ -339,15 +340,15 @@ denotation2 = denotation (defChoicesPP PP.***! defChoicesPP)
 -- { Comparing the results
 
 -- compareNoSort is stronger than compare' so prefer to use it where possible
-compareNoSort :: Eq a
+compareNoSort :: (Ord a, Show a)
               => PGS.Connection
               -> SelectDenotation a
               -> SelectDenotation a
-              -> IO Bool
+              -> IO TQ.Property
 compareNoSort conn one two = do
   one' <- unSelectDenotation one conn
   two' <- unSelectDenotation two conn
-  return (one' == two')
+  return (one' === two')
 
 compare' :: Ord a
          => PGS.Connection
@@ -375,12 +376,12 @@ compareSortedBy o conn one two = do
 
 -- { The tests
 
-fields :: PGS.Connection -> ArbitraryFields -> IO Bool
+fields :: PGS.Connection -> ArbitraryFields -> IO TQ.Property
 fields conn (ArbitraryFields c) =
   compareNoSort conn (denotation' (pure (fieldsOfHaskells c)))
                      (pure c)
 
-fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitrarySelect -> IO Bool
+fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitrarySelect -> IO TQ.Property
 fmap' conn f (ArbitrarySelect q) =
   compareNoSort conn (denotation' (fmap (unArbitraryGarble f) q))
                      (onList (fmap (unArbitraryGarble f)) (denotation' q))
@@ -424,7 +425,7 @@ limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
   return ((length one' == min l (length two'))
           && condBool)
 
-offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect -> IO Bool
+offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect -> IO TQ.Property
 offset conn (ArbitraryPositiveInt l) (ArbitrarySelect q) =
   compareNoSort conn (denotation' (O.offset l q))
                      (onList (drop l) (denotation' q))
@@ -449,18 +450,18 @@ restrict conn (ArbitrarySelect q) =
   compare' conn (denotation' (restrictFirstBool Arrow.<<< q))
                 (onList restrictFirstBoolList (denotation' q))
 
-values :: PGS.Connection -> ArbitraryFieldsList -> IO Bool
+values :: PGS.Connection -> ArbitraryFieldsList -> IO TQ.Property
 values conn (ArbitraryFieldsList l) =
   compareNoSort conn (denotation' (fmap fieldsList (O.values (fmap O.toFields l))))
                      (pureList (fmap fieldsList l))
 
-aggregate :: PGS.Connection -> ArbitrarySelect -> IO Bool
+aggregate :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
 aggregate conn (ArbitrarySelect q) =
   compareNoSort conn (denotation' (O.aggregate aggregateFields q))
                      (onList aggregateDenotation (denotation' q))
 
 
-label :: PGS.Connection -> String -> ArbitrarySelect -> IO Bool
+label :: PGS.Connection -> String -> ArbitrarySelect -> IO TQ.Property
 label conn comment (ArbitrarySelect q) =
   compareNoSort conn (denotation' (O.label comment q))
                      (denotation' q)
