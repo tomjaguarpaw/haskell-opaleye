@@ -143,8 +143,18 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aqArg ((pure . fieldsOfHaskells) fields_)
     , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.selectTable table1)))
     , do
-        ArbitraryFieldsList l <- TQ.arbitrary
-        aqArg (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.toFields l))))
+        q <- TQ.oneof [
+            do
+            ArbitraryFieldsList l <- TQ.arbitrary
+            return (fmap fieldsList (O.valuesSafe (fmap O.toFields l)))
+          , -- We test empty lists of values separately, because we
+            -- used to not support them
+            do
+              l <- TQ.arbitrary
+              let _ = l :: [()]
+              return (fmap (const []) (O.valuesSafe l))
+          ]
+        aqArg (P.lmap (const ()) q)
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
@@ -455,8 +465,16 @@ restrict conn (ArbitrarySelect q) =
 
 values :: PGS.Connection -> ArbitraryFieldsList -> IO TQ.Property
 values conn (ArbitraryFieldsList l) =
-  compareNoSort conn (denotation' (fmap fieldsList (O.values (fmap O.toFields l))))
+  compareNoSort conn (denotation' (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
                      (pureList (fmap fieldsList l))
+
+-- We test values entries of length two in values, and values entries
+-- of length zero here.  Ideally we would find some way to merge them.
+valuesEmpty :: PGS.Connection -> [()] -> IO TQ.Property
+valuesEmpty conn l =
+  compareNoSort conn
+                (denotation D.def (O.valuesSafe l))
+                (pureList l)
 
 aggregate :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
 aggregate conn (ArbitrarySelect q) =
@@ -519,6 +537,7 @@ run conn = do
   test1 distinct
   test1 restrict
   test1 values
+  test1 valuesEmpty
   test1 aggregate
   test2 label
 

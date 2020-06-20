@@ -2,6 +2,10 @@
   `requiredTableField`, to replace `optional`, `readOnly` and
   `required` in a later version.
 
+* Add `valuesSafe`, a version of `values`. `values` of an empty list
+  generates incorrect queries when mixed with @OUTER@/@LEFT@/@RIGHT
+  JOIN@s.  `valuesSafe` will replace it in version 0.7
+
 * Add `Opaleye.Unpackspec` as the forward-compatible place to import
   `Unpackspec` from
 

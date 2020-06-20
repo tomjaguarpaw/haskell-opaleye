@@ -8,6 +8,8 @@ import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.PGTypes
+import qualified Opaleye.SqlTypes
 
 import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor (Profunctor, dimap, rmap)
@@ -64,6 +66,62 @@ runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 instance Default Valuesspec (Column a) (Column a) where
   def = Valuesspec (PM.iso id Column)
 
+valuesUSafe :: ValuesspecSafe columns columns'
+            -> [columns]
+            -> ((), T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
+valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows ((), t) =
+  (newColumns, primQ', T.next t)
+  where runRow row =
+          case PM.run (U.runUnpackspec unpack extractValuesEntry row) of
+            (_, []) -> [zero]
+            (_, xs) -> xs
+
+        (newColumns, valuesPEs_nulls) =
+          PM.run (runValuesspecSafe valuesspec (extractValuesField t))
+
+        valuesPEs = map fst valuesPEs_nulls
+        nulls = case map snd valuesPEs_nulls of
+          []     -> [nullInt]
+          nulls' -> nulls'
+
+        yieldNoRows :: PQ.PrimQuery -> PQ.PrimQuery
+        yieldNoRows = PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False))
+
+        zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
+        nullInt = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType
+                                  (Nothing :: Maybe Opaleye.SqlTypes.SqlInt4))
+                               (HPQ.ConstExpr HPQ.NullLit)
+
+        (values, wrap) = case NEL.nonEmpty rows of
+          Nothing    -> (pure nulls, yieldNoRows)
+          Just rows' -> (fmap runRow rows', id)
+
+        primQ' = wrap (PQ.Values valuesPEs values)
+
+data ValuesspecSafe columns columns' =
+  ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
+                 (U.Unpackspec columns columns')
+
+runValuesspecSafe :: Applicative f
+                  => ValuesspecSafe columns columns'
+                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
+                  -> f columns'
+runValuesspecSafe (ValuesspecSafe v _) f = PM.traversePM v f ()
+
+instance Opaleye.Internal.PGTypes.IsSqlType a
+  => Default ValuesspecSafe (Column a) (Column a) where
+  def = def_
+    where def_ = ValuesspecSafe (PM.PackMap (\f () -> fmap Column (f null_)))
+                                U.unpackspecColumn
+
+          null_ = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
+                               (HPQ.ConstExpr HPQ.NullLit)
+
+          sqlType = columnProxy def_
+          columnProxy :: f (Column sqlType) -> Maybe sqlType
+          columnProxy _ = Nothing
+
+
 -- {
 
 -- Boilerplate instance definitions.  Theoretically, these are derivable.
@@ -79,6 +137,21 @@ instance Profunctor Valuesspec where
   dimap _ g (Valuesspec q) = Valuesspec (rmap g q)
 
 instance ProductProfunctor Valuesspec where
+  purePP = pure
+  (****) = (<*>)
+
+instance Functor (ValuesspecSafe a) where
+  fmap f (ValuesspecSafe g h) = ValuesspecSafe (fmap f g) (fmap f h)
+
+instance Applicative (ValuesspecSafe a) where
+  pure a = ValuesspecSafe (pure a) (pure a)
+  ValuesspecSafe f f' <*> ValuesspecSafe x x' =
+    ValuesspecSafe (f <*> x) (f' <*> x')
+
+instance Profunctor ValuesspecSafe where
+  dimap f g (ValuesspecSafe q q') = ValuesspecSafe (rmap g q) (dimap f g q')
+
+instance ProductProfunctor ValuesspecSafe where
   purePP = pure
   (****) = (<*>)
 
