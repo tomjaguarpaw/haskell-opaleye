@@ -181,6 +181,8 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         thisLabel        <- TQ.arbitrary
         aqArg (O.label thisLabel q)
     , do
+        ArbitrarySelectArr q1 <- TQ.arbitrary
+        ArbitrarySelectArr q2 <- TQ.arbitrary
         binaryOperation <- TQ.elements [ O.intersect
                                        , O.intersectAll
                                        , O.union
@@ -188,7 +190,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                                        , O.except
                                        , O.exceptAll
                                        ]
-        q <- arbitraryBinary binaryOperation
+        q <- arbitraryBinary binaryOperation q1 q2
         aqArg q
     , -- This is stupidly simple way of generating lateral subqueries.
       -- All it does is run a lateral aggregation.
@@ -207,10 +209,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
 
           aqArg = return . ArbitrarySelectArr
 
-          arbitraryBinary binaryOperation = do
-            ArbitrarySelectArr q1 <- TQ.arbitrary
-            ArbitrarySelectArr q2 <- TQ.arbitrary
-
+          arbitraryBinary binaryOperation q1 q2 =
             return (P.lmap (const ())
                     (fmap fieldsList
                      (binaryOperation
