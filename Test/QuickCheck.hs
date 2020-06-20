@@ -202,19 +202,15 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
-          aq qf = aqArg
-                  . P.lmap (const ())
-                  . qf
-                  . (<<< pure [])
+          aq qf = aqArg . OL.laterally qf
 
           aqArg = return . ArbitrarySelectArr
 
           arbitraryBinary binaryOperation q1 q2 =
-            return (P.lmap (const ())
-                    (fmap fieldsList
-                     (binaryOperation
-                      (fmap listFields (q1 <<< pure []))
-                      (fmap listFields (q2 <<< pure [])))))
+            return (fmap fieldsList
+                    (OL.bilaterally binaryOperation
+                     (fmap listFields q1)
+                     (fmap listFields q2)))
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
