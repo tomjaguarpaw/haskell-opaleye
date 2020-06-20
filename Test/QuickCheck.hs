@@ -27,6 +27,7 @@ import qualified Data.Ord as Ord
 import qualified Data.Set as Set
 import qualified Data.Maybe as Maybe
 import qualified Control.Arrow as Arrow
+import           Control.Arrow ((<<<))
 
 twoIntTable :: String
             -> O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
@@ -133,7 +134,7 @@ instance Show ArbitraryGarble where
 instance TQ.Arbitrary ArbitrarySelect where
   arbitrary = do
     ArbitrarySelectArr q <- TQ.arbitrary
-    return (ArbitrarySelect (q Arrow.<<< pure []))
+    return (ArbitrarySelect (q <<< pure []))
 
 instance TQ.Arbitrary ArbitrarySelectArr where
   arbitrary = TQ.oneof [
@@ -171,7 +172,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
 
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
-        aqArg (restrictFirstBool Arrow.<<< q)
+        aqArg (restrictFirstBool <<< q)
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.aggregate aggregateFields) q
@@ -202,7 +203,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
           aq qf = aqArg
                   . P.lmap (const ())
                   . qf
-                  . (Arrow.<<< pure [])
+                  . (<<< pure [])
 
           aqArg = return . ArbitrarySelectArr
 
@@ -213,8 +214,8 @@ instance TQ.Arbitrary ArbitrarySelectArr where
             return (P.lmap (const ())
                     (fmap fieldsList
                      (binaryOperation
-                      (fmap listFields (q1 Arrow.<<< pure []))
-                      (fmap listFields (q2 Arrow.<<< pure [])))))
+                      (fmap listFields (q1 <<< pure []))
+                      (fmap listFields (q2 <<< pure [])))))
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
@@ -454,7 +455,7 @@ distinct conn (ArbitrarySelect q) =
 -- restrict had to start being compared sorted.
 restrict :: PGS.Connection -> ArbitrarySelect -> IO Bool
 restrict conn (ArbitrarySelect q) =
-  compare' conn (denotation' (restrictFirstBool Arrow.<<< q))
+  compare' conn (denotation' (restrictFirstBool <<< q))
                 (onList restrictFirstBoolList (denotation' q))
 
 values :: PGS.Connection -> ArbitraryFieldsList -> IO TQ.Property
@@ -579,8 +580,8 @@ isInt (CString _) = Nothing
 
 restrictFirstBool :: O.SelectArr Fields Fields
 restrictFirstBool = Arrow.arr snd
-      Arrow.<<< Arrow.first O.restrict
-      Arrow.<<< Arrow.arr (firstBoolOrTrue (O.sqlBool True))
+      <<< Arrow.first O.restrict
+      <<< Arrow.arr (firstBoolOrTrue (O.sqlBool True))
 
 restrictFirstBoolList :: [Haskells] -> [Haskells]
 restrictFirstBoolList = map snd
