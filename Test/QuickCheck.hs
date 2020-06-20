@@ -148,7 +148,9 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
-        aqArg ((++) <$> q1 <*> q2)
+        q <- TQ.oneof [ pure ((++) <$> q1 <*> q2)
+                      , pure (q1 <<< q2) ]
+        aqArg q
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.distinctExplicit defChoicesPP) q
@@ -480,7 +482,7 @@ label conn comment (ArbitrarySelect q) =
   * Nullability
   * Left join
   * Operators (mathematical, logical, etc.)
-  * >>>?
+  * Denotation of <<<
 
   * The denotation of lateral subqueries (at the moment we just
     generate subqueries containing them, but we don't check their
