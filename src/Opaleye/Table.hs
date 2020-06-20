@@ -140,7 +140,7 @@ selectTableExplicit :: U.Unpackspec tablefields fields
                     -> Table a tablefields
                     -- ^
                     -> S.Select fields
-selectTableExplicit cm table' = Q.simpleQueryArr f where
+selectTableExplicit cm table' = Q.productQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
     (retwires, primQ) = T.queryTable cm table' t0
 

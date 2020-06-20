@@ -52,7 +52,7 @@ example = 'orderBy' ('asc' fst \<\> 'desc' snd)
 -}
 orderBy :: O.Order a -> S.Select a -> S.Select a
 orderBy os q =
-  Q.simpleQueryArr (O.orderByU os . Q.runSimpleQueryArr q)
+  Q.productQueryArr (O.orderByU os . Q.runSimpleQueryArr q)
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear last)
@@ -109,7 +109,7 @@ SELECT * FROM (SELECT * FROM yourTable LIMIT 10) OFFSET 50
 @
 -}
 limit :: Int -> S.Select a -> S.Select a
-limit n a = Q.simpleQueryArr (O.limit' n . Q.runSimpleQueryArr a)
+limit n a = Q.productQueryArr (O.limit' n . Q.runSimpleQueryArr a)
 
 {- |
 Offset the results of the given 'S.Select' by the given amount, skipping
@@ -119,7 +119,7 @@ that many result rows.
 'offset' with 'limit'.
 -}
 offset :: Int -> S.Select a -> S.Select a
-offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
+offset n a = Q.productQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 
 -- * Distinct on
 
@@ -128,7 +128,7 @@ offset n a = Q.simpleQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 --   tuples of 'Opaleye.Field.Field_'s. Use 'distinctOnBy' to control how the rows
 --   are chosen.
 distinctOn :: D.Default U.Unpackspec b b => (a -> b) -> S.Select a -> S.Select a
-distinctOn proj q = Q.simpleQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
+distinctOn proj q = Q.productQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
 
 
 -- | Keep the row from each set where the given function returns the same result. The
@@ -137,7 +137,7 @@ distinctOn proj q = Q.simpleQueryArr (O.distinctOn D.def proj . Q.runSimpleQuery
 --   out tuples of 'Opaleye.Field.Field_'s.
 distinctOnBy :: D.Default U.Unpackspec b b => (a -> b) -> O.Order a
              -> S.Select a -> S.Select a
-distinctOnBy proj ord q = Q.simpleQueryArr (O.distinctOnBy D.def proj ord . Q.runSimpleQueryArr q)
+distinctOnBy proj ord q = Q.productQueryArr (O.distinctOnBy D.def proj ord . Q.runSimpleQueryArr q)
 
 
 -- * Other

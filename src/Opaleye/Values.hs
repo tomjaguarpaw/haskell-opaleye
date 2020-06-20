@@ -38,7 +38,7 @@ valuesExplicit :: U.Unpackspec fields fields'
                -> V.Valuesspec fields fields'
                -> [fields] -> S.Select fields'
 valuesExplicit unpack valuesspec fields =
-  Q.simpleQueryArr (V.valuesU unpack valuesspec fields)
+  Q.productQueryArr (V.valuesU unpack valuesspec fields)
 
 valuesSafe :: (Default V.ValuesspecSafe fields fields,
                 Default U.Unpackspec fields fields) =>
@@ -49,7 +49,7 @@ valuesSafeExplicit :: U.Unpackspec fields fields'
                     -> V.ValuesspecSafe fields fields'
                     -> [fields] -> S.Select fields'
 valuesSafeExplicit unpack valuesspec fields =
-  Q.simpleQueryArr (V.valuesUSafe unpack valuesspec fields)
+  Q.productQueryArr (V.valuesUSafe unpack valuesspec fields)
 
 valuesUnsafe :: (Default V.Valuesspec fields fields,
                  Default U.Unpackspec fields fields) =>

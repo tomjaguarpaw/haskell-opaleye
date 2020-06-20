@@ -72,7 +72,7 @@ result of an aggregation.
 
 -}
 aggregate :: Aggregator a b -> S.Select a -> S.Select b
-aggregate agg q = Q.simpleQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
+aggregate agg q = Q.productQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
 -- | Order the values within each aggregation in `Aggregator` using
 -- the given ordering. This is only relevant for aggregations that

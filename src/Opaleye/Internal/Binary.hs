@@ -38,7 +38,7 @@ binaryspecColumn = Binaryspec (PM.iso (mapBoth unColumn) Column)
 
 sameTypeBinOpHelper :: PQ.BinOp -> Binaryspec columns columns'
                     -> Q.Query columns -> Q.Query columns -> Q.Query columns'
-sameTypeBinOpHelper binop binaryspec q1 q2 = Q.simpleQueryArr q where
+sameTypeBinOpHelper binop binaryspec q1 q2 = Q.productQueryArr q where
   q ((), startTag) = (newColumns, newPrimQuery, T.next endTag)
     where (columns1, primQuery1, midTag) = Q.runSimpleQueryArr q1 ((), startTag)
           (columns2, primQuery2, endTag) = Q.runSimpleQueryArr q2 ((), midTag)
