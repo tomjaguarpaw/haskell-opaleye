@@ -138,8 +138,8 @@ instance TQ.Arbitrary ArbitrarySelect where
 instance TQ.Arbitrary ArbitrarySelectArr where
   arbitrary = TQ.oneof [
       do
-        arbitraryFields <- TQ.arbitrary
-        aqArg ((pure . fieldsOfHaskells . unArbitraryFields) arbitraryFields)
+        ArbitraryFields fields_ <- TQ.arbitrary
+        aqArg ((pure . fieldsOfHaskells) fields_)
     , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.selectTable table1)))
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
