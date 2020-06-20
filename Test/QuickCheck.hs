@@ -168,13 +168,11 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aq (O.orderBy (arbitraryOrder o)) q
 
     , do
-        ArbitrarySelectArr q <- TQ.arbitrary
         f                <- TQ.arbitrary
-        aqArg (fmap (unArbitraryGarble f) q)
+        aqArg (Arrow.arr (unArbitraryGarble f))
 
     , do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        aqArg (restrictFirstBool <<< q)
+        aqArg restrictFirstBool
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.aggregate aggregateFields) q
