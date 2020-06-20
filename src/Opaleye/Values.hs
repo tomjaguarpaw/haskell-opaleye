@@ -24,6 +24,11 @@ import           Data.Profunctor.Product.Default (Default, def)
 -- @
 -- values :: [Foo (Field a) (Field b) (Field c)] -> S.Select (Foo (Field a) (Field b) (Field c))
 -- @
+--
+-- (Please note that 'values' of an empty list generates incorrect
+-- queries when mixed with @OUTER@\/@LEFT@\/@RIGHT JOIN@.  You should
+-- use 'valuesSafe' instead.  'valuesSafe' will replace 'values' in
+-- version 0.7.)
 values :: (Default V.Valuesspec fields fields,
            Default U.Unpackspec fields fields) =>
           [fields] -> S.Select fields
@@ -34,3 +39,24 @@ valuesExplicit :: U.Unpackspec fields fields'
                -> [fields] -> S.Select fields'
 valuesExplicit unpack valuesspec fields =
   Q.simpleQueryArr (V.valuesU unpack valuesspec fields)
+
+valuesSafe :: (Default V.ValuesspecSafe fields fields,
+                Default U.Unpackspec fields fields) =>
+               [fields] -> S.Select fields
+valuesSafe = valuesSafeExplicit def def
+
+valuesSafeExplicit :: U.Unpackspec fields fields'
+                    -> V.ValuesspecSafe fields fields'
+                    -> [fields] -> S.Select fields'
+valuesSafeExplicit unpack valuesspec fields =
+  Q.simpleQueryArr (V.valuesUSafe unpack valuesspec fields)
+
+valuesUnsafe :: (Default V.Valuesspec fields fields,
+                 Default U.Unpackspec fields fields) =>
+                [fields] -> S.Select fields
+valuesUnsafe = values
+
+valuesUnsafeExplicit :: U.Unpackspec fields fields'
+                     -> V.Valuesspec fields fields'
+                     -> [fields] -> S.Select fields'
+valuesUnsafeExplicit = valuesExplicit

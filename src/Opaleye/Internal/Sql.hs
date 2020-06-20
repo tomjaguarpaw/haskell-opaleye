@@ -226,9 +226,9 @@ join j cond pes1 pes2 s1 s2 =
 -- Postgres seems to name columns of VALUES clauses "column1",
 -- "column2", ... . I'm not sure to what extent it is customisable or
 -- how robust it is to rely on this
-values :: [Symbol] -> NEL.NonEmpty [HPQ.PrimExpr] -> Select
+values :: [Symbol] -> [[HPQ.PrimExpr]] -> Select
 values columns pes = SelectValues Values { vAttrs  = SelectAttrs (mkColumns columns)
-                                         , vValues = NEL.toList ((fmap . map) sqlExpr pes) }
+                                         , vValues = (fmap . map) sqlExpr pes }
   where mkColumns = ensureColumns . zipWith (flip (curry (sqlBinding . Arr.second mkColumn))) [1..]
         mkColumn i = (HPQ.BaseTableAttrExpr . ("column" ++) . show) (i::Int)
 

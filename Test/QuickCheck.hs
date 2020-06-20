@@ -144,7 +144,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.selectTable table1)))
     , do
         ArbitraryFieldsList l <- TQ.arbitrary
-        aqArg (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.toFields l))))
+        aqArg (P.lmap (const ()) (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
@@ -455,7 +455,7 @@ restrict conn (ArbitrarySelect q) =
 
 values :: PGS.Connection -> ArbitraryFieldsList -> IO TQ.Property
 values conn (ArbitraryFieldsList l) =
-  compareNoSort conn (denotation' (fmap fieldsList (O.values (fmap O.toFields l))))
+  compareNoSort conn (denotation' (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
                      (pureList (fmap fieldsList l))
 
 aggregate :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property

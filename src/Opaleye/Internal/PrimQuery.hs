@@ -77,7 +77,7 @@ data PrimQuery' a = Unit
                               (PrimQuery' a)
                               (PrimQuery' a)
                   | Exists    Bool (PrimQuery' a) (PrimQuery' a)
-                  | Values    [Symbol] (NEL.NonEmpty [HPQ.PrimExpr])
+                  | Values    [Symbol] [[HPQ.PrimExpr]]
                   | Binary    BinOp
                               (PrimQuery' a, PrimQuery' a)
                   | Label     String (PrimQuery' a)
@@ -113,7 +113,7 @@ data PrimQueryFold' a p = PrimQueryFold
                       -> p
                       -> p
   , existsf           :: Bool -> p -> p -> p
-  , values            :: [Symbol] -> NEL.NonEmpty [HPQ.PrimExpr] -> p
+  , values            :: [Symbol] -> [[HPQ.PrimExpr]] -> p
   , binary            :: BinOp
                       -> (p, p)
                       -> p
