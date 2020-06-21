@@ -1,5 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 
+-- | Do not use. This module will be deprecated in 0.7.
+
 module Opaleye.Map where
 
 type family Map f x
