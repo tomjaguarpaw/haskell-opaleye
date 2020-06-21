@@ -111,6 +111,7 @@ instance PP.ProductProfunctor NullMaker where
 
 --
 
+-- | Do not use.  Nulled will be deprecated in 0.7.
 data Nulled
 
 type instance TF.IMap Nulled TF.OT     = TF.NullsT
