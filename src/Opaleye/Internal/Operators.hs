@@ -4,7 +4,7 @@
 
 module Opaleye.Internal.Operators where
 
-import           Opaleye.Internal.Column (Column)
+import           Opaleye.Internal.Column (Column(Column))
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
@@ -14,21 +14,36 @@ import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.PGTypes as T
+import qualified Opaleye.SqlTypes as T
+import qualified Opaleye.Field as F
+import qualified Opaleye.Select as S
 
 import           Data.Profunctor (Profunctor, dimap, lmap, rmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
+
+restrict :: S.SelectArr (F.Field T.SqlBool) ()
+restrict = QA.QueryArr f where
+  f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
 
 infix 4 .==
 (.==) :: forall columns. D.Default EqPP columns columns
       => columns -> columns -> Column T.PGBool
 (.==) = eqExplicit (D.def :: EqPP columns columns)
 
+infixr 2 .||
+
+(.||) :: F.Field T.SqlBool -> F.Field T.SqlBool -> F.Field T.SqlBool
+(.||) = C.binOp HPQ.OpOr
+
 infixr 3 .&&
 
 -- | Boolean and
 (.&&) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
 (.&&) = C.binOp HPQ.OpAnd
+
+not :: F.Field T.SqlBool -> F.Field T.SqlBool
+not = C.unOp HPQ.OpNot
 
 newtype EqPP a b = EqPP (a -> a -> Column T.PGBool)
 

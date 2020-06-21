@@ -1,23 +1,4 @@
 -- | Left, right, and full outer joins.
---
--- "Opaleye.FunctionalJoin" provides a much nicer, Haskelly, interface
--- to joins than this module, which sticks to the (horrible) standard
--- \"make missing rows NULL\" interface that SQL provides.
---
--- If you want inner joins, just use 'restrict' instead.
---
--- The use of the 'D.Default' typeclass means that the compiler will
--- have trouble inferring types.  It is strongly recommended that you
--- provide full type signatures when using the join functions.
---
--- Example specialization:
---
--- @
--- leftJoin :: Select (Field a, Field b)
---          -> Select (Field c, FieldNullable d)
---          -> (((Field a, Field b), (Field c, FieldNullable d)) -> Field 'Opaleye.SqlTypes.SqlBool')
---          -> Select ((Field a, Field b), (FieldNullable c, FieldNullable d))
--- @
 
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -29,6 +10,7 @@ module Opaleye.Join where
 import qualified Opaleye.Field               as F
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Join as J
+import qualified Opaleye.Internal.MaybeFields as M
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Map as Map
 import qualified Opaleye.Select   as S
@@ -36,8 +18,92 @@ import qualified Opaleye.SqlTypes as T
 
 import qualified Data.Profunctor.Product.Default as D
 
--- * Joins
+-- * The recommended way of performing joins in Opaleye
 
+-- $ref
+--
+-- Opaleye supports inner joins, left/right joins and full outer
+-- joins.  Instead of using them directly we recommend the following,
+-- which provide APIs that are more familiar to a Haskell programmer
+-- and more composable:
+--
+-- - Inner joins: use 'Opaleye.Operators.restrict' directly (along
+--   with 'Control.Applicative.<*>' or arrow notation)
+--
+-- - Left/right joins: use 'optionalRestrict'
+--
+-- - Full outer joins: use 'Opaleye.FunctionalJoin.fullJoinF' (If you
+--   have a real-world use case for full outer joins then we'd love to
+--   hear about it. Please [open a new issue on the Opaleye
+--   project](http://github.com/tomjaguarpaw/haskell-opaleye/issues/new)
+--   and tell us about it.)
+
+-- | Convenient access to left/right join functionality.  Performs a
+-- @LEFT JOIN@ under the hood and has behaviour equivalent to the
+-- following Haskell function:
+--
+-- @
+-- optionalRestrict :: [a] -> (a -> Bool) -> Maybe a
+-- optionalRestrict xs p =
+--    case filter p xs of []  -> [Nothing]
+--                        xs' -> map Just xs'
+-- @
+--
+-- For example,
+--
+-- @
+-- > let l = [1, 10, 100, 1000] :: [Field SqlInt4]
+-- > 'Opaleye.RunSelect.runSelect' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 100000)) :: IO [Maybe Int]
+-- [Nothing]
+-- > 'Opaleye.RunSelect.runSelect' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 15)) :: IO [Maybe Int]
+-- [Just 100,Just 1000]
+-- @
+--
+-- See the documentation of 'leftJoin' for how to use
+-- 'optionalRestrict' to replace 'leftJoin' (and by symmetry,
+-- 'rightJoin').
+optionalRestrict :: D.Default U.Unpackspec a a
+                 => S.Select a
+                 -- ^ Input query
+                 -> S.SelectArr (a -> F.Field T.SqlBool) (M.MaybeFields a)
+                 -- ^ If any rows of the input query satisfy the
+                 -- condition then return them (wrapped in \"Just\").
+                 -- If none of them satisfy the condition then return a
+                 -- single row of \"Nothing\"
+optionalRestrict = J.optionalRestrict
+
+
+-- * Direct access to joins (not recommended)
+
+-- $ref2
+--
+-- You probably want use the alternatives listed at the top of this
+-- module instead of these.
+-- The use of the 'D.Default' typeclass means that the compiler will
+-- have trouble inferring types.  It is strongly recommended that you
+-- provide full type signatures when using the join functions.
+-- Example specialization:
+--
+-- @
+-- leftJoin :: Select (Field a, Field b)
+--          -> Select (Field c, FieldNullable d)
+--          -> (((Field a, Field b), (Field c, FieldNullable d)) -> Field 'Opaleye.SqlTypes.SqlBool')
+--          -> Select ((Field a, Field b), (FieldNullable c, FieldNullable d))
+-- @
+
+-- | We suggest you use 'optionalRestrict' instead.  Instead of writing
+-- \"@'Opaleye.Join.leftJoin' qL qR cond@\" you can write
+--
+-- @
+-- proc () -> do
+--   fieldsL <- qL -< ()
+--   maybeFieldsR \<- 'optionalRestrict' qR -\< 'Prelude.curry' cond fieldsL
+--   'Control.Arrow.returnA' -< (fieldsL, maybeFieldsR)
+-- @
+--
+-- Typically everything except the 'optionalRestrict' line can be
+-- inlined in surrounding arrow notation.  In such cases, readability
+-- and maintainibility increase dramatically.
 leftJoin  :: (D.Default U.Unpackspec fieldsL fieldsL,
               D.Default U.Unpackspec fieldsR fieldsR,
               D.Default J.NullMaker fieldsR nullableFieldsR)
@@ -47,8 +113,11 @@ leftJoin  :: (D.Default U.Unpackspec fieldsL fieldsL,
           -> S.Select (fieldsL, nullableFieldsR) -- ^ Left join
 leftJoin = leftJoinExplicit D.def D.def D.def
 
--- | 'leftJoinA' is a convenient way of using left joins within arrow
--- notation
+-- | We suggest you don't use this.  'optionalRestrict' is probably
+-- better for your use case.  'Opaleye.Join.leftJoinA' is the same as
+-- except 'optionalRestrict' without the return type wrapped in
+-- 'Opaleye.Internal.MaybeFields.MaybeFields'.
+
 leftJoinA :: (D.Default U.Unpackspec fieldsR fieldsR,
               D.Default J.NullMaker fieldsR nullableFieldsR)
           => S.Select fieldsR
@@ -58,6 +127,8 @@ leftJoinA :: (D.Default U.Unpackspec fieldsR fieldsR,
           -- result comes out
 leftJoinA = leftJoinAExplict D.def D.def
 
+-- | We suggest you use 'optionalRestrict' instead.  See 'leftJoin'
+-- for more details.
 rightJoin  :: (D.Default U.Unpackspec fieldsL fieldsL,
                D.Default U.Unpackspec fieldsR fieldsR,
                D.Default J.NullMaker fieldsL nullableFieldsL)
@@ -114,6 +185,11 @@ fullJoinExplicit :: U.Unpackspec fieldsL fieldsL
                  -> S.Select (nullableFieldsL, nullableFieldsR)
 fullJoinExplicit uA uB nullmakerA nullmakerB =
   J.joinExplicit uA uB (J.toNullable nullmakerA) (J.toNullable nullmakerB) PQ.FullJoin
+
+optionalRestrictExplicit :: U.Unpackspec a a
+                         -> S.Select a
+                         -> S.SelectArr (a -> F.Field T.SqlBool) (M.MaybeFields a)
+optionalRestrictExplicit = J.optionalRestrictExplicit
 
 -- * Inferrable versions
 

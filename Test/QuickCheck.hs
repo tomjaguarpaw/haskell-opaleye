@@ -8,7 +8,7 @@ module QuickCheck where
 
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
-import qualified Opaleye.MaybeFields as OM
+import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.ToFields as O
 import           Wrapped (constructor, asSumProfunctor,
                           constructorDecidable, asDecidable)
@@ -135,6 +135,9 @@ optionalDenotation = \case
   [] -> [Nothing]
   xs -> map Just xs
 
+optionalRestrictDenotation :: [Haskells] -> [Maybe Haskells]
+optionalRestrictDenotation = optionalDenotation . restrictFirstBoolList
+
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
                               (O.showSqlExplicit unpackFields q)
@@ -216,6 +219,14 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                      . O.fromMaybeFields (0, O.sqlBool True)
                      . fmap listFields)
                     (OM.optional q))
+    , do
+        ArbitrarySelectArr q <- TQ.arbitrary
+        let q' = P.dimap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))
+                         (fieldsList
+                          . OM.fromMaybeFields (0, O.sqlBool True)
+                          . fmap listFields)
+                         (O.optionalRestrictExplicit defChoicesPP (q <<< pure []))
+        aqArg q'
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
@@ -495,6 +506,14 @@ optional conn (ArbitrarySelect q) =
   compare' conn (denotationMaybeFields (OM.optional q))
                 (onList optionalDenotation (denotation' q))
 
+optionalRestrict :: PGS.Connection -> ArbitrarySelect -> IO Bool
+optionalRestrict conn (ArbitrarySelect q) =
+  compare' conn (denotationMaybeFields q1)
+                (onList optionalRestrictDenotation (denotation' q))
+  where q1 = P.lmap (\() -> fst . firstBoolOrTrue (O.sqlBool True))
+                    (O.optionalRestrictExplicit defChoicesPP q)
+
+
 
 {- TODO
 
@@ -543,6 +562,7 @@ run conn = do
   test1 aggregate
   test2 label
   test1 optional
+  test1 optionalRestrict
 
 -- }
 

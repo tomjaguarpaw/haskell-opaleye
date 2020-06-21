@@ -1,3 +1,6 @@
+* Add `Opaleye.Join.optionalRestrict`, as a more convenient and
+  composable way of doing left/right joins.
+
 * Add `Opaleye.MaybeFields`
 
 * Add `optionalTableField`, `readOnlyTableField`,
