@@ -12,7 +12,6 @@ import           Control.Arrow (returnA, (<<<), (>>>))
 import qualified Opaleye.Internal.Binary as B
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Constant as Constant
-import qualified Opaleye.Internal.Distinct as D
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -25,8 +24,8 @@ import           Opaleye.Select (Select, SelectArr)
 import qualified Opaleye.Column
 import qualified Opaleye.Field
 import           Opaleye.Field (Field)
-import           Opaleye.Operators ((.&&), (.||), restrict, not)
-import           Opaleye.Internal.Operators (ifExplict, IfPP)
+import           Opaleye.Internal.Operators ((.&&), (.||), restrict, not,
+                                             ifExplict, IfPP)
 import qualified Opaleye.Internal.Lateral
 import qualified Opaleye.SqlTypes
 import           Opaleye.SqlTypes (SqlBool, IsSqlType)
@@ -110,7 +109,7 @@ traverseMaybeFields query = proc mfInput -> do
   restrict -< mfPresent mfInput `implies` mfPresent mfOutput
   returnA -< MaybeFields (mfPresent mfInput) (mfFields mfOutput)
 
-  where a `implies` b = Opaleye.Operators.not a .|| b
+  where a `implies` b = Opaleye.Internal.Operators.not a .|| b
 
 -- | Convenient access to lateral left/right join
 -- functionality. Performs a @LATERAL LEFT JOIN@ under the hood and
@@ -156,7 +155,7 @@ optional = Opaleye.Internal.Lateral.laterally optionalSelect
           PM.run (U.runUnpackspec U.unpackspecColumn (PM.extractAttr "maybe" tag') t)
         join = PQ.Join PQ.LeftJoin true [] bindings left right
     true = HPQ.ConstExpr (HPQ.BoolLit True)
-    isNotNull = Opaleye.Operators.not . Opaleye.Field.isNull
+    isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
 
 
 -- | An example to demonstrate how the functionality of (lateral)
@@ -200,8 +199,9 @@ fromFieldsMaybeFields (RQ.QueryRunner u p c) = RQ.QueryRunner u' p' c'
 
 -- | This is not safe in general because it relies on p not doing
 -- anything observable with the @a@s if @mfPresent@ is false.  In
--- particular, it won't work for 'D.Distinctspec' because it does
--- indeed look at the @mfFields@ to check distinctness.
+-- particular, it won't work for
+-- 'Opaleye.Internal.Distinct.Distinctspec' because it does indeed
+-- look at the @mfFields@ to check distinctness.
 productProfunctorMaybeFields :: PP.ProductProfunctor p
                              => p (Field SqlBool) (Field SqlBool)
                              -> p a b
@@ -227,6 +227,9 @@ toFieldsMaybeFields :: V.Nullspec a b
 toFieldsMaybeFields n p = Constant.Constant $ \case
   Nothing -> nothingFieldsExplicit n
   Just a  -> justFields (Constant.constantExplicit p a)
+
+ifPPMaybeFields :: IfPP a b -> IfPP (MaybeFields a) (MaybeFields b)
+ifPPMaybeFields = productProfunctorMaybeFields PP.def
 
 -- | This is only safe if d is OK with having nulls passed through it
 -- when they claim to be non-null.
@@ -263,10 +266,6 @@ withNullsField col = result
 
         columnProxy :: f (IC.Column sqlType) -> Maybe sqlType
         columnProxy _ = Nothing
-
-distinctspecMaybeFields :: WithNulls D.Distinctspec a b
-                        -> D.Distinctspec (MaybeFields a) (MaybeFields b)
-distinctspecMaybeFields = unWithNulls PP.def
 
 binaryspecMaybeFields
   :: WithNulls B.Binaryspec a b
@@ -309,13 +308,13 @@ instance (PP.Default Constant.Constant a b, PP.Default V.Nullspec a b)
   => PP.Default Constant.Constant (Maybe a) (MaybeFields b) where
   def = toFieldsMaybeFields PP.def PP.def
 
+instance PP.Default IfPP a b
+  => PP.Default IfPP (MaybeFields a) (MaybeFields b) where
+  def = ifPPMaybeFields PP.def
+
 instance (P.Profunctor p, IsSqlType a, PP.Default p (IC.Column a) (IC.Column a))
   => PP.Default (WithNulls p) (IC.Column a) (IC.Column a) where
   def = withNullsField PP.def
-
-instance PP.Default (WithNulls D.Distinctspec) a b
-  => PP.Default D.Distinctspec (MaybeFields a) (MaybeFields b) where
-  def = distinctspecMaybeFields PP.def
 
 instance PP.Default (WithNulls B.Binaryspec) a b
   => PP.Default B.Binaryspec (MaybeFields a) (MaybeFields b) where

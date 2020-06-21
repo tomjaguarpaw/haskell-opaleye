@@ -1,7 +1,9 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Opaleye.Internal.Distinct where
 
+import qualified Opaleye.Internal.MaybeFields as M
 import           Opaleye.Select (Select)
 import           Opaleye.Column (Column)
 import           Opaleye.Aggregate (Aggregator, groupBy, aggregate)
@@ -24,6 +26,14 @@ newtype Distinctspec a b = Distinctspec (Aggregator a b)
 
 instance Default Distinctspec (Column a) (Column a) where
   def = Distinctspec groupBy
+
+distinctspecMaybeFields :: M.WithNulls Distinctspec a b
+                        -> Distinctspec (M.MaybeFields a) (M.MaybeFields b)
+distinctspecMaybeFields = M.unWithNulls def
+
+instance Default (M.WithNulls Distinctspec) a b
+  => Default Distinctspec (M.MaybeFields a) (M.MaybeFields b) where
+  def = distinctspecMaybeFields def
 
 -- { Boilerplate instances
 

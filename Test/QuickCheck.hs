@@ -221,6 +221,9 @@ optionalDenotation = \case
   [] -> [Nothing]
   xs -> map Just xs
 
+optionalRestrictDenotation :: [Haskells] -> [Maybe Haskells]
+optionalRestrictDenotation = optionalDenotation . restrictFirstBoolList
+
 traverseDenotation :: SelectArrDenotation a Haskells
                    -> SelectDenotation (Maybe a)
                    -> SelectDenotation (Maybe Haskells)
@@ -449,6 +452,15 @@ genSelectMapper =
 
     , do
         return (O.aggregate aggregateFields)
+    , do
+        let q' q = P.dimap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))
+                           (fieldsList
+                            . OM.fromMaybeFields (0,
+                                                  O.sqlBool True,
+                                                  O.justFields (O.sqlString "field"))
+                            . fmap listFields)
+                           (O.optionalRestrictExplicit unpackFields q)
+        return q'
     ]
 
 genSelectMapper2 :: [TQ.Gen (O.Select Fields -> O.Select Fields
@@ -850,6 +862,13 @@ optional conn (ArbitrarySelect q) =
   compare conn (denotationMaybeFields (OMF.optional q))
                (onList optionalDenotation (denotation q))
 
+optionalRestrict :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
+optionalRestrict conn (ArbitrarySelect q) =
+  compare conn (denotationMaybeFields q1)
+               (onList optionalRestrictDenotation (denotation q))
+  where q1 = P.lmap (\() -> fst . firstBoolOrTrue (O.sqlBool True))
+                    (O.optionalRestrictExplicit unpackFields q)
+
 maybeFieldsToSelect :: PGS.Connection -> ArbitrarySelectMaybe -> IO TQ.Property
 maybeFieldsToSelect conn (ArbitrarySelectMaybe q) =
   compare conn (denotation (O.maybeFieldsToSelect <<< q))
@@ -929,6 +948,7 @@ run conn = do
   test1 aggregate
   test2 label
   test1 optional
+  test1 optionalRestrict
   test1 maybeFieldsToSelect
   test2 traverseMaybeFields
 

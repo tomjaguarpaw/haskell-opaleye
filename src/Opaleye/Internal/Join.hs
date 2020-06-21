@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE Arrows #-}
 
 module Opaleye.Internal.Join where
 
@@ -9,13 +10,20 @@ import qualified Opaleye.Internal.Tag                 as T
 import qualified Opaleye.Internal.Unpackspec          as U
 import           Opaleye.Internal.Column (Column(Column), Nullable)
 import qualified Opaleye.Internal.QueryArr as Q
+import qualified Opaleye.Internal.Operators as Op
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.PGTypes as T
+import qualified Opaleye.SqlTypes as T
 import qualified Opaleye.Column as C
+import           Opaleye.Field   (Field)
 import qualified Opaleye.Map     as Map
+import           Opaleye.Internal.MaybeFields (MaybeFields(MaybeFields),
+                                               mfPresent, mfFields)
+import qualified Opaleye.Select  as S
 import qualified Opaleye.Internal.TypeFamilies as TF
 
 import qualified Control.Applicative as A
+import qualified Control.Arrow
 
 import           Data.Profunctor (Profunctor, dimap)
 import qualified Data.Profunctor.Product as PP
@@ -86,6 +94,36 @@ leftJoinAExplicit uA nullmaker rq =
            primQueryL
            primQueryR
        , T.next t2)
+
+optionalRestrict :: D.Default U.Unpackspec a a
+                 => S.Select a
+                 -> S.SelectArr (a -> Field T.SqlBool) (MaybeFields a)
+optionalRestrict = optionalRestrictExplicit D.def
+
+optionalRestrictExplicit :: U.Unpackspec a a
+                         -> S.Select a
+                         -> S.SelectArr (a -> Field T.SqlBool) (MaybeFields a)
+optionalRestrictExplicit uA q =
+  dimap (. snd) (\(nonNullIfPresent, rest) ->
+      let present = Op.not (C.isNull (C.unsafeCoerceColumn nonNullIfPresent))
+      in MaybeFields { mfPresent = present
+                     , mfFields  = rest
+                     }) $
+  leftJoinAExplicit (PP.p2 (U.unpackspecColumn, uA))
+                    (Opaleye.Internal.Join.NullMaker id)
+                    (fmap (\x -> (T.sqlBool True, x)) q)
+
+-- | An example to demonstrate how the functionality of @LEFT JOIN@
+-- can be recovered using 'optionalRestrict'.
+leftJoinInTermsOfOptionalRestrict :: D.Default U.Unpackspec fieldsR fieldsR
+                                  => S.Select fieldsL
+                                  -> S.Select fieldsR
+                                  -> ((fieldsL, fieldsR) -> Field T.SqlBool)
+                                  -> S.Select (fieldsL, MaybeFields fieldsR)
+leftJoinInTermsOfOptionalRestrict qL qR cond = proc () -> do
+  fieldsL <- qL -< ()
+  maybeFieldsR <- optionalRestrict qR -< curry cond fieldsL
+  Control.Arrow.returnA -< (fieldsL, maybeFieldsR)
 
 extractLeftJoinFields :: Int
                       -> T.Tag

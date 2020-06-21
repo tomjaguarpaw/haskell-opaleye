@@ -30,6 +30,7 @@ module Opaleye.MaybeFields (
   traverseMaybeFieldsExplicit,
   ) where
 
+import Opaleye.Internal.Distinct
 import Opaleye.Internal.MaybeFields
 import Opaleye.Internal.Values
 import Opaleye.Unpackspec

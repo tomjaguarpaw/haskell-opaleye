@@ -26,7 +26,7 @@ import qualified Opaleye.SqlTypes as T
 
 import qualified Opaleye.Column   as Column
 import qualified Opaleye.Distinct as Distinct
-import qualified Opaleye.Join     as Join
+import qualified Opaleye.Join as Join
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
@@ -48,8 +48,7 @@ then 'keepWhen' will suit you better.
 'Control.Applicative.Alternative' it may help you to know that
 'restrict' corresponds to the 'Control.Monad.guard' function.) -}
 restrict :: S.SelectArr (F.Field T.SqlBool) ()
-restrict = QueryArr f where
-  f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
+restrict = O.restrict
 
 {-| Add a @WHERE EXISTS@ clause to the current query. -}
 restrictExists :: S.SelectArr a b -> S.SelectArr a ()
@@ -159,7 +158,7 @@ infixr 2 .||
 
 -- | Boolean or
 (.||) :: F.Field T.SqlBool -> F.Field T.SqlBool -> F.Field T.SqlBool
-(.||) = C.binOp HPQ.OpOr
+(.||) = (O..||)
 
 infixr 3 .&&
 
@@ -169,7 +168,7 @@ infixr 3 .&&
 
 -- | Boolean not
 not :: F.Field T.SqlBool -> F.Field T.SqlBool
-not = C.unOp HPQ.OpNot
+not = O.not
 
 -- | True when any element of the container is true
 ors :: F.Foldable f => f (F.Field T.SqlBool) -> F.Field T.SqlBool
