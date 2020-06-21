@@ -35,7 +35,7 @@ import qualified Control.Arrow as Arr
 --                                , quantity :: d
 --                                , radius   :: e }
 --
--- $('Data.Profunctor.Product.TH.makeAdaptorAndInstance' \"pWidget\" ''Widget)
+-- \$('Data.Profunctor.Product.TH.makeAdaptorAndInstance' \"pWidget\" ''Widget)
 --
 -- widgetTable :: Table (Widget (Maybe (Column PGInt4)) (Column PGText) (Column PGText)
 --                              (Column PGInt4) (Column PGFloat8))
