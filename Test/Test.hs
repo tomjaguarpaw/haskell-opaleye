@@ -1086,7 +1086,7 @@ testRangeAdjacency = it "generates adjacency" $ testH q (`shouldBe` [True])
 
 testRangeBoundsEnum :: forall a b.
     ( Show a, Eq a, Enum a, O.IsRangeType b
-    , DefaultFromField (Nullable b) (Maybe a))
+    , DefaultFromField b a )
         => String -> (a -> Field b) -> a -> a -> Test
 testRangeBoundsEnum msg mkCol x y = it msg $ \conn -> do
     -- bound functions for discrete range types return fields as from the form [x,y)
