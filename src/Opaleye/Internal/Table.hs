@@ -113,41 +113,57 @@ newtype Writer columns dummy =
   Writer (forall f. Functor f =>
           PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
 
--- | 'required' is for fields which are not 'optional'.  You must
--- provide them on writes.
-required :: String -> TableFields (Column a) (Column a)
-required columnName = TableProperties
+-- | 'requiredTableField' is for fields which are not optional.  You
+-- must provide them on writes.
+requiredTableField :: String -> TableFields (Column a) (Column a)
+requiredTableField columnName = TableProperties
   (requiredW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
--- | 'optional' is for fields that you can omit on writes, such as
---  columns which have defaults or which are SERIAL.
-optional :: String -> TableFields (Maybe (Column a)) (Column a)
-optional columnName = TableProperties
+-- | 'optionalTableField' is for fields that you can omit on writes, such as
+--  fields which have defaults or which are SERIAL.
+optionalTableField :: String -> TableFields (Maybe (Column a)) (Column a)
+optionalTableField columnName = TableProperties
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
--- | 'readOnly' is for fields that you must omit on writes, such as
---  SERIAL columns intended to auto-increment only.
+-- | 'readOnlyTableField' is for fields that you must omit on writes, such as
+--  SERIAL fields intended to auto-increment only.
+readOnlyTableField :: String -> TableFields () (Column a)
+readOnlyTableField = lmap (const Nothing) . optionalTableField
+
+-- | Use 'requiredTableField' instead.  'required' will be deprecated
+-- in 0.7.
+required :: String -> TableFields (Column a) (Column a)
+required = requiredTableField
+
+-- | Use 'optionalTableField' instead.  'optional' will be deprecated
+-- in 0.7.
+optional :: String -> TableFields (Maybe (Column a)) (Column a)
+optional = optionalTableField
+
+-- | Use 'readOnlyTableField' instead.  'readOnly' will be deprecated
+-- in 0.7.
 readOnly :: String -> TableFields () (Column a)
-readOnly = lmap (const Nothing) . optional
+readOnly = readOnlyTableField
 
 class TableColumn writeType sqlType | writeType -> sqlType where
     -- | Do not use.  Use 'tableField' instead.  Will be deprecated in
     -- 0.7.
     tableColumn :: String -> TableFields writeType (Column sqlType)
     tableColumn = tableField
-    -- | Infer either a 'required' or 'optional' column depending on
+    -- | Infer either a required ('requiredTableField') or optional
+    -- ('optionalTableField') field depending on
     -- the write type.  It's generally more convenient to use this
     -- than 'required' or 'optional' but you do have to provide a type
     -- signature instead.
     tableField  :: String -> TableFields writeType (Column sqlType)
 
 instance TableColumn (Column a) a where
-    tableField = required
+    tableField = requiredTableField
 
 instance TableColumn (Maybe (Column a)) a where
-    tableField = optional
+    tableField = optionalTableField
 
 queryTable :: U.Unpackspec viewColumns columns
             -> Table writeColumns viewColumns

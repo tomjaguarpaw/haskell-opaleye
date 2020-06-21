@@ -66,15 +66,18 @@ module Opaleye.Table (-- * Defining tables
                       tableWithSchema,
                       T.Table,
                       T.tableField,
-                      T.optional,
-                      T.readOnly,
-                      T.required,
+                      T.optionalTableField,
+                      T.readOnlyTableField,
+                      T.requiredTableField,
                       -- * Selecting from tables
                       selectTable,
                       -- * Other
                       T.TableColumns,
                       TableFields,
                       -- * Deprecated
+                      T.optional,
+                      T.readOnly,
+                      T.required,
                       T.tableColumn,
                       View,
                       Writer,
