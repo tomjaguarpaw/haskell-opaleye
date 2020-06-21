@@ -20,8 +20,8 @@ import           Opaleye.Select (Select, SelectArr)
 import qualified Opaleye.Column
 import qualified Opaleye.Field
 import           Opaleye.Field (Field)
-import           Opaleye.Operators ((.&&), (.||), restrict, not)
-import           Opaleye.Internal.Operators (ifExplict, IfPP)
+import           Opaleye.Internal.Operators ((.&&), (.||), restrict, not,
+                                             ifExplict, IfPP)
 import qualified Opaleye.Internal.Lateral
 import qualified Opaleye.SqlTypes
 import           Opaleye.SqlTypes (SqlBool)
@@ -83,7 +83,7 @@ traverseMaybeFields query = proc mfInput -> do
   restrict -< mfPresent mfInput `implies` mfPresent mfOutput
   returnA -< MaybeFields (mfPresent mfInput) (mfFields mfOutput)
 
-  where a `implies` b = Opaleye.Operators.not a .|| b
+  where a `implies` b = Opaleye.Internal.Operators.not a .|| b
 
 -- | Convenient access to lateral left/right join
 -- functionality. Performs a @LATERAL LEFT JOIN@ under the hood and
@@ -122,7 +122,7 @@ optional = Opaleye.Internal.Lateral.laterally (IQ.QueryArr . go)
         (MaybeFields t a, right, tag') =
           IQ.runSimpleQueryArr (pure <$> query) (i, tag)
 
-        present = Opaleye.Operators.not (Opaleye.Field.isNull (IC.unsafeCoerceColumn t'))
+        present = Opaleye.Internal.Operators.not (Opaleye.Field.isNull (IC.unsafeCoerceColumn t'))
 
         (t', bindings) =
           PM.run (U.runUnpackspec U.unpackspecColumn (PM.extractAttr "maybe" tag') t)
