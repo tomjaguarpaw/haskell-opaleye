@@ -24,7 +24,7 @@ import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Arrow as Arr
 
 -- | Define a table as follows, where \"id\", \"color\", \"location\",
--- \"quantity\" and \"radius\" are the tables columns in Postgres and
+-- \"quantity\" and \"radius\" are the table's fields in Postgres and
 -- the types are given in the type signature.  The @id@ field is an
 -- autoincrementing field (i.e. optional for writes).
 --
@@ -37,16 +37,16 @@ import qualified Control.Arrow as Arr
 --
 -- \$('Data.Profunctor.Product.TH.makeAdaptorAndInstance' \"pWidget\" ''Widget)
 --
--- widgetTable :: Table (Widget (Maybe (Column PGInt4)) (Column PGText) (Column PGText)
---                              (Column PGInt4) (Column PGFloat8))
---                      (Widget (Column PGText) (Column PGText) (Column PGText)
---                              (Column PGInt4) (Column PGFloat8))
+-- widgetTable :: Table (Widget (Maybe (Field SqlInt4)) (Field SqlText) (Field SqlText)
+--                              (Field SqlInt4) (Field SqlFloat8))
+--                      (Widget (Field SqlText) (Field SqlText) (Field SqlText)
+--                              (Field SqlInt4) (Field SqlFloat8))
 -- widgetTable = table \"widgetTable\"
---                      (pWidget Widget { wid      = tableColumn \"id\"
---                                      , color    = tableColumn \"color\"
---                                      , location = tableColumn \"location\"
---                                      , quantity = tableColumn \"quantity\"
---                                      , radius   = tableColumn \"radius\" })
+--                      (pWidget Widget { wid      = tableField \"id\"
+--                                      , color    = tableField \"color\"
+--                                      , location = tableField \"location\"
+--                                      , quantity = tableField \"quantity\"
+--                                      , radius   = tableField \"radius\" })
 -- @
 --
 -- The constructors of Table are internal only and will be
