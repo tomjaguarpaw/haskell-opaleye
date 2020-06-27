@@ -341,8 +341,8 @@ denotationExplicit :: O.FromFields fields a
 denotationExplicit qr q =
   SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
 
-denotation' :: O.Select Fields -> SelectDenotation Haskells
-denotation' = denotationExplicit defChoicesPP
+denotation :: O.Select Fields -> SelectDenotation Haskells
+denotation = denotationExplicit defChoicesPP
 
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
@@ -398,18 +398,18 @@ compareSortedBy o conn one two = do
 
 fields :: PGS.Connection -> ArbitraryFields -> IO TQ.Property
 fields conn (ArbitraryFields c) =
-  compareNoSort conn (denotation' (pure (fieldsOfHaskells c)))
+  compareNoSort conn (denotation (pure (fieldsOfHaskells c)))
                      (pure c)
 
 fmap' :: PGS.Connection -> ArbitraryFunction -> ArbitrarySelect -> IO TQ.Property
 fmap' conn f (ArbitrarySelect q) =
-  compareNoSort conn (denotation' (fmap (unArbitraryFunction f) q))
-                     (onList (fmap (unArbitraryFunction f)) (denotation' q))
+  compareNoSort conn (denotation (fmap (unArbitraryFunction f) q))
+                     (onList (fmap (unArbitraryFunction f)) (denotation q))
 
 apply :: PGS.Connection -> ArbitrarySelect -> ArbitrarySelect -> IO Bool
 apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
   compare' conn (denotation2 ((,) <$> q1 <*> q2))
-                ((,) <$> denotation' q1 <*> denotation' q2)
+                ((,) <$> denotation q1 <*> denotation q2)
 
 -- When combining arbitrary queries with the applicative product <*>
 -- the limit of the denotation is not always the denotation of the
@@ -427,8 +427,8 @@ limit :: PGS.Connection
 limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
   let q' = O.limit l (O.orderBy (arbitraryOrder o) q)
 
-  one' <- unSelectDenotation (denotation' q') conn
-  two' <- unSelectDenotation (denotation' q) conn
+  one' <- unSelectDenotation (denotation q') conn
+  two' <- unSelectDenotation (denotation q) conn
 
   let remainder = MultiSet.fromList two'
                   `MultiSet.difference`
@@ -448,33 +448,33 @@ limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
 offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect
        -> IO TQ.Property
 offset conn (ArbitraryPositiveInt l) (ArbitrarySelect q) =
-  compareNoSort conn (denotation' (O.offset l q))
-                     (onList (drop l) (denotation' q))
+  compareNoSort conn (denotation (O.offset l q))
+                     (onList (drop l) (denotation q))
 
 order :: PGS.Connection -> ArbitraryOrder -> ArbitrarySelect -> IO Bool
 order conn o (ArbitrarySelect q) =
   compareSortedBy (arbitraryOrdering o)
                   conn
-                  (denotation' (O.orderBy (arbitraryOrder o) q))
-                  (denotation' q)
+                  (denotation (O.orderBy (arbitraryOrder o) q))
+                  (denotation q)
 
 distinct :: PGS.Connection -> ArbitrarySelect -> IO Bool
 distinct conn (ArbitrarySelect q) =
-  compare' conn (denotation' (O.distinctExplicit defChoicesPP q))
-                (onList nub (denotation' q))
+  compare' conn (denotation (O.distinctExplicit defChoicesPP q))
+                (onList nub (denotation q))
 
 -- When we added <*> to the arbitrary queries we started getting some
 -- consequences to do with the order of the returned rows and so
 -- restrict had to start being compared sorted.
 restrict :: PGS.Connection -> ArbitrarySelect -> IO Bool
 restrict conn (ArbitrarySelect q) =
-  compare' conn (denotation' (restrictFirstBool <<< q))
-                (onList restrictFirstBoolList (denotation' q))
+  compare' conn (denotation (restrictFirstBool <<< q))
+                (onList restrictFirstBoolList (denotation q))
 
 values :: PGS.Connection -> ArbitraryFieldsList -> IO TQ.Property
 values conn (ArbitraryFieldsList l) =
   compareNoSort conn
-                (denotation' (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
+                (denotation (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
                 (pureList (fmap fieldsList l))
 
 -- We test values entries of length two in values, and values entries
@@ -487,14 +487,14 @@ valuesEmpty conn l =
 
 aggregate :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
 aggregate conn (ArbitrarySelect q) =
-  compareNoSort conn (denotation' (O.aggregate aggregateFields q))
-                     (onList aggregateDenotation (denotation' q))
+  compareNoSort conn (denotation (O.aggregate aggregateFields q))
+                     (onList aggregateDenotation (denotation q))
 
 
 label :: PGS.Connection -> String -> ArbitrarySelect -> IO TQ.Property
 label conn comment (ArbitrarySelect q) =
-  compareNoSort conn (denotation' (O.label comment q))
-                     (denotation' q)
+  compareNoSort conn (denotation (O.label comment q))
+                     (denotation q)
 
 
 {- TODO
