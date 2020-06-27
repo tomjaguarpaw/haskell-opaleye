@@ -126,7 +126,7 @@ optional = M.optional
 --
 -- You probably want use the alternatives listed at the top of this
 -- module instead of these.
--- The use of the 'D.Default' typeclass means that the compiler will
+-- The use of the @Default 'NullMaker'@ typeclass means that the compiler will
 -- have trouble inferring types.  It is strongly recommended that you
 -- provide full type signatures when using the join functions.
 -- Example specialization:

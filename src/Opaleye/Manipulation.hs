@@ -170,7 +170,8 @@ rCount = MI.Count
 
 -- | Return a function of the inserted or updated rows
 --
--- 'rReturning''s use of the 'D.Default' typeclass means that the
+-- 'rReturning''s use of the @D.Default 'RQ.QueryRunner'@
+-- typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- 'rReturning'.

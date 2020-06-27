@@ -28,7 +28,8 @@ import qualified Data.Profunctor.Product.Default as D
 
 -- * Running 'S.Select's
 
--- | @runSelect@'s use of the 'D.Default' typeclass means that the
+-- | @runSelect@'s use of the @D.Default 'RQ.QueryRunner'@
+-- typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runSelect@.
