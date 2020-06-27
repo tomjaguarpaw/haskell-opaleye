@@ -146,7 +146,7 @@ instance Show ArbitrarySelect where
                               (O.showSqlExplicit unpackFields q)
 
 instance Show ArbitraryGarble where
-  show = const "A permutation"
+  show = const "A function"
 
 instance TQ.Arbitrary ArbitrarySelect where
   arbitrary = do
