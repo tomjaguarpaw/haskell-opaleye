@@ -1,9 +1,11 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE Arrows #-}
 
 module Opaleye.Internal.Lateral
   ( lateral
   , laterally
   , bilaterally
+  , bind
   )
 where
 
@@ -12,6 +14,7 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import           Opaleye.Select
 
 import           Data.List.NonEmpty ( NonEmpty((:|)) )
+import           Control.Arrow ( returnA )
 import           Control.Category ( (<<<) )
 
 
@@ -45,3 +48,9 @@ laterally f as = lateral (\i -> f (as <<< pure i))
 bilaterally :: (Select a -> Select b -> Select c)
             -> SelectArr i a -> SelectArr i b -> SelectArr i c
 bilaterally f as bs = lateral (\i -> f (as <<< pure i) (bs <<< pure i))
+
+bind :: SelectArr i a -> (a -> SelectArr i b) -> SelectArr i b
+bind s f = proc i -> do
+  a <- s -< i
+  b <- lateral (\(a, i) -> f a <<< pure i) -< (a, i)
+  returnA -< b
