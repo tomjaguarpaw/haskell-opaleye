@@ -220,12 +220,12 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                      . fmap listFields)
                     (OJ.optionalExplicit defChoicesPP q))
     , do
-        ArbitrarySelectArr q <- TQ.arbitrary
+        ArbitrarySelect q <- TQ.arbitrary
         let q' = P.dimap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))
                          (fieldsList
                           . O.fromMaybeFields (0, O.sqlBool True)
                           . fmap listFields)
-                         (O.optionalRestrictExplicit defChoicesPP (q <<< pure []))
+                         (O.optionalRestrictExplicit defChoicesPP q)
         aqArg q'
     ]
     where -- Applies qf to the query, but uses [] for the input of
