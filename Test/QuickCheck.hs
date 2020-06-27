@@ -335,15 +335,18 @@ instance Applicative (SelectArrDenotation a) where
                                    (unSelectArrDenotation f)
                                    (unSelectArrDenotation x))
 
-denotation :: O.FromFields fields a -> O.Select fields -> SelectDenotation a
-denotation qr q = SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
+denotationExplicit :: O.FromFields fields a
+                   -> O.Select fields
+                   -> SelectDenotation a
+denotationExplicit qr q =
+  SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
 
 denotation' :: O.Select Fields -> SelectDenotation Haskells
-denotation' = denotation defChoicesPP
+denotation' = denotationExplicit defChoicesPP
 
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
-denotation2 = denotation (defChoicesPP PP.***! defChoicesPP)
+denotation2 = denotationExplicit (defChoicesPP PP.***! defChoicesPP)
 
 -- { Comparing the results
 
@@ -479,7 +482,7 @@ values conn (ArbitraryFieldsList l) =
 valuesEmpty :: PGS.Connection -> [()] -> IO TQ.Property
 valuesEmpty conn l =
   compareNoSort conn
-                (denotation D.def (O.valuesSafe l))
+                (denotationExplicit D.def (O.valuesSafe l))
                 (pureList l)
 
 aggregate :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
