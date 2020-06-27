@@ -75,7 +75,8 @@ newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
 newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Haskells }
                         deriving Show
-newtype ArbitraryFieldsList = ArbitraryFieldsList { unArbitraryFieldsList :: [(Int, Bool)] }
+newtype ArbitraryFieldsList =
+  ArbitraryFieldsList { unArbitraryFieldsList :: [(Int, Bool)] }
                              deriving Show
 newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
@@ -141,7 +142,8 @@ instance TQ.Arbitrary ArbitrarySelectArr where
       do
         ArbitraryFields fields_ <- TQ.arbitrary
         aqArg ((pure . fieldsOfHaskells) fields_)
-    , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.selectTable table1)))
+    , aqArg (P.lmap (const ())
+                    (fmap (\(x,y) -> [CInt x, CInt y]) (O.selectTable table1)))
     , do
         q <- TQ.oneof [
             do
@@ -438,7 +440,8 @@ limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
   return ((length one' == min l (length two'))
           && condBool)
 
-offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect -> IO TQ.Property
+offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect
+       -> IO TQ.Property
 offset conn (ArbitraryPositiveInt l) (ArbitrarySelect q) =
   compareNoSort conn (denotation' (O.offset l q))
                      (onList (drop l) (denotation' q))
@@ -465,8 +468,9 @@ restrict conn (ArbitrarySelect q) =
 
 values :: PGS.Connection -> ArbitraryFieldsList -> IO TQ.Property
 values conn (ArbitraryFieldsList l) =
-  compareNoSort conn (denotation' (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
-                     (pureList (fmap fieldsList l))
+  compareNoSort conn
+                (denotation' (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
+                (pureList (fmap fieldsList l))
 
 -- We test values entries of length two in values, and values entries
 -- of length zero here.  Ideally we would find some way to merge them.
@@ -526,7 +530,8 @@ run conn = do
                => (PGS.Connection -> a1 -> a2 -> a3 -> IO prop) -> IO ()
       test3 = t . prop3
 
-      t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
+      t p = errorIfNotSuccess
+        =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
   test1 fields
   test2 fmap'
