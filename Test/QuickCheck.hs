@@ -389,19 +389,22 @@ instance Applicative (SelectArrDenotation a) where
                                    (unSelectArrDenotation f)
                                    (unSelectArrDenotation x))
 
-denotation :: O.FromFields fields a -> O.Select fields -> SelectDenotation a
-denotation qr q = SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
+denotationExplicit :: O.FromFields fields a
+                   -> O.Select fields
+                   -> SelectDenotation a
+denotationExplicit qr q =
+  SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
 
 denotation' :: O.Select Fields -> SelectDenotation Haskells
-denotation' = denotation defChoicesPP
+denotation' = denotationExplicit defChoicesPP
 
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
-denotation2 = denotation (defChoicesPP PP.***! defChoicesPP)
+denotation2 = denotationExplicit (defChoicesPP PP.***! defChoicesPP)
 
 denotationMaybeFields :: O.Select (O.MaybeFields Fields)
                       -> SelectDenotation (Maybe Haskells)
-denotationMaybeFields = denotation (O.fromFieldsMaybeFields defChoicesPP)
+denotationMaybeFields = denotationExplicit (O.fromFieldsMaybeFields defChoicesPP)
 
 -- { Comparing the results
 
