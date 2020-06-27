@@ -278,6 +278,10 @@ instance TQ.Arbitrary ArbitrarySelectArrMaybeFields where
         let q' = P.lmap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))
                         (O.optionalRestrictExplicit defChoicesPP q)
         aqArg q'
+    , do
+        ArbitrarySelectArr q <- TQ.arbitrary
+        ArbitrarySelectArrMaybeFields qm <- TQ.arbitrary
+        aqArg (O.traverseMaybeFieldsExplicit defChoicesPP defChoicesPP q <<< qm)
     ]
     where aqArg = return . ArbitrarySelectArrMaybeFields
 
