@@ -347,7 +347,9 @@ denotation2 = denotation (defChoicesPP PP.***! defChoicesPP)
 
 -- { Comparing the results
 
--- compareNoSort is stronger than compare' so prefer to use it where possible
+-- compareNoSort is stronger than compare' so prefer to use it where
+-- possible.  If the queries do not compare equal but do compare equal
+-- sorted then switch to "compare".  That's no big deal.
 compareNoSort :: (Ord a, Show a)
               => PGS.Connection
               -> SelectDenotation a
