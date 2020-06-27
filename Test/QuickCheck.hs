@@ -6,6 +6,7 @@
 
 module QuickCheck where
 
+import           Prelude hiding (compare)
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
 import qualified Opaleye.Join as OJ
@@ -24,7 +25,7 @@ import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Monoid as Monoid
-import qualified Data.Ord as Ord
+import qualified Data.Ord as Ord hiding (compare)
 import qualified Data.Set as Set
 import qualified Data.Maybe as Maybe
 import qualified Control.Arrow as Arrow
@@ -408,7 +409,7 @@ denotationMaybeFields = denotationExplicit (O.fromFieldsMaybeFields defChoicesPP
 
 -- { Comparing the results
 
--- compareNoSort is stronger than compare' so prefer to use it where possible
+-- compareNoSort is stronger than compare so prefer to use it where possible
 compareNoSort :: (Ord a, Show a)
               => PGS.Connection
               -> SelectDenotation a
@@ -426,12 +427,12 @@ compareNoSort conn one two = do
 
   return (one' === two')
 
-compare' :: Ord a
+compare :: Ord a
          => PGS.Connection
          -> SelectDenotation a
          -> SelectDenotation a
          -> IO Bool
-compare' conn one two = do
+compare conn one two = do
   one' <- unSelectDenotation one conn
   two' <- unSelectDenotation two conn
   return (sort one' == sort two')
@@ -464,7 +465,7 @@ fmap' conn f (ArbitrarySelect q) =
 
 apply :: PGS.Connection -> ArbitrarySelect -> ArbitrarySelect -> IO Bool
 apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
-  compare' conn (denotation2 ((,) <$> q1 <*> q2))
+  compare conn (denotation2 ((,) <$> q1 <*> q2))
                 ((,) <$> denotation q1 <*> denotation q2)
 
 -- When combining arbitrary queries with the applicative product <*>
@@ -516,7 +517,7 @@ order conn o (ArbitrarySelect q) =
 
 distinct :: PGS.Connection -> ArbitrarySelect -> IO Bool
 distinct conn (ArbitrarySelect q) =
-  compare' conn (denotation (O.distinctExplicit defChoicesPP q))
+  compare conn (denotation (O.distinctExplicit defChoicesPP q))
                 (onList nub (denotation q))
 
 -- When we added <*> to the arbitrary queries we started getting some
@@ -524,7 +525,7 @@ distinct conn (ArbitrarySelect q) =
 -- restrict had to start being compared sorted.
 restrict :: PGS.Connection -> ArbitrarySelect -> IO Bool
 restrict conn (ArbitrarySelect q) =
-  compare' conn (denotation (restrictFirstBool <<< q))
+  compare conn (denotation (restrictFirstBool <<< q))
                 (onList restrictFirstBoolList (denotation q))
 
 values :: PGS.Connection -> ArbitraryFieldsList -> IO TQ.Property
@@ -546,12 +547,12 @@ label conn comment (ArbitrarySelect q) =
 
 optional :: PGS.Connection -> ArbitrarySelect -> IO Bool
 optional conn (ArbitrarySelect q) =
-  compare' conn (denotationMaybeFields (OJ.optionalExplicit defChoicesPP q))
+  compare conn (denotationMaybeFields (OJ.optionalExplicit defChoicesPP q))
                 (onList optionalDenotation (denotation q))
 
 optionalRestrict :: PGS.Connection -> ArbitrarySelect -> IO Bool
 optionalRestrict conn (ArbitrarySelect q) =
-  compare' conn (denotationMaybeFields q1)
+  compare conn (denotationMaybeFields q1)
                 (onList optionalRestrictDenotation (denotation q))
   where q1 = P.lmap (\() -> fst . firstBoolOrTrue (O.sqlBool True))
                     (O.optionalRestrictExplicit defChoicesPP q)
@@ -567,7 +568,7 @@ traverseMaybeFields :: PGS.Connection
                     -> ArbitrarySelectMaybeFields
                     -> IO Bool
 traverseMaybeFields conn (ArbitrarySelectMaybeFields q) =
-  compare' conn
+  compare conn
            (denotationMaybeFields
               (O.traverseMaybeFieldsExplicit defChoicesPP defChoicesPP f <<< q))
            (onList (traverse f' =<<) (denotationMaybeFields q))
