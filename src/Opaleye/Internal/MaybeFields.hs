@@ -97,6 +97,19 @@ traverseMaybeFields query = proc mfInput -> do
 
   where a `implies` b = Opaleye.Internal.Operators.not a .|| b
 
+traverseMaybeFieldsF :: (a -> SelectArr i b)
+                     -> MaybeFields a
+                     -> SelectArr i (MaybeFields b)
+traverseMaybeFieldsF query = outmf
+  where ini = \i -> Opaleye.Internal.Lateral.lateral (\a -> query a <<< pure i)
+        outi = traverseMaybeFields . ini
+        outmf = \mf -> Opaleye.Internal.Lateral.lateral (\i -> outi i <<< pure mf)
+
+traverseMaybeFieldsF2 :: SelectArr a b
+                      -> SelectArr (MaybeFields a) (MaybeFields b)
+traverseMaybeFieldsF2 query =
+  Opaleye.Internal.Lateral.lateral (traverseMaybeFieldsF (\a -> query <<< pure a))
+
 optional :: SelectArr i a -> SelectArr i (MaybeFields a)
 optional = Opaleye.Internal.Lateral.laterally (IQ.QueryArr . go)
   where
