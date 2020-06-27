@@ -25,6 +25,7 @@ import qualified Data.Time.Compat                 as Time
 import qualified Data.Time.Clock.POSIX.Compat     as Time
 import qualified Database.PostgreSQL.Simple       as PGS
 import qualified Database.PostgreSQL.Simple.Range as R
+import qualified Database.Postgres.Temp
 import           GHC.Int                          (Int64)
 import           Opaleye                          (Field, Nullable, Select,
                                                    SelectArr, (.==), (.>))
@@ -1405,11 +1406,14 @@ main = do
 
   let mconnectString = connectStringEnvVar <|> connectStringDotEnv
 
-  connectString <- maybe
-    (fail ("Set " ++ envVarName ++ " environment variable\n"
-           ++ "For example " ++ envVarName ++ "='user=tom dbname=opaleye_test "
-           ++ "host=localhost port=25433 password=tom'"))
-    (pure . String.fromString)
+  (connectString, db) <- maybe
+    (do Right db <- Database.Postgres.Temp.start
+        let connectString = Database.Postgres.Temp.toConnectionString db
+        pure (connectString, db))
+    (const (fail ("Opaleye tests no use a manually configured"
+          ++ " database connection string.  If you have a POSTGRES_CONNSTRING"
+          ++ " environment variable or a .env file then please remove them"
+          ++ " and run the tests again.")))
     mconnectString
 
   conn <- PGS.connectPostgreSQL connectString
@@ -1554,3 +1558,5 @@ main = do
         testAddIntervalFromTimestampToTimestamp
         testAddIntervalFromTimestamptzToTimestamptz
         testAddIntervalFromTimeToTime
+
+  Database.Postgres.Temp.stop db

@@ -137,6 +137,7 @@ test-suite test
     text >= 0.11 && < 1.3,
     time-compat,
     uuid,
+    tmp-postgres >= 1.34.1.0,
     transformers,
     hspec,
     hspec-discover,
