@@ -85,6 +85,8 @@ listHaskells f = listFieldsG f 1 True
 
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
+newtype ArbitrarySelectArrMaybeFields =
+  ArbitrarySelectArrMaybeFields (O.SelectArr Fields (O.MaybeFields Fields))
 newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Haskells }
                         deriving Show
 newtype ArbitraryFieldsList =
@@ -236,19 +238,12 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                 . aggregateLaterally aggregateFields
                 . fmap pairColumns) q)
     , do
-        ArbitrarySelectArr q <- TQ.arbitrary
+        ArbitrarySelectArrMaybeFields q <- TQ.arbitrary
+
         aqArg (fmap (fieldsList
                      . O.fromMaybeFields (0, O.sqlBool True)
                      . fmap listFields)
-                    (OJ.optionalExplicit defChoicesPP q))
-    , do
-        ArbitrarySelect q <- TQ.arbitrary
-        let q' = P.dimap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))
-                         (fieldsList
-                          . OM.fromMaybeFields (0, O.sqlBool True)
-                          . fmap listFields)
-                         (O.optionalRestrictExplicit defChoicesPP q)
-        aqArg q'
+                    q)
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
@@ -261,6 +256,19 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                     (OL.bilaterally binaryOperation
                      (fmap listFields q1)
                      (fmap listFields q2)))
+
+instance TQ.Arbitrary ArbitrarySelectArrMaybeFields where
+  arbitrary = TQ.oneof [
+      do
+        ArbitrarySelectArr q <- TQ.arbitrary
+        aqArg (OJ.optionalExplicit defChoicesPP q)
+    , do
+        ArbitrarySelect q <- TQ.arbitrary
+        let q' = P.lmap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))
+                        (O.optionalRestrictExplicit defChoicesPP q)
+        aqArg q'
+    ]
+    where aqArg = return . ArbitrarySelectArrMaybeFields
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = do
