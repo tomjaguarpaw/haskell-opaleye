@@ -8,6 +8,7 @@ module QuickCheck where
 import           Prelude hiding (compare, (.), id)
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
+import qualified Opaleye.Join as OJ
 import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
 import qualified Opaleye.ToFields as O
@@ -239,7 +240,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aqArg (fmap (fieldsList
                      . O.fromMaybeFields (0, O.sqlBool True)
                      . fmap listFields)
-                    (OM.optional q))
+                    (OJ.optionalExplicit defChoicesPP q))
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         let q' = P.dimap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))

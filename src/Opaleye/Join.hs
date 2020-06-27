@@ -32,6 +32,8 @@ import qualified Data.Profunctor.Product.Default as D
 --
 -- - Left/right joins: use 'optionalRestrict'
 --
+-- - Lateral left/right joins: use 'optional'
+--
 -- - Full outer joins: use 'Opaleye.FunctionalJoin.fullJoinF' (If you
 --   have a real-world use case for full outer joins then we'd love to
 --   hear about it. Please [open a new issue on the Opaleye
@@ -73,6 +75,51 @@ optionalRestrict :: D.Default U.Unpackspec a a
                  -- single row of \"Nothing\"
 optionalRestrict = J.optionalRestrict
 
+-- | Convenient access to lateral left/right join
+-- functionality. Performs a @LATERAL LEFT JOIN@ under the hood and
+-- has behaviour equivalent to the following Haskell function:
+--
+-- @
+-- optional :: [a] -> [Maybe a]
+-- optional q = case q of
+--     [] -> [Nothing]
+--     xs -> map Just xs
+-- @
+--
+-- That is, if @q :: 'SelectArr' i a@ returns no rows, @'optional' q
+-- :: 'SelectArr' i ('MaybeFields' a)@ returns exactly one \"Nothing\"
+-- row.  Otherwise, @'optional' q@ returns exactly the rows of @q@
+-- wrapped in \"Just\".  For example,
+--
+-- @
+-- > let l1 = ["one", "two", "three"] :: [Field SqlText]
+-- > 'Opaleye.RunSelect.runSelect' conn ('optional' ('Opaleye.Values.valuesSafe' l1)) :: IO [Maybe String]
+-- [Just "one", Just "two", Just "three"]
+--
+-- > let l2 = [] :: [Field SqlText]
+-- > 'Opaleye.RunSelect.runSelect' conn ('optional' ('Opaleye.Values.valuesSafe' l2)) :: IO [Maybe String]
+-- [Nothing]
+-- @
+--
+-- 'optionalRestrict' is a special case of @optional@ and could be
+-- written in terms of @optional@ as follows (except that
+-- 'optionalRestrict' doesn't use @LATERAL@ under the hood and
+-- @optional@ does).
+--
+-- @
+-- optionalRestrict q = optional $ proc cond -> do
+--   a <- q -< ()
+--   restrict -< cond a
+--   returnA -< a
+-- @
+optional :: D.Default U.Unpackspec a a
+         => S.SelectArr i a
+         -- ^ Input query
+         -> S.SelectArr i (M.MaybeFields a)
+         -- ^ The rows of the input query wrapped in \"Just\", unless
+         -- the input query has no rows in which case a single row of
+         -- \"Nothing\"
+optional = M.optional
 
 -- * Direct access to joins (not recommended)
 
@@ -191,6 +238,14 @@ optionalRestrictExplicit :: U.Unpackspec a a
                          -> S.Select a
                          -> S.SelectArr (a -> F.Field T.SqlBool) (M.MaybeFields a)
 optionalRestrictExplicit = J.optionalRestrictExplicit
+
+-- The Unpackpec is not used but I'm adding it in case we discover we
+-- need it in the future.  Then we can use it without breaking the
+-- API.
+optionalExplicit :: U.Unpackspec a a
+                 -> S.SelectArr i a
+                 -> S.SelectArr i (M.MaybeFields a)
+optionalExplicit _ = M.optional
 
 -- * Inferrable versions
 

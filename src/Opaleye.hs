@@ -52,6 +52,7 @@ import Opaleye.Field
           maybeToNullable)
 import Opaleye.FunctionalJoin
 import Opaleye.Join
+  hiding (optional)
 import Opaleye.Label
 import Opaleye.Manipulation
 import Opaleye.MaybeFields
