@@ -242,6 +242,17 @@ instance TQ.Arbitrary ArbitrarySelectArrMaybeFields where
   arbitrary = TQ.oneof [
       do
         ArbitrarySelectArr q <- TQ.arbitrary
+        aqArg (fmap pure q)
+    , do
+        ArbitraryGarble f <- TQ.arbitrary
+        ArbitrarySelectArrMaybeFields q <- TQ.arbitrary
+        aqArg (fmap (fmap f) q)
+    , do
+        ArbitrarySelectArrMaybeFields q1 <- TQ.arbitrary
+        ArbitrarySelectArrMaybeFields q2 <- TQ.arbitrary
+        aqArg (liftA2 (++) <$> q1 <*> q2)
+    , do
+        ArbitrarySelectArr q <- TQ.arbitrary
         aqArg (OJ.optionalExplicit defChoicesPP q)
     , do
         ArbitrarySelect q <- TQ.arbitrary
