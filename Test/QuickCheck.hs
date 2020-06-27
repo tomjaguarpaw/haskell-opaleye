@@ -78,6 +78,8 @@ listHaskells :: Haskells -> (Int, Bool)
 listHaskells f = listFieldsG f 1 True
 
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
+newtype ArbitrarySelectMaybeFields =
+  ArbitrarySelectMaybeFields (O.Select (O.MaybeFields Fields))
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
 newtype ArbitrarySelectArrMaybeFields =
   ArbitrarySelectArrMaybeFields (O.SelectArr Fields (O.MaybeFields Fields))
@@ -145,6 +147,11 @@ instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
                               (O.showSqlExplicit unpackFields q)
 
+instance Show ArbitrarySelectMaybeFields where
+  show (ArbitrarySelectMaybeFields q) =
+    maybe "Empty query" id
+          (O.showSqlExplicit (O.unpackspecMaybeFields unpackFields) q)
+
 instance Show ArbitraryFunction where
   show = const "A function"
 
@@ -152,6 +159,11 @@ instance TQ.Arbitrary ArbitrarySelect where
   arbitrary = do
     ArbitrarySelectArr q <- TQ.arbitrary
     return (ArbitrarySelect (q <<< pure []))
+
+instance TQ.Arbitrary ArbitrarySelectMaybeFields where
+  arbitrary = do
+    ArbitrarySelectArrMaybeFields q <- TQ.arbitrary
+    return (ArbitrarySelectMaybeFields (q <<< pure []))
 
 instance TQ.Arbitrary ArbitrarySelectArr where
   arbitrary = TQ.oneof [
@@ -541,6 +553,25 @@ optionalRestrict conn (ArbitrarySelect q) =
   where q1 = P.lmap (\() -> fst . firstBoolOrTrue (O.sqlBool True))
                     (O.optionalRestrictExplicit defChoicesPP q)
 
+-- This isn't a very thorough test, but traverseMaybeFields returns a
+-- SelectArr so testing it has the same problem as testing <<<.  We
+-- need to test a denotation that is a *function*, rather than just a
+-- list.  We haven't implemented that yet.  It would require running a
+-- base query and doing one trip to the database for each row in the
+-- base query, applying the SelectArr, and then concatenating the
+-- returned lists.
+traverseMaybeFields :: PGS.Connection
+                    -> ArbitrarySelectMaybeFields
+                    -> IO Bool
+traverseMaybeFields conn (ArbitrarySelectMaybeFields q) =
+  compare' conn
+           (denotationMaybeFields
+              (O.traverseMaybeFieldsExplicit defChoicesPP defChoicesPP f <<< q))
+           (onList (traverse f' =<<) (denotationMaybeFields q))
+  where f = proc l -> do
+          O.restrict -< (fst . firstBoolOrTrue (O.sqlBool True)) l
+          Arrow.returnA -< l
+        f' = \h -> if (fst . firstBoolOrTrue True) h then [h] else []
 
 
 {- TODO
@@ -592,6 +623,7 @@ run conn = do
   test2 label
   test1 optional
   test1 optionalRestrict
+  test1 traverseMaybeFields
 
 -- }
 
