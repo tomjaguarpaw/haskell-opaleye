@@ -37,9 +37,11 @@ import Data.Profunctor.Product.Default
 --   * @traverse (const l)  (Just x) = fmap Just l@
 --   * @traverse (const []) (Just x) = []@
 traverseMaybeFields :: (Default Unpackspec a a, Default Unpackspec b b)
-                    => SelectArr a b
+                    => (a -> SelectArr i b)
                     -- ^
-                    -> SelectArr (MaybeFields a) (MaybeFields b)
+                    -> MaybeFields a
+                    -- ^
+                    -> SelectArr i (MaybeFields b)
                     -- ^
 traverseMaybeFields = Opaleye.Internal.MaybeFields.traverseMaybeFields
 
@@ -48,7 +50,11 @@ traverseMaybeFields = Opaleye.Internal.MaybeFields.traverseMaybeFields
 -- without breaking the API.
 traverseMaybeFieldsExplicit :: Unpackspec a a
                             -> Unpackspec b b
-                            -> SelectArr a b
-                            -> SelectArr (MaybeFields a) (MaybeFields b)
+                            -> (a -> SelectArr i b)
+                            -- ^
+                            -> MaybeFields a
+                            -- ^
+                            -> SelectArr i (MaybeFields b)
+                            -- ^
 traverseMaybeFieldsExplicit _ _ =
   Opaleye.Internal.MaybeFields.traverseMaybeFields

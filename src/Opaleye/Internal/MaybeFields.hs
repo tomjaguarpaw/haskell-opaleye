@@ -25,6 +25,7 @@ import           Opaleye.Field (Field)
 import           Opaleye.Internal.Operators ((.&&), (.||), restrict, not,
                                              ifExplict, IfPP)
 import qualified Opaleye.Internal.Lateral
+import           Opaleye.Internal.Lateral (lateral)
 import qualified Opaleye.SqlTypes
 import           Opaleye.SqlTypes (SqlBool)
 
@@ -89,26 +90,18 @@ nothingExplicit v = MaybeFields {
   , mfFields  = runIdentity (V.runValuesspecSafe v pure)
   }
 
-traverseMaybeFields :: SelectArr a b -> SelectArr (MaybeFields a) (MaybeFields b)
-traverseMaybeFields query = proc mfInput -> do
-  mfOutput <- optional (query <<< catMaybeFields) -< mfInput
+traverseMaybeFields :: (a -> SelectArr i b)
+                    -> MaybeFields a
+                    -> SelectArr i (MaybeFields b)
+traverseMaybeFields query mfInput = proc i -> do
+  mfOutput <- lateral (\i ->
+                optional (lateral (\a -> query a <<< pure i)
+                          <<< catMaybeFields <<< pure mfInput)) -< i
+
   restrict -< mfPresent mfInput `implies` mfPresent mfOutput
   returnA -< MaybeFields (mfPresent mfInput) (mfFields mfOutput)
 
   where a `implies` b = Opaleye.Internal.Operators.not a .|| b
-
-traverseMaybeFieldsF :: (a -> SelectArr i b)
-                     -> MaybeFields a
-                     -> SelectArr i (MaybeFields b)
-traverseMaybeFieldsF query = outmf
-  where ini = \i -> Opaleye.Internal.Lateral.lateral (\a -> query a <<< pure i)
-        outi = traverseMaybeFields . ini
-        outmf = \mf -> Opaleye.Internal.Lateral.lateral (\i -> outi i <<< pure mf)
-
-traverseMaybeFieldsF2 :: SelectArr a b
-                      -> SelectArr (MaybeFields a) (MaybeFields b)
-traverseMaybeFieldsF2 query =
-  Opaleye.Internal.Lateral.lateral (traverseMaybeFieldsF (\a -> query <<< pure a))
 
 optional :: SelectArr i a -> SelectArr i (MaybeFields a)
 optional = Opaleye.Internal.Lateral.laterally (IQ.QueryArr . go)

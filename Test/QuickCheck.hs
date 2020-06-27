@@ -8,6 +8,7 @@ module QuickCheck where
 import           Prelude hiding (compare, (.), id)
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
+import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Join as OJ
 import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
@@ -294,7 +295,7 @@ instance TQ.Arbitrary ArbitrarySelectArrMaybeFields where
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         ArbitrarySelectArrMaybeFields qm <- TQ.arbitrary
-        aqArg (O.traverseMaybeFieldsExplicit defChoicesPP defChoicesPP q <<< qm)
+        aqArg (OM.traverseMaybeFieldsF2 q <<< qm)
     ]
     where aqArg = return . ArbitrarySelectArrMaybeFields
 
@@ -632,7 +633,7 @@ traverseMaybeFields :: PGS.Connection
 traverseMaybeFields conn (ArbitrarySelectMaybeFields q) =
   compare conn
           (denotationMaybeFields
-             (O.traverseMaybeFieldsExplicit defChoicesPP defChoicesPP f <<< q))
+             (OM.traverseMaybeFieldsF2 f <<< q))
           (onList (traverse f' =<<) (denotationMaybeFields q))
   where f = proc l -> do
           O.restrict -< (fst . firstBoolOrTrue (O.sqlBool True)) l
