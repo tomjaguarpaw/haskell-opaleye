@@ -90,8 +90,8 @@ newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
 newtype ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
                       deriving Show
-newtype ArbitraryGarble =
-  ArbitraryGarble { unArbitraryGarble :: forall a. [a] -> [a] }
+newtype ArbitraryFunction =
+  ArbitraryFunction { unArbitraryFunction :: forall a. [a] -> [a] }
 
 data Order = Asc | Desc deriving Show
 
@@ -145,7 +145,7 @@ instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
                               (O.showSqlExplicit unpackFields q)
 
-instance Show ArbitraryGarble where
+instance Show ArbitraryFunction where
   show = const "A function"
 
 instance TQ.Arbitrary ArbitrarySelect where
@@ -188,7 +188,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
 
     , do
         f                <- TQ.arbitrary
-        aqArg (Arrow.arr (unArbitraryGarble f))
+        aqArg (Arrow.arr (unArbitraryFunction f))
 
     , do
         aqArg restrictFirstBool
@@ -244,7 +244,7 @@ instance TQ.Arbitrary ArbitrarySelectArrMaybeFields where
         ArbitrarySelectArr q <- TQ.arbitrary
         aqArg (fmap pure q)
     , do
-        ArbitraryGarble f <- TQ.arbitrary
+        ArbitraryFunction f <- TQ.arbitrary
         ArbitrarySelectArrMaybeFields q <- TQ.arbitrary
         aqArg (fmap (fmap f) q)
     , do
@@ -307,11 +307,11 @@ pairColumns cs = (evens cs, odds cs)
 unpairColums :: ([a], [a]) -> [a]
 unpairColums = uncurry (++)
 
-instance TQ.Arbitrary ArbitraryGarble where
+instance TQ.Arbitrary ArbitraryFunction where
   arbitrary = do
     i <- TQ.choose (0 :: Int, 4)
 
-    return (ArbitraryGarble (\xs ->
+    return (ArbitraryFunction (\xs ->
         if i == 0 then
           evens xs ++ odds xs
         else if i == 1 then
@@ -438,10 +438,10 @@ fields conn (ArbitraryFields c) =
   compareNoSort conn (denotation' (pure (fieldsOfHaskells c)))
                      (pure c)
 
-fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitrarySelect -> IO TQ.Property
+fmap' :: PGS.Connection -> ArbitraryFunction -> ArbitrarySelect -> IO TQ.Property
 fmap' conn f (ArbitrarySelect q) =
-  compareNoSort conn (denotation' (fmap (unArbitraryGarble f) q))
-                     (onList (fmap (unArbitraryGarble f)) (denotation' q))
+  compareNoSort conn (denotation' (fmap (unArbitraryFunction f) q))
+                     (onList (fmap (unArbitraryFunction f)) (denotation' q))
 
 apply :: PGS.Connection -> ArbitrarySelect -> ArbitrarySelect -> IO Bool
 apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
