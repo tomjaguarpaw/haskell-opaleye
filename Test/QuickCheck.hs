@@ -8,6 +8,7 @@ module QuickCheck where
 
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
+import qualified Opaleye.Join as OJ
 import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.ToFields as O
 import           Wrapped (constructor, asSumProfunctor,
@@ -218,7 +219,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aqArg (fmap (fieldsList
                      . O.fromMaybeFields (0, O.sqlBool True)
                      . fmap listFields)
-                    (OM.optional q))
+                    (OJ.optionalExplicit defChoicesPP q))
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         let q' = P.dimap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))
@@ -503,7 +504,7 @@ label conn comment (ArbitrarySelect q) =
 
 optional :: PGS.Connection -> ArbitrarySelect -> IO Bool
 optional conn (ArbitrarySelect q) =
-  compare' conn (denotationMaybeFields (OM.optional q))
+  compare' conn (denotationMaybeFields (OJ.optionalExplicit defChoicesPP q))
                 (onList optionalDenotation (denotation' q))
 
 optionalRestrict :: PGS.Connection -> ArbitrarySelect -> IO Bool

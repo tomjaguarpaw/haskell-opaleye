@@ -85,35 +85,6 @@ traverseMaybeFields query = proc mfInput -> do
 
   where a `implies` b = Opaleye.Internal.Operators.not a .|| b
 
--- | Convenient access to lateral left/right join
--- functionality. Performs a @LATERAL LEFT JOIN@ under the hood and
--- has behaviour equivalent to the following Haskell function:
---
--- @
--- optional :: [a] -> [Maybe a]
--- optional q = case q of
---     [] -> [Nothing]
---     xs -> map Just xs
--- @
---
--- That is, if @q :: 'SelectArr' i a@ returns no rows, @'optional' q
--- :: 'SelectArr' i ('MaybeFields' a)@ returns exactly one \"Nothing\"
--- row.  Otherwise, @'optional' q@ returns exactly the rows of @q@
--- wrapped in \"Just\".
---
--- @
--- > let l1 = ["one", "two", "three"] :: [Field SqlText]
--- > 'Opaleye.RunSelect.runSelect' conn ('optional' ('Opaleye.Values.valuesSafe' l1)) :: IO [Maybe String]
--- [Just "one", Just "two", Just "three"]
---
--- > let l2 = [] :: [Field SqlText]
--- > 'Opaleye.RunSelect.runSelect' conn ('optional' ('Opaleye.Values.valuesSafe' l2)) :: IO [Maybe String]
--- [Nothing]
--- @
---
--- @optional@ is a generalisation of 'Opaleye.Join.optionalRestrict'.
--- See the implementation of 'lateralLeftJoinOptional' for a
--- demonstration of how @LEFT JOIN@ can be written using 'optional'.
 optional :: SelectArr i a -> SelectArr i (MaybeFields a)
 optional = Opaleye.Internal.Lateral.laterally (IQ.QueryArr . go)
   where
