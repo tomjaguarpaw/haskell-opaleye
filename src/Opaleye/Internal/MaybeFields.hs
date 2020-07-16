@@ -7,6 +7,7 @@ module Opaleye.Internal.MaybeFields where
 
 import           Control.Applicative hiding (optional)
 import           Control.Arrow (returnA, (<<<))
+import           Data.Functor.Identity (runIdentity)
 
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.PackMap as PM
@@ -16,6 +17,7 @@ import qualified Opaleye.Internal.QueryArr as IQ
 import qualified Opaleye.Internal.RunQuery as RQ
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
+import qualified Opaleye.Internal.Values as V
 import           Opaleye.Select (Select, SelectArr)
 import qualified Opaleye.Column
 import qualified Opaleye.Field
@@ -56,6 +58,10 @@ instance Monad MaybeFields where
   MaybeFields t a >>= f = case f a of
     MaybeFields t' b -> MaybeFields (t .&& t') b
 
+-- | The Opaleye analogue of 'Data.Maybe.Nothing'
+nothing :: PP.Default V.ValuesspecSafe a a => MaybeFields a
+nothing = nothingExplicit PP.def
+
 -- | The Opaleye analogue of 'Data.Maybe.maybe'
 maybeFields :: PP.Default IfPP b b => b -> (a -> b) -> MaybeFields a -> b
 maybeFields = maybeFieldsExplicit PP.def
@@ -76,6 +82,12 @@ maybeFieldsExplicit ifpp b f mf =
 
 fromMaybeFieldsExplicit :: IfPP b b -> b -> MaybeFields b -> b
 fromMaybeFieldsExplicit ifpp = flip (maybeFieldsExplicit ifpp) id
+
+nothingExplicit :: V.ValuesspecSafe a a -> MaybeFields a
+nothingExplicit v = MaybeFields {
+    mfPresent = Opaleye.SqlTypes.sqlBool False
+  , mfFields  = runIdentity (V.runValuesspecSafe v pure)
+  }
 
 traverseMaybeFields :: SelectArr a b -> SelectArr (MaybeFields a) (MaybeFields b)
 traverseMaybeFields query = proc mfInput -> do
