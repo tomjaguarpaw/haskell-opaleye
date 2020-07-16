@@ -7,6 +7,7 @@ module Opaleye.Internal.Lateral
   , laterally
   , bilaterally
   , bind
+  , arrowApply
   )
 where
 
@@ -58,3 +59,6 @@ bind s f = proc i -> do
   a <- s -< i
   b <- lateral (\(a, i) -> viaLateral (f a) i) -< (a, i)
   returnA -< b
+
+arrowApply :: SelectArr (SelectArr i a, i) a
+arrowApply = lateral (\(f, i) -> viaLateral f i)
