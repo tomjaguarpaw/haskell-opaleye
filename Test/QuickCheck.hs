@@ -5,20 +5,24 @@
 
 module QuickCheck where
 
-import           Prelude hiding (compare)
+import           Prelude hiding (compare, (.), id)
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
+import qualified Opaleye.Internal.Values as OV
 import qualified Opaleye.ToFields as O
+import qualified Rectangular as R
 import           Wrapped (constructor, asSumProfunctor,
                           constructorDecidable, asDecidable)
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Test.QuickCheck as TQ
 import           Test.QuickCheck ((===))
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
-import           Control.Monad (when)
+import           Control.Category (Category, (.), id)
+import           Control.Monad (when, (<=<))
 import qualified Data.Profunctor.Product.Default as D
 import           Data.List (sort)
 import qualified Data.List as List
+import qualified Data.List.NonEmpty as NEL
 import qualified Data.MultiSet as MultiSet
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
@@ -129,6 +133,10 @@ aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
                               (O.showSqlExplicit unpackFields q)
+
+instance Show ArbitrarySelectArr where
+  -- We could plug in dummy data here, or maybe just an empty list
+  show _ = "ArbitrarySelectArr"
 
 instance Show ArbitraryFunction where
   show = const "A function"
@@ -336,6 +344,11 @@ instance Applicative (SelectArrDenotation a) where
                                    (unSelectArrDenotation f)
                                    (unSelectArrDenotation x))
 
+instance Category SelectArrDenotation where
+  id = SelectArrDenotation (\_ -> pure)
+  (.) = \(SelectArrDenotation f) (SelectArrDenotation g) ->
+          SelectArrDenotation (\conn -> f conn <=< g conn)
+
 concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
 concatMapM f = fmap concat . mapM f
 
@@ -348,6 +361,14 @@ denotationExplicit qr q =
 
 denotation :: O.Select Fields -> SelectDenotation Haskells
 denotation = denotationExplicit defChoicesPP
+
+denotationArr :: O.SelectArr Fields Fields
+              -> SelectArrDenotation Haskells Haskells
+denotationArr q =
+  SelectArrDenotation (\conn hs ->
+    case rectangularValues (map fieldsOfHaskells hs) of
+      Nothing -> error "Jagged"
+      Just fs -> O.runSelectExplicit defChoicesPP conn (q <<< fs))
 
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
@@ -404,6 +425,23 @@ fields :: PGS.Connection -> ArbitraryFields -> IO TQ.Property
 fields conn (ArbitraryFields c) =
   compareNoSort conn (denotation (pure (fieldsOfHaskells c)))
                      (pure c)
+
+compose :: PGS.Connection
+        -> ArbitrarySelectArr
+        -> ArbitrarySelect
+        -> IO Bool
+compose conn (ArbitrarySelectArr a) (ArbitrarySelect q) = do
+  compare conn (denotation (a . q))
+               (denotationArr a . denotation q)
+
+-- Would prefer to write 'compare conn (denotation id) id' but that
+-- requires extending compare to compare SelectArrs.
+identity :: PGS.Connection
+         -> ArbitrarySelect
+         -> IO Bool
+identity conn (ArbitrarySelect q) = do
+  compare conn (denotation (id . q))
+               (id . denotation q)
 
 fmap' :: PGS.Connection -> ArbitraryFunction -> ArbitrarySelect -> IO TQ.Property
 fmap' conn f (ArbitrarySelect q) =
@@ -506,7 +544,6 @@ label conn comment (ArbitrarySelect q) =
   * Nullability
   * Left join
   * Operators (mathematical, logical, etc.)
-  * Denotation of <<<
 
   * The denotation of lateral subqueries (at the moment we just
     generate subqueries containing them, but we don't check their
@@ -542,6 +579,8 @@ run conn = do
       t p = errorIfNotSuccess
         =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
+  test1 identity
+  test2 compose
   test1 fields
   test2 fmap'
   test2 apply
@@ -636,5 +675,23 @@ maximumBy c xs@(_:_) = Just (List.maximumBy c xs)
 
 minimumBy :: (a -> a -> Ord.Ordering) -> [a] -> Maybe a
 minimumBy = maximumBy . flip
+
+-- Opaleye's 'values' applied to a list of rows, when the rows match,
+-- i.e. they have the same length and the constructors of the elements
+-- match at each index.  IF they don't match, then Nothing.
+rectangularValues :: [Fields] -> Maybe (O.Select Fields)
+rectangularValues bs' = case NEL.nonEmpty bs' of
+  Nothing -> Just (O.valuesSafeExplicit (pure []) [])
+  Just bs -> case PP.list (choicePP pureUdef pureUdef pureUdef) of
+    R.U g -> case g (fmap (\x -> ((), x)) bs) of
+      Nothing -> Nothing
+      Just (R.W p1' ar) ->
+        Just (O.valuesSafeExplicit p1' (NEL.toList (fmap snd ar)))
+
+  where pureUdef ::O.IsSqlType a
+                 => R.U OV.ValuesspecSafe
+                        (O.Column a)
+                        (O.Column a)
+        pureUdef = R.pureU D.def
 
 -- }
