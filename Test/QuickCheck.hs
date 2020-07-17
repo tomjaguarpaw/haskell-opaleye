@@ -40,12 +40,12 @@ table1 :: O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
 table1 = twoIntTable "table1"
 
 newtype SelectArrDenotation a b =
-  SelectArrDenotation { unSelectArrDenotation :: PGS.Connection -> a -> IO [b] }
+  SelectArrDenotation { unSelectArrDenotation :: PGS.Connection -> [a] -> IO [b] }
 
 type SelectDenotation = SelectArrDenotation ()
 
 unSelectDenotation :: SelectDenotation b -> PGS.Connection -> IO [b]
-unSelectDenotation sa conn = unSelectArrDenotation sa conn ()
+unSelectDenotation sa conn = unSelectArrDenotation sa conn [()]
 
 onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
@@ -336,11 +336,15 @@ instance Applicative (SelectArrDenotation a) where
                                    (unSelectArrDenotation f)
                                    (unSelectArrDenotation x))
 
+concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
+concatMapM f = fmap concat . mapM f
+
 denotationExplicit :: O.FromFields fields a
                    -> O.Select fields
                    -> SelectDenotation a
 denotationExplicit qr q =
-  SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
+  SelectArrDenotation (\conn rs ->
+    flip concatMapM rs (\() -> O.runSelectExplicit qr conn q))
 
 denotation :: O.Select Fields -> SelectDenotation Haskells
 denotation = denotationExplicit defChoicesPP
