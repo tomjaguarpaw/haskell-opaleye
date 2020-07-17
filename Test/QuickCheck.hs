@@ -569,7 +569,12 @@ choicePP p1 p2 p3 = asSumProfunctor $ proc choice -> case choice of
 defChoicesPP :: (D.Default p a a', D.Default p b b', D.Default p s s',
                  PP.SumProfunctor p, PP.ProductProfunctor p)
              => p [Choice a b s] [Choice a' b' s']
-defChoicesPP = PP.list (choicePP D.def D.def D.def)
+defChoicesPP = PP.list defChoicePP
+
+defChoicePP :: (D.Default p a a', D.Default p b b', D.Default p s s',
+                PP.SumProfunctor p, PP.ProductProfunctor p)
+            => p (Choice a b s) (Choice a' b' s')
+defChoicePP = choicePP D.def D.def D.def
 
 -- Replace this with `isSuccess` when the following issue is fixed
 --
