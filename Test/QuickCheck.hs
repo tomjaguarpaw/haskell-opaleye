@@ -68,6 +68,11 @@ type Choices i b s = [Choice i b s]
 type Fields = Choices (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText)
 type Haskells = Choices Int Bool String
 
+ppChoices :: (PP.SumProfunctor p, PP.ProductProfunctor p)
+          => p (Choice i b s) (Choice i' b' s')
+          -> p (Choices i b s) (Choices i' b' s')
+ppChoices = PP.list
+
 fieldsOfHaskells :: Haskells -> Fields
 fieldsOfHaskells = O.toFieldsExplicit defChoicesPP
 
@@ -102,9 +107,9 @@ aggregateFields =
   -- The requirement to cast to int4 is silly, but we still have a bug
   --
   --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/117
-  PP.list (choicePP (P.rmap (O.unsafeCast "int4") O.sum)
-                    O.boolAnd
-                    (O.stringAgg (O.sqlString ", ")))
+  ppChoices (choicePP (P.rmap (O.unsafeCast "int4") O.sum)
+                      O.boolAnd
+                      (O.stringAgg (O.sqlString ", ")))
 
 aggregateLaterally :: O.Aggregator b b'
                    -> O.SelectArr i (Fields, b)
@@ -623,7 +628,7 @@ choicePP p1 p2 p3 = asSumProfunctor $ proc choice -> case choice of
 defChoicesPP :: (D.Default p a a', D.Default p b b', D.Default p s s',
                  PP.SumProfunctor p, PP.ProductProfunctor p)
              => p (Choices a b s) (Choices a' b' s')
-defChoicesPP = PP.list defChoicePP
+defChoicesPP = ppChoices defChoicePP
 
 defChoicePP :: (D.Default p a a', D.Default p b b', D.Default p s s',
                 PP.SumProfunctor p, PP.ProductProfunctor p)
@@ -693,7 +698,7 @@ minimumBy = maximumBy . flip
 rectangularValues :: [Fields] -> Maybe (O.Select Fields)
 rectangularValues bs' = case NEL.nonEmpty bs' of
   Nothing -> Just (O.valuesSafeExplicit (pure []) [])
-  Just bs -> case PP.list (choicePP pureUdef pureUdef pureUdef) of
+  Just bs -> case ppChoices (choicePP pureUdef pureUdef pureUdef) of
     R.U g -> case g (fmap (\x -> ((), x)) bs) of
       Nothing -> Nothing
       Just (R.W p1' ar) ->
