@@ -190,7 +190,8 @@ instance TQ.Arbitrary ArbitrarySelectArr where
           , -- We test empty lists of values separately, because we
             -- used to not support them
             do
-              l <- TQ.arbitrary
+              k <- TQ.choose (0, 5)
+              l <- TQ.vector k
               let _ = l :: [()]
               return (fmap (const []) (O.valuesSafe l))
           ]
