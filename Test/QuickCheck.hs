@@ -68,6 +68,9 @@ type Choices i b s = [Choice i b s]
 type Fields = Choices (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText)
 type Haskells = Choices Int Bool String
 
+emptyChoices :: Choices i b s
+emptyChoices = []
+
 ppChoices :: (PP.SumProfunctor p, PP.ProductProfunctor p)
           => p (Choice i b s) (Choice i' b' s')
           -> p (Choices i b s) (Choices i' b' s')
@@ -151,7 +154,7 @@ instance Show ArbitraryFunction where
 instance TQ.Arbitrary ArbitrarySelect where
   arbitrary = do
     ArbitrarySelectArr q <- TQ.arbitrary
-    return (ArbitrarySelect (q <<< pure []))
+    return (ArbitrarySelect (q <<< pure emptyChoices))
 
 instance TQ.Arbitrary ArbitrarySelectArr where
   arbitrary = TQ.oneof [
@@ -170,7 +173,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
             do
               l <- TQ.arbitrary
               let _ = l :: [()]
-              return (fmap (const []) (O.valuesSafe l))
+              return (fmap (const emptyChoices) (O.valuesSafe l))
           ]
         aqArg (P.lmap (const ()) q)
     , do
@@ -697,7 +700,7 @@ minimumBy = maximumBy . flip
 -- match at each index.  IF they don't match, then Nothing.
 rectangularValues :: [Fields] -> Maybe (O.Select Fields)
 rectangularValues bs' = case NEL.nonEmpty bs' of
-  Nothing -> Just (O.valuesSafeExplicit (pure []) [])
+  Nothing -> Just (O.valuesSafeExplicit (pure emptyChoices) [])
   Just bs -> case ppChoices (choicePP pureUdef pureUdef pureUdef) of
     R.U g -> case g (fmap (\x -> ((), x)) bs) of
       Nothing -> Nothing
