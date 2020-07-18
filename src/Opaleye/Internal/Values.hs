@@ -108,6 +108,10 @@ runValuesspecSafe :: Applicative f
                   -> f columns'
 runValuesspecSafe (ValuesspecSafe v _) f = PM.traversePM v f ()
 
+valuesspecField :: Opaleye.SqlTypes.IsSqlType a
+                => ValuesspecSafe (Column a) (Column a)
+valuesspecField = def
+
 instance Opaleye.Internal.PGTypes.IsSqlType a
   => Default ValuesspecSafe (Column a) (Column a) where
   def = def_
