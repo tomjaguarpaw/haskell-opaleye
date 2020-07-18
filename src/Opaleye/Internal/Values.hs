@@ -11,8 +11,9 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PGTypes
 import qualified Opaleye.SqlTypes
 
+import           Data.Functor.Identity (runIdentity)
 import qualified Data.List.NonEmpty as NEL
-import           Data.Profunctor (Profunctor, dimap, rmap)
+import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
@@ -125,6 +126,38 @@ instance Opaleye.Internal.PGTypes.IsSqlType a
           columnProxy :: f (Column sqlType) -> Maybe sqlType
           columnProxy _ = Nothing
 
+-- Implementing this in terms of Valuesspec for convenience
+newtype Nullspec fields fields' = Nullspec (ValuesspecSafe fields fields')
+
+nullspecField :: Opaleye.SqlTypes.IsSqlType b
+              => Nullspec a (Column b)
+nullspecField = Nullspec (lmap e valuesspecField)
+  where e = error (concat [ "We looked at the argument of a Nullspec when we "
+                          , "expected that we never would!  This is a bug in "
+                          , "Opaleye.  Please report it, if you can reproduce "
+                          , "it."
+                          ])
+
+nullspecList :: Nullspec a [b]
+nullspecList = pure []
+
+nullspecEitherLeft :: Nullspec a b
+                   -> Nullspec a (Either b b')
+nullspecEitherLeft = fmap Left
+
+nullspecEitherRight :: Nullspec a b'
+                    -> Nullspec a (Either b b')
+nullspecEitherRight = fmap Right
+
+instance Opaleye.SqlTypes.IsSqlType a
+  => Default Nullspec (Column a) (Column a) where
+  def = nullspecField
+
+-- | All fields @NULL@, even though technically the type may forbid
+-- that!  Used to create such fields when we know we will never look
+-- at them expecting to find something non-NULL.
+nullFields :: Nullspec a fields -> fields
+nullFields (Nullspec v) = runIdentity (runValuesspecSafe v pure)
 
 -- {
 
@@ -156,6 +189,20 @@ instance Profunctor ValuesspecSafe where
   dimap f g (ValuesspecSafe q q') = ValuesspecSafe (rmap g q) (dimap f g q')
 
 instance ProductProfunctor ValuesspecSafe where
+  purePP = pure
+  (****) = (<*>)
+
+instance Functor (Nullspec a) where
+  fmap f (Nullspec g) = Nullspec (fmap f g)
+
+instance Applicative (Nullspec a) where
+  pure = Nullspec . pure
+  Nullspec f <*> Nullspec x = Nullspec (f <*> x)
+
+instance Profunctor Nullspec where
+  dimap f g (Nullspec q) = Nullspec (dimap f g q)
+
+instance ProductProfunctor Nullspec where
   purePP = pure
   (****) = (<*>)
 
