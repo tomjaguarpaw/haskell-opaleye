@@ -63,13 +63,15 @@ chooseChoice choose fi fb fs = asDecidable $ proc a -> case choose a of
   CBool b   -> constructorDecidable fb -< b
   CString s -> constructorDecidable fs -< s
 
-type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText)]
-type Haskells = [Choice Int Bool String]
+type Choices i b s = [Choice i b s]
+
+type Fields = Choices (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText)
+type Haskells = Choices Int Bool String
 
 fieldsOfHaskells :: Haskells -> Fields
 fieldsOfHaskells = O.toFieldsExplicit defChoicesPP
 
-fieldsList :: (a, b) -> [Choice a b s]
+fieldsList :: (a, b) -> Choices a b s
 fieldsList (x, y) = [CInt x, CBool y]
 
 listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
@@ -620,7 +622,7 @@ choicePP p1 p2 p3 = asSumProfunctor $ proc choice -> case choice of
 
 defChoicesPP :: (D.Default p a a', D.Default p b b', D.Default p s s',
                  PP.SumProfunctor p, PP.ProductProfunctor p)
-             => p [Choice a b s] [Choice a' b' s']
+             => p (Choices a b s) (Choices a' b' s')
 defChoicesPP = PP.list defChoicePP
 
 defChoicePP :: (D.Default p a a', D.Default p b b', D.Default p s s',
@@ -636,13 +638,13 @@ errorIfNotSuccess r = case r of
   TQ.Success {} -> return ()
   _             -> error "Failed"
 
-firstBoolOrTrue :: b -> [Choice a b s] -> (b, [Choice a b s])
+firstBoolOrTrue :: b -> Choices a b s -> (b, Choices a b s)
 firstBoolOrTrue true c = (b, c)
   where b = case Maybe.mapMaybe isBool c of
           []    -> true
           (x:_) -> x
 
-firstIntOr :: a -> [Choice a b s] -> (a, [Choice a b s])
+firstIntOr :: a -> Choices a b s -> (a, Choices a b s)
 firstIntOr else_ c = (b, c)
   where b = case Maybe.mapMaybe isInt c of
           []    -> else_
