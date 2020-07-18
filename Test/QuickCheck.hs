@@ -2,7 +2,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE Arrows #-}
 
 module QuickCheck where
 
@@ -16,6 +15,7 @@ import qualified Database.PostgreSQL.Simple as PGS
 import qualified Test.QuickCheck as TQ
 import           Test.QuickCheck ((===))
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
+import           Control.Monad (when)
 import qualified Data.Profunctor.Product.Default as D
 import           Data.List (sort)
 import qualified Data.List as List
@@ -110,7 +110,7 @@ aggregateLaterally agg q = proc i -> do
     (\(a, b) ->
         let aLateralInt :: O.Field O.SqlInt4
             aLateralInt = fst (firstIntOr 0 a)
-        in (O.aggregateOrdered (O.asc (const aLateralInt)) agg) (pure b))
+        in O.aggregateOrdered (O.asc (const aLateralInt)) agg (pure b))
             -< (a, b)
   Arrow.returnA -< (a, b')
 
@@ -363,11 +363,10 @@ compareNoSort conn one two = do
   one' <- unSelectDenotation one conn
   two' <- unSelectDenotation two conn
 
-  if (one' /= two')
-    then (putStrLn $ if (sort one' == sort two')
-                     then "[but they are equal sorted]"
-                     else "AND THEY'RE NOT EVEN EQUAL SORTED!")
-    else return ()
+  when (one' /= two')
+       (putStrLn $ if sort one' == sort two'
+                   then "[but they are equal sorted]"
+                   else "AND THEY'RE NOT EVEN EQUAL SORTED!")
 
   return (one' === two')
 

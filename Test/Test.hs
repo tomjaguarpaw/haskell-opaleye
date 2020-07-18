@@ -790,7 +790,7 @@ testDeleteReturning :: Test
 testDeleteReturning = it "" $ \conn -> do
   result <- O.runDelete_ conn delete
   _ <- O.runInsert_ conn O.Insert { O.iTable = table4
-                                  , O.iRows = ([(40,50)] :: [(Field O.SqlInt4, Field O.SqlInt4)])
+                                  , O.iRows = [(40,50)] :: [(Field O.SqlInt4, Field O.SqlInt4)]
                                   , O.iReturning = O.rCount
                                   , O.iOnConflict = Nothing } :: IO Int64
   result `shouldBe` expected
@@ -803,7 +803,7 @@ testDeleteReturning = it "" $ \conn -> do
 testInsertConflict :: Test
 testInsertConflict = it "inserts with conflicts" $ \conn -> do
   _ <- O.runDelete_ conn O.Delete { O.dTable = table10
-                                  , O.dWhere = (const $ O.toFields True)
+                                  , O.dWhere = const $ O.toFields True
                                   , O.dReturning = O.rCount }
   returned <- O.runInsert_ conn O.Insert { O.iTable = table10
                                          , O.iRows = insertT

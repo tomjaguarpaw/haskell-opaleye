@@ -95,7 +95,7 @@ tableColumnsView = tablePropertiesView
 
 -- | Internal only.  Do not use.  'View' will be deprecated in version
 -- 0.7.
-data View columns = View columns
+newtype View columns = View columns
 
 -- | Internal only.  Do not use.  'Writer' will be deprecated in
 -- version 0.7.
@@ -233,7 +233,7 @@ instance Functor (Writer a) where
   fmap _ (Writer g) = Writer g
 
 instance Applicative (Writer a) where
-  pure x = Writer (fmap (const ()) (pure x))
+  pure _ = Writer (pure ())
   Writer f <*> Writer x = Writer (liftA2 (\_ _ -> ()) f x)
 
 instance Profunctor Writer where
