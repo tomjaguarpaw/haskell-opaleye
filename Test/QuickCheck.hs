@@ -9,6 +9,7 @@ import           Prelude hiding (compare, (.), id)
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
 import qualified Opaleye.Internal.Values as OV
+import qualified Opaleye.Internal.Distinct as OD
 import qualified Opaleye.ToFields as O
 import qualified Rectangular as R
 import           Wrapped (constructor, asSumProfunctor,
@@ -110,6 +111,12 @@ data Order = Asc | Desc deriving Show
 unpackFields :: O.Unpackspec Fields Fields
 unpackFields = defChoicesPP
 
+distinctFields :: OD.Distinctspec Fields Fields
+distinctFields = defChoicesPP
+
+fromFieldsFields :: O.FromFields Fields Haskells
+fromFieldsFields = defChoicesPP
+
 aggregateFields :: O.Aggregator Fields Fields
 aggregateFields =
   -- The requirement to cast to int4 is silly, but we still have a bug
@@ -189,7 +196,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aqArg q
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
-        aq (O.distinctExplicit defChoicesPP) q
+        aq (O.distinctExplicit distinctFields) q
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
@@ -377,7 +384,7 @@ denotationExplicit qr q =
     flip concatMapM rs (\() -> O.runSelectExplicit qr conn q))
 
 denotation :: O.Select Fields -> SelectDenotation Haskells
-denotation = denotationExplicit defChoicesPP
+denotation = denotationExplicit fromFieldsFields
 
 denotationArr :: O.SelectArr Fields Fields
               -> SelectArrDenotation Haskells Haskells
@@ -385,11 +392,11 @@ denotationArr q =
   SelectArrDenotation (\conn hs ->
     case rectangularValues (map fieldsOfHaskells hs) of
       Nothing -> error "Jagged"
-      Just fs -> O.runSelectExplicit defChoicesPP conn (q <<< fs))
+      Just fs -> O.runSelectExplicit fromFieldsFields conn (q <<< fs))
 
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
-denotation2 = denotationExplicit (defChoicesPP PP.***! defChoicesPP)
+denotation2 = denotationExplicit (fromFieldsFields PP.***! fromFieldsFields)
 
 -- { Comparing the results
 
@@ -519,7 +526,7 @@ order conn o (ArbitrarySelect q) =
 
 distinct :: PGS.Connection -> ArbitrarySelect -> IO Bool
 distinct conn (ArbitrarySelect q) =
-  compare conn (denotation (O.distinctExplicit defChoicesPP q))
+  compare conn (denotation (O.distinctExplicit distinctFields q))
                 (onList nub (denotation q))
 
 -- When we added <*> to the arbitrary queries we started getting some
