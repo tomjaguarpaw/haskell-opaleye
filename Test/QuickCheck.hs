@@ -555,6 +555,15 @@ label conn comment (ArbitrarySelect q) =
 
 -- { Running the QuickCheck
 
+-- One way that the property tests can fail is because of LIMIT and
+-- OFFSET.  It seems that a query returning LIMIT or OFFSET does not
+-- always return the same result when it is part of a larger query.
+-- This happens rarely.  We could sort before LIMIT or OFFSET to make
+-- it even rarer.
+--
+-- Another way is "resource vanished".  That's not our fault.  That's
+-- Postgres segfaulting on perfectly good queries.
+
 run :: PGS.Connection -> IO ()
 run conn = do
   let prop1 p = fmap          TQ.ioProperty (p conn)
