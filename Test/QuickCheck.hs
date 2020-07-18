@@ -63,27 +63,28 @@ chooseChoice choose fi fb fs = asDecidable $ proc a -> case choose a of
   CBool b   -> constructorDecidable fb -< b
   CString s -> constructorDecidable fs -< s
 
-type Choices i b s = [Choice i b s]
+newtype Choices i b s = Choices { unChoices :: [Choice i b s] }
+  deriving (Show, Eq, Ord)
 
 type Fields = Choices (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText)
 type Haskells = Choices Int Bool String
 
 emptyChoices :: Choices i b s
-emptyChoices = []
+emptyChoices = Choices []
 
 appendChoices :: Choices i b s -> Choices i b s -> Choices i b s
-appendChoices c1 c2 = c1 ++ c2
+appendChoices c1 c2 = Choices (unChoices c1 ++ unChoices c2)
 
 ppChoices :: (PP.SumProfunctor p, PP.ProductProfunctor p)
           => p (Choice i b s) (Choice i' b' s')
           -> p (Choices i b s) (Choices i' b' s')
-ppChoices = PP.list
+ppChoices = P.dimap unChoices Choices . PP.list
 
 fieldsOfHaskells :: Haskells -> Fields
 fieldsOfHaskells = O.toFieldsExplicit defChoicesPP
 
 fieldsList :: (a, b) -> Choices a b s
-fieldsList (x, y) = [CInt x, CBool y]
+fieldsList (x, y) = Choices [CInt x, CBool y]
 
 listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
 listFields f = (fst (firstIntOr 1 f),
@@ -138,11 +139,11 @@ aggregateLaterally agg q = proc i -> do
 -- length and it probably should.
 aggregateDenotation :: [Haskells] -> [Haskells]
 aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
-  where combine = zipWith (curry (\case
+  where combine h1 h2 = Choices (zipWith (curry (\case
           (CInt  i1, CInt i2)  -> CInt (i1 + i2)
           (CBool b1, CBool b2) -> CBool (b1 && b2)
           (CString s1, CString s2) -> CString (s1 ++ ", " ++ s2)
-          _ -> error "Impossible"))
+          _ -> error "Impossible")) (unChoices h1) (unChoices h2))
 
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
@@ -166,7 +167,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         ArbitraryFields fields_ <- TQ.arbitrary
         aqArg ((pure . fieldsOfHaskells) fields_)
     , aqArg (P.lmap (const ())
-                    (fmap (\(x,y) -> [CInt x, CInt y]) (O.selectTable table1)))
+                    (fmap (\(x,y) -> Choices [CInt x, CInt y]) (O.selectTable table1)))
     , do
         q <- TQ.oneof [
             do
@@ -258,7 +259,7 @@ instance TQ.Arbitrary ArbitraryFields where
                                , CBool   <$> TQ.arbitrary
                                , CString <$> arbitraryPGString ])
 
-      return (ArbitraryFields l)
+      return (ArbitraryFields (Choices l))
 
 instance TQ.Arbitrary ArbitraryFieldsList where
   -- We don't want to choose very big lists because we take
@@ -279,18 +280,18 @@ instance TQ.Arbitrary ArbitraryOrder where
                                <*> TQ.choose (0, 100)))
 
 odds :: Choices i b s -> Choices i b s
-odds []     = []
-odds (x:xs) = x : evens xs
+odds (Choices [])     = Choices []
+odds (Choices (x:xs)) = Choices (x : unChoices (evens (Choices xs)))
 
 evens :: Choices i b s -> Choices i b s
-evens []     = []
-evens (_:xs) = odds xs
+evens (Choices [])     = Choices []
+evens (Choices (_:xs)) = odds (Choices xs)
 
 pairColumns :: Choices i b s -> (Choices i b s, Choices i b s)
 pairColumns cs = (evens cs, odds cs)
 
 unpairColums :: (Choices i b s, Choices i b s) -> Choices i b s
-unpairColums = uncurry (++)
+unpairColums = uncurry appendChoices
 
 instance TQ.Arbitrary ArbitraryFunction where
   arbitrary = do
@@ -298,11 +299,11 @@ instance TQ.Arbitrary ArbitraryFunction where
 
     return (ArbitraryFunction (\xs ->
         if i == 0 then
-          evens xs ++ odds xs
+          evens xs `appendChoices` odds xs
         else if i == 1 then
-          evens xs ++ evens xs
+          evens xs `appendChoices` evens xs
         else if i == 2 then
-          odds xs ++ odds xs
+          odds xs `appendChoices` odds xs
         else if i == 3 then
           evens xs
         else
@@ -317,7 +318,8 @@ arbitraryOrder =
               Desc -> \f -> chooseChoice f (O.desc id) (O.desc id) (O.desc id))
            -- If the list is empty we have to conjure up
            -- an arbitrary value of type Field
-           (\l -> let len = length l
+           (\c -> let l = unChoices c
+                      len = length l
                   in if len > 0 then
                        l !! (index `mod` length l)
                   else
@@ -337,7 +339,8 @@ arbitraryOrdering =
             -- Note that this one will compare CInt Int
             -- to CBool Bool, but it never gets asked to
             -- do so, so we don't care.
-            (Ord.comparing (\l -> let len = length l
+            (Ord.comparing (\c -> let l = unChoices c
+                                      len = length l
                                   in if len > 0 then
                                        l !! (index `mod` length l)
                                   else
@@ -652,13 +655,13 @@ errorIfNotSuccess r = case r of
 
 firstBoolOrTrue :: b -> Choices a b s -> (b, Choices a b s)
 firstBoolOrTrue true c = (b, c)
-  where b = case Maybe.mapMaybe isBool c of
+  where b = case Maybe.mapMaybe isBool (unChoices c) of
           []    -> true
           (x:_) -> x
 
 firstIntOr :: a -> Choices a b s -> (a, Choices a b s)
 firstIntOr else_ c = (b, c)
-  where b = case Maybe.mapMaybe isInt c of
+  where b = case Maybe.mapMaybe isInt (unChoices c) of
           []    -> else_
           (x:_) -> x
 
