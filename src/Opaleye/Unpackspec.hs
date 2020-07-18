@@ -1,3 +1,3 @@
-module Opaleye.Unpackspec (Unpackspec, unpackspecColumn) where
+module Opaleye.Unpackspec (Unpackspec, unpackspecField) where
 
 import Opaleye.Internal.Unpackspec
