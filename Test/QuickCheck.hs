@@ -71,6 +71,9 @@ type Haskells = Choices Int Bool String
 emptyChoices :: Choices i b s
 emptyChoices = []
 
+appendChoices :: Choices i b s -> Choices i b s -> Choices i b s
+appendChoices c1 c2 = c1 ++ c2
+
 ppChoices :: (PP.SumProfunctor p, PP.ProductProfunctor p)
           => p (Choice i b s) (Choice i' b' s')
           -> p (Choices i b s) (Choices i' b' s')
@@ -98,7 +101,8 @@ newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
 newtype ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
                       deriving Show
 newtype ArbitraryFunction =
-  ArbitraryFunction { unArbitraryFunction :: forall a. [a] -> [a] }
+  ArbitraryFunction { unArbitraryFunction :: forall i b s.
+                      Choices i b s -> Choices i b s }
 
 data Order = Asc | Desc deriving Show
 
@@ -179,7 +183,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
-        q <- TQ.oneof [ pure ((++) <$> q1 <*> q2)
+        q <- TQ.oneof [ pure (appendChoices <$> q1 <*> q2)
                       , pure (q1 <<< q2) ]
         aqArg q
     , do
@@ -274,18 +278,18 @@ instance TQ.Arbitrary ArbitraryOrder where
                                <$> TQ.oneof [return Asc, return Desc]
                                <*> TQ.choose (0, 100)))
 
-odds :: [a] -> [a]
+odds :: Choices i b s -> Choices i b s
 odds []     = []
 odds (x:xs) = x : evens xs
 
-evens :: [a] -> [a]
+evens :: Choices i b s -> Choices i b s
 evens []     = []
 evens (_:xs) = odds xs
 
-pairColumns :: [a] -> ([a], [a])
+pairColumns :: Choices i b s -> (Choices i b s, Choices i b s)
 pairColumns cs = (evens cs, odds cs)
 
-unpairColums :: ([a], [a]) -> [a]
+unpairColums :: (Choices i b s, Choices i b s) -> Choices i b s
 unpairColums = uncurry (++)
 
 instance TQ.Arbitrary ArbitraryFunction where
