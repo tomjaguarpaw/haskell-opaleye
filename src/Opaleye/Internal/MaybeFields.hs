@@ -80,6 +80,12 @@ maybeFields = maybeFieldsExplicit PP.def
 fromMaybeFields :: PP.Default IfPP b b => b -> MaybeFields b -> b
 fromMaybeFields = fromMaybeFieldsExplicit PP.def
 
+-- | The Opaleye analogue of 'Data.Maybe.maybeToList'
+maybeFieldsToSelect :: SelectArr (MaybeFields a) a
+maybeFieldsToSelect = proc mf -> do
+  restrict -< mfPresent mf
+  returnA -< mfFields mf
+
 maybeFieldsExplicit :: IfPP b b' -> b -> (a -> b) -> MaybeFields a -> b'
 maybeFieldsExplicit ifpp b f mf =
   ifExplict ifpp (mfPresent mf) (f (mfFields mf)) b

@@ -4,6 +4,7 @@ module Opaleye.MaybeFields (
   justFields,
   fromMaybeFields,
   maybeFields,
+  maybeFieldsToSelect,
   optional,
   -- * Adaptors
   Nullspec,

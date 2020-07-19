@@ -38,7 +38,7 @@ import qualified Data.Ord as Ord hiding (compare)
 import qualified Data.Set as Set
 import qualified Data.Maybe as Maybe
 import qualified Control.Arrow as Arrow
-import           Control.Arrow ((<<<))
+import           Control.Arrow ((<<<), (>>>))
 
 twoIntTable :: String
             -> O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
@@ -118,6 +118,8 @@ listHaskells :: Haskells -> (Int, Bool)
 listHaskells f = listFieldsG f 1 True
 
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
+newtype ArbitrarySelectMaybe =
+  ArbitrarySelectMaybe (O.Select (O.MaybeFields Fields))
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
 newtype ArbitraryHaskells = ArbitraryHaskells { unArbitraryHaskells :: Haskells }
                         deriving Show
@@ -210,6 +212,11 @@ instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
                               (O.showSqlExplicit unpackFields q)
 
+instance Show ArbitrarySelectMaybe where
+  show (ArbitrarySelectMaybe q) =
+    maybe "Empty query" id
+          (O.showSqlExplicit (O.unpackspecMaybeFields unpackFields) q)
+
 instance Show ArbitrarySelectArr where
   -- We could plug in dummy data here, or maybe just an empty list
   show _ = "ArbitrarySelectArr"
@@ -242,6 +249,23 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     else if c <= 10
     then TQ.oneof arbitrarySelectArrRecurse2
     else error "Impossible"
+
+-- It would be better if ArbitrarySelect recursively called this, but
+-- it will do for now.
+instance TQ.Arbitrary ArbitrarySelectMaybe where
+  arbitrary = do
+    TQ.oneof $
+      (fmap . fmap) ArbitrarySelectMaybe $
+      map (\fg -> do { ArbitrarySelect q <- TQ.arbitrary
+                     ; f <- fg
+                     ; return (f q)
+                     })
+      genSelectArrMaybeMapper
+      ++
+      [ do
+          ArbitrarySelect q <- TQ.arbitrary
+          return (fmap fieldsToMaybeFields q)
+      ]
 
 -- [Note] Testing strategy
 --
@@ -785,6 +809,11 @@ optional conn (ArbitrarySelect q) =
   compare conn (denotationMaybeFields (OMF.optional q))
                (onList optionalDenotation (denotation q))
 
+maybeFieldsToSelect :: PGS.Connection -> ArbitrarySelectMaybe -> IO TQ.Property
+maybeFieldsToSelect conn (ArbitrarySelectMaybe q) =
+  compare conn (denotation (O.maybeFieldsToSelect <<< q))
+               (onList (Maybe.maybeToList =<<) (denotationMaybeFields q))
+
 
 {- TODO
 
@@ -845,6 +874,7 @@ run conn = do
   test1 aggregate
   test2 label
   test1 optional
+  test1 maybeFieldsToSelect
 
 -- }
 
@@ -907,6 +937,15 @@ isInt :: Choice a b s -> Maybe a
 isInt (CInt a)  = Just a
 isInt (CBool _) = Nothing
 isInt (CString _) = Nothing
+
+fieldsToMaybeFields :: Applicative m => Choices m i b s -> m (Choices m i b s)
+fieldsToMaybeFields fs = case Maybe.listToMaybe (subMaybeFields fs) of
+  Nothing -> pure fs
+  Just x  -> x
+
+subMaybeFields :: Choices m i b s -> [m (Choices m i b s)]
+subMaybeFields = unChoices >>> Maybe.mapMaybe (\case Left _  -> Nothing
+                                                     Right r -> Just r)
 
 restrictFirstBool :: O.SelectArr Fields Fields
 restrictFirstBool = Arrow.arr snd
