@@ -247,6 +247,14 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     then TQ.oneof arbitrarySelectArrRecurse2
     else error "Impossible"
 
+-- [Note] Testing strategy
+--
+-- The idea here is that only arbitrary... generators can do
+-- recursion, i.e. call arbitrary in a way that could lead to other
+-- calls of arbitrary.  The gen... functions don't call arbitrary
+-- again, but can return functions to which arbitrary argument can be
+-- applied by arbitrary... generators.
+
 arbitrarySelectRecurse0 :: [TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse0 =
   (fmap . fmap) ArbitrarySelect $
