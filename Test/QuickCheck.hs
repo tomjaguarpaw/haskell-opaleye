@@ -256,26 +256,27 @@ arbitrarySelectRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                         -> [TQ.Gen r]
 arbitrarySelectRecurse1 aqArg =
     [ do
-        ArbitrarySelectArr q <- TQ.arbitrary
+        q <- TQ.arbitrary
         aq (O.distinctExplicit distinctFields) q
     , do
-        ArbitrarySelectArr q <- TQ.arbitrary
+        q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
         aq (O.limit l) q
     , do
-        ArbitrarySelectArr q <- TQ.arbitrary
+        q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
         aq (O.offset l) q
     , do
-        ArbitrarySelectArr q <- TQ.arbitrary
+        q <- TQ.arbitrary
         o                <- TQ.arbitrary
         aq (O.orderBy (arbitraryOrder o)) q
 
     , do
-        ArbitrarySelectArr q <- TQ.arbitrary
+        q <- TQ.arbitrary
         aq (O.aggregate aggregateFields) q
     ]
-    where aq qf = aqArg . OL.laterally qf
+    where aq qf = aqArg . OL.laterally qf . unArbitrary
+          unArbitrary (ArbitrarySelectArr q) = q
 
 arbitrarySelectArrRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
