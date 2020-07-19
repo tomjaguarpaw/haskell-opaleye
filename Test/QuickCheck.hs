@@ -319,6 +319,11 @@ arbitrarySelectArrRecurse1 =
                    ; f <- fg
                    ; pure (f q) })
         genSelectArrMapper
+    ++
+    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+                   ; f <- fg
+                   ; pure (fmap (Choices . pure . Right) (f q)) })
+        genSelectArrMaybeMapper
 
 arbitrarySelectArrRecurse2 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse2 =
@@ -419,9 +424,14 @@ genSelectArrMapper =
         return (fmap unpairColums
                 . aggregateLaterally aggregateFields
                 . fmap pairColumns)
-    , do
-        return (fmap (Choices . pure . Right) . OMF.optional)
     ]
+
+genSelectArrMaybeMapper :: [TQ.Gen (O.SelectArr a Fields
+                                    -> O.SelectArr a (O.MaybeFields Fields))]
+genSelectArrMaybeMapper =
+  [ do
+      return OMF.optional
+  ]
 
 genSelectArrPoly :: [TQ.Gen (O.SelectArr a Fields
                              -> O.SelectArr a Fields
