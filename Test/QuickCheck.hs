@@ -222,9 +222,11 @@ instance TQ.Arbitrary ArbitrarySelect where
     ArbitrarySelectArr q <- TQ.arbitrary
     return (ArbitrarySelect (q <<< pure emptyChoices))
 
-instance TQ.Arbitrary ArbitrarySelectArr where
-  arbitrary = TQ.oneof [
-      do
+arbitrarySelectArrRecurse0 :: a
+                           -> (O.SelectArr Fields Fields -> TQ.Gen r)
+                           -> [TQ.Gen r]
+arbitrarySelectArrRecurse0 _ aqArg =
+    [ do
         ArbitraryFields fields_ <- TQ.arbitrary
         aqArg ((pure . fieldsOfHaskells) fields_)
     , aqArg (P.lmap (const ())
@@ -249,7 +251,15 @@ instance TQ.Arbitrary ArbitrarySelectArr where
 
     , do
         aqArg restrictFirstBool
-    , do
+    ]
+
+arbitrarySelectArrRecurse1 :: ((O.Select Fields -> O.Select Fields)
+                              -> O.SelectArr Fields Fields
+                              -> TQ.Gen r)
+                           -> (O.SelectArr Fields Fields -> TQ.Gen r)
+                           -> [TQ.Gen r]
+arbitrarySelectArrRecurse1 aq aqArg =
+    [ do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.distinctExplicit distinctFields) q
     , do
@@ -272,12 +282,6 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         ArbitrarySelectArr q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
         aqArg (O.label thisLabel q)
-    , do
-        ArbitrarySelectArr q1 <- TQ.arbitrary
-        ArbitrarySelectArr q2 <- TQ.arbitrary
-        q <- TQ.oneof [ pure (appendChoices <$> q1 <*> q2)
-                      , pure (q1 <<< q2) ]
-        aqArg q
     , -- This is stupidly simple way of generating lateral subqueries.
       -- All it does is run a lateral aggregation.
       do
@@ -288,6 +292,18 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aqArg (fmap (Choices . pure . Right) (OMF.optional q))
+    ]
+
+arbitrarySelectArrRecurse2 :: a
+                           -> (O.SelectArr Fields Fields -> TQ.Gen r)
+                           -> [TQ.Gen r]
+arbitrarySelectArrRecurse2 _ aqArg =
+    [ do
+        ArbitrarySelectArr q1 <- TQ.arbitrary
+        ArbitrarySelectArr q2 <- TQ.arbitrary
+        q <- TQ.oneof [ pure (appendChoices <$> q1 <*> q2)
+                      , pure (q1 <<< q2) ]
+        aqArg q
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
@@ -301,17 +317,22 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         q <- arbitraryBinary binaryOperation q1 q2
         aqArg q
     ]
+    where arbitraryBinary binaryOperation q1 q2 =
+            return (fmap fieldsList
+                    (OL.bilaterally binaryOperation
+                     (fmap listFields q1)
+                     (fmap listFields q2)))
+
+instance TQ.Arbitrary ArbitrarySelectArr where
+  arbitrary = TQ.oneof (concat [ arbitrarySelectArrRecurse0 aq aqArg
+                               , arbitrarySelectArrRecurse1 aq aqArg
+                               , arbitrarySelectArrRecurse2 aq aqArg
+                               ])
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
           aq qf = aqArg . OL.laterally qf
 
           aqArg = return . ArbitrarySelectArr
-
-          arbitraryBinary binaryOperation q1 q2 =
-            return (fmap fieldsList
-                    (OL.bilaterally binaryOperation
-                     (fmap listFields q1)
-                     (fmap listFields q2)))
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = arbitraryFields 6
