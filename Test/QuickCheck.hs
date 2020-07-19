@@ -310,8 +310,11 @@ arbitrarySelectArrRecurse2 =
     [ do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
-        TQ.oneof [ pure (appendChoices <$> q1 <*> q2)
-                 , pure (q1 <<< q2) ]
+        pure (appendChoices <$> q1 <*> q2)
+    , do
+        ArbitrarySelectArr q1 <- TQ.arbitrary
+        ArbitrarySelectArr q2 <- TQ.arbitrary
+        pure (q1 <<< q2)
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
