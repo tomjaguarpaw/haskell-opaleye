@@ -230,7 +230,11 @@ arbitrarySelectArrRecurse0 aqArg =
 arbitrarySelect :: (O.SelectArr Fields Fields -> TQ.Gen r)
                 -> [TQ.Gen r]
 arbitrarySelect aqArg =
-    map (\sg -> do { s <- sg; aqArg' s }) $
+    map (\sg -> do { s <- sg; aqArg' s }) arbitrarySelectActual
+  where aqArg' = aqArg . P.lmap (const ())
+
+arbitrarySelectActual :: [TQ.Gen (O.Select Fields)]
+arbitrarySelectActual =
     [ do
         ArbitraryFields fields_ <- TQ.arbitrary
         return ((pure . fieldsOfHaskells) fields_)
@@ -250,7 +254,6 @@ arbitrarySelect aqArg =
           ]
         return q
     ]
-  where aqArg' = aqArg . P.lmap (const ())
 
 arbitrarySelectArrFunction :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
