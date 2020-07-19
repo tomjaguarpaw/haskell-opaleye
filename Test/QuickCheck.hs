@@ -225,6 +225,11 @@ instance TQ.Arbitrary ArbitrarySelect where
 arbitrarySelectArrRecurse0 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
 arbitrarySelectArrRecurse0 aqArg =
+  arbitrarySelect aqArg ++ arbitrarySelectArrFunction aqArg
+
+arbitrarySelect :: (O.SelectArr Fields Fields -> TQ.Gen r)
+                -> [TQ.Gen r]
+arbitrarySelect aqArg =
     [ do
         ArbitraryFields fields_ <- TQ.arbitrary
         aqArg ((pure . fieldsOfHaskells) fields_)
@@ -244,7 +249,12 @@ arbitrarySelectArrRecurse0 aqArg =
               return (fmap (const emptyChoices) (O.valuesSafe l))
           ]
         aqArg (P.lmap (const ()) q)
-    , do
+    ]
+
+arbitrarySelectArrFunction :: (O.SelectArr Fields Fields -> TQ.Gen r)
+                           -> [TQ.Gen r]
+arbitrarySelectArrFunction aqArg =
+    [ do
         f                <- TQ.arbitrary
         aqArg (Arrow.arr (unArbitraryFunction f))
 
