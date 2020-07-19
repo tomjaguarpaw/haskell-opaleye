@@ -225,7 +225,8 @@ instance TQ.Arbitrary ArbitrarySelect where
 arbitrarySelectArrRecurse0 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
 arbitrarySelectArrRecurse0 aqArg =
-  arbitrarySelect aqArg ++ arbitrarySelectArrFunction aqArg
+  arbitrarySelect aqArg
+  ++ map (\fg -> do { f <- fg; aqArg f }) arbitraryFieldsFunction
 
 arbitrarySelect :: (O.SelectArr Fields Fields -> TQ.Gen r)
                 -> [TQ.Gen r]
@@ -254,11 +255,6 @@ arbitrarySelectActual =
           ]
         return q
     ]
-
-arbitrarySelectArrFunction :: (O.SelectArr Fields Fields -> TQ.Gen r)
-                           -> [TQ.Gen r]
-arbitrarySelectArrFunction aqArg =
-    map (\fg -> do { f <- fg; aqArg f }) arbitraryFieldsFunction
 
 arbitraryFieldsFunction :: [TQ.Gen (O.SelectArr Fields Fields)]
 arbitraryFieldsFunction =
