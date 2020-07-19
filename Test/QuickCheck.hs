@@ -284,9 +284,9 @@ arbitrarySelectArrRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
 arbitrarySelectArrRecurse1 aqArg =
     map (\fg -> do { q <- TQ.arbitrary; f <- fg; aq f q }) arbitrarySelectMapper
     ++
-    (map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
-                    ; f <- fg
-                    ; aqArg (f q) }) arbitrarySelectArrMapper)
+    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+                   ; f <- fg
+                   ; aqArg (f q) }) arbitrarySelectArrMapper
     where aq qf = aqArg . OL.laterally qf . unArbitrary
           unArbitrary (ArbitrarySelectArr q) = q
 
