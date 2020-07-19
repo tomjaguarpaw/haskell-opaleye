@@ -255,25 +255,21 @@ arbitrarySelectArrRecurse0 aqArg =
 arbitrarySelectRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                         -> [TQ.Gen r]
 arbitrarySelectRecurse1 aqArg =
+    map (\fg -> do { q <- TQ.arbitrary; f <- fg; aq f q }) $
     [ do
-        q <- TQ.arbitrary
-        aq (O.distinctExplicit distinctFields) q
+        return (O.distinctExplicit distinctFields)
     , do
-        q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
-        aq (O.limit l) q
+        return (O.limit l)
     , do
-        q <- TQ.arbitrary
         l                <- TQ.choose (0, 100)
-        aq (O.offset l) q
+        return (O.offset l)
     , do
-        q <- TQ.arbitrary
         o                <- TQ.arbitrary
-        aq (O.orderBy (arbitraryOrder o)) q
+        return (O.orderBy (arbitraryOrder o))
 
     , do
-        q <- TQ.arbitrary
-        aq (O.aggregate aggregateFields) q
+        return (O.aggregate aggregateFields)
     ]
     where aq qf = aqArg . OL.laterally qf . unArbitrary
           unArbitrary (ArbitrarySelectArr q) = q
