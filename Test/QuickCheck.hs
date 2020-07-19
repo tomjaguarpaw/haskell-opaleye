@@ -340,12 +340,12 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     -- The range of choose is inclusive
     c <- TQ.choose (1, 10 :: Int)
 
-    if c <= 3
-    then fmap ArbitrarySelectArr $ TQ.oneof arbitrarySelectArrRecurse0
+    fmap ArbitrarySelectArr $ if c <= 3
+    then TQ.oneof arbitrarySelectArrRecurse0
     else if c <= 8
-    then fmap ArbitrarySelectArr $ TQ.oneof arbitrarySelectArrRecurse1
+    then TQ.oneof arbitrarySelectArrRecurse1
     else if c <= 10
-    then fmap ArbitrarySelectArr $ TQ.oneof arbitrarySelectArrRecurse2
+    then TQ.oneof arbitrarySelectArrRecurse2
     else error "Impossible"
 
 instance TQ.Arbitrary ArbitraryFields where
