@@ -244,11 +244,11 @@ instance TQ.Arbitrary ArbitrarySelectArr where
           ]
         aqArg (P.lmap (const ()) q)
     , do
-        ArbitrarySelectArr q1 <- TQ.arbitrary
-        ArbitrarySelectArr q2 <- TQ.arbitrary
-        q <- TQ.oneof [ pure (appendChoices <$> q1 <*> q2)
-                      , pure (q1 <<< q2) ]
-        aqArg q
+        f                <- TQ.arbitrary
+        aqArg (Arrow.arr (unArbitraryFunction f))
+
+    , do
+        aqArg restrictFirstBool
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.distinctExplicit distinctFields) q
@@ -266,18 +266,28 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aq (O.orderBy (arbitraryOrder o)) q
 
     , do
-        f                <- TQ.arbitrary
-        aqArg (Arrow.arr (unArbitraryFunction f))
-
-    , do
-        aqArg restrictFirstBool
-    , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.aggregate aggregateFields) q
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
         aqArg (O.label thisLabel q)
+    , do
+        ArbitrarySelectArr q1 <- TQ.arbitrary
+        ArbitrarySelectArr q2 <- TQ.arbitrary
+        q <- TQ.oneof [ pure (appendChoices <$> q1 <*> q2)
+                      , pure (q1 <<< q2) ]
+        aqArg q
+    , -- This is stupidly simple way of generating lateral subqueries.
+      -- All it does is run a lateral aggregation.
+      do
+        ArbitrarySelectArr q <- TQ.arbitrary
+        aqArg ((fmap unpairColums
+                . aggregateLaterally aggregateFields
+                . fmap pairColumns) q)
+    , do
+        ArbitrarySelectArr q <- TQ.arbitrary
+        aqArg (fmap (Choices . pure . Right) (OMF.optional q))
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
@@ -290,16 +300,6 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                                        ]
         q <- arbitraryBinary binaryOperation q1 q2
         aqArg q
-    , -- This is stupidly simple way of generating lateral subqueries.
-      -- All it does is run a lateral aggregation.
-      do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        aqArg ((fmap unpairColums
-                . aggregateLaterally aggregateFields
-                . fmap pairColumns) q)
-    , do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        aqArg (fmap (Choices . pure . Right) (OMF.optional q))
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
