@@ -344,16 +344,12 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     c <- TQ.choose (1, 10 :: Int)
 
     if c <= 3
-    then TQ.oneof (arbitrarySelectArrRecurse0 aqArg)
+    then fmap ArbitrarySelectArr $ TQ.oneof (arbitrarySelectArrRecurse0 pure)
     else if c <= 8
-    then TQ.oneof (arbitrarySelectArrRecurse1 aqArg)
+    then fmap ArbitrarySelectArr $ TQ.oneof (arbitrarySelectArrRecurse1 pure)
     else if c <= 10
-    then TQ.oneof (arbitrarySelectArrRecurse2 aqArg)
+    then fmap ArbitrarySelectArr $ TQ.oneof (arbitrarySelectArrRecurse2 pure)
     else error "Impossible"
-
-    where -- Applies qf to the query, but uses [] for the input of
-          -- query, and ignores the input of the result.
-          aqArg = return . ArbitrarySelectArr
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = arbitraryFields 6
