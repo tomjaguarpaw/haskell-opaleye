@@ -283,7 +283,11 @@ arbitrarySelectArrRecurse1 aqArg =
     arbitrarySelectRecurse1 aqArg ++
     (map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
                     ; f <- fg
-                    ; aqArg (f q) }) $
+                    ; aqArg (f q) }) arbitrarySelectArrMapper)
+
+arbitrarySelectArrMapper :: [TQ.Gen (O.SelectArr a Fields
+                                     -> O.SelectArr a Fields)]
+arbitrarySelectArrMapper =
     [ do
         thisLabel        <- TQ.arbitrary
         return (O.label thisLabel)
@@ -295,7 +299,7 @@ arbitrarySelectArrRecurse1 aqArg =
                 . fmap pairColumns)
     , do
         return (fmap (Choices . pure . Right) . OMF.optional)
-    ])
+    ]
 
 arbitrarySelectArrRecurse2 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
