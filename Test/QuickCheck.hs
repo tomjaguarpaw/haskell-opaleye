@@ -222,12 +222,11 @@ instance TQ.Arbitrary ArbitrarySelect where
     ArbitrarySelectArr q <- TQ.arbitrary
     return (ArbitrarySelect (q <<< pure emptyChoices))
 
-arbitrarySelectArrRecurse0 :: (O.SelectArr Fields Fields -> TQ.Gen r)
-                           -> [TQ.Gen r]
-arbitrarySelectArrRecurse0 aqArg =
+arbitrarySelectArrRecurse0 :: [TQ.Gen (O.SelectArr Fields Fields)]
+arbitrarySelectArrRecurse0 =
      map (\sg -> aqArg' =<< sg) arbitrarySelect
-  ++ map (\fg -> aqArg =<< fg) arbitraryFieldsFunction
-  where aqArg' = aqArg . P.lmap (const ())
+  ++ arbitraryFieldsFunction
+  where aqArg' = pure . P.lmap (const ())
 
 arbitrarySelect :: [TQ.Gen (O.Select Fields)]
 arbitrarySelect =
@@ -279,15 +278,14 @@ arbitrarySelectMapper =
         return (O.aggregate aggregateFields)
     ]
 
-arbitrarySelectArrRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
-                           -> [TQ.Gen r]
-arbitrarySelectArrRecurse1 aqArg =
+arbitrarySelectArrRecurse1 :: [TQ.Gen (O.SelectArr Fields Fields)]
+arbitrarySelectArrRecurse1 =
     map (\fg -> do { q <- TQ.arbitrary; f <- fg; aq f q }) arbitrarySelectMapper
     ++
     map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
                    ; f <- fg
-                   ; aqArg (f q) }) arbitrarySelectArrMapper
-    where aq qf = aqArg . OL.laterally qf . unArbitrary
+                   ; pure (f q) }) arbitrarySelectArrMapper
+    where aq qf = pure . OL.laterally qf . unArbitrary
           unArbitrary (ArbitrarySelectArr q) = q
 
 arbitrarySelectArrMapper :: [TQ.Gen (O.SelectArr a Fields
@@ -306,15 +304,14 @@ arbitrarySelectArrMapper =
         return (fmap (Choices . pure . Right) . OMF.optional)
     ]
 
-arbitrarySelectArrRecurse2 :: (O.SelectArr Fields Fields -> TQ.Gen r)
-                           -> [TQ.Gen r]
-arbitrarySelectArrRecurse2 aqArg =
+arbitrarySelectArrRecurse2 :: [TQ.Gen (O.SelectArr Fields Fields)]
+arbitrarySelectArrRecurse2 =
     [ do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
         q <- TQ.oneof [ pure (appendChoices <$> q1 <*> q2)
                       , pure (q1 <<< q2) ]
-        aqArg q
+        pure q
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
@@ -326,7 +323,7 @@ arbitrarySelectArrRecurse2 aqArg =
                                        , O.exceptAll
                                        ]
         q <- arbitraryBinary binaryOperation q1 q2
-        aqArg q
+        pure q
     ]
     where arbitraryBinary binaryOperation q1 q2 =
             return (fmap fieldsList
@@ -344,11 +341,11 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     c <- TQ.choose (1, 10 :: Int)
 
     if c <= 3
-    then fmap ArbitrarySelectArr $ TQ.oneof (arbitrarySelectArrRecurse0 pure)
+    then fmap ArbitrarySelectArr $ TQ.oneof arbitrarySelectArrRecurse0
     else if c <= 8
-    then fmap ArbitrarySelectArr $ TQ.oneof (arbitrarySelectArrRecurse1 pure)
+    then fmap ArbitrarySelectArr $ TQ.oneof arbitrarySelectArrRecurse1
     else if c <= 10
-    then fmap ArbitrarySelectArr $ TQ.oneof (arbitrarySelectArrRecurse2 pure)
+    then fmap ArbitrarySelectArr $ TQ.oneof arbitrarySelectArrRecurse2
     else error "Impossible"
 
 instance TQ.Arbitrary ArbitraryFields where
