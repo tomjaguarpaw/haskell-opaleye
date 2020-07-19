@@ -236,7 +236,7 @@ arbitrarySelect =
     , return        (fmap (\(x,y) -> Choices [Left (CInt x), Left (CInt y)])
                           (O.selectTable table1))
     , do
-        q <- TQ.oneof [
+        TQ.oneof [
             do
             ArbitraryFieldsList l <- TQ.arbitrary
             return (fmap fieldsList (O.valuesSafe (fmap O.toFields l)))
@@ -247,7 +247,6 @@ arbitrarySelect =
               let _ = l :: [()]
               return (fmap (const emptyChoices) (O.valuesSafe l))
           ]
-        return q
     ]
 
 arbitraryFieldsFunction :: [TQ.Gen (O.SelectArr Fields Fields)]
@@ -309,9 +308,8 @@ arbitrarySelectArrRecurse2 =
     [ do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
-        q <- TQ.oneof [ pure (appendChoices <$> q1 <*> q2)
-                      , pure (q1 <<< q2) ]
-        pure q
+        TQ.oneof [ pure (appendChoices <$> q1 <*> q2)
+                 , pure (q1 <<< q2) ]
     , do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
@@ -322,8 +320,7 @@ arbitrarySelectArrRecurse2 =
                                        , O.except
                                        , O.exceptAll
                                        ]
-        q <- arbitraryBinary binaryOperation q1 q2
-        pure q
+        arbitraryBinary binaryOperation q1 q2
     ]
     where arbitraryBinary binaryOperation q1 q2 =
             return (fmap fieldsList
