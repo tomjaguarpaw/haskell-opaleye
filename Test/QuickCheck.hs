@@ -226,12 +226,12 @@ arbitrarySelectArrRecurse0 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
 arbitrarySelectArrRecurse0 aqArg =
   arbitrarySelect aqArg
-  ++ map (\fg -> do { f <- fg; aqArg f }) arbitraryFieldsFunction
+  ++ map (\fg -> aqArg =<< fg) arbitraryFieldsFunction
 
 arbitrarySelect :: (O.SelectArr Fields Fields -> TQ.Gen r)
                 -> [TQ.Gen r]
 arbitrarySelect aqArg =
-    map (\sg -> do { s <- sg; aqArg' s }) arbitrarySelectActual
+    map (\sg -> aqArg' =<< sg) arbitrarySelectActual
   where aqArg' = aqArg . P.lmap (const ())
 
 arbitrarySelectActual :: [TQ.Gen (O.Select Fields)]
