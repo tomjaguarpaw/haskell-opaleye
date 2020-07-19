@@ -233,9 +233,8 @@ arbitrarySelect aqArg =
     [ do
         ArbitraryFields fields_ <- TQ.arbitrary
         aqArg ((pure . fieldsOfHaskells) fields_)
-    , aqArg (P.lmap (const ())
-                    (fmap (\(x,y) -> Choices [Left (CInt x), Left (CInt y)])
-                          (O.selectTable table1)))
+    , aqArg'        (fmap (\(x,y) -> Choices [Left (CInt x), Left (CInt y)])
+                          (O.selectTable table1))
     , do
         q <- TQ.oneof [
             do
@@ -248,8 +247,9 @@ arbitrarySelect aqArg =
               let _ = l :: [()]
               return (fmap (const emptyChoices) (O.valuesSafe l))
           ]
-        aqArg (P.lmap (const ()) q)
+        aqArg' q
     ]
+  where aqArg' = aqArg . P.lmap (const ())
 
 arbitrarySelectArrFunction :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
