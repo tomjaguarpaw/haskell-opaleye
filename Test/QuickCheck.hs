@@ -258,7 +258,10 @@ arbitrarySelectActual =
 arbitrarySelectArrFunction :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
 arbitrarySelectArrFunction aqArg =
-    map (\fg -> do { f <- fg; aqArg f }) $
+    map (\fg -> do { f <- fg; aqArg f }) arbitraryFieldsFunction
+
+arbitraryFieldsFunction :: [TQ.Gen (O.SelectArr Fields Fields)]
+arbitraryFieldsFunction =
     [ do
         f                <- TQ.arbitrary
         return (Arrow.arr (unArbitraryFunction f))
