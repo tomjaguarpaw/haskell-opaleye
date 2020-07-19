@@ -230,10 +230,11 @@ arbitrarySelectArrRecurse0 aqArg =
 arbitrarySelect :: (O.SelectArr Fields Fields -> TQ.Gen r)
                 -> [TQ.Gen r]
 arbitrarySelect aqArg =
+    map (\sg -> do { s <- sg; aqArg' s }) $
     [ do
         ArbitraryFields fields_ <- TQ.arbitrary
-        aqArg ((pure . fieldsOfHaskells) fields_)
-    , aqArg'        (fmap (\(x,y) -> Choices [Left (CInt x), Left (CInt y)])
+        return ((pure . fieldsOfHaskells) fields_)
+    , return        (fmap (\(x,y) -> Choices [Left (CInt x), Left (CInt y)])
                           (O.selectTable table1))
     , do
         q <- TQ.oneof [
@@ -247,7 +248,7 @@ arbitrarySelect aqArg =
               let _ = l :: [()]
               return (fmap (const emptyChoices) (O.valuesSafe l))
           ]
-        aqArg' q
+        return q
     ]
   where aqArg' = aqArg . P.lmap (const ())
 
