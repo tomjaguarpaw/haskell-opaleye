@@ -1,13 +1,17 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module QuickCheck where
 
 import           Prelude hiding (compare, (.), id)
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Lateral as OL
+import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
 import qualified Opaleye.Internal.Distinct as OD
 import qualified Opaleye.ToFields as O
@@ -64,32 +68,53 @@ chooseChoice choose fi fb fs = asDecidable $ proc a -> case choose a of
   CBool b   -> constructorDecidable fb -< b
   CString s -> constructorDecidable fs -< s
 
-newtype Choices i b s = Choices { unChoices :: [Choice i b s] }
-  deriving (Show, Eq, Ord)
+newtype Choices m i b s =
+  Choices { unChoices :: [Either (Choice i b s) (m (Choices m i b s))] }
 
-type Fields = Choices (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText)
-type Haskells = Choices Int Bool String
+deriving instance Show Haskells
+deriving instance Eq Haskells
+deriving instance Ord Haskells
 
-emptyChoices :: Choices i b s
+type SimpleField = Choice (O.Field O.SqlInt4)
+                          (O.Field O.SqlBool)
+                          (O.Field O.SqlText)
+type Fields = Choices O.MaybeFields (O.Field O.SqlInt4)
+                                    (O.Field O.SqlBool)
+                                    (O.Field O.SqlText)
+type Haskells = Choices Maybe Int Bool String
+
+emptyChoices :: Choices m i b s
 emptyChoices = Choices []
 
-appendChoices :: Choices i b s -> Choices i b s -> Choices i b s
+appendChoices :: Choices m i b s -> Choices m i b s -> Choices m i b s
 appendChoices c1 c2 = Choices (unChoices c1 ++ unChoices c2)
 
 ppChoices :: (PP.SumProfunctor p, PP.ProductProfunctor p)
           => p (Choice i b s) (Choice i' b' s')
-          -> p (Choices i b s) (Choices i' b' s')
-ppChoices = P.dimap unChoices Choices . PP.list
+          -> (p (Choices m i b s) (Choices m' i' b' s')
+             -> p (m (Choices m i b s)) (m' (Choices m' i' b' s')))
+          -> p (Choices m i b s) (Choices m' i' b' s')
+ppChoices p f = ps
+  where ps = P.dimap unChoices Choices (PP.list (p PP.+++! f ps))
 
 fieldsOfHaskells :: Haskells -> Fields
-fieldsOfHaskells = O.toFieldsExplicit defChoicesPP
+fieldsOfHaskells = (O.toFieldsExplicit
+                    . defChoicesPP
+                    . O.toFieldsMaybeFields
+                    . fmap Choices)
+                   OV.nullspecList
 
-fieldsList :: (a, b) -> Choices a b s
-fieldsList (x, y) = Choices [CInt x, CBool y]
+fieldsList :: (a, b) -> Choices m a b s
+fieldsList (x, y) = Choices [Left (CInt x), Left (CBool y)]
+
+listFieldsG :: Choices m i b s -> i -> b -> (i, b)
+listFieldsG f i b = (fst (firstIntOr i f), fst (firstBoolOrTrue b f))
 
 listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
-listFields f = (fst (firstIntOr 1 f),
-                fst (firstBoolOrTrue (O.sqlBool True) f))
+listFields f = listFieldsG f 1 (O.sqlBool True)
+
+listHaskells :: Haskells -> (Int, Bool)
+listHaskells f = listFieldsG f 1 True
 
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
@@ -103,20 +128,27 @@ newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
 newtype ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
                       deriving Show
 newtype ArbitraryFunction =
-  ArbitraryFunction { unArbitraryFunction :: forall i b s.
-                      Choices i b s -> Choices i b s }
+  ArbitraryFunction { unArbitraryFunction :: forall m i b s.
+                      Functor m => Choices m i b s -> Choices m i b s }
 
 data Order = Asc | Desc deriving Show
 
 unpackFields :: O.Unpackspec Fields Fields
-unpackFields = defChoicesPP
+unpackFields = defChoicesPP O.unpackspecMaybeFields
+
+distinctNullsFields :: OM.WithNulls OD.Distinctspec Fields Fields
+distinctNullsFields =
+  ppChoices defChoicePP (OM.mapMaybeFieldsWithNulls D.def)
 
 distinctFields :: OD.Distinctspec Fields Fields
-distinctFields = defChoicesPP
+distinctFields = P.dimap unChoices Choices (PP.list
+    (defChoicePP PP.+++! OM.unWithNulls D.def distinctNullsFields))
 
 fromFieldsFields :: O.FromFields Fields Haskells
-fromFieldsFields = defChoicesPP
+fromFieldsFields = defChoicesPP O.fromFieldsMaybeFields
 
+-- We don't have the ability to aggregate MaybeFields, at least, not
+-- yet.  Therefore we just replace them with Nothing.
 aggregateFields :: O.Aggregator Fields Fields
 aggregateFields =
   -- The requirement to cast to int4 is silly, but we still have a bug
@@ -125,6 +157,7 @@ aggregateFields =
   ppChoices (choicePP (P.rmap (O.unsafeCast "int4") O.sum)
                       O.boolAnd
                       (O.stringAgg (O.sqlString ", ")))
+            (const (PP.purePP (O.nothingFieldsExplicit (pure emptyChoices))))
 
 aggregateLaterally :: O.Aggregator b b'
                    -> O.SelectArr i (Fields, b)
@@ -144,13 +177,28 @@ aggregateLaterally agg q = proc i -> do
 -- are of different types.  It should probably return a Maybe or an
 -- Either.  Secondly, it doesn't detect when lists are the same
 -- length and it probably should.
+--
+-- We don't have the ability to aggregate MaybeFields, at least, not
+-- yet.  Therefore we just replace them with Nothing.
 aggregateDenotation :: [Haskells] -> [Haskells]
-aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
+aggregateDenotation cs = if null cs
+                         then []
+                         else (pure
+                              . List.foldl1' combine
+                              . map emptyOutChoices
+                              ) cs
   where combine h1 h2 = Choices (zipWith (curry (\case
-          (CInt  i1, CInt i2)  -> CInt (i1 + i2)
-          (CBool b1, CBool b2) -> CBool (b1 && b2)
-          (CString s1, CString s2) -> CString (s1 ++ ", " ++ s2)
+          (Left l1, Left l2) -> Left $ case (l1, l2) of
+            (CInt  i1, CInt i2)  -> CInt (i1 + i2)
+            (CBool b1, CBool b2) -> CBool (b1 && b2)
+            (CString s1, CString s2) -> CString (s1 ++ ", " ++ s2)
+            _ -> error "Impossible"
+          (Right _, Right _) -> Right Nothing
           _ -> error "Impossible")) (unChoices h1) (unChoices h2))
+
+        emptyOutChoices c = Choices $ flip map (unChoices c) $ \case
+            Left l  -> Left l
+            Right _ -> Right Nothing
 
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
@@ -174,7 +222,8 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         ArbitraryFields fields_ <- TQ.arbitrary
         aqArg ((pure . fieldsOfHaskells) fields_)
     , aqArg (P.lmap (const ())
-                    (fmap (\(x,y) -> Choices [CInt x, CInt y]) (O.selectTable table1)))
+                    (fmap (\(x,y) -> Choices [Left (CInt x), Left (CInt y)])
+                          (O.selectTable table1)))
     , do
         q <- TQ.oneof [
             do
@@ -256,15 +305,26 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                      (fmap listFields q2)))
 
 instance TQ.Arbitrary ArbitraryFields where
-    arbitrary = do
+    arbitrary = arbitraryFields 6
+
+arbitraryFields :: Int -> TQ.Gen ArbitraryFields
+arbitraryFields size = do
       -- Postgres strings cannot contain the zero codepoint.  See
       --
       -- https://www.postgresql.org/message-id/1171970019.3101.328.camel@coppola.muc.ecircle.de
       let arbitraryPGString = filter (/= '\0') <$> TQ.arbitrary
 
-      l <- TQ.listOf (TQ.oneof [ CInt    <$> TQ.arbitrary
-                               , CBool   <$> TQ.arbitrary
-                               , CString <$> arbitraryPGString ])
+      s <- TQ.choose (0, size)
+
+      l <- TQ.vectorOf s (TQ.oneof
+              [ Left  <$> CInt    <$> TQ.arbitrary
+              , Left  <$> CBool   <$> TQ.arbitrary
+              , Left  <$> CString <$> arbitraryPGString
+              , pure (Right Nothing)
+              , do
+                  ArbitraryFields c <- arbitraryFields (size `div` 2)
+                  return (Right (Just c))
+              ])
 
       return (ArbitraryFields (Choices l))
 
@@ -286,18 +346,18 @@ instance TQ.Arbitrary ArbitraryOrder where
                                <$> TQ.oneof [return Asc, return Desc]
                                <*> TQ.choose (0, 100)))
 
-odds :: Choices i b s -> Choices i b s
+odds :: Choices m i b s -> Choices m i b s
 odds (Choices [])     = Choices []
 odds (Choices (x:xs)) = Choices (x : unChoices (evens (Choices xs)))
 
-evens :: Choices i b s -> Choices i b s
+evens :: Choices m i b s -> Choices m i b s
 evens (Choices [])     = Choices []
 evens (Choices (_:xs)) = odds (Choices xs)
 
-pairColumns :: Choices i b s -> (Choices i b s, Choices i b s)
+pairColumns :: Choices m i b s -> (Choices m i b s, Choices m i b s)
 pairColumns cs = (evens cs, odds cs)
 
-unpairColums :: (Choices i b s, Choices i b s) -> Choices i b s
+unpairColums :: (Choices m i b s, Choices m i b s) -> Choices m i b s
 unpairColums = uncurry appendChoices
 
 instance TQ.Arbitrary ArbitraryFunction where
@@ -323,12 +383,16 @@ arbitraryOrder =
            (case direction of
               Asc  -> \f -> chooseChoice f (O.asc id) (O.asc id) (O.asc id)
               Desc -> \f -> chooseChoice f (O.desc id) (O.desc id) (O.desc id))
-           -- If the list is empty we have to conjure up
-           -- an arbitrary value of type Field
+           -- If the list is empty we have to conjure up an arbitrary
+           -- value of type Field.  We don't know how to order
+           -- MaybeFields (yet) so we do the same if we hit a
+           -- MaybeFields.
            (\c -> let l = unChoices c
                       len = length l
                   in if len > 0 then
-                       l !! (index `mod` length l)
+                       case l !! (index `mod` length l) of
+                         Left i  -> i
+                         Right _ -> CInt 0
                   else
                        CInt 0))
   . unArbitraryOrder
@@ -340,8 +404,10 @@ arbitraryOrdering =
             (case direction of
                 Asc  -> id
                 Desc -> flip)
-            -- If the list is empty we have to conjure up
-            -- an arbitrary value of type Field
+            -- If the list is empty we have to conjure up an arbitrary
+            -- value of type Field.  We don't know how to order
+            -- MaybeFields (yet) so we do the same if we hit a
+            -- MaybeFields.
             --
             -- Note that this one will compare CInt Int
             -- to CBool Bool, but it never gets asked to
@@ -349,7 +415,9 @@ arbitraryOrdering =
             (Ord.comparing (\c -> let l = unChoices c
                                       len = length l
                                   in if len > 0 then
-                                       l !! (index `mod` length l)
+                                       case l !! (index `mod` length l) of
+                                         Left i  -> i
+                                         Right _ -> CInt 0
                                   else
                                        CInt 0)))
   . unArbitraryOrder
@@ -397,6 +465,11 @@ denotationArr q =
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
 denotation2 = denotationExplicit (fromFieldsFields PP.***! fromFieldsFields)
+
+denotationMaybeFields :: O.Select (O.MaybeFields Fields)
+                      -> SelectDenotation (Maybe Haskells)
+denotationMaybeFields =
+  denotationExplicit (O.fromFieldsMaybeFields fromFieldsFields)
 
 -- { Comparing the results
 
@@ -566,12 +639,7 @@ label conn comment (ArbitrarySelect q) =
 {- TODO
 
   * Nullability
-  * Left join
   * Operators (mathematical, logical, etc.)
-
-  * The denotation of lateral subqueries (at the moment we just
-    generate subqueries containing them, but we don't check their
-    behaviour)
 
 -}
 
@@ -644,7 +712,9 @@ choicePP p1 p2 p3 = asSumProfunctor $ proc choice -> case choice of
 
 defChoicesPP :: (D.Default p a a', D.Default p b b', D.Default p s s',
                  PP.SumProfunctor p, PP.ProductProfunctor p)
-             => p (Choices a b s) (Choices a' b' s')
+             => (p (Choices m a b s) (Choices m' a' b' s')
+                -> p (m (Choices m a b s)) (m' (Choices m' a' b' s')))
+             -> p (Choices m a b s) (Choices m' a' b' s')
 defChoicesPP = ppChoices defChoicePP
 
 defChoicePP :: (D.Default p a a', D.Default p b b', D.Default p s s',
@@ -660,15 +730,19 @@ errorIfNotSuccess r = case r of
   TQ.Success {} -> return ()
   _             -> error "Failed"
 
-firstBoolOrTrue :: b -> Choices a b s -> (b, Choices a b s)
+-- We could try to be clever and look inside the MaybeFields, but this
+-- will do for now.
+firstBoolOrTrue :: b -> Choices m a b s -> (b, Choices m a b s)
 firstBoolOrTrue true c = (b, c)
-  where b = case Maybe.mapMaybe isBool (unChoices c) of
+  where b = case Maybe.mapMaybe (either isBool (const Nothing)) (unChoices c) of
           []    -> true
           (x:_) -> x
 
-firstIntOr :: a -> Choices a b s -> (a, Choices a b s)
+-- We could try to be clever and look inside the MaybeFields, but this
+-- will do for now.
+firstIntOr :: a -> Choices m a b s -> (a, Choices m a b s)
 firstIntOr else_ c = (b, c)
-  where b = case Maybe.mapMaybe isInt (unChoices c) of
+  where b = case Maybe.mapMaybe (either isInt (const Nothing)) (unChoices c) of
           []    -> else_
           (x:_) -> x
 
@@ -715,16 +789,27 @@ minimumBy = maximumBy . flip
 rectangularValues :: [Fields] -> Maybe (O.Select Fields)
 rectangularValues bs' = case NEL.nonEmpty bs' of
   Nothing -> Just (O.valuesSafeExplicit (pure emptyChoices) [])
-  Just bs -> case ppChoices (choicePP pureUdef pureUdef pureUdef) of
+  Just bs -> case defPPChoicesFieldsU of
     R.U g -> case g (fmap (\x -> ((), x)) bs) of
       Nothing -> Nothing
       Just (R.W p1' ar) ->
         Just (O.valuesSafeExplicit p1' (NEL.toList (fmap snd ar)))
 
-  where pureUdef ::O.IsSqlType a
-                 => R.U OV.ValuesspecSafe
-                        (O.Column a)
-                        (O.Column a)
-        pureUdef = R.pureU D.def
+ppChoicesFieldsU :: PP.ProductProfunctor p
+                 => p (O.Field O.SqlInt4) (O.Field O.SqlInt4)
+                 -> p (O.Field O.SqlBool) (O.Field O.SqlBool)
+                 -> p (O.Field O.SqlText) (O.Field O.SqlText)
+                 -> p (O.Field O.SqlBool) (O.Field O.SqlBool)
+                 -> R.U p Fields Fields
+ppChoicesFieldsU i b s boo = ppChoices
+                                (choicePP (R.pureU i) (R.pureU b) (R.pureU s))
+                                (OM.productProfunctorMaybeFields (R.pureU boo))
+
+defPPChoicesFieldsU :: (PP.ProductProfunctor p,
+                        D.Default p (O.Field O.SqlBool) (O.Field O.SqlBool),
+                        D.Default p (O.Field O.SqlInt4) (O.Field O.SqlInt4),
+                        D.Default p (O.Field O.SqlText) (O.Field O.SqlText))
+                    => R.U p Fields Fields
+defPPChoicesFieldsU = ppChoicesFieldsU D.def D.def D.def D.def
 
 -- }

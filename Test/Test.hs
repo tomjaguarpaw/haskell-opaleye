@@ -29,6 +29,7 @@ import           Opaleye                          (Field, Nullable, Select,
 import qualified Opaleye                          as O
 import qualified Opaleye.Internal.Aggregate       as IA
 import           Opaleye.Internal.RunQuery        (DefaultFromField)
+import           Opaleye.Internal.MaybeFields     as OM
 import qualified QuickCheck
 import           System.Environment               (lookupEnv)
 import           Test.Hspec
@@ -1135,6 +1136,16 @@ testLiterals = do
     testH (pure (O.sqlZonedTime value))
           (\r -> map Time.zonedTimeToUTC r `shouldBe` [Time.zonedTimeToUTC value])
 
+-- Check that MaybeFields's "Nothings" are not distinct, even if we
+-- fmap different values over their inner fields.
+testMaybeFieldsDistinct :: Test
+testMaybeFieldsDistinct =
+  it "MaybeFields distinct" $ testH query (`shouldBe` [Nothing :: Maybe Int])
+  where nothing_ = OM.nothingFields :: MaybeFields ()
+        query :: Select (MaybeFields (Field O.SqlInt4))
+        query = O.distinct (O.valuesSafe [ fmap (const 0) nothing_
+                                         , fmap (const 1) nothing_ ])
+
 main :: IO ()
 main = do
   let envVarName = "POSTGRES_CONNSTRING"
@@ -1272,3 +1283,5 @@ main = do
             O.sqlDay (read "2018-01-01") (read "2018-01-12")
       describe "literals" $ do
         testLiterals
+      describe "MaybeFields" $ do
+        testMaybeFieldsDistinct

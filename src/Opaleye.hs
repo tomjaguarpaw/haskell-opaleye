@@ -23,6 +23,7 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.Join
                , module Opaleye.Label
                , module Opaleye.Manipulation
+               , module Opaleye.MaybeFields
                , module Opaleye.Operators
                , module Opaleye.Order
                , module Opaleye.PGTypes
@@ -53,6 +54,7 @@ import Opaleye.FunctionalJoin
 import Opaleye.Join
 import Opaleye.Label
 import Opaleye.Manipulation
+import Opaleye.MaybeFields
 import Opaleye.Operators
 import Opaleye.Order
 import Opaleye.PGTypes
