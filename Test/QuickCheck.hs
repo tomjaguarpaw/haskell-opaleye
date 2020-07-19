@@ -217,6 +217,36 @@ instance Show ArbitrarySelectArr where
 instance Show ArbitraryFunction where
   show = const "A function"
 
+instance TQ.Arbitrary ArbitrarySelect where
+  arbitrary = do
+    -- The range of choose is inclusive
+    c <- TQ.choose (1, 10 :: Int)
+
+    if c <= 3
+    then TQ.oneof arbitrarySelectRecurse0
+    else if c <= 8
+    then TQ.oneof arbitrarySelectRecurse1
+    else if c <= 10
+    then TQ.oneof arbitrarySelectRecurse2
+    else error "Impossible"
+
+-- We have to be very careful otherwise we will generate
+-- infinite-sized expressions.  On the other hand we probably generate
+-- far too small small expressions.  We should probably improve that
+-- but explicitly passing a size parameter to the sub-generators.
+instance TQ.Arbitrary ArbitrarySelectArr where
+  arbitrary = do
+    -- The range of choose is inclusive
+    c <- TQ.choose (1, 10 :: Int)
+
+    if c <= 3
+    then TQ.oneof arbitrarySelectArrRecurse0
+    else if c <= 8
+    then TQ.oneof arbitrarySelectArrRecurse1
+    else if c <= 10
+    then TQ.oneof arbitrarySelectArrRecurse2
+    else error "Impossible"
+
 arbitrarySelectRecurse0 :: [TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse0 =
   (fmap . fmap) ArbitrarySelect $
@@ -261,25 +291,45 @@ arbitrarySelectRecurse2 =
                    })
     arbitrarySelectMapper2
 
-instance TQ.Arbitrary ArbitrarySelect where
-  arbitrary = do
-    -- The range of choose is inclusive
-    c <- TQ.choose (1, 10 :: Int)
-
-    if c <= 3
-    then TQ.oneof arbitrarySelectRecurse0
-    else if c <= 8
-    then TQ.oneof arbitrarySelectRecurse1
-    else if c <= 10
-    then TQ.oneof arbitrarySelectRecurse2
-    else error "Impossible"
-
 arbitrarySelectArrRecurse0 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse0 =
   (fmap . fmap) ArbitrarySelectArr $
      map (fmap ignoreArguments) arbitrarySelect
   ++ arbitraryFieldsFunction
   where ignoreArguments = P.lmap (const ())
+
+arbitrarySelectArrRecurse1 :: [TQ.Gen ArbitrarySelectArr]
+arbitrarySelectArrRecurse1 =
+    (fmap . fmap) ArbitrarySelectArr $
+    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+                   ; f <- fg
+                   ; pure (OL.laterally f q) })
+        arbitrarySelectMapper
+    ++
+    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+                   ; f <- fg
+                   ; pure (f q) })
+        arbitrarySelectArrMapper
+
+arbitrarySelectArrRecurse2 :: [TQ.Gen ArbitrarySelectArr]
+arbitrarySelectArrRecurse2 =
+    (fmap . fmap) ArbitrarySelectArr $
+    map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
+                   ; ArbitrarySelectArr q2 <- TQ.arbitrary
+                   ; f <- fg
+                   ; pure (OL.bilaterally f q1 q2) })
+        arbitrarySelectMapper2
+    ++
+    (
+    map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
+                   ; ArbitrarySelectArr q2 <- TQ.arbitrary
+                   ; f <- fg
+                   ; pure (f q1 q2)
+                   }) $
+    arbitrarySelectArrPoly
+    ++
+    arbitrarySelectArr
+    )
 
 arbitrarySelect :: [TQ.Gen (O.Select Fields)]
 arbitrarySelect =
@@ -349,19 +399,6 @@ arbitrarySelectMapper2 =
               (fmap listFields q1)
               (fmap listFields q2)))
 
-arbitrarySelectArrRecurse1 :: [TQ.Gen ArbitrarySelectArr]
-arbitrarySelectArrRecurse1 =
-    (fmap . fmap) ArbitrarySelectArr $
-    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
-                   ; f <- fg
-                   ; pure (OL.laterally f q) })
-        arbitrarySelectMapper
-    ++
-    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
-                   ; f <- fg
-                   ; pure (f q) })
-        arbitrarySelectArrMapper
-
 arbitrarySelectArrMapper :: [TQ.Gen (O.SelectArr a Fields
                                      -> O.SelectArr a Fields)]
 arbitrarySelectArrMapper =
@@ -378,26 +415,6 @@ arbitrarySelectArrMapper =
         return (fmap (Choices . pure . Right) . OMF.optional)
     ]
 
-arbitrarySelectArrRecurse2 :: [TQ.Gen ArbitrarySelectArr]
-arbitrarySelectArrRecurse2 =
-    (fmap . fmap) ArbitrarySelectArr $
-    map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
-                   ; ArbitrarySelectArr q2 <- TQ.arbitrary
-                   ; f <- fg
-                   ; pure (OL.bilaterally f q1 q2) })
-        arbitrarySelectMapper2
-    ++
-    (
-    map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
-                   ; ArbitrarySelectArr q2 <- TQ.arbitrary
-                   ; f <- fg
-                   ; pure (f q1 q2)
-                   }) $
-    arbitrarySelectArrPoly
-    ++
-    arbitrarySelectArr
-    )
-
 arbitrarySelectArrPoly :: [TQ.Gen (O.SelectArr a Fields
                                   -> O.SelectArr a Fields
                                   -> O.SelectArr a Fields)]
@@ -413,23 +430,6 @@ arbitrarySelectArr =
     [ do
         pure (<<<)
     ]
-
--- We have to be very careful otherwise we will generate
--- infinite-sized expressions.  On the other hand we probably generate
--- far too small small expressions.  We should probably improve that
--- but explicitly passing a size parameter to the sub-generators.
-instance TQ.Arbitrary ArbitrarySelectArr where
-  arbitrary = do
-    -- The range of choose is inclusive
-    c <- TQ.choose (1, 10 :: Int)
-
-    if c <= 3
-    then TQ.oneof arbitrarySelectArrRecurse0
-    else if c <= 8
-    then TQ.oneof arbitrarySelectArrRecurse1
-    else if c <= 10
-    then TQ.oneof arbitrarySelectArrRecurse2
-    else error "Impossible"
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = arbitraryFields 6
