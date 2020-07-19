@@ -258,12 +258,13 @@ arbitrarySelectActual =
 arbitrarySelectArrFunction :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
 arbitrarySelectArrFunction aqArg =
+    map (\fg -> do { f <- fg; aqArg f }) $
     [ do
         f                <- TQ.arbitrary
-        aqArg (Arrow.arr (unArbitraryFunction f))
+        return (Arrow.arr (unArbitraryFunction f))
 
     , do
-        aqArg restrictFirstBool
+        return restrictFirstBool
     ]
 
 arbitrarySelectRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
