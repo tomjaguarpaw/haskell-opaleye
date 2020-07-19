@@ -225,13 +225,8 @@ instance TQ.Arbitrary ArbitrarySelect where
 arbitrarySelectArrRecurse0 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
 arbitrarySelectArrRecurse0 aqArg =
-  arbitrarySelect aqArg
+     map (\sg -> aqArg' =<< sg) arbitrarySelectActual
   ++ map (\fg -> aqArg =<< fg) arbitraryFieldsFunction
-
-arbitrarySelect :: (O.SelectArr Fields Fields -> TQ.Gen r)
-                -> [TQ.Gen r]
-arbitrarySelect aqArg =
-    map (\sg -> aqArg' =<< sg) arbitrarySelectActual
   where aqArg' = aqArg . P.lmap (const ())
 
 arbitrarySelectActual :: [TQ.Gen (O.Select Fields)]
