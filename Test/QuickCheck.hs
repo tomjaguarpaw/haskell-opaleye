@@ -323,15 +323,26 @@ arbitrarySelectArrRecurse2 _ aqArg =
                      (fmap listFields q1)
                      (fmap listFields q2)))
 
+-- We have to be very careful otherwise we will generate
+-- infinite-sized expressions.  On the other hand we probably generate
+-- far too small small expressions.  We should probably improve that
+-- but explicitly passing a size parameter to the sub-generators.
 instance TQ.Arbitrary ArbitrarySelectArr where
-  arbitrary = TQ.oneof (concat [ arbitrarySelectArrRecurse0 aq aqArg
-                               , arbitrarySelectArrRecurse1 aq aqArg
-                               , arbitrarySelectArrRecurse2 aq aqArg
-                               ])
+  arbitrary = do
+    -- The range of choose is inclusive
+    c <- TQ.choose (1, 10 :: Int)
+
+    if c <= 3
+    then TQ.oneof (arbitrarySelectArrRecurse0 aq aqArg)
+    else if c <= 8
+    then TQ.oneof (arbitrarySelectArrRecurse1 aq aqArg)
+    else if c <= 10
+    then TQ.oneof (arbitrarySelectArrRecurse2 aq aqArg)
+    else error "Impossible"
+
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
           aq qf = aqArg . OL.laterally qf
-
           aqArg = return . ArbitrarySelectArr
 
 instance TQ.Arbitrary ArbitraryFields where
