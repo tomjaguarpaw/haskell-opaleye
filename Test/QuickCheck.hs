@@ -227,6 +227,11 @@ arbitrarySelectRecurse1 =
       ArbitrarySelectArr q <- TQ.arbitrary
       return (q <<< pure emptyChoices)
   ]
+  ++
+  map (\fg -> do { ArbitrarySelect q <- TQ.arbitrary
+                 ; f <- fg
+                 ; return (f q) })
+      arbitrarySelectMapper
 
 arbitrarySelectRecurse2 :: [TQ.Gen (O.Select Fields)]
 arbitrarySelectRecurse2 =
