@@ -118,13 +118,15 @@ instance Opaleye.Internal.PGTypes.IsSqlType a
   def = def_
     where def_ = ValuesspecSafe (PM.PackMap (\f () -> fmap Column (f null_)))
                                 U.unpackspecColumn
-
-          null_ = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
-                               (HPQ.ConstExpr HPQ.NullLit)
+          null_ = nullPE sqlType
 
           sqlType = columnProxy def_
           columnProxy :: f (Column sqlType) -> Maybe sqlType
           columnProxy _ = Nothing
+
+nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
+nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
+                              (HPQ.ConstExpr HPQ.NullLit)
 
 -- Implementing this in terms of Valuesspec for convenience
 newtype Nullspec fields fields' = Nullspec (ValuesspecSafe fields fields')
