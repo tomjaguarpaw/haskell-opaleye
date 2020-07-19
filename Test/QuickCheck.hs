@@ -230,10 +230,6 @@ instance TQ.Arbitrary ArbitrarySelect where
     then TQ.oneof arbitrarySelectRecurse2
     else error "Impossible"
 
--- We have to be very careful otherwise we will generate
--- infinite-sized expressions.  On the other hand we probably generate
--- far too small small expressions.  We should probably improve that
--- but explicitly passing a size parameter to the sub-generators.
 instance TQ.Arbitrary ArbitrarySelectArr where
   arbitrary = do
     -- The range of choose is inclusive
@@ -248,6 +244,11 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     else error "Impossible"
 
 -- [Note] Testing strategy
+--
+-- We have to be very careful otherwise we will generate
+-- infinite-sized expressions.  On the other hand we probably generate
+-- far too small small expressions.  We should probably improve that
+-- but explicitly passing a size parameter to the sub-generators.
 --
 -- The idea here is that only arbitrary... generators can do
 -- recursion, i.e. call arbitrary in a way that could lead to other
