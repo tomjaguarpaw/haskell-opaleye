@@ -279,15 +279,14 @@ arbitrarySelectMapper =
 
 arbitrarySelectArrRecurse1 :: [TQ.Gen (O.SelectArr Fields Fields)]
 arbitrarySelectArrRecurse1 =
-    map (\fg -> do { q <- TQ.arbitrary
+    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
                    ; f <- fg
                    ; aq f q }) arbitrarySelectMapper
     ++
     map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
                    ; f <- fg
                    ; pure (f q) }) arbitrarySelectArrMapper
-    where aq qf = pure . OL.laterally qf . unArbitrary
-          unArbitrary (ArbitrarySelectArr q) = q
+    where aq qf = pure . OL.laterally qf
 
 arbitrarySelectArrMapper :: [TQ.Gen (O.SelectArr a Fields
                                      -> O.SelectArr a Fields)]
