@@ -399,8 +399,7 @@ genSelectMapper2 =
               (fmap listFields q1)
               (fmap listFields q2)))
 
-genSelectArrMapper :: [TQ.Gen (O.SelectArr a Fields
-                               -> O.SelectArr a Fields)]
+genSelectArrMapper :: [TQ.Gen (O.SelectArr a Fields -> O.SelectArr a Fields)]
 genSelectArrMapper =
     [ do
         thisLabel        <- TQ.arbitrary
