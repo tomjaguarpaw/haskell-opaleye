@@ -261,13 +261,6 @@ arbitraryFieldsFunction =
         return restrictFirstBool
     ]
 
-arbitrarySelectRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
-                        -> [TQ.Gen r]
-arbitrarySelectRecurse1 aqArg =
-    map (\fg -> do { q <- TQ.arbitrary; f <- fg; aq f q }) arbitrarySelectMapper
-    where aq qf = aqArg . OL.laterally qf . unArbitrary
-          unArbitrary (ArbitrarySelectArr q) = q
-
 arbitrarySelectMapper :: [TQ.Gen (O.Select Fields -> O.Select Fields)]
 arbitrarySelectMapper =
     [ do
@@ -289,10 +282,13 @@ arbitrarySelectMapper =
 arbitrarySelectArrRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
 arbitrarySelectArrRecurse1 aqArg =
-    arbitrarySelectRecurse1 aqArg ++
+    map (\fg -> do { q <- TQ.arbitrary; f <- fg; aq f q }) arbitrarySelectMapper
+    ++
     (map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
                     ; f <- fg
                     ; aqArg (f q) }) arbitrarySelectArrMapper)
+    where aq qf = aqArg . OL.laterally qf . unArbitrary
+          unArbitrary (ArbitrarySelectArr q) = q
 
 arbitrarySelectArrMapper :: [TQ.Gen (O.SelectArr a Fields
                                      -> O.SelectArr a Fields)]
