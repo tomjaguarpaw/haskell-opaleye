@@ -338,9 +338,9 @@ arbitrarySelectArrPoly =
                      (fmap listFields q1)
                      (fmap listFields q2)))
 
-arbitrarySelectArr :: [TQ.Gen (O.SelectArr Fields Fields
-                               -> O.SelectArr Fields Fields
-                               -> O.SelectArr Fields Fields)]
+arbitrarySelectArr :: [TQ.Gen (O.SelectArr b c
+                               -> O.SelectArr a b
+                               -> O.SelectArr a c)]
 arbitrarySelectArr =
     [ do
         pure (<<<)
