@@ -312,10 +312,16 @@ arbitrarySelectArrRecurse2 =
                    ; f <- fg
                    ; pure (f q1 q2)
                    }) $
+    arbitrarySelectArrPoly
+    ++
+    arbitrarySelectArr
+
+arbitrarySelectArrPoly :: [TQ.Gen (O.SelectArr a Fields
+                                  -> O.SelectArr a Fields
+                                  -> O.SelectArr a Fields)]
+arbitrarySelectArrPoly =
     [ do
         pure (\q1 q2 -> appendChoices <$> q1 <*> q2)
-    , do
-        pure (\q1 q2 -> q1 <<< q2)
     , do
         binaryOperation <- TQ.elements [ O.intersect
                                        , O.intersectAll
@@ -331,6 +337,14 @@ arbitrarySelectArrRecurse2 =
                     (OL.bilaterally binaryOperation
                      (fmap listFields q1)
                      (fmap listFields q2)))
+
+arbitrarySelectArr :: [TQ.Gen (O.SelectArr Fields Fields
+                               -> O.SelectArr Fields Fields
+                               -> O.SelectArr Fields Fields)]
+arbitrarySelectArr =
+    [ do
+        pure (\q1 q2 -> q1 <<< q2)
+    ]
 
 -- We have to be very careful otherwise we will generate
 -- infinite-sized expressions.  On the other hand we probably generate
