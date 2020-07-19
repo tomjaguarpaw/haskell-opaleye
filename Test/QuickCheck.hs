@@ -253,6 +253,13 @@ arbitrarySelectRecurse2 =
                    ; pure (f q1 q2)
                    })
     arbitrarySelectArr
+    ++
+    map (\fg -> do { ArbitrarySelect q1 <- TQ.arbitrary
+                   ; ArbitrarySelect q2 <- TQ.arbitrary
+                   ; f <- fg
+                   ; pure (f q1 q2)
+                   })
+    arbitrarySelectMapper2
 
 instance TQ.Arbitrary ArbitrarySelect where
   arbitrary = do
@@ -322,6 +329,25 @@ arbitrarySelectMapper =
     , do
         return (O.aggregate aggregateFields)
     ]
+
+arbitrarySelectMapper2 :: [TQ.Gen (O.Select Fields -> O.Select Fields
+                                                   -> O.Select Fields)]
+arbitrarySelectMapper2 =
+  [ do
+      binaryOperation <- TQ.elements [ O.intersect
+                                     , O.intersectAll
+                                     , O.union
+                                     , O.unionAll
+                                     , O.except
+                                     , O.exceptAll
+                                     ]
+      return (arbitraryBinary binaryOperation)
+  ]
+  where arbitraryBinary binaryOperation q1 q2 =
+          (fmap fieldsList
+            (binaryOperation
+              (fmap listFields q1)
+              (fmap listFields q2)))
 
 arbitrarySelectArrRecurse1 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse1 =
