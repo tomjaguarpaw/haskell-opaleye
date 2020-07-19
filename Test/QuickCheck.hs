@@ -224,9 +224,9 @@ instance TQ.Arbitrary ArbitrarySelect where
 
 arbitrarySelectArrRecurse0 :: [TQ.Gen (O.SelectArr Fields Fields)]
 arbitrarySelectArrRecurse0 =
-     map (\sg -> aqArg' =<< sg) arbitrarySelect
+     map (fmap ignoreArguments) arbitrarySelect
   ++ arbitraryFieldsFunction
-  where aqArg' = pure . P.lmap (const ())
+  where ignoreArguments = P.lmap (const ())
 
 arbitrarySelect :: [TQ.Gen (O.Select Fields)]
 arbitrarySelect =
