@@ -250,7 +250,7 @@ instance TQ.Arbitrary ArbitrarySelectArr where
 arbitrarySelectRecurse0 :: [TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse0 =
   (fmap . fmap) ArbitrarySelect $
-  arbitrarySelect
+  genSelect
 
 arbitrarySelectRecurse1 :: [TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse1 =
@@ -265,7 +265,7 @@ arbitrarySelectRecurse1 =
   map (\fg -> do { ArbitrarySelect q <- TQ.arbitrary
                  ; f <- fg
                  ; return (f q) })
-      arbitrarySelectMapper
+      genSelectMapper
 
 arbitrarySelectRecurse2 :: [TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse2 =
@@ -275,27 +275,27 @@ arbitrarySelectRecurse2 =
                    ; f <- fg
                    ; pure (f q1 q2)
                    })
-    arbitrarySelectArrPoly
+    genSelectArrPoly
     ++
     map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
                    ; ArbitrarySelect q2 <- TQ.arbitrary
                    ; f <- fg
                    ; pure (f q1 q2)
                    })
-    arbitrarySelectArr
+    genSelectArrMapper2
     ++
     map (\fg -> do { ArbitrarySelect q1 <- TQ.arbitrary
                    ; ArbitrarySelect q2 <- TQ.arbitrary
                    ; f <- fg
                    ; pure (f q1 q2)
                    })
-    arbitrarySelectMapper2
+    genSelectMapper2
 
 arbitrarySelectArrRecurse0 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse0 =
   (fmap . fmap) ArbitrarySelectArr $
-     map (fmap ignoreArguments) arbitrarySelect
-  ++ arbitraryFieldsFunction
+     map (fmap ignoreArguments) genSelect
+  ++ genFieldsFunction
   where ignoreArguments = P.lmap (const ())
 
 arbitrarySelectArrRecurse1 :: [TQ.Gen ArbitrarySelectArr]
@@ -304,12 +304,12 @@ arbitrarySelectArrRecurse1 =
     map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
                    ; f <- fg
                    ; pure (OL.laterally f q) })
-        arbitrarySelectMapper
+        genSelectMapper
     ++
     map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
                    ; f <- fg
                    ; pure (f q) })
-        arbitrarySelectArrMapper
+        genSelectArrMapper
 
 arbitrarySelectArrRecurse2 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse2 =
@@ -318,7 +318,7 @@ arbitrarySelectArrRecurse2 =
                    ; ArbitrarySelectArr q2 <- TQ.arbitrary
                    ; f <- fg
                    ; pure (OL.bilaterally f q1 q2) })
-        arbitrarySelectMapper2
+        genSelectMapper2
     ++
     (
     map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
@@ -326,13 +326,13 @@ arbitrarySelectArrRecurse2 =
                    ; f <- fg
                    ; pure (f q1 q2)
                    }) $
-    arbitrarySelectArrPoly
+    genSelectArrPoly
     ++
-    arbitrarySelectArr
+    genSelectArrMapper2
     )
 
-arbitrarySelect :: [TQ.Gen (O.Select Fields)]
-arbitrarySelect =
+genSelect :: [TQ.Gen (O.Select Fields)]
+genSelect =
     [ do
         ArbitraryFields fields_ <- TQ.arbitrary
         return ((pure . fieldsOfHaskells) fields_)
@@ -352,8 +352,8 @@ arbitrarySelect =
           ]
     ]
 
-arbitraryFieldsFunction :: [TQ.Gen (O.SelectArr Fields Fields)]
-arbitraryFieldsFunction =
+genFieldsFunction :: [TQ.Gen (O.SelectArr Fields Fields)]
+genFieldsFunction =
     [ do
         f                <- TQ.arbitrary
         return (Arrow.arr (unArbitraryFunction f))
@@ -362,8 +362,8 @@ arbitraryFieldsFunction =
         return restrictFirstBool
     ]
 
-arbitrarySelectMapper :: [TQ.Gen (O.Select Fields -> O.Select Fields)]
-arbitrarySelectMapper =
+genSelectMapper :: [TQ.Gen (O.Select Fields -> O.Select Fields)]
+genSelectMapper =
     [ do
         return (O.distinctExplicit distinctFields)
     , do
@@ -380,9 +380,9 @@ arbitrarySelectMapper =
         return (O.aggregate aggregateFields)
     ]
 
-arbitrarySelectMapper2 :: [TQ.Gen (O.Select Fields -> O.Select Fields
-                                                   -> O.Select Fields)]
-arbitrarySelectMapper2 =
+genSelectMapper2 :: [TQ.Gen (O.Select Fields -> O.Select Fields
+                                             -> O.Select Fields)]
+genSelectMapper2 =
   [ do
       binaryOperation <- TQ.elements [ O.intersect
                                      , O.intersectAll
@@ -399,9 +399,9 @@ arbitrarySelectMapper2 =
               (fmap listFields q1)
               (fmap listFields q2)))
 
-arbitrarySelectArrMapper :: [TQ.Gen (O.SelectArr a Fields
-                                     -> O.SelectArr a Fields)]
-arbitrarySelectArrMapper =
+genSelectArrMapper :: [TQ.Gen (O.SelectArr a Fields
+                               -> O.SelectArr a Fields)]
+genSelectArrMapper =
     [ do
         thisLabel        <- TQ.arbitrary
         return (O.label thisLabel)
@@ -415,18 +415,18 @@ arbitrarySelectArrMapper =
         return (fmap (Choices . pure . Right) . OMF.optional)
     ]
 
-arbitrarySelectArrPoly :: [TQ.Gen (O.SelectArr a Fields
-                                  -> O.SelectArr a Fields
-                                  -> O.SelectArr a Fields)]
-arbitrarySelectArrPoly =
+genSelectArrPoly :: [TQ.Gen (O.SelectArr a Fields
+                             -> O.SelectArr a Fields
+                             -> O.SelectArr a Fields)]
+genSelectArrPoly =
     [ do
         pure (\q1 q2 -> appendChoices <$> q1 <*> q2)
     ]
 
-arbitrarySelectArr :: [TQ.Gen (O.SelectArr b c
-                               -> O.SelectArr a b
-                               -> O.SelectArr a c)]
-arbitrarySelectArr =
+genSelectArrMapper2 :: [TQ.Gen (O.SelectArr b c
+                                -> O.SelectArr a b
+                                -> O.SelectArr a c)]
+genSelectArrMapper2 =
     [ do
         pure (<<<)
     ]
