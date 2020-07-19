@@ -343,7 +343,7 @@ arbitrarySelectArr :: [TQ.Gen (O.SelectArr Fields Fields
                                -> O.SelectArr Fields Fields)]
 arbitrarySelectArr =
     [ do
-        pure (\q1 q2 -> q1 <<< q2)
+        pure (<<<)
     ]
 
 -- We have to be very careful otherwise we will generate
