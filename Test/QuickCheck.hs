@@ -217,10 +217,45 @@ instance Show ArbitrarySelectArr where
 instance Show ArbitraryFunction where
   show = const "A function"
 
+arbitrarySelectRecurse0 :: [TQ.Gen (O.Select Fields)]
+arbitrarySelectRecurse0 =
+  arbitrarySelect
+
+arbitrarySelectRecurse1 :: [TQ.Gen (O.Select Fields)]
+arbitrarySelectRecurse1 =
+  [ do
+      ArbitrarySelectArr q <- TQ.arbitrary
+      return (q <<< pure emptyChoices)
+  ]
+
+arbitrarySelectRecurse2 :: [TQ.Gen (O.Select Fields)]
+arbitrarySelectRecurse2 =
+    map (\fg -> do { ArbitrarySelect q1 <- TQ.arbitrary
+                   ; ArbitrarySelect q2 <- TQ.arbitrary
+                   ; f <- fg
+                   ; pure (f q1 q2)
+                   })
+    arbitrarySelectArrPoly
+    ++
+    map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
+                   ; ArbitrarySelect q2 <- TQ.arbitrary
+                   ; f <- fg
+                   ; pure (f q1 q2)
+                   })
+    arbitrarySelectArr
+
 instance TQ.Arbitrary ArbitrarySelect where
   arbitrary = do
-    ArbitrarySelectArr q <- TQ.arbitrary
-    return (ArbitrarySelect (q <<< pure emptyChoices))
+    -- The range of choose is inclusive
+    c <- TQ.choose (1, 10 :: Int)
+
+    fmap ArbitrarySelect $ if c <= 3
+    then TQ.oneof arbitrarySelectRecurse0
+    else if c <= 8
+    then TQ.oneof arbitrarySelectRecurse1
+    else if c <= 10
+    then TQ.oneof arbitrarySelectRecurse2
+    else error "Impossible"
 
 arbitrarySelectArrRecurse0 :: [TQ.Gen (O.SelectArr Fields Fields)]
 arbitrarySelectArrRecurse0 =
