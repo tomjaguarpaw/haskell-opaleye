@@ -222,10 +222,9 @@ instance TQ.Arbitrary ArbitrarySelect where
     ArbitrarySelectArr q <- TQ.arbitrary
     return (ArbitrarySelect (q <<< pure emptyChoices))
 
-arbitrarySelectArrRecurse0 :: a
-                           -> (O.SelectArr Fields Fields -> TQ.Gen r)
+arbitrarySelectArrRecurse0 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
-arbitrarySelectArrRecurse0 _ aqArg =
+arbitrarySelectArrRecurse0 aqArg =
     [ do
         ArbitraryFields fields_ <- TQ.arbitrary
         aqArg ((pure . fieldsOfHaskells) fields_)
@@ -253,11 +252,9 @@ arbitrarySelectArrRecurse0 _ aqArg =
         aqArg restrictFirstBool
     ]
 
-arbitrarySelectRecurse1 :: ((O.Select Fields -> O.Select Fields)
-                            -> O.SelectArr Fields Fields
-                            -> TQ.Gen r)
+arbitrarySelectRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                         -> [TQ.Gen r]
-arbitrarySelectRecurse1 aq =
+arbitrarySelectRecurse1 aqArg =
     [ do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.distinctExplicit distinctFields) q
@@ -278,14 +275,12 @@ arbitrarySelectRecurse1 aq =
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.aggregate aggregateFields) q
     ]
+    where aq qf = aqArg . OL.laterally qf
 
-arbitrarySelectArrRecurse1 :: ((O.Select Fields -> O.Select Fields)
-                              -> O.SelectArr Fields Fields
-                              -> TQ.Gen r)
-                           -> (O.SelectArr Fields Fields -> TQ.Gen r)
+arbitrarySelectArrRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
-arbitrarySelectArrRecurse1 aq aqArg =
-    arbitrarySelectRecurse1 aq ++
+arbitrarySelectArrRecurse1 aqArg =
+    arbitrarySelectRecurse1 aqArg ++
     [ do
         ArbitrarySelectArr q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
@@ -302,10 +297,9 @@ arbitrarySelectArrRecurse1 aq aqArg =
         aqArg (fmap (Choices . pure . Right) (OMF.optional q))
     ]
 
-arbitrarySelectArrRecurse2 :: a
-                           -> (O.SelectArr Fields Fields -> TQ.Gen r)
+arbitrarySelectArrRecurse2 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
-arbitrarySelectArrRecurse2 _ aqArg =
+arbitrarySelectArrRecurse2 aqArg =
     [ do
         ArbitrarySelectArr q1 <- TQ.arbitrary
         ArbitrarySelectArr q2 <- TQ.arbitrary
@@ -341,16 +335,15 @@ instance TQ.Arbitrary ArbitrarySelectArr where
     c <- TQ.choose (1, 10 :: Int)
 
     if c <= 3
-    then TQ.oneof (arbitrarySelectArrRecurse0 aq aqArg)
+    then TQ.oneof (arbitrarySelectArrRecurse0 aqArg)
     else if c <= 8
-    then TQ.oneof (arbitrarySelectArrRecurse1 aq aqArg)
+    then TQ.oneof (arbitrarySelectArrRecurse1 aqArg)
     else if c <= 10
-    then TQ.oneof (arbitrarySelectArrRecurse2 aq aqArg)
+    then TQ.oneof (arbitrarySelectArrRecurse2 aqArg)
     else error "Impossible"
 
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
-          aq qf = aqArg . OL.laterally qf
           aqArg = return . ArbitrarySelectArr
 
 instance TQ.Arbitrary ArbitraryFields where
