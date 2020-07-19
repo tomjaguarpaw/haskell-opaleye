@@ -136,6 +136,10 @@ traverseMaybeFields query = proc mfInput -> do
 -- > 'Opaleye.RunSelect.runSelect' conn ('optional' ('Opaleye.Values.valuesSafe' l2)) :: IO [Maybe String]
 -- [Nothing]
 -- @
+--
+-- @optional@ is a generalisation of 'Opaleye.Join.optionalRestrict'.
+-- See the implementation of 'lateralLeftJoinOptional' for a
+-- demonstration of how @LEFT JOIN@ can be written using 'optional'.
 optional :: SelectArr i a -> SelectArr i (MaybeFields a)
 optional = Opaleye.Internal.Lateral.laterally optionalSelect
   where
