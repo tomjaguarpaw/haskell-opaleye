@@ -253,12 +253,11 @@ arbitrarySelectArrRecurse0 _ aqArg =
         aqArg restrictFirstBool
     ]
 
-arbitrarySelectArrRecurse1 :: ((O.Select Fields -> O.Select Fields)
-                              -> O.SelectArr Fields Fields
-                              -> TQ.Gen r)
-                           -> (O.SelectArr Fields Fields -> TQ.Gen r)
-                           -> [TQ.Gen r]
-arbitrarySelectArrRecurse1 aq aqArg =
+arbitrarySelectRecurse1 :: ((O.Select Fields -> O.Select Fields)
+                            -> O.SelectArr Fields Fields
+                            -> TQ.Gen r)
+                        -> [TQ.Gen r]
+arbitrarySelectRecurse1 aq =
     [ do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.distinctExplicit distinctFields) q
@@ -278,7 +277,16 @@ arbitrarySelectArrRecurse1 aq aqArg =
     , do
         ArbitrarySelectArr q <- TQ.arbitrary
         aq (O.aggregate aggregateFields) q
-    , do
+    ]
+
+arbitrarySelectArrRecurse1 :: ((O.Select Fields -> O.Select Fields)
+                              -> O.SelectArr Fields Fields
+                              -> TQ.Gen r)
+                           -> (O.SelectArr Fields Fields -> TQ.Gen r)
+                           -> [TQ.Gen r]
+arbitrarySelectArrRecurse1 aq aqArg =
+    arbitrarySelectRecurse1 aq ++
+    [ do
         ArbitrarySelectArr q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
         aqArg (O.label thisLabel q)
