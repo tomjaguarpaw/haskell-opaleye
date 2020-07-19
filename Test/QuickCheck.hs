@@ -637,15 +637,15 @@ compareNoSort conn one two = do
 
   return (one' === two')
 
-compare :: Ord a
+compare :: (Show a, Ord a)
          => PGS.Connection
          -> SelectDenotation a
          -> SelectDenotation a
-         -> IO Bool
+         -> IO TQ.Property
 compare conn one two = do
   one' <- unSelectDenotation one conn
   two' <- unSelectDenotation two conn
-  return (sort one' == sort two')
+  return (sort one' === sort two')
 
 compareSortedBy :: Ord a
                 => (a -> a -> Ord.Ordering)
@@ -671,7 +671,7 @@ fields conn (ArbitraryHaskells c) =
 compose :: PGS.Connection
         -> ArbitrarySelectArr
         -> ArbitrarySelect
-        -> IO Bool
+        -> IO TQ.Property
 compose conn (ArbitrarySelectArr a) (ArbitrarySelect q) = do
   compare conn (denotation (a . q))
                (denotationArr a . denotation q)
@@ -680,7 +680,7 @@ compose conn (ArbitrarySelectArr a) (ArbitrarySelect q) = do
 -- requires extending compare to compare SelectArrs.
 identity :: PGS.Connection
          -> ArbitrarySelect
-         -> IO Bool
+         -> IO TQ.Property
 identity conn (ArbitrarySelect q) = do
   compare conn (denotation (id . q))
                (id . denotation q)
@@ -690,7 +690,7 @@ fmap' conn f (ArbitrarySelect q) =
   compareNoSort conn (denotation (fmap (unArbitraryFunction f) q))
                      (onList (fmap (unArbitraryFunction f)) (denotation q))
 
-apply :: PGS.Connection -> ArbitrarySelect -> ArbitrarySelect -> IO Bool
+apply :: PGS.Connection -> ArbitrarySelect -> ArbitrarySelect -> IO TQ.Property
 apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
   compare conn (denotation2 ((,) <$> q1 <*> q2))
                 ((,) <$> denotation q1 <*> denotation q2)
@@ -742,7 +742,7 @@ order conn o (ArbitrarySelect q) =
                   (denotation (O.orderBy (arbitraryOrder o) q))
                   (denotation q)
 
-distinct :: PGS.Connection -> ArbitrarySelect -> IO Bool
+distinct :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
 distinct conn (ArbitrarySelect q) =
   compare conn (denotation (O.distinctExplicit distinctFields q))
                 (onList nub (denotation q))
@@ -750,7 +750,7 @@ distinct conn (ArbitrarySelect q) =
 -- When we added <*> to the arbitrary queries we started getting some
 -- consequences to do with the order of the returned rows and so
 -- restrict had to start being compared sorted.
-restrict :: PGS.Connection -> ArbitrarySelect -> IO Bool
+restrict :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
 restrict conn (ArbitrarySelect q) =
   compare conn (denotation (restrictFirstBool <<< q))
                 (onList restrictFirstBoolList (denotation q))
@@ -780,7 +780,7 @@ label conn comment (ArbitrarySelect q) =
   compareNoSort conn (denotation (O.label comment q))
                      (denotation q)
 
-optional :: PGS.Connection -> ArbitrarySelect -> IO Bool
+optional :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
 optional conn (ArbitrarySelect q) =
   compare conn (denotationMaybeFields (OMF.optional q))
                (onList optionalDenotation (denotation q))
