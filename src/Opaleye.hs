@@ -55,6 +55,7 @@ import Opaleye.Join
 import Opaleye.Label
 import Opaleye.Manipulation
 import Opaleye.MaybeFields
+  hiding (optional)
 import Opaleye.Operators
 import Opaleye.Order
 import Opaleye.PGTypes

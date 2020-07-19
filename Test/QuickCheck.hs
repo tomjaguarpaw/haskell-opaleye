@@ -10,6 +10,7 @@ module QuickCheck where
 
 import           Prelude hiding (compare, (.), id)
 import qualified Opaleye as O
+import qualified Opaleye.MaybeFields as OMF
 import qualified Opaleye.Internal.Lateral as OL
 import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
@@ -200,6 +201,11 @@ aggregateDenotation cs = if null cs
             Left l  -> Left l
             Right _ -> Right Nothing
 
+optionalDenotation :: [Haskells] -> [Maybe Haskells]
+optionalDenotation = \case
+  [] -> [Nothing]
+  xs -> map Just xs
+
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
                               (O.showSqlExplicit unpackFields q)
@@ -291,6 +297,9 @@ instance TQ.Arbitrary ArbitrarySelectArr where
         aqArg ((fmap unpairColums
                 . aggregateLaterally aggregateFields
                 . fmap pairColumns) q)
+    , do
+        ArbitrarySelectArr q <- TQ.arbitrary
+        aqArg (fmap (Choices . pure . Right) (OMF.optional q))
     ]
     where -- Applies qf to the query, but uses [] for the input of
           -- query, and ignores the input of the result.
@@ -635,6 +644,11 @@ label conn comment (ArbitrarySelect q) =
   compareNoSort conn (denotation (O.label comment q))
                      (denotation q)
 
+optional :: PGS.Connection -> ArbitrarySelect -> IO Bool
+optional conn (ArbitrarySelect q) =
+  compare conn (denotationMaybeFields (OMF.optional q))
+               (onList optionalDenotation (denotation q))
+
 
 {- TODO
 
@@ -694,6 +708,7 @@ run conn = do
   test1 valuesEmpty
   test1 aggregate
   test2 label
+  test1 optional
 
 -- }
 

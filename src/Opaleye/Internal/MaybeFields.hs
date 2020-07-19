@@ -1,19 +1,32 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveFunctor #-}
 
 module Opaleye.Internal.MaybeFields where
 
+import           Control.Applicative hiding (optional)
+import           Control.Arrow (returnA)
+
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Constant as Constant
 import qualified Opaleye.Internal.Distinct as D
+import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.PrimQuery as PQ
+import qualified Opaleye.Internal.QueryArr as IQ
 import qualified Opaleye.Internal.RunQuery as RQ
+import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Values as V
+import           Opaleye.Select (Select, SelectArr)
 import qualified Opaleye.Column
-import           Opaleye.Operators ((.&&))
-import           Opaleye.Internal.Operators (IfPP, ifExplict)
+import qualified Opaleye.Field
+import           Opaleye.Field (Field)
+import           Opaleye.Operators ((.&&), restrict, not)
+import           Opaleye.Internal.Operators (ifExplict, IfPP)
+import qualified Opaleye.Internal.Lateral
 import qualified Opaleye.SqlTypes
 import           Opaleye.SqlTypes (SqlBool, IsSqlType)
 
@@ -79,6 +92,77 @@ nothingFieldsExplicit n = MaybeFields {
     mfPresent = Opaleye.SqlTypes.sqlBool False
   , mfFields  = V.nullFields n
   }
+
+-- | Convenient access to lateral left/right join
+-- functionality. Performs a @LATERAL LEFT JOIN@ under the hood and
+-- has behaviour equivalent to the following Haskell function:
+--
+-- @
+-- optional :: [a] -> [Maybe a]
+-- optional q = case q of
+--     [] -> [Nothing]
+--     xs -> map Just xs
+-- @
+--
+-- That is, if @q :: 'SelectArr' i a@ returns no rows, @'optional' q
+-- :: 'SelectArr' i ('MaybeFields' a)@ returns exactly one \"Nothing\"
+-- row.  Otherwise, @'optional' q@ returns exactly the rows of @q@
+-- wrapped in \"Just\".
+--
+-- @
+-- > let l1 = ["one", "two", "three"] :: [Field SqlText]
+-- > 'Opaleye.RunSelect.runSelect' conn ('optional' ('Opaleye.Values.valuesSafe' l1)) :: IO [Maybe String]
+-- [Just "one", Just "two", Just "three"]
+--
+-- > let l2 = [] :: [Field SqlText]
+-- > 'Opaleye.RunSelect.runSelect' conn ('optional' ('Opaleye.Values.valuesSafe' l2)) :: IO [Maybe String]
+-- [Nothing]
+-- @
+optional :: SelectArr i a -> SelectArr i (MaybeFields a)
+optional = Opaleye.Internal.Lateral.laterally optionalSelect
+  where
+    -- This is basically a left join on TRUE, but Shane (@duairc)
+    -- wrote it to ensure that we don't need an Unpackspec a a.
+    optionalSelect :: Select a -> Select (MaybeFields a)
+    optionalSelect = IQ.QueryArr . go
+
+    go query ((), left, tag) = (MaybeFields present a, join, Tag.next tag')
+      where
+        (MaybeFields t a, right, tag') =
+          IQ.runSimpleQueryArr (justFields <$> query) ((), tag)
+
+        present = isNotNull (IC.unsafeCoerceColumn t')
+
+        (t', bindings) =
+          PM.run (U.runUnpackspec U.unpackspecColumn (PM.extractAttr "maybe" tag') t)
+        join = PQ.Join PQ.LeftJoin true [] bindings left right
+    true = HPQ.ConstExpr (HPQ.BoolLit True)
+    isNotNull = Opaleye.Operators.not . Opaleye.Field.isNull
+
+
+-- | An example to demonstrate how the functionality of (lateral)
+-- @LEFT JOIN@ can be recovered using 'optional'.
+lateralLeftJoinOptional :: SelectArr i a
+                        -> SelectArr i b
+                        -> ((a, b) -> Opaleye.Field.Field Opaleye.SqlTypes.SqlBool)
+                        -> SelectArr i (a, MaybeFields b)
+lateralLeftJoinOptional fieldsL fieldsR cond = proc i -> do
+  fieldsL' <- fieldsL -< i
+  maybeFieldsR' <- optional (proc (fieldsL', i) -> do
+                                fieldsR' <- fieldsR -< i
+                                restrict -< cond (fieldsL', fieldsR')
+                                returnA -< fieldsR'
+                                ) -< (fieldsL', i)
+  returnA -< (fieldsL', maybeFieldsR')
+
+-- | An example to demonstrate how the functionality of
+-- 'Opaleye.Join.optionalRestrict' can be recovered using 'optional'.
+optionalRestrictOptional :: Select a
+                         -> SelectArr (a -> Field SqlBool) (MaybeFields a)
+optionalRestrictOptional q = optional $ proc cond -> do
+  a <- q -< ()
+  restrict -< cond a
+  returnA -< a
 
 fromFieldsMaybeFields :: RQ.FromFields fields haskells
                       -> RQ.FromFields (MaybeFields fields) (Maybe haskells)
