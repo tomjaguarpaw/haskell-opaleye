@@ -119,10 +119,10 @@ listHaskells f = listFieldsG f 1 True
 
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
-newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Haskells }
+newtype ArbitraryHaskells = ArbitraryHaskells { unArbitraryHaskells :: Haskells }
                         deriving Show
-newtype ArbitraryFieldsList =
-  ArbitraryFieldsList { unArbitraryFieldsList :: [(Int, Bool)] }
+newtype ArbitraryHaskellsList =
+  ArbitraryHaskellsList { unArbitraryHaskellsList :: [(Int, Bool)] }
                              deriving Show
 newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
@@ -342,14 +342,14 @@ arbitrarySelectArrRecurse2 =
 genSelect :: [TQ.Gen (O.Select Fields)]
 genSelect =
     [ do
-        ArbitraryFields fields_ <- TQ.arbitrary
+        ArbitraryHaskells fields_ <- TQ.arbitrary
         return ((pure . fieldsOfHaskells) fields_)
     , return        (fmap (\(x,y) -> Choices [Left (CInt x), Left (CInt y)])
                           (O.selectTable table1))
     , do
         TQ.oneof [
             do
-            ArbitraryFieldsList l <- TQ.arbitrary
+            ArbitraryHaskellsList l <- TQ.arbitrary
             return (fmap fieldsList (O.valuesSafe (fmap O.toFields l)))
           , -- We test empty lists of values separately, because we
             -- used to not support them
@@ -438,10 +438,10 @@ genSelectArrMapper2 =
         pure (<<<)
     ]
 
-instance TQ.Arbitrary ArbitraryFields where
+instance TQ.Arbitrary ArbitraryHaskells where
     arbitrary = arbitraryFields 6
 
-arbitraryFields :: Int -> TQ.Gen ArbitraryFields
+arbitraryFields :: Int -> TQ.Gen ArbitraryHaskells
 arbitraryFields size = do
       -- Postgres strings cannot contain the zero codepoint.  See
       --
@@ -456,20 +456,20 @@ arbitraryFields size = do
               , Left  <$> CString <$> arbitraryPGString
               , pure (Right Nothing)
               , do
-                  ArbitraryFields c <- arbitraryFields (size `div` 2)
+                  ArbitraryHaskells c <- arbitraryFields (size `div` 2)
                   return (Right (Just c))
               ])
 
-      return (ArbitraryFields (Choices l))
+      return (ArbitraryHaskells (Choices l))
 
-instance TQ.Arbitrary ArbitraryFieldsList where
+instance TQ.Arbitrary ArbitraryHaskellsList where
   -- We don't want to choose very big lists because we take
   -- products of queries and so their sizes are going to end up
   -- multiplying.
   arbitrary = do
     k <- TQ.choose (0, 5)
     l <- TQ.vectorOf k TQ.arbitrary
-    return (ArbitraryFieldsList l)
+    return (ArbitraryHaskellsList l)
 
 instance TQ.Arbitrary ArbitraryPositiveInt where
   arbitrary = fmap ArbitraryPositiveInt (TQ.choose (0, 100))
@@ -652,8 +652,8 @@ compareSortedBy o conn one two = do
 
 -- { The tests
 
-fields :: PGS.Connection -> ArbitraryFields -> IO TQ.Property
-fields conn (ArbitraryFields c) =
+fields :: PGS.Connection -> ArbitraryHaskells -> IO TQ.Property
+fields conn (ArbitraryHaskells c) =
   compareNoSort conn (denotation (pure (fieldsOfHaskells c)))
                      (pure c)
 
@@ -744,8 +744,8 @@ restrict conn (ArbitrarySelect q) =
   compare conn (denotation (restrictFirstBool <<< q))
                 (onList restrictFirstBoolList (denotation q))
 
-values :: PGS.Connection -> ArbitraryFieldsList -> IO TQ.Property
-values conn (ArbitraryFieldsList l) =
+values :: PGS.Connection -> ArbitraryHaskellsList -> IO TQ.Property
+values conn (ArbitraryHaskellsList l) =
   compareNoSort conn
                 (denotation (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
                 (pureList (fmap fieldsList l))
