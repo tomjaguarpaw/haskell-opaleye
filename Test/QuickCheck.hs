@@ -384,11 +384,19 @@ arbitrarySelectArrRecurse2 =
     map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
                    ; ArbitrarySelectArr q2 <- TQ.arbitrary
                    ; f <- fg
+                   ; pure (OL.bilaterally f q1 q2) })
+        arbitrarySelectMapper2
+    ++
+    (
+    map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
+                   ; ArbitrarySelectArr q2 <- TQ.arbitrary
+                   ; f <- fg
                    ; pure (f q1 q2)
                    }) $
     arbitrarySelectArrPoly
     ++
     arbitrarySelectArr
+    )
 
 arbitrarySelectArrPoly :: [TQ.Gen (O.SelectArr a Fields
                                   -> O.SelectArr a Fields
@@ -396,21 +404,7 @@ arbitrarySelectArrPoly :: [TQ.Gen (O.SelectArr a Fields
 arbitrarySelectArrPoly =
     [ do
         pure (\q1 q2 -> appendChoices <$> q1 <*> q2)
-    , do
-        binaryOperation <- TQ.elements [ O.intersect
-                                       , O.intersectAll
-                                       , O.union
-                                       , O.unionAll
-                                       , O.except
-                                       , O.exceptAll
-                                       ]
-        return (arbitraryBinary binaryOperation)
     ]
-    where arbitraryBinary binaryOperation q1 q2 =
-                   (fmap fieldsList
-                    (OL.bilaterally binaryOperation
-                     (fmap listFields q1)
-                     (fmap listFields q2)))
 
 arbitrarySelectArr :: [TQ.Gen (O.SelectArr b c
                                -> O.SelectArr a b
