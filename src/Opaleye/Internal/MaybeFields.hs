@@ -7,7 +7,7 @@
 module Opaleye.Internal.MaybeFields where
 
 import           Control.Applicative hiding (optional)
-import           Control.Arrow (returnA)
+import           Control.Arrow (returnA, (<<<))
 
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Constant as Constant
@@ -24,7 +24,7 @@ import           Opaleye.Select (Select, SelectArr)
 import qualified Opaleye.Column
 import qualified Opaleye.Field
 import           Opaleye.Field (Field)
-import           Opaleye.Operators ((.&&), restrict, not)
+import           Opaleye.Operators ((.&&), (.||), restrict, not)
 import           Opaleye.Internal.Operators (ifExplict, IfPP)
 import qualified Opaleye.Internal.Lateral
 import qualified Opaleye.SqlTypes
@@ -98,6 +98,14 @@ nothingFieldsExplicit n = MaybeFields {
     mfPresent = Opaleye.SqlTypes.sqlBool False
   , mfFields  = V.nullFields n
   }
+
+traverseMaybeFields :: SelectArr a b -> SelectArr (MaybeFields a) (MaybeFields b)
+traverseMaybeFields query = proc mfInput -> do
+  mfOutput <- optional (query <<< maybeFieldsToSelect) -< mfInput
+  restrict -< mfPresent mfInput `implies` mfPresent mfOutput
+  returnA -< MaybeFields (mfPresent mfInput) (mfFields mfOutput)
+
+  where a `implies` b = Opaleye.Operators.not a .|| b
 
 -- | Convenient access to lateral left/right join
 -- functionality. Performs a @LATERAL LEFT JOIN@ under the hood and

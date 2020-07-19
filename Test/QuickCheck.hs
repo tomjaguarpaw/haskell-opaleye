@@ -26,6 +26,7 @@ import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
 import           Control.Category (Category, (.), id)
 import           Control.Monad (when, (<=<))
 import qualified Data.Profunctor.Product.Default as D
+import qualified Data.Either
 import           Data.List (sort)
 import qualified Data.List as List
 import qualified Data.List.NonEmpty as NEL
@@ -207,6 +208,27 @@ optionalDenotation :: [Haskells] -> [Maybe Haskells]
 optionalDenotation = \case
   [] -> [Nothing]
   xs -> map Just xs
+
+traverseDenotation :: SelectArrDenotation Haskells Haskells
+                   -> SelectDenotation (Maybe Haskells)
+                   -> SelectDenotation (Maybe Haskells)
+traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
+  (SelectArrDenotation (\conn l -> do
+                           qr <- q conn l
+                           let nothings :: [()]
+                               justs :: [Haskells]
+                               (nothings, justs) =
+                                 Data.Either.partitionEithers
+                                   (map (\case
+                                            Nothing -> Left ()
+                                            Just j -> Right j)
+                                        qr)
+
+                           justs' <- f conn justs
+                           let _ = justs' :: [Haskells]
+
+                           return ((Just <$> justs')
+                                   ++ (Nothing <$ nothings))))
 
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
@@ -814,11 +836,22 @@ maybeFieldsToSelect conn (ArbitrarySelectMaybe q) =
   compare conn (denotation (O.maybeFieldsToSelect <<< q))
                (onList (Maybe.maybeToList =<<) (denotationMaybeFields q))
 
+traverseMaybeFields :: PGS.Connection
+                    -> ArbitrarySelectArr
+                    -> ArbitrarySelectMaybe
+                    -> IO TQ.Property
+traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
+  compare conn
+    (denotationMaybeFields (O.traverseMaybeFieldsExplicit u u q <<< qm))
+    (traverseDenotation (denotationArr q) (denotationMaybeFields qm))
+  where u = unpackFields
+
 
 {- TODO
 
   * Nullability
   * Operators (mathematical, logical, etc.)
+  * Use traverseMaybeFields in generated queries
 
 -}
 
@@ -875,6 +908,7 @@ run conn = do
   test2 label
   test1 optional
   test1 maybeFieldsToSelect
+  test2 traverseMaybeFields
 
 -- }
 
