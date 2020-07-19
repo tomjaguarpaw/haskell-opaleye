@@ -2,6 +2,8 @@ module Opaleye.MaybeFields (
   MaybeFields,
   nothingFields,
   justFields,
+  fromMaybeFields,
+  maybeFields,
   -- * Adaptors
   Nullspec,
   nullspecField,
@@ -15,6 +17,8 @@ module Opaleye.MaybeFields (
   valuesspecMaybeFields,
   -- * Explicit versions
   nothingFieldsExplicit,
+  fromMaybeFieldsExplicit,
+  maybeFieldsExplicit,
   ) where
 
 import Opaleye.Internal.MaybeFields

@@ -13,7 +13,7 @@ import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Values as V
 import qualified Opaleye.Column
 import           Opaleye.Operators ((.&&))
-import           Opaleye.Internal.Operators (ifExplict)
+import           Opaleye.Internal.Operators (IfPP, ifExplict)
 import qualified Opaleye.SqlTypes
 import           Opaleye.SqlTypes (SqlBool, IsSqlType)
 
@@ -58,6 +58,21 @@ nothingFields = nothingFieldsExplicit def
 -- 'Control.Applicative.pure'.
 justFields :: a -> MaybeFields a
 justFields = pure
+
+-- | The Opaleye analogue of 'Data.Maybe.maybe'
+maybeFields :: PP.Default IfPP b b => b -> (a -> b) -> MaybeFields a -> b
+maybeFields = maybeFieldsExplicit PP.def
+
+-- | The Opaleye analogue of 'Data.Maybe.fromMaybe'
+fromMaybeFields :: PP.Default IfPP b b => b -> MaybeFields b -> b
+fromMaybeFields = fromMaybeFieldsExplicit PP.def
+
+maybeFieldsExplicit :: IfPP b b' -> b -> (a -> b) -> MaybeFields a -> b'
+maybeFieldsExplicit ifpp b f mf =
+  ifExplict ifpp (mfPresent mf) (f (mfFields mf)) b
+
+fromMaybeFieldsExplicit :: IfPP b b -> b -> MaybeFields b -> b
+fromMaybeFieldsExplicit ifpp = flip (maybeFieldsExplicit ifpp) id
 
 nothingFieldsExplicit :: V.Nullspec a b -> MaybeFields b
 nothingFieldsExplicit n = MaybeFields {
