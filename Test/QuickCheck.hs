@@ -223,6 +223,8 @@ arbitrarySelectRecurse0 =
 
 arbitrarySelectRecurse1 :: [TQ.Gen (O.Select Fields)]
 arbitrarySelectRecurse1 =
+  -- I'm not sure this is neccessary anymore.  It should be covered by
+  -- other generation pathways.
   [ do
       ArbitrarySelectArr q <- TQ.arbitrary
       return (q <<< pure emptyChoices)
