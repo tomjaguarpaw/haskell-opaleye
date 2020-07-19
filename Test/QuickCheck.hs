@@ -281,21 +281,21 @@ arbitrarySelectArrRecurse1 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
 arbitrarySelectArrRecurse1 aqArg =
     arbitrarySelectRecurse1 aqArg ++
+    (map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+                    ; f <- fg
+                    ; aqArg (f q) }) $
     [ do
-        ArbitrarySelectArr q <- TQ.arbitrary
         thisLabel        <- TQ.arbitrary
-        aqArg (O.label thisLabel q)
+        return (O.label thisLabel)
     , -- This is stupidly simple way of generating lateral subqueries.
       -- All it does is run a lateral aggregation.
       do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        aqArg ((fmap unpairColums
+        return (fmap unpairColums
                 . aggregateLaterally aggregateFields
-                . fmap pairColumns) q)
+                . fmap pairColumns)
     , do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        aqArg (fmap (Choices . pure . Right) (OMF.optional q))
-    ]
+        return (fmap (Choices . pure . Right) . OMF.optional)
+    ])
 
 arbitrarySelectArrRecurse2 :: (O.SelectArr Fields Fields -> TQ.Gen r)
                            -> [TQ.Gen r]
