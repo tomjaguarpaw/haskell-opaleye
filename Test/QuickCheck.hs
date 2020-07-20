@@ -892,8 +892,18 @@ traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
 
 run :: PGS.Connection -> IO ()
 run conn = do
-  let prop1 p = fmap          TQ.ioProperty (p conn)
+
+  let prop1 :: TQ.Testable prop
+            => (PGS.Connection -> a -> IO prop)
+            -> a -> TQ.Property
+      prop1 p = fmap          TQ.ioProperty (p conn)
+      prop2 :: TQ.Testable prop
+            => (PGS.Connection -> a -> b -> IO prop)
+            -> a -> b -> TQ.Property
       prop2 p = (fmap . fmap) TQ.ioProperty (p conn)
+      prop3 :: TQ.Testable prop
+            => (PGS.Connection -> a -> b -> c -> IO prop)
+            -> a -> b -> c -> TQ.Property
       prop3 p = (fmap . fmap . fmap) TQ.ioProperty (p conn)
 
       test1 :: (Show a, TQ.Arbitrary a, TQ.Testable prop)
