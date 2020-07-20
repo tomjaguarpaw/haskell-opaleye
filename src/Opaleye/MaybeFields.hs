@@ -7,6 +7,7 @@ module Opaleye.MaybeFields (
   fromMaybeFields,
   maybeFields,
   maybeFieldsToSelect,
+  catMaybeFields,
   optional,
   Opaleye.MaybeFields.traverseMaybeFields,
   -- * Adaptors

@@ -7,7 +7,7 @@
 module Opaleye.Internal.MaybeFields where
 
 import           Control.Applicative hiding (optional)
-import           Control.Arrow (returnA, (<<<))
+import           Control.Arrow (returnA, (<<<), (>>>))
 
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Constant as Constant
@@ -85,6 +85,10 @@ maybeFieldsToSelect :: SelectArr (MaybeFields a) a
 maybeFieldsToSelect = proc mf -> do
   restrict -< mfPresent mf
   returnA -< mfFields mf
+
+-- | The Opaleye analogue of 'Data.Maybe.catMaybes'
+catMaybeFields :: SelectArr i (MaybeFields a) -> SelectArr i a
+catMaybeFields = (>>> maybeFieldsToSelect)
 
 maybeFieldsExplicit :: IfPP b b' -> b -> (a -> b) -> MaybeFields a -> b'
 maybeFieldsExplicit ifpp b f mf =
