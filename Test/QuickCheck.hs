@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -240,6 +241,66 @@ traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
 
                            return ((Just <$> justs')
                                    ++ (Nothing <$ nothings))))
+
+data FieldsType f h where
+  FInt    :: FieldsType (O.Field O.SqlInt4) Int
+  FString :: FieldsType (O.Field O.SqlText) String
+  FBool   :: FieldsType (O.Field O.SqlBool) Bool
+
+  FPair  :: FieldsType f1 h1 -> FieldsType f2 h2 -> FieldsType (f1, f2) (h1, h2)
+  FMaybe :: FieldsType f1 h1 -> FieldsType (O.MaybeFields f1) (Maybe h1)
+
+fieldsTypePP :: PP.ProductProfunctor p
+             => p (O.Field O.SqlInt4) (O.Field O.SqlInt4)
+             -> p (O.Field O.SqlText) (O.Field O.SqlText)
+             -> p (O.Field O.SqlBool) (O.Field O.SqlBool)
+             -> (forall a b. p a b -> p (O.MaybeFields a) (O.MaybeFields b))
+             -> FieldsType f h
+             -> p f f
+fieldsTypePP i s b m = \case
+    FInt    -> i
+    FBool   -> b
+    FString -> s
+
+    FPair p1 p2 -> PP.p2 (fieldsTypePP i s b m p1,
+                          fieldsTypePP i s b m p2)
+
+    FMaybe m1 -> m (fieldsTypePP i s b m m1)
+
+fieldsTypePPH :: PP.ProductProfunctor p
+              => p (O.Field O.SqlInt4) Int
+              -> p (O.Field O.SqlText) String
+              -> p (O.Field O.SqlBool) Bool
+              -> (forall a b. p a b -> p (O.MaybeFields a) (Maybe b))
+              -> FieldsType f h
+              -> p f h
+fieldsTypePPH i s b m = \case
+    FInt    -> i
+    FBool   -> b
+    FString -> s
+
+    FPair p1 p2 -> PP.p2 (fieldsTypePPH i s b m p1,
+                          fieldsTypePPH i s b m p2)
+
+    FMaybe m1 -> m (fieldsTypePPH i s b m m1)
+
+fieldsTypePPF :: PP.ProductProfunctor p
+              => p Int (O.Field O.SqlInt4)
+              -> p String (O.Field O.SqlText)
+              -> p Bool (O.Field O.SqlBool)
+              -> (forall a b. p a b -> p (Maybe a) (O.MaybeFields b))
+              -> FieldsType f h
+              -> p h f
+fieldsTypePPF i s b m = \case
+    FInt    -> i
+    FBool   -> b
+    FString -> s
+
+    FPair p1 p2 -> PP.p2 (fieldsTypePPF i s b m p1,
+                          fieldsTypePPF i s b m p2)
+
+    FMaybe m1 -> m (fieldsTypePPF i s b m m1)
+
 
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
