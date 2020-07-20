@@ -100,11 +100,7 @@ ppChoices p f = ps
   where ps = P.dimap unChoices Choices (PP.list (p PP.+++! f ps))
 
 fieldsOfHaskells :: Haskells -> Fields
-fieldsOfHaskells = (O.toFieldsExplicit
-                    . defChoicesPP
-                    . O.toFieldsMaybeFields
-                    . fmap Choices)
-                   OV.nullspecList
+fieldsOfHaskells = O.toFieldsExplicit toFieldsFields
 
 fieldsList :: (a, b) -> Choices m a b s
 fieldsList (x, y) = Choices [Left (CInt x), Left (CBool y)]
@@ -150,6 +146,10 @@ distinctFields = P.dimap unChoices Choices (PP.list
 
 fromFieldsFields :: O.FromFields Fields Haskells
 fromFieldsFields = defChoicesPP O.fromFieldsMaybeFields
+
+toFieldsFields :: O.ToFields Haskells Fields
+toFieldsFields =
+  defChoicesPP (O.toFieldsMaybeFields (fmap Choices OV.nullspecList))
 
 -- We don't have the ability to aggregate MaybeFields, at least, not
 -- yet.  Therefore we just replace them with Nothing.
