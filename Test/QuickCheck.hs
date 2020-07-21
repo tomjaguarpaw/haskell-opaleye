@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module QuickCheck where
@@ -38,7 +39,8 @@ import qualified Data.Ord as Ord hiding (compare)
 import qualified Data.Set as Set
 import qualified Data.Maybe as Maybe
 import qualified Control.Arrow as Arrow
-import           Control.Arrow ((<<<), (>>>))
+import           Control.Arrow ((<<<), (>>>), (&&&), (***))
+import qualified Type.Reflection as R
 
 twoIntTable :: String
             -> O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
@@ -247,8 +249,12 @@ data FieldsType f h where
   FString :: FieldsType (O.Field O.SqlText) String
   FBool   :: FieldsType (O.Field O.SqlBool) Bool
 
-  FPair  :: FieldsType f1 h1 -> FieldsType f2 h2 -> FieldsType (f1, f2) (h1, h2)
-  FMaybe :: FieldsType f1 h1 -> FieldsType (O.MaybeFields f1) (Maybe h1)
+  FPair  :: (R.Typeable f1, R.Typeable f2,
+             R.Typeable h1, R.Typeable h2)
+         => FieldsType f1 h1 -> FieldsType f2 h2 -> FieldsType (f1, f2) (h1, h2)
+
+  FMaybe :: (R.Typeable f1, R.Typeable h1)
+         => FieldsType f1 h1 -> FieldsType (O.MaybeFields f1) (Maybe h1)
 
 fieldsTypePP :: PP.ProductProfunctor p
              => p (O.Field O.SqlInt4) (O.Field O.SqlInt4)
@@ -300,6 +306,104 @@ fieldsTypePPF i s b m = \case
                           fieldsTypePPF i s b m p2)
 
     FMaybe m1 -> m (fieldsTypePPF i s b m m1)
+
+data SomeType2 f where
+  SomeType2 :: (R.Typeable a, R.Typeable b)
+            => R.TypeRep a -> R.TypeRep b -> f a b -> SomeType2 f
+
+type SomeFields = SomeType2 FieldsType
+
+someFields :: (R.Typeable a, R.Typeable b) => f a b -> SomeType2 f
+someFields = SomeType2 R.typeRep R.typeRep
+
+genSomeFields :: TQ.Gen SomeFields
+genSomeFields = do
+  c <- TQ.choose (1, 10 :: Int)
+
+  if c <= 3
+  then TQ.oneof [ pure (someFields FInt)
+                , pure (someFields FString)
+                , pure (someFields FBool) ]
+  else if c <= 8
+  then genSomeFields >>= \case SomeType2 _ _ a -> pure (someFields (FMaybe a))
+  else if c <= 10
+  then do
+    genSomeFields >>= \case { SomeType2 _ _ u1 ->
+    genSomeFields >>= \case { SomeType2 _ _ u2 ->
+    pure (someFields (FPair u1 u2)) }}
+  else error "Impossible"
+
+eqT :: (R.Typeable a, R.Typeable b) => Maybe (a R.:~~: b)
+eqT = R.eqTypeRep R.typeRep R.typeRep
+
+eqFieldsTypeF :: (R.Typeable f1, R.Typeable f2,
+                  R.Typeable h1, R.Typeable h2)
+              => FieldsType f1 h1 -> FieldsType f2 h2
+              -> Maybe ((f1, h1) R.:~~: (f2, h2))
+eqFieldsTypeF _ _ = eqT
+
+fmapMaybe :: (a -> b) -> Maybe a -> Maybe b
+fmapMaybe = fmap
+
+isMaybe :: FieldsType mf mh
+        -> (forall f h.
+            (mf ~ O.MaybeFields f, mh ~ Maybe h, R.Typeable f, R.Typeable h)
+            => FieldsType f h
+            -> r)
+        -> Maybe r
+isMaybe ft k = case ft of
+  FMaybe m -> Just (k m)
+  _        -> Nothing
+
+genFunction :: (R.Typeable f1,
+                R.Typeable f2,
+                R.Typeable h1,
+                R.Typeable h2)
+            => FieldsType f1 h1
+            -> FieldsType f2 h2
+            -> TQ.Gen (f1 -> f2, h1 -> h2)
+genFunction f1 f2 = TQ.oneof choices
+  where choices = concat [ identity_
+                         , mapMaybe
+                         , split
+                         , parallel
+                         , compose_
+                         ]
+        identity_ = case eqFieldsTypeF f1 f2 of
+          Nothing      -> []
+          Just R.HRefl -> [ pure (id, id) ]
+
+        mapMaybe = Maybe.fromMaybe [] $ isMaybe f1 (\m1 ->
+                   Maybe.fromMaybe [] $ isMaybe f2 (\m2 ->
+                     [ do
+                         (f, f') <- genFunction m1 m2
+                         return (fmap f, fmap f')
+                     ]))
+
+        split = case f2 of { FPair p1 p2 ->
+                     [ do
+                         (g1, g1') <- genFunction f1 p1
+                         (g2, g2') <- genFunction f1 p2
+                         return (g1 &&& g2, g1' &&& g2')
+                     ];
+                     _ -> [] }
+
+        parallel = case f1 of { FPair p1 p2 ->
+                   case f2 of { FPair q1 q2 ->
+                     [ do
+                         (g1, g1') <- genFunction p1 q1
+                         (g2, g2') <- genFunction p2 q2
+                         return (g1 *** g2, g1' *** g2')
+                     ];
+                     _ -> [] };
+                     _ -> [] }
+
+        compose_ = [ do
+                       genSomeFields >>= \case { SomeType2 _ _ f -> do
+                         (g1, g1') <- genFunction f1 f
+                         (g2, g2') <- genFunction f f2
+                         return (g2 . g1, g2' . g1') }
+                   ]
 
 
 instance Show ArbitrarySelect where
