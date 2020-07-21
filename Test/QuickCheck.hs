@@ -498,13 +498,14 @@ genSelectArrMapper2 =
 instance TQ.Arbitrary ArbitraryHaskells where
     arbitrary = arbitraryFields 6
 
+-- Postgres strings cannot contain the zero codepoint.  See
+--
+-- https://www.postgresql.org/message-id/1171970019.3101.328.camel@coppola.muc.ecircle.de
+arbitraryPGString :: TQ.Gen String
+arbitraryPGString = filter (/= '\0') <$> TQ.arbitrary
+
 arbitraryFields :: Int -> TQ.Gen ArbitraryHaskells
 arbitraryFields size = do
-      -- Postgres strings cannot contain the zero codepoint.  See
-      --
-      -- https://www.postgresql.org/message-id/1171970019.3101.328.camel@coppola.muc.ecircle.de
-      let arbitraryPGString = filter (/= '\0') <$> TQ.arbitrary
-
       s <- TQ.choose (0, size)
 
       l <- TQ.vectorOf s (TQ.oneof
