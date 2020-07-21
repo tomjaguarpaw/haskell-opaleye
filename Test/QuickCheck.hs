@@ -355,6 +355,17 @@ isMaybe ft k = case ft of
   FMaybe m -> Just (k m)
   _        -> Nothing
 
+genHaskells :: R.Typeable f
+            => FieldsType f h
+            -> TQ.Gen h
+genHaskells = \case
+  FInt    -> TQ.arbitrary
+  FBool   -> TQ.arbitrary
+  FString -> arbitraryPGString
+  FPair p1 p2 -> (,) <$> genHaskells p1 <*> genHaskells p2
+  FMaybe m -> TQ.oneof [ Just <$> genHaskells m
+                       , pure Nothing ]
+
 genFunction :: (R.Typeable f1,
                 R.Typeable f2,
                 R.Typeable h1,
