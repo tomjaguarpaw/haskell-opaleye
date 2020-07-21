@@ -318,20 +318,14 @@ someFields = SomeType2 R.typeRep R.typeRep
 
 genSomeFields :: TQ.Gen SomeFields
 genSomeFields = do
-  c <- TQ.choose (1, 10 :: Int)
-
-  if c <= 3
-  then TQ.oneof [ pure (someFields FInt)
-                , pure (someFields FString)
-                , pure (someFields FBool) ]
-  else if c <= 8
-  then genSomeFields >>= \case SomeType2 _ _ a -> pure (someFields (FMaybe a))
-  else if c <= 10
-  then do
-    genSomeFields >>= \case { SomeType2 _ _ u1 ->
-    genSomeFields >>= \case { SomeType2 _ _ u2 ->
-    pure (someFields (FPair u1 u2)) }}
-  else error "Impossible"
+  recurseSafely
+    (TQ.oneof [ pure (someFields FInt)
+              , pure (someFields FString)
+              , pure (someFields FBool) ])
+    (genSomeFields >>= \case SomeType2 _ _ a -> pure (someFields (FMaybe a)))
+    (genSomeFields >>= \case { SomeType2 _ _ u1 ->
+     genSomeFields >>= \case { SomeType2 _ _ u2 ->
+     pure (someFields (FPair u1 u2)) }})
 
 eqT :: (R.Typeable a, R.Typeable b) => Maybe (a R.:~~: b)
 eqT = R.eqTypeRep R.typeRep R.typeRep
