@@ -448,7 +448,7 @@ genFunction :: (R.Typeable f1,
 genFunction f1 f2 =
   recurseSafelyOneof
       ([easyGenFunction f1 f2] ++ identity_)
-      mapMaybe
+      (concat [ mapMaybe, just ] ++ [ again ])
       (concat [ split, parallel, compose_ ])
 
   where identity_ = case eqFieldsTypeF f1 f2 of
@@ -461,6 +461,20 @@ genFunction f1 f2 =
                          (f, f') <- genFunction m1 m2
                          return (fmap f, fmap f')
                      ]))
+
+        -- Also should do a Nothing/nothingFields, but we need an
+        -- adaptor for that so we'll leave it for later
+        just = Maybe.fromMaybe [] $ isMaybe f2 (\m2 ->
+                     [ do
+                         (f, f') <- genFunction f1 m2
+                         return (pure . f, Just . f')
+                     ])
+
+        -- This is fairly stupid, but because oneof expects a
+        -- non-empty list we haev to guarantee we have elements.
+        -- Either we should find a better way of guaranteeing that, or
+        -- we should improve our recursion wrapper.
+        again = genFunction f1 f2
 
         split = case f2 of { FPair p1 p2 ->
                      [ do
