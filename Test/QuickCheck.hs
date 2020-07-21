@@ -366,6 +366,84 @@ genHaskells = \case
   FMaybe m -> TQ.oneof [ Just <$> genHaskells m
                        , pure Nothing ]
 
+-- Structurally recursive on the types, so it will find a solution
+-- relatively quickly
+easyGenFunction :: (R.Typeable f1,
+                    R.Typeable f2,
+                    R.Typeable h1,
+                    R.Typeable h2)
+                => FieldsType f1 h1
+                -> FieldsType f2 h2
+                -> TQ.Gen (f1 -> f2, h1 -> h2)
+easyGenFunction f1 f2 = case f2 of
+  FInt -> case f1 of
+    FInt    -> pure (id, id)
+    -- Could choose these randomly and/or based on the Bool/String in
+    -- question, but for now we will just use constants.
+    FBool   -> pure (const 123, const 123)
+    FString -> pure (const 456, const 456)
+    FMaybe m -> do
+      (f, h) <- easyGenFunction m FInt
+      pure (O.maybeFields 789 f, maybe 789 h)
+
+    FPair p1 p2 -> do
+      TQ.oneof [ do
+                   (f, h) <- easyGenFunction p1 FInt
+                   pure (f . fst, h . fst)
+               , do
+                   (f, h) <- easyGenFunction p2 FInt
+                   pure (f . snd, h . snd)
+               ]
+
+  FBool -> case f1 of
+    FBool -> pure (id, id)
+
+    FInt    -> pure (const (O.sqlBool True), const True)
+    FString -> pure (const (O.sqlBool False), const False)
+    FMaybe m -> do
+      (f, h) <- easyGenFunction m FBool
+      pure (O.maybeFields (O.sqlBool True) f, maybe True h)
+
+    FPair p1 p2 -> do
+      TQ.oneof [ do
+                   (f, h) <- easyGenFunction p1 FBool
+                   pure (f . fst, h . fst)
+               , do
+                   (f, h) <- easyGenFunction p2 FBool
+                   pure (f . snd, h . snd)
+               ]
+
+  FString -> case f1 of
+    FString -> pure (id, id)
+
+    FInt    -> pure (const (O.sqlString "one"), const "one")
+    FBool   -> pure (const (O.sqlString "two"), const "two")
+    FMaybe m -> do
+      (f, h) <- easyGenFunction m FString
+      pure (O.maybeFields (O.sqlString "three") f, maybe "three" h)
+
+    FPair p1 p2 -> do
+      TQ.oneof [ do
+                   (f, h) <- easyGenFunction p1 FString
+                   pure (f . fst, h . fst)
+               , do
+                   (f, h) <- easyGenFunction p2 FString
+                   pure (f . snd, h . snd)
+               ]
+
+  -- Would also like to do nothingFields but that requires having the
+  -- right adaptor in scope.  When we put it in the FieldsType we can
+  -- do it.
+  FMaybe m -> TQ.oneof [ do
+                           (f, h) <- easyGenFunction f1 m
+                           pure (pure . f, Just . h)
+                       ]
+
+  FPair p1 p2 -> do
+    (fp1, hp1) <- easyGenFunction f1 p1
+    (fp2, hp2) <- easyGenFunction f1 p2
+    pure (fp1 &&& fp2, hp1 &&& hp2)
+
 genFunction :: (R.Typeable f1,
                 R.Typeable f2,
                 R.Typeable h1,
