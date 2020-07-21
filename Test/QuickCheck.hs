@@ -452,7 +452,8 @@ genFunction :: (R.Typeable f1,
             -> FieldsType f2 h2
             -> TQ.Gen (f1 -> f2, h1 -> h2)
 genFunction f1 f2 = TQ.oneof choices
-  where choices = concat [ identity_
+  where choices = concat [ [ easyGenFunction f1 f2 ]
+                         , identity_
                          , mapMaybe
                          , split
                          , parallel
