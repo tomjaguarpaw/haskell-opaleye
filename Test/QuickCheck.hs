@@ -445,15 +445,13 @@ genFunction :: (R.Typeable f1,
             => FieldsType f1 h1
             -> FieldsType f2 h2
             -> TQ.Gen (f1 -> f2, h1 -> h2)
-genFunction f1 f2 = TQ.oneof choices
-  where choices = concat [ [ easyGenFunction f1 f2 ]
-                         , identity_
-                         , mapMaybe
-                         , split
-                         , parallel
-                         , compose_
-                         ]
-        identity_ = case eqFieldsTypeF f1 f2 of
+genFunction f1 f2 =
+  recurseSafelyOneof
+      ([easyGenFunction f1 f2] ++ identity_)
+      mapMaybe
+      (concat [ split, parallel, compose_ ])
+
+  where identity_ = case eqFieldsTypeF f1 f2 of
           Nothing      -> []
           Just R.HRefl -> [ pure (id, id) ]
 
