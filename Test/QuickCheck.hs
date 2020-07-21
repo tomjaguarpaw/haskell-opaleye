@@ -260,31 +260,34 @@ instance Show ArbitrarySelectArr where
 instance Show ArbitraryFunction where
   show = const "A function"
 
-instance TQ.Arbitrary ArbitrarySelect where
-  arbitrary = do
+recurseSafelyOneof :: [TQ.Gen a] -> [TQ.Gen a] -> [TQ.Gen a] -> TQ.Gen a
+recurseSafelyOneof r0 r1 r2 =
+  recurseSafely (TQ.oneof r0) (TQ.oneof r1) (TQ.oneof r2)
+
+recurseSafely :: TQ.Gen a -> TQ.Gen a -> TQ.Gen a -> TQ.Gen a
+recurseSafely r0 r1 r2 = do
     -- The range of choose is inclusive
     c <- TQ.choose (1, 10 :: Int)
 
     if c <= 3
-    then TQ.oneof arbitrarySelectRecurse0
+    then r0
     else if c <= 8
-    then TQ.oneof arbitrarySelectRecurse1
+    then r1
     else if c <= 10
-    then TQ.oneof arbitrarySelectRecurse2
+    then r2
     else error "Impossible"
+
+instance TQ.Arbitrary ArbitrarySelect where
+  arbitrary = recurseSafelyOneof
+                  arbitrarySelectRecurse0
+                  arbitrarySelectRecurse1
+                  arbitrarySelectRecurse2
 
 instance TQ.Arbitrary ArbitrarySelectArr where
-  arbitrary = do
-    -- The range of choose is inclusive
-    c <- TQ.choose (1, 10 :: Int)
-
-    if c <= 3
-    then TQ.oneof arbitrarySelectArrRecurse0
-    else if c <= 8
-    then TQ.oneof arbitrarySelectArrRecurse1
-    else if c <= 10
-    then TQ.oneof arbitrarySelectArrRecurse2
-    else error "Impossible"
+  arbitrary = recurseSafelyOneof
+                  arbitrarySelectArrRecurse0
+                  arbitrarySelectArrRecurse1
+                  arbitrarySelectArrRecurse2
 
 -- It would be better if ArbitrarySelect recursively called this, but
 -- it will do for now.
