@@ -13,13 +13,13 @@ import qualified Data.Profunctor.Product.Default as D
 -- Example type specialization:
 --
 -- @
--- distinct :: Select (Column a, Column b) -> Select (Column a, Column b)
+-- distinct :: Select (Field a, Field b) -> Select (Field a, Field b)
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
 --
 -- @
--- distinct :: Select (Foo (Column a) (Column b) (Column c)) -> Select (Foo (Column a) (Column b) (Column c))
+-- distinct :: Select (Foo (Field a) (Field b) (Field c)) -> Select (Foo (Field a) (Field b) (Field c))
 -- @
 --
 -- By design there is no @distinct@ function of type @SelectArr a b ->

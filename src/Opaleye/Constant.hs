@@ -1,3 +1,6 @@
+-- | Do not use.  Use "Opaleye.ToFields" instead.  Will be deprecated
+-- in version 0.7.
+
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 
 module Opaleye.Constant where
@@ -28,7 +31,7 @@ import           Data.Functor                    ((<$>))
 import qualified Database.PostgreSQL.Simple.Range as R
 
 -- | 'toFields' provides a convenient typeclass wrapper around the
--- 'Column' creation functions in "Opaleye.SqlTypes".  Besides
+-- 'Opaleye.Field.Field_' creation functions in "Opaleye.SqlTypes".  Besides
 -- convenience it doesn't provide any additional functionality.
 --
 -- It can be used with functions like 'Opaleye.Manipulation.runInsert'
@@ -37,7 +40,7 @@ import qualified Database.PostgreSQL.Simple.Range as R
 --
 -- @
 --   customInsert
---      :: ( 'D.Default' 'Constant' haskells fields )
+--      :: ( 'D.Default' 'ToFields' haskells fields )
 --      => Connection
 --      -> 'Opaleye.Table' fields fields'
 --      -> haskells
@@ -46,123 +49,126 @@ import qualified Database.PostgreSQL.Simple.Range as R
 -- @
 --
 -- In order to use this function with your custom types, you need to define an
--- instance of 'D.Default' 'Constant' for your custom types.
-toFields :: D.Default Constant haskells fields
+-- instance of 'D.Default' 'ToFields' for your custom types.
+toFields :: D.Default ToFields haskells fields
          => haskells -> fields
 toFields = constantExplicit D.def
 
-constant :: D.Default Constant haskells fields
+-- | Do not use.  Use 'toFields' instead.  Will be deprecated in version 0.7.
+constant :: D.Default ToFields haskells fields
          => haskells -> fields
 constant = constantExplicit D.def
 
+-- | Do not use the name @Constant@.  Use 'ToFields' instead.  Will be
+-- deprecated in version 0.7.
 newtype Constant haskells fields =
   Constant { constantExplicit :: haskells -> fields }
 
 type ToFields = Constant
 
-instance D.Default Constant haskell (Column sql)
-         => D.Default Constant (Maybe haskell) (Column (C.Nullable sql)) where
+instance D.Default ToFields haskell (Column sql)
+         => D.Default ToFields (Maybe haskell) (Column (C.Nullable sql)) where
   def = Constant (C.maybeToNullable . fmap f)
     where Constant f = D.def
 
-instance D.Default Constant String (Column T.SqlText) where
+instance D.Default ToFields String (Column T.SqlText) where
   def = Constant T.sqlString
 
-instance D.Default Constant LBS.ByteString (Column T.SqlBytea) where
+instance D.Default ToFields LBS.ByteString (Column T.SqlBytea) where
   def = Constant T.sqlLazyByteString
 
-instance D.Default Constant SBS.ByteString (Column T.SqlBytea) where
+instance D.Default ToFields SBS.ByteString (Column T.SqlBytea) where
   def = Constant T.sqlStrictByteString
 
-instance D.Default Constant ST.Text (Column T.SqlText) where
+instance D.Default ToFields ST.Text (Column T.SqlText) where
   def = Constant T.sqlStrictText
 
-instance D.Default Constant LT.Text (Column T.SqlText) where
+instance D.Default ToFields LT.Text (Column T.SqlText) where
   def = Constant T.sqlLazyText
 
-instance D.Default Constant Sci.Scientific (Column T.SqlNumeric) where
+instance D.Default ToFields Sci.Scientific (Column T.SqlNumeric) where
   def = Constant T.sqlNumeric
 
-instance D.Default Constant Int (Column T.SqlInt4) where
+instance D.Default ToFields Int (Column T.SqlInt4) where
   def = Constant T.sqlInt4
 
-instance D.Default Constant Int.Int32 (Column T.SqlInt4) where
+instance D.Default ToFields Int.Int32 (Column T.SqlInt4) where
   def = Constant $ T.sqlInt4 . fromIntegral
 
-instance D.Default Constant Int.Int64 (Column T.SqlInt8) where
+instance D.Default ToFields Int.Int64 (Column T.SqlInt8) where
   def = Constant T.sqlInt8
 
-instance D.Default Constant Double (Column T.SqlFloat8) where
+instance D.Default ToFields Double (Column T.SqlFloat8) where
   def = Constant T.sqlDouble
 
-instance D.Default Constant Bool (Column T.SqlBool) where
+instance D.Default ToFields Bool (Column T.SqlBool) where
   def = Constant T.sqlBool
 
-instance D.Default Constant UUID.UUID (Column T.SqlUuid) where
+instance D.Default ToFields UUID.UUID (Column T.SqlUuid) where
   def = Constant T.sqlUUID
 
-instance D.Default Constant Time.Day (Column T.SqlDate) where
+instance D.Default ToFields Time.Day (Column T.SqlDate) where
   def = Constant T.sqlDay
 
-instance D.Default Constant Time.UTCTime (Column T.SqlTimestamptz) where
+instance D.Default ToFields Time.UTCTime (Column T.SqlTimestamptz) where
   def = Constant T.sqlUTCTime
 
-instance D.Default Constant Time.LocalTime (Column T.SqlTimestamp) where
+instance D.Default ToFields Time.LocalTime (Column T.SqlTimestamp) where
   def = Constant T.sqlLocalTime
 
-instance D.Default Constant Time.ZonedTime (Column T.SqlTimestamptz) where
+instance D.Default ToFields Time.ZonedTime (Column T.SqlTimestamptz) where
   def = Constant T.sqlZonedTime
 
-instance D.Default Constant Time.TimeOfDay (Column T.SqlTime) where
+instance D.Default ToFields Time.TimeOfDay (Column T.SqlTime) where
   def = Constant T.sqlTimeOfDay
 
-instance D.Default Constant (CI.CI ST.Text) (Column T.SqlCitext) where
+instance D.Default ToFields (CI.CI ST.Text) (Column T.SqlCitext) where
   def = Constant T.sqlCiStrictText
 
-instance D.Default Constant (CI.CI LT.Text) (Column T.SqlCitext) where
+instance D.Default ToFields (CI.CI LT.Text) (Column T.SqlCitext) where
   def = Constant T.sqlCiLazyText
 
-instance D.Default Constant SBS.ByteString (Column T.SqlJson) where
+instance D.Default ToFields SBS.ByteString (Column T.SqlJson) where
   def = Constant T.sqlStrictJSON
 
-instance D.Default Constant LBS.ByteString (Column T.SqlJson) where
+instance D.Default ToFields LBS.ByteString (Column T.SqlJson) where
   def = Constant T.sqlLazyJSON
 
-instance D.Default Constant Ae.Value (Column T.SqlJson) where
+instance D.Default ToFields Ae.Value (Column T.SqlJson) where
   def = Constant T.sqlValueJSON
 
-instance D.Default Constant SBS.ByteString (Column T.SqlJsonb) where
+instance D.Default ToFields SBS.ByteString (Column T.SqlJsonb) where
   def = Constant T.sqlStrictJSONB
 
-instance D.Default Constant LBS.ByteString (Column T.SqlJsonb) where
+instance D.Default ToFields LBS.ByteString (Column T.SqlJsonb) where
   def = Constant T.sqlLazyJSONB
 
-instance D.Default Constant Ae.Value (Column T.SqlJsonb) where
+instance D.Default ToFields Ae.Value (Column T.SqlJsonb) where
   def = Constant T.sqlValueJSONB
 
-instance D.Default Constant haskell (Column sql) => D.Default Constant (Maybe haskell) (Maybe (Column sql)) where
+instance D.Default ToFields haskell (Column sql) => D.Default ToFields (Maybe haskell) (Maybe (Column sql)) where
   def = Constant (constant <$>)
 
-instance (D.Default Constant a (Column b), T.IsSqlType b)
-         => D.Default Constant [a] (Column (T.SqlArray b)) where
+instance (D.Default ToFields a (Column b), T.IsSqlType b)
+         => D.Default ToFields [a] (Column (T.SqlArray b)) where
   def = Constant (T.sqlArray (constantExplicit D.def))
 
-instance D.Default Constant (R.PGRange Int.Int) (Column (T.SqlRange T.SqlInt4)) where
+instance D.Default ToFields (R.PGRange Int.Int) (Column (T.SqlRange T.SqlInt4)) where
   def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlInt4 a b
 
-instance D.Default Constant (R.PGRange Int.Int64) (Column (T.SqlRange T.SqlInt8)) where
+instance D.Default ToFields (R.PGRange Int.Int64) (Column (T.SqlRange T.SqlInt8)) where
   def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlInt8 a b
 
-instance D.Default Constant (R.PGRange Sci.Scientific) (Column (T.SqlRange T.SqlNumeric)) where
+instance D.Default ToFields (R.PGRange Sci.Scientific) (Column (T.SqlRange T.SqlNumeric)) where
   def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlNumeric a b
 
-instance D.Default Constant (R.PGRange Time.LocalTime) (Column (T.SqlRange T.SqlTimestamp)) where
+instance D.Default ToFields (R.PGRange Time.LocalTime) (Column (T.SqlRange T.SqlTimestamp)) where
   def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlLocalTime a b
 
-instance D.Default Constant (R.PGRange Time.UTCTime) (Column (T.SqlRange T.SqlTimestamptz)) where
+instance D.Default ToFields (R.PGRange Time.UTCTime) (Column (T.SqlRange T.SqlTimestamptz)) where
   def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlUTCTime a b
 
-instance D.Default Constant (R.PGRange Time.Day) (Column (T.SqlRange T.SqlDate)) where
+instance D.Default ToFields (R.PGRange Time.Day) (Column (T.SqlRange T.SqlDate)) where
   def = Constant $ \(R.PGRange a b) -> T.sqlRange T.sqlDay a b
 
 -- { Boilerplate instances

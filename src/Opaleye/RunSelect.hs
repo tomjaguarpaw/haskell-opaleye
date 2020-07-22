@@ -7,13 +7,19 @@ module Opaleye.RunSelect
    -- * Datatypes
    IRQ.Cursor,
    IRQ.FromFields,
-   IRQ.FromField) where
+   IRQ.FromField,
+   IRQ.DefaultFromField,
+   IRQ.defaultFromField,
+   -- * Helper functions
+   IRQ.fromPGSFromField,
+   IRQ.fromPGSFieldParser) where
 
+import qualified Data.Profunctor            as P
 import qualified Database.PostgreSQL.Simple as PGS
 
+import qualified Opaleye.Column as C
 import qualified Opaleye.Select as S
 import qualified Opaleye.RunQuery          as RQ
-import qualified Opaleye.Sql as S
 import qualified Opaleye.TypeFamilies as TF
 import           Opaleye.Internal.RunQuery (FromFields)
 import qualified Opaleye.Internal.RunQuery as IRQ
@@ -30,13 +36,13 @@ import qualified Data.Profunctor.Product.Default as D
 -- Example type specialization:
 --
 -- @
--- runSelect :: 'S.Select' (Column 'Opaleye.SqlTypes.SqlInt4', Column 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
+-- runSelect :: 'S.Select' ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4', 'Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
 --
 -- @
--- runSelect :: 'S.Select' (Foo (Column 'Opaleye.SqlTypes.SqlInt4') (Column 'Opaleye.SqlTypes.SqlText') (Column 'Opaleye.SqlTypes.SqlBool')
+-- runSelect :: 'S.Select' (Foo ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlText') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlBool')
 --           -> IO [Foo Int String Bool]
 -- @
 runSelect :: D.Default FromFields fields haskells
@@ -79,8 +85,6 @@ runSelectFold = RQ.runQueryFold
 
 -- | Declare a temporary cursor. The cursor is given a unique name for the given
 -- connection.
---
--- Returns 'Nothing' when the query returns zero rows.
 declareCursor
     :: D.Default FromFields fields haskells
     => PGS.Connection
@@ -108,6 +112,29 @@ foldForward
     -- ^
     -> IO (Either a a)
 foldForward = RQ.foldForward
+
+-- * Creating new 'FromField's
+
+-- | Use 'unsafeFromField' to make an instance to allow you to run
+--   queries on your own datatypes.  For example:
+--
+-- @
+-- newtype Foo = Foo Int
+--
+-- instance QueryRunnerColumnDefault Foo Foo where
+--    defaultFromField = unsafeFromField Foo defaultFromField
+-- @
+--
+-- It is \"unsafe\" because it does not check that the @sqlType@
+-- correctly corresponds to the Haskell type.
+unsafeFromField :: (b -> b')
+                -> IRQ.FromField sqlType b
+                -> IRQ.FromField sqlType' b'
+unsafeFromField haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
+                                                     (fmapFP haskellF fp)
+  where IRQ.QueryRunnerColumn u fp = qrc
+        fmapFP = fmap . fmap . fmap
+        colF = C.unsafeCoerceColumn
 
 -- * Explicit versions
 

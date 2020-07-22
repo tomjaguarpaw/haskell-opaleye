@@ -32,37 +32,16 @@ import qualified Data.Profunctor.Product.Default as D
 
 -- * Running 'S.Select's
 
--- | @runQuery@'s use of the 'D.Default' typeclass means that the
--- compiler will have trouble inferring types.  It is strongly
--- recommended that you provide full type signatures when using
--- @runQuery@.
---
--- Example type specialization:
---
--- @
--- runQuery :: 'S.Select' (Column 'Opaleye.SqlTypes.SqlInt4', Column 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
--- @
---
--- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
---
--- @
--- runQuery :: 'S.Select' (Foo (Column 'Opaleye.SqlTypes.SqlInt4') (Column 'Opaleye.SqlTypes.SqlText') (Column 'Opaleye.SqlTypes.SqlBool')
---          -> IO [Foo Int String Bool]
--- @
---
--- Opaleye types are converted to Haskell types based on instances of
--- the 'Opaleye.Internal.RunQuery.QueryRunnerColumnDefault' typeclass.
+-- | Use 'Opaleye.RunSelect.runSelect' instead.  @runQuery@ will be
+-- deprecated in 0.7.
 runQuery :: D.Default IRQ.FromFields fields haskells
          => PGS.Connection
          -> S.Select fields
          -> IO [haskells]
 runQuery = runQueryExplicit D.def
 
--- | @runQueryFold@ streams the results of a query incrementally and consumes
--- the results with a left fold.
---
--- This fold is /not/ strict. The stream consumer is responsible for
--- forcing the evaluation of its result to avoid space leaks.
+-- | Use 'Opaleye.RunSelect.runSelectFold' instead.  @runQueryFold@
+-- will be deprecated in 0.7.
 runQueryFold
   :: D.Default IRQ.FromFields fields haskells
   => PGS.Connection
@@ -74,21 +53,10 @@ runQueryFold = runQueryFoldExplicit D.def
 
 -- * Creating new 'QueryRunnerColumn's
 
--- | Use 'queryRunnerColumn' to make an instance to allow you to run queries on
---   your own datatypes.  For example:
---
--- @
--- newtype Foo = Foo Int
---
--- instance QueryRunnerColumnDefault Foo Foo where
---    queryRunnerColumnDefault =
---        queryRunnerColumn ('Opaleye.Column.unsafeCoerceColumn'
---                               :: Column Foo -> Column SqlInt4)
---                          Foo
---                          queryRunnerColumnDefault
--- @
+-- | Use 'Opaleye.RunSelect.unsafeFromField' instead.
+-- @queryRunnerColumn@ will be deprecated in 0.7.
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
-                  -> IRQ.QueryRunnerColumn a b -> IRQ.QueryRunnerColumn a' b'
+                  -> IRQ.FromField a b -> IRQ.FromField a' b'
 queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
                                                             (fmapFP haskellF fp)
   where IRQ.QueryRunnerColumn u fp = qrc
@@ -96,6 +64,8 @@ queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
 
 -- * Explicit versions
 
+-- | Use 'Opaleye.RunSelect.runSelectExplict' instead.  Will be
+-- deprecated in 0.7.
 runQueryExplicit :: IRQ.FromFields fields haskells
                  -> PGS.Connection
                  -> S.Select fields
@@ -103,6 +73,8 @@ runQueryExplicit :: IRQ.FromFields fields haskells
 runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
   where (sql, parser) = prepareQuery qr q
 
+-- | Use 'Opaleye.RunSelect.runSelectFoldExplict' instead.  Will be
+-- deprecated in 0.7.
 runQueryFoldExplicit
   :: IRQ.FromFields fields haskells
   -> PGS.Connection
@@ -117,10 +89,8 @@ runQueryFoldExplicit qr conn q z f = case sql of
 
 -- * Cursor interface
 
--- | Declare a temporary cursor. The cursor is given a unique name for the given
--- connection.
---
--- Returns 'Nothing' when the query returns zero rows.
+-- | Use 'Opaleye.RunSelect.declareCursor' instead.  Will be
+-- deprecated in 0.7.
 declareCursor
     :: D.Default IRQ.FromFields fields haskells
     => PGS.Connection
@@ -128,7 +98,8 @@ declareCursor
     -> IO (IRQ.Cursor haskells)
 declareCursor = declareCursorExplicit D.def
 
--- | Like 'declareCursor' but takes a 'IRQ.FromFields' explicitly.
+-- | Use 'Opaleye.RunSelect.declareCursorExplicit' instead.  Will be
+-- deprecated in 0.7.
 declareCursorExplicit
     :: IRQ.FromFields fields haskells
     -> PGS.Connection
@@ -141,14 +112,14 @@ declareCursorExplicit qr conn q =
   where
     (mbQuery, rowParser) = prepareQuery qr q
 
--- | Close the given cursor.
+-- | Use 'Opaleye.RunSelect.closeCursor' instead.  Will be
+-- deprecated in 0.7.
 closeCursor :: IRQ.Cursor fields -> IO ()
 closeCursor IRQ.EmptyCursor       = pure ()
 closeCursor (IRQ.Cursor _ cursor) = PGSC.closeCursor cursor
 
--- | Fold over a chunk of rows, calling the supplied fold-like function on each
--- row as it is received. In case the cursor is exhausted, a 'Left' value is
--- returned, otherwise a 'Right' value is returned.
+-- | Use 'Opaleye.RunSelect.foldForward' instead.  Will be
+-- deprecated in 0.7.
 foldForward
     :: IRQ.Cursor haskells
     -> Int

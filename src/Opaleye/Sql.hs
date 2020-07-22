@@ -19,22 +19,22 @@ import qualified Data.Profunctor.Product.Default as D
 
 -- * Showing SQL
 
--- | Show the SQL query string generated from the query.
+-- | Show the SQL query string generated from the 'S.Select'.
 --
--- When 'Nothing' is returned it means that the 'Query' returns zero
+-- When 'Nothing' is returned it means that the 'S.Select' returns zero
 -- rows.
 --
 -- Example type specialization:
 --
 -- @
--- showSql :: Select (Column a, Column b) -> Maybe String
+-- showSql :: Select (Field a, Field b) -> Maybe String
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- showSql :: Select (Foo (Column a) (Column b) (Column c)) -> Maybe String
+-- showSql :: Select (Foo (Field a) (Field b) (Field c)) -> Maybe String
 -- @
 showSql :: forall fields.
            D.Default U.Unpackspec fields fields
@@ -42,7 +42,7 @@ showSql :: forall fields.
         -> Maybe String
 showSql = showSqlExplicit (D.def :: U.Unpackspec fields fields)
 
--- | Show the unoptimized SQL query string generated from the query.
+-- | Show the unoptimized SQL query string generated from the 'S.Select'.
 showSqlUnopt :: forall fields.
                 D.Default U.Unpackspec fields fields
              => S.Select fields

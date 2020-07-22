@@ -8,7 +8,7 @@ import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.Unpackspec as U
 
 import           Data.Profunctor (Profunctor, dimap)
-import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
+import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
 
@@ -64,7 +64,7 @@ instance Profunctor ViewColumnMaker where
   dimap f g (ViewColumnMaker q) = ViewColumnMaker (dimap f g q)
 
 instance ProductProfunctor ViewColumnMaker where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 --}

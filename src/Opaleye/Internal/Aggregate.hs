@@ -27,14 +27,15 @@ An 'Aggregator' corresponds closely to a 'Control.Foldl.Fold' from the
 type @a@ to a single row of type @b@, a 'Control.Foldl.Fold' @a@ @b@
 takes a list of @a@ and returns a single value of type @b@.
 -}
-newtype Aggregator a b = Aggregator
-                         (PM.PackMap (Maybe (HPQ.AggrOp, [HPQ.OrderExpr],HPQ.AggrDistinct), HPQ.PrimExpr)
-                                     HPQ.PrimExpr
-                                     a b)
+newtype Aggregator a b =
+  Aggregator (PM.PackMap (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
+                          HPQ.PrimExpr)
+                         HPQ.PrimExpr
+                         a b)
 
 makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
-makeAggr' m = Aggregator (PM.PackMap
-                          (\f (C.Column e) -> fmap C.Column (f (fmap (,[],HPQ.AggrAll) m, e))))
+makeAggr' mAggrOp = Aggregator (PM.PackMap
+  (\f (C.Column e) -> fmap C.Column (f (fmap (, [], HPQ.AggrAll) mAggrOp, e))))
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
 makeAggr = makeAggr' . Just
@@ -73,25 +74,60 @@ makeAggr = makeAggr' . Just
 -- @
 
 orderAggregate :: O.Order a -> Aggregator a b -> Aggregator a b
-orderAggregate o (Aggregator (PM.PackMap pm)) =
-  Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap ((\f' (a,b,c') -> (a,f' b,c')) (const $ O.orderExprs c o)))) c))
+orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
+  (\f c -> pm (f . P.first' (fmap ((\f' (a,b,c') -> (a,f' b,c')) (const $ O.orderExprs c o)))) c))
 
-runAggregator :: Applicative f => Aggregator a b
-              -> ((Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr) -> f HPQ.PrimExpr)
-              -> a -> f b
+runAggregator
+  :: Applicative f
+  => Aggregator a b
+  -> ((Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)
+     -> f HPQ.PrimExpr)
+  -> a -> f b
 runAggregator (Aggregator a) = PM.traversePM a
 
+-- In Postgres (and, I believe, standard SQL) "aggregate functions are
+-- not allowed in FROM clause of their own query level".  There
+-- doesn't seem to be any fundamental reason for this, but we are
+-- stuck with it.  That means that in a lateral subquery containing an
+-- aggregation over a field C from a previous subquery we have to
+-- create a new field name for C before we are allowed to aggregate it!
+-- For more information see
+--
+--     https://www.postgresql.org/message-id/20200513110251.GC24083%40cloudinit-builder
+--
+--     https://github.com/tomjaguarpaw/haskell-opaleye/pull/460#issuecomment-626716160
+--
+-- Instead of detecting when we are aggregating over a field from a
+-- previous query we just create new names for all field before we
+-- aggregate.  On the other hand, referring to a field from a previous
+-- query in an ORDER BY expression is totally fine!
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
 aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
-  where (c1, projPEs) =
+  where (c1, projPEs_inners) =
           PM.run (runAggregator agg (extractAggregateFields t0) c0)
 
-        primQ' = PQ.Aggregate projPEs primQ
+        projPEs = map fst projPEs_inners
+        inners  = map snd projPEs_inners
 
-extractAggregateFields :: T.Tag -> (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)
-      -> PM.PM [(HPQ.Symbol, (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr))] HPQ.PrimExpr
-extractAggregateFields = PM.extractAttr "result"
+        primQ' = PQ.Aggregate projPEs (PQ.Rebind True inners primQ)
+
+extractAggregateFields
+  :: T.Tag
+  -> (m, HPQ.PrimExpr)
+  -> PM.PM [((HPQ.Symbol,
+              (m, HPQ.Symbol)),
+              (HPQ.Symbol, HPQ.PrimExpr))]
+           HPQ.PrimExpr
+extractAggregateFields tag (m, pe) = do
+  i <- PM.new
+
+  let souter = HPQ.Symbol ("result" ++ i) tag
+      sinner = HPQ.Symbol ("inner" ++ i) tag
+
+  PM.write ((souter, (m, sinner)), (sinner, pe))
+
+  pure (HPQ.AttrExpr souter)
 
 -- { Boilerplate instances
 
@@ -106,8 +142,8 @@ instance P.Profunctor Aggregator where
   dimap f g (Aggregator q) = Aggregator (P.dimap f g q)
 
 instance PP.ProductProfunctor Aggregator where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance PP.SumProfunctor Aggregator where
   Aggregator x1 +++! Aggregator x2 = Aggregator (x1 PP.+++! x2)

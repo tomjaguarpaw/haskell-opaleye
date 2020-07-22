@@ -222,9 +222,9 @@ in_ fcas (Column a) = Column $ case NEL.nonEmpty (F.toList fcas) of
 -- This operation is equivalent to Postgres's @IN@ operator but, for
 -- expediency, is currently implemented using a @LEFT JOIN@.  Please
 -- file a bug if this causes any issues in practice.
-inQuery :: D.Default O.EqPP fields fields
-        => fields -> Query fields -> S.Select (F.Field T.SqlBool)
-inQuery c q = qj'
+inSelect :: D.Default O.EqPP fields fields
+         => fields -> S.Select fields -> S.Select (F.Field T.SqlBool)
+inSelect c q = qj'
   where -- Remove every row that isn't equal to c
         -- Replace the ones that are with '1'
         q' = A.arr (const 1)
@@ -336,8 +336,21 @@ infix 4 .?&
 emptyArray :: T.IsSqlType a => Column (T.SqlArray a)
 emptyArray = T.sqlArray id []
 
+-- | Append two 'T.SqlArray's
+arrayAppend :: F.Field (T.SqlArray a) -> F.Field (T.SqlArray a) -> F.Field (T.SqlArray a)
+arrayAppend = C.binOp (HPQ.:||)
+
+-- | Prepend an element to a 'T.SqlArray'
 arrayPrepend :: Column a -> Column (T.SqlArray a) -> Column (T.SqlArray a)
 arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es])
+
+-- | Remove all instances of an element from a 'T.SqlArray'
+arrayRemove :: Column a -> Column (T.SqlArray a) -> Column (T.SqlArray a)
+arrayRemove (Column e) (Column es) = Column (HPQ.FunExpr "array_remove" [es, e])
+
+-- | Remove all 'NULL' values from a 'T.SqlArray'
+arrayRemoveNulls :: Column (T.SqlArray (C.Nullable a)) -> Column (T.SqlArray a)
+arrayRemoveNulls = Column.unsafeCoerceColumn . arrayRemove Column.null
 
 singletonArray :: T.IsSqlType a => Column a -> Column (T.SqlArray a)
 singletonArray x = arrayPrepend x emptyArray
@@ -403,3 +416,8 @@ exists = restrictExists
 -- | Identical to 'restrictNotExists'.  Will be deprecated in version 0.7.
 notExists :: QueryArr a b -> QueryArr a ()
 notExists = restrictNotExists
+
+-- | Identical to 'inSelect'.  Will be deprecated in version 0.7.
+inQuery :: D.Default O.EqPP fields fields
+        => fields -> Query fields -> S.Select (F.Field T.SqlBool)
+inQuery = inSelect

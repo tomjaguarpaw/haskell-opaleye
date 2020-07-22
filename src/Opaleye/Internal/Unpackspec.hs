@@ -8,7 +8,7 @@ import qualified Opaleye.Column as C
 
 import           Control.Applicative (Applicative, pure, (<*>))
 import           Data.Profunctor (Profunctor, dimap)
-import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
+import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Profunctor.Product.Default as D
 
@@ -69,8 +69,8 @@ instance Profunctor Unpackspec where
   dimap f g (Unpackspec q) = Unpackspec (dimap f g q)
 
 instance ProductProfunctor Unpackspec where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance PP.SumProfunctor Unpackspec where
   Unpackspec x1 +++! Unpackspec x2 = Unpackspec (x1 PP.+++! x2)

@@ -9,7 +9,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Monad.Trans.State as State
 import           Data.Profunctor (Profunctor, dimap, rmap)
-import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
+import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import qualified Data.Functor.Identity as I
 
@@ -40,7 +40,8 @@ import qualified Data.Functor.Identity as I
 -- 'ProductProfunctor') in @s@ and @t@.  It is unclear at this point
 -- whether we want the same @Traversal@ laws to hold or not.  Our use
 -- cases may be much more general.
-newtype PackMap a b s t = PackMap (forall f. Applicative f => (a -> f b) -> s -> f t)
+newtype PackMap a b s t =
+  PackMap (forall f. Applicative f => (a -> f b) -> s -> f t)
 
 -- | Replaces the targeted occurences of @a@ in @s@ with @b@ (changing
 -- the @s@ to a @t@ in the process).  This can be done via an
@@ -91,8 +92,10 @@ run m = (r, as)
 --
 -- Add the fresh name and the input value it refers to to the list in
 -- the state parameter.
-extractAttrPE :: (primExpr -> String -> String) -> T.Tag -> primExpr
-               -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
+extractAttrPE :: (primExpr -> String -> String)
+              -> T.Tag
+              -> primExpr
+              -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractAttrPE mkName t pe = do
   i <- new
   let s = HPQ.Symbol (mkName pe i) t
@@ -101,8 +104,10 @@ extractAttrPE mkName t pe = do
 
 -- | As 'extractAttrPE' but ignores the 'primExpr' when making the
 -- fresh column name and just uses the supplied 'String' and 'T.Tag'.
-extractAttr :: String -> T.Tag -> primExpr
-               -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
+extractAttr :: String
+            -> T.Tag
+            -> primExpr
+            -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractAttr s = extractAttrPE (const (s ++))
 
 -- }
@@ -134,8 +139,8 @@ instance Profunctor (PackMap a b) where
   dimap f g (PackMap q) = PackMap (fmap (dimap f (fmap g)) q)
 
 instance ProductProfunctor (PackMap a b) where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance PP.SumProfunctor (PackMap a b) where
   PackMap f +++! PackMap g = PackMap (\x -> eitherFunction (f x) (g x))

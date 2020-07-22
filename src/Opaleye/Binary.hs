@@ -5,17 +5,17 @@
 -- specializations.  For example:
 --
 -- @
--- unionAll :: S.Select (Column a, Column b)
---          -> S.Select (Column a, Column b)
---          -> S.Select (Column a, Column b)
+-- unionAll :: S.Select (Field a, Field b)
+--          -> S.Select (Field a, Field b)
+--          -> S.Select (Field a, Field b)
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
 --
 -- @
--- unionAll :: S.Select (Foo (Column a) (Column b) (Column c))
---          -> S.Select (Foo (Column a) (Column b) (Column c))
---          -> S.Select (Foo (Column a) (Column b) (Column c))
+-- unionAll :: S.Select (Foo (Field a) (Field b) (Field c))
+--          -> S.Select (Foo (Field a) (Field b) (Field c))
+--          -> S.Select (Foo (Field a) (Field b) (Field c))
 -- @
 --
 -- Please note that by design there are no binary relational functions

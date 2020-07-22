@@ -1,3 +1,8 @@
+-- | Functions for working directly with 'Field_'s.
+--
+-- Please note that numeric 'Field_' types are instances of 'Num', so
+-- you can use '*', '/', '+', '-' on them.
+
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 
@@ -6,13 +11,18 @@ module Opaleye.Field where
 import qualified Opaleye.Column   as C
 import qualified Opaleye.PGTypes  as T
 
+-- | The name @Column@ will be replaced by @Field@ in version 0.7.
+-- The @Field_@, @Field@ and @FieldNullable@ types exist to help
+-- smooth the transition.  We recommend that you use @Field_@, @Field@
+-- or @FieldNullable@ instead of @Column@ everywhere that it is
+-- sufficient.
 type family Field_ (a :: Nullability) b
 
 data Nullability = NonNullable | Nullable
 
 type instance Field_ 'NonNullable a = C.Column a
 type instance Field_ 'Nullable a = C.Column (C.Nullable a)
-  
+
 type FieldNullable  a = Field_ 'Nullable a
 type Field a = Field_ 'NonNullable a
 
@@ -20,7 +30,7 @@ type Field a = Field_ 'NonNullable a
 null :: FieldNullable a
 null = C.null
 
--- | @TRUE@ if the value of the column is @NULL@, @FALSE@ otherwise.
+-- | @TRUE@ if the value of the field is @NULL@, @FALSE@ otherwise.
 isNull :: FieldNullable a -> Field T.PGBool
 isNull = C.isNull
 
@@ -70,3 +80,6 @@ toNullable = C.unsafeCoerceColumn
 maybeToNullable :: Maybe (Field_ 'NonNullable a)
                 -> Field_ 'Nullable a
 maybeToNullable = C.maybeToNullable
+
+unsafeCoerceField :: C.Column a -> C.Column b
+unsafeCoerceField = C.unsafeCoerceColumn

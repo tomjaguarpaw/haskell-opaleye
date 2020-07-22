@@ -10,19 +10,19 @@ import qualified Opaleye.Select              as S
 import           Data.Profunctor.Product.Default (Default, def)
 
 -- | 'values' implements Postgres's @VALUES@ construct and allows you
--- to create a query that consists of the given rows.
+-- to create a @SELECT@ that consists of the given rows.
 --
 -- Example type specialization:
 --
 -- @
--- values :: [(Column a, Column b)] -> Select (Column a, Column b)
+-- values :: [(Field a, Field b)] -> Select (Field a, Field b)
 -- @
 --
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the
 -- product type @Foo@:
 --
 -- @
--- queryTable :: [Foo (Column a) (Column b) (Column c)] -> S.Select (Foo (Column a) (Column b) (Column c))
+-- values :: [Foo (Field a) (Field b) (Field c)] -> S.Select (Foo (Field a) (Field b) (Field c))
 -- @
 values :: (Default V.Valuesspec fields fields,
            Default U.Unpackspec fields fields) =>

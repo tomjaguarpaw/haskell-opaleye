@@ -11,7 +11,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor (Profunctor, dimap, rmap)
-import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
+import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
 
@@ -59,6 +59,8 @@ runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
+-- For 0.7 put an `IsSqlType a` constraint on here, so that we can
+-- later use it without breaking the API
 instance Default Valuesspec (Column a) (Column a) where
   def = Valuesspec (PM.iso id Column)
 
@@ -77,7 +79,7 @@ instance Profunctor Valuesspec where
   dimap _ g (Valuesspec q) = Valuesspec (rmap g q)
 
 instance ProductProfunctor Valuesspec where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 -- }

@@ -79,8 +79,6 @@ runInsert_ conn i = case i of
             runInsertMany
           (MI.Count, Just HSql.DoNothing) ->
             runInsertManyOnConflictDoNothing
-          (MI.Returning f, oc) ->
-            \c t r -> MI.runInsertManyReturningExplicit D.def c t r f oc
           (MI.ReturningExplicit qr f, oc) ->
             \c t r -> MI.runInsertManyReturningExplicit qr c t r f oc
     in insert conn table_ rows_
@@ -99,8 +97,6 @@ runUpdate_ conn i = case i of
     let update = case returning_ of
           MI.Count ->
             runUpdate
-          MI.Returning f ->
-            \c t u w -> runUpdateReturning c t u w f
           MI.ReturningExplicit qr f ->
             \c t u w -> runUpdateReturningExplicit qr c t u w f
     in update conn table_ updateWith_ where_
@@ -112,14 +108,12 @@ runDelete_ :: PGS.Connection
            -> Delete haskells
            -> IO haskells
            -- ^ Returns a type that depends on the 'MI.Returning' that
-           -- you provided when creating the 'Update'.
+           -- you provided when creating the 'Delete'.
 runDelete_ conn i = case i of
   Delete table_ where_ returning_ ->
     let delete = case returning_ of
           MI.Count ->
             runDelete
-          MI.Returning f ->
-            \c t w -> MI.runDeleteReturning c t w f
           MI.ReturningExplicit qr f ->
             \c t w -> MI.runDeleteReturningExplicit qr c t w f
     in delete conn table_ where_
@@ -143,10 +137,10 @@ data Insert haskells = forall fieldsW fieldsR. Insert
 data Update haskells = forall fieldsW fieldsR. Update
    { uTable      :: T.Table fieldsW fieldsR
    , uUpdateWith :: fieldsR -> fieldsW
-   -- ^ Be careful: providing 'Nothing' to a column created by
-   -- 'Opaleye.Table.optional' updates the column to its default
+   -- ^ Be careful: providing 'Nothing' to a field created by
+   -- 'Opaleye.Table.optional' updates the field to its default
    -- value.  Many users have been confused by this because they
-   -- assume it means that the column is to be left unchanged.  For an
+   -- assume it means that the field is to be left unchanged.  For an
    -- easier time wrap your update function in 'updateEasy'.
    , uWhere      :: fieldsR -> F.Field SqlBool
    , uReturning  :: MI.Returning fieldsR haskells
@@ -184,7 +178,7 @@ rReturning :: D.Default RQ.QueryRunner fields haskells
            => (fieldsR -> fields)
            -- ^
            -> MI.Returning fieldsR [haskells]
-rReturning = MI.Returning
+rReturning = rReturningExplicit D.def
 
 -- | Return a function of the inserted or updated rows.  Explicit
 -- version.  You probably just want to use 'rReturning' instead.
@@ -330,7 +324,7 @@ arrangeUpdateReturningSql =
   show . Print.ppUpdateReturning .::. arrangeUpdateReturning
 
 -- | Insert rows into a table with @ON CONFLICT DO NOTHING@
-{-# DEPRECATED runInsertManyOnConflictDoNothing "Use runInsert_" #-}
+{-# DEPRECATED runInsertManyOnConflictDoNothing "Use 'runInsert_'.  Will be removed in version 0.8." #-}
 runInsertManyOnConflictDoNothing :: PGS.Connection
                                  -- ^
                                  -> T.Table columns columns'
@@ -353,7 +347,7 @@ runInsertManyOnConflictDoNothing conn table_ columns =
 -- 'D.Default' typeclass means that the compiler will have trouble
 -- inferring types.  It is strongly recommended that you provide full
 -- type signatures when using it.
-{-# DEPRECATED runInsertManyReturningOnConflictDoNothing "Use runInsert_" #-}
+{-# DEPRECATED runInsertManyReturningOnConflictDoNothing "Use 'runInsert_'. Will be removed in version 0.8." #-}
 runInsertManyReturningOnConflictDoNothing
   :: (D.Default RQ.QueryRunner columnsReturned haskells)
   => PGS.Connection
@@ -504,4 +498,3 @@ runDelete :: PGS.Connection
           -> IO Int64
           -- ^ The number of rows deleted
 runDelete conn = PGS.execute_ conn . fromString .: arrangeDeleteSql
-

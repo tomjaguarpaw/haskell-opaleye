@@ -24,12 +24,17 @@ data OT
 data NullsT
 data WT
 
+-- | Used in 'RecordField' and 'TableRecordField' for a non-nullable
+-- field
 type NN = 'F.NonNullable
+-- | Used in 'RecordField' and 'TableRecordField' for a nullable field
 type N  = 'F.Nullable
 
 data Optionality = OReq | OOpt
 
+-- | 'TableRecordField' for a required field
 type Req = 'OReq
+-- | 'TableRecordField' for an optional field
 type Opt = 'OOpt
 
 type family A (a :: Arr h k1 k2) (b :: k1) :: k2
@@ -59,7 +64,7 @@ type instance A ('H HT) ('C '(h, o, NN)) = h
 type instance A ('H HT) ('C '(h, o, N))  = Maybe h
 type instance A ('H OT) ('C '(h, o, NN)) = Column o
 type instance A ('H OT) ('C '(h, o, N))  = Column (Nullable o)
-type instance A ('H NullsT) ('C '(h, o, NN)) = Column (Nullable o)
+type instance A ('H NullsT) ('C '(h, o, n)) = Column (Nullable o)
 
 type instance A ('H HT) ('TC '(t, b)) = A ('H HT) ('C t)
 type instance A ('H OT) ('TC '(t, b)) = A ('H OT) ('C t)
@@ -68,10 +73,21 @@ type instance A ('H WT) ('TC '(t, Opt)) = Maybe (A ('H OT) ('C t))
 type instance A ('H NullsT) ('TC '(t, b)) = A ('H NullsT) ('C t)
 
 type RecordField f a b c = A f ('C '(a, b, c))
-type TableField  f a b c d = A f ('TC '( '(a, b, c), d))
+type TableRecordField f a b c d = A f ('TC '( '(a, b, c), d))
+-- | Do not use.  Use 'TableRecordField' instead.  Will be deprecated
+-- in version 0.7.
+type TableField f a b c d = TableRecordField f a b c d
 
+-- | Type families parameter for Haskell types ('String', 'Int', etc.)
 type H = 'H HT
+-- | Type families parameter for Opaleye types ('Opaleye.Field.Field'
+-- 'Opaleye.SqlString', 'Opaleye.Field.Field' 'Opaleye.SqlInt4', etc.)
 type O = 'H OT
+-- | Type families parameter for nulled Opaleye types
+-- ('Opaleye.Field.FieldNullable' 'Opaleye.SqlString',
+-- 'Opaleye.Field.FieldNullable' 'Opaleye.SqlInt4', etc.)
 type Nulls = 'H NullsT
+-- | Type families parameter for Opaleye write types (i.e. wrapped in
+-- 'Maybe' for optional types)
 type W = 'H WT
 type F = 'H

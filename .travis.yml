@@ -4,17 +4,29 @@ env:
 - GHCVER=8.0.2
 - GHCVER=8.2.2
 - GHCVER=8.4.4
-- GHCVER=8.6.1
+- GHCVER=8.6.5
+- GHCVER=8.8.3
+- GHCVER=8.10.1
 - GHCVER=head
 
 script:
-- curl -sSL https://raw.github.com/tomjaguarpaw/neil/stable4/travis.sh | sh -s tomjaguarpaw stable4
+- curl -sSL https://raw.github.com/tomjaguarpaw/neil/d960b6a/travis.sh | sh -s tomjaguarpaw d960b6a
 
 # To clear the caches go to
 #
 #     https://travis-ci.org/tomjaguarpaw/haskell-opaleye/caches
 #
-# (or the equivalent where you run Travis)
+# (or the equivalent where you run Travis).  NB the documentation says
+#
+# > If a branch does not have its own cache, Travis CI fetches the default
+# > branch cache.
+#
+# I think this means that new branches get a copy of master's cache (and
+# after they build the results are stored in their own cache).  If you want
+# a new branch to build without a cache I suppose you have to delete master's.
+# Also note that it seems to take a little while for a cache to be truly
+# deleted.  If you start a build too quickkly after clicking "delete" on the
+# cache then the old cache may still be picked up.
 cache:
   directories:
   - $HOME/.ghc

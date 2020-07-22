@@ -18,13 +18,13 @@
 >                          Table, table, tableField, selectTable,
 >                          Select, (.==), aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runSelect, runSelectTF,
->                          showSqlForPostgres, Unpackspec,
+>                          showSql, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
 > import qualified Opaleye              as O
 > import qualified Opaleye.Map          as M
 > import           Opaleye.TypeFamilies (O, H, NN, Req, Nulls, W,
->                                        TableField, IMap, F,
+>                                        TableRecordField, IMap, F,
 >                                        (:<$>), (:<*>))
 >
 > import qualified Data.Profunctor         as P
@@ -54,17 +54,17 @@ there is no support for creating databases or tables, though these
 features may be added later according to demand.
 
 A table is defined with the `table` function.  The syntax is
-simple.  You specify the types of the columns, the name of the table
-and the names of the columns in the underlying database.
+simple.  You specify the types of the fields, the name of the table
+and the names of the fields in the underlying database.
 
 (Note: This simple syntax is supported by an extra combinator that
-describes the shape of the container that you are storing the columns
+describes the shape of the container that you are storing the fields
 in.  In the first example we are using a tuple of size 3 and the
 combinator is called `p3`.  We'll see examples of others later.)
 
 The `Table` type constructor has two arguments.  The first one tells
-us what columns we can write to the table and the second what columns
-we can read from the table.  In this case all columns are required, so
+us what fields we can write to the table and the second what fields
+we can read from the table.  In this case all fields are required, so
 the write and read types will be the same.
 
 > personTable :: Table (Field SqlText, Field SqlInt4, Field SqlText)
@@ -131,8 +131,8 @@ to be polymorphic in all their fields.  In fact there's a nice scheme
 using type families that reduces boiler plate and has always been
 compatible with Opaleye!
 
-> data Birthday f = Birthday { bdName :: TableField f String SqlText NN Req
->                            , bdDay  :: TableField f Day    SqlDate NN Req
+> data Birthday f = Birthday { bdName :: TableRecordField f String SqlText NN Req
+>                            , bdDay  :: TableRecordField f Day    SqlDate NN Req
 >                            }
 
 This instance, adaptor and type family are fully derivable by Template
@@ -140,18 +140,18 @@ Haskell or generics but I haven't got round to writing that yet.
 Please volunteer to do that if you can.
 
 > instance ( PP.ProductProfunctor p
->          , Default p (TableField a String SqlText NN Req)
->                      (TableField b String SqlText NN Req)
->          , Default p (TableField a Day    SqlDate NN Req)
->                      (TableField b Day    SqlDate NN Req)) =>
+>          , Default p (TableRecordField a String SqlText NN Req)
+>                      (TableRecordField b String SqlText NN Req)
+>          , Default p (TableRecordField a Day    SqlDate NN Req)
+>                      (TableRecordField b Day    SqlDate NN Req)) =>
 >   Default p (Birthday a) (Birthday b) where
 >   def = pBirthday (Birthday D.def D.def)
 >
 > pBirthday :: PP.ProductProfunctor p
 >           => Birthday (p :<$> a :<*> b)
 >           -> p (Birthday a) (Birthday b)
-> pBirthday (Birthday a b) = Birthday PP.***$ P.lmap bdName a
->                                     PP.**** P.lmap bdDay b
+> pBirthday b = Birthday PP.***$ P.lmap bdName (bdName b)
+>                        PP.**** P.lmap bdDay  (bdDay b)
 >
 > type instance M.Map g (Birthday (F f)) = Birthday (F (IMap g f))
 
@@ -195,34 +195,34 @@ By way of example, suppose we have a widget table which contains the
 style, color, location, quantity and radius of widgets.  We can model
 this information with the following datatype.
 
-> data Widget f = Widget { style    :: TableField f String SqlText   NN Req
->                        , color    :: TableField f String SqlText   NN Req
->                        , location :: TableField f String SqlText   NN Req
->                        , quantity :: TableField f Int    SqlInt4   NN Req
->                        , radius   :: TableField f Double SqlFloat8 NN Req
+> data Widget f = Widget { style    :: TableRecordField f String SqlText   NN Req
+>                        , color    :: TableRecordField f String SqlText   NN Req
+>                        , location :: TableRecordField f String SqlText   NN Req
+>                        , quantity :: TableRecordField f Int    SqlInt4   NN Req
+>                        , radius   :: TableRecordField f Double SqlFloat8 NN Req
 >                        }
 
 This instance, adaptor and type family are fully derivable but no
 one's implemented the Template Haskell or generics to do that yet.
 
 > instance ( PP.ProductProfunctor p
->          , Default p (TableField a String SqlText NN Req)
->                      (TableField b String SqlText NN Req)
->          , Default p (TableField a Int    SqlInt4 NN Req)
->                      (TableField b Int    SqlInt4 NN Req)
->          , Default p (TableField a Double SqlFloat8 NN Req)
->                      (TableField b Double SqlFloat8 NN Req)) =>
+>          , Default p (TableRecordField a String SqlText NN Req)
+>                      (TableRecordField b String SqlText NN Req)
+>          , Default p (TableRecordField a Int    SqlInt4 NN Req)
+>                      (TableRecordField b Int    SqlInt4 NN Req)
+>          , Default p (TableRecordField a Double SqlFloat8 NN Req)
+>                      (TableRecordField b Double SqlFloat8 NN Req)) =>
 >   Default p (Widget a) (Widget b) where
 >   def = pWidget (Widget D.def D.def D.def D.def D.def)
 >
 > pWidget :: PP.ProductProfunctor p
 >         => Widget (p :<$> a :<*> b)
 >         -> p (Widget a) (Widget b)
-> pWidget (Widget a b c d e) = Widget PP.***$ P.lmap style a
->                                     PP.**** P.lmap color b
->                                     PP.**** P.lmap location c
->                                     PP.**** P.lmap quantity d
->                                     PP.**** P.lmap radius e
+> pWidget w = Widget PP.***$ P.lmap style    (style w)
+>                    PP.**** P.lmap color    (color w)
+>                    PP.**** P.lmap location (location w)
+>                    PP.**** P.lmap quantity (quantity w)
+>                    PP.**** P.lmap radius   (radius w)
 >
 > type instance M.Map g (Widget (F f)) = Widget (F (IMap g f))
 
@@ -288,7 +288,7 @@ Idealized SQL:
 
 Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
-"adaptor" to specify how columns are aggregated.
+"adaptor" to specify how fields are aggregated.
 
 Outer join
 ==========
@@ -354,9 +354,9 @@ Types of joins are inferrable in new versions of Opaleye.  Here is a
 >     O.fullJoinInferrable (O.fullJoinInferrable
 >                     birthdaySelect
 >                     (selectTable widgetTable)
->                     (const (O.pgBool True)))
+>                     (const (O.sqlBool True)))
 >                birthdaySelect
->                (const (O.pgBool True))
+>                (const (O.sqlBool True))
 
 Running queries on Postgres
 ===========================
@@ -367,9 +367,9 @@ Opaleye provides simple facilities for running queries on Postgres.
 the following type
 
 > -- runSelect :: Database.PostgreSQL.Simple.Connection
-> --          -> Select columns -> IO [haskells]
+> --          -> Select fields -> IO [haskells]
 
-It converts a "record" of Opaleye columns to a list of "records" of
+It converts a "record" of Opaleye fields to a list of "records" of
 Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
@@ -396,4 +396,4 @@ Utilities
 This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres
+> printSql = putStrLn . maybe "Empty query" id . showSql

@@ -2,8 +2,8 @@
 >
 > import           Prelude hiding (sum)
 >
-> import           Opaleye (Column, Table, table,
->                           tableColumn, (.==), (.<),
+> import           Opaleye (Field, Table, table,
+>                           tableField, (.==), (.<),
 >                           Insert(..),
 >                           Update(..),
 >                           Delete(..),
@@ -15,7 +15,7 @@
 >                          )
 >
 > import           Data.Profunctor.Product (p4)
-> import qualified Opaleye.Constant as C
+> import           Opaleye.ToFields (toFields)
 >
 > import           GHC.Int (Int64)
 
@@ -32,25 +32,25 @@ float8-valued required fields.  The `Table` type constructor has two
 type arguments.  The first one is the type of writes to the table, and
 the second is the type of reads from the table.  The "id" column is
 defined as optional (for writes) because its write type is `Maybe
-(Column SqlInt4)`.  That means we don't necessarily need to specify it
+(Field SqlInt4)`.  That means we don't necessarily need to specify it
 when writing to the table.  The database will automatically fill in a
 value for us.
 
 > myTable :: Table
->     (Maybe (Column SqlInt4), Column SqlFloat8, Column SqlFloat8, Column SqlText)
->     (Column SqlInt4, Column SqlFloat8, Column SqlFloat8, Column SqlText)
-> myTable = table "tablename" (p4 ( tableColumn "id"
->                                 , tableColumn "x"
->                                 , tableColumn "y"
->                                 , tableColumn "s" ))
+>     (Maybe (Field SqlInt4), Field SqlFloat8, Field SqlFloat8, Field SqlText)
+>     (Field SqlInt4, Field SqlFloat8, Field SqlFloat8, Field SqlText)
+> myTable = table "tablename" (p4 ( tableField "id"
+>                                 , tableField "x"
+>                                 , tableField "y"
+>                                 , tableField "s" ))
 
 To perform a delete we provide an expression from our read type to
-`Column Bool`.  All rows for which the expression is true are deleted.
+`Field SqlBool`.  All rows for which the expression is true are deleted.
 
 > delete :: Delete Int64
 > delete = Delete
 >   { dTable     = myTable
->   , dWhere     = (\(_, x, y, _) -> x .< y)
+>   , dWhere     = \(_, x, y, _) -> x .< y
 >   , dReturning = rCount
 >   }
 
@@ -84,12 +84,12 @@ VALUES (DEFAULT,
 
 
 If we'd like to pass a variable into the insertion function, we can't
-rely on the `Num` instance and must use `constant`:
+rely on the `Num` instance and must use `toFields`:
 
 > insertNonLiteral :: Double -> Insert Int64
 > insertNonLiteral i = Insert
 >   { iTable      = myTable
->   , iRows       = [(Nothing, 2, C.constant i, sqlString "Hello")]
+>   , iRows       = [(Nothing, 2, toFields i, sqlString "Hello")]
 >   , iReturning  = rCount
 >   , iOnConflict = Nothing
 >   }
@@ -126,14 +126,14 @@ VALUES (1,
 
 An update takes an update function from the read type to the write
 type, and a condition given by a function from the read type to
-`Column Bool`.  All rows that satisfy the condition are updated
+`Field SqlBool`.  All rows that satisfy the condition are updated
 according to the update function.
 
 > update :: Update Int64
 > update = Update
 >   { uTable      = myTable
 >   , uUpdateWith = updateEasy (\(id_, x, y, s) -> (id_, x + y, x - y, s))
->   , uWhere      = (\(id_, _, _, _) -> id_ .== 5)
+>   , uWhere      = \(id_, _, _, _) -> id_ .== 5
 >   , uReturning  = rCount
 >   }
 

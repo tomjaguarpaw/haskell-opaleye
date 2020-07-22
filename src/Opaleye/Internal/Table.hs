@@ -15,7 +15,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Functor.Identity as I
 import           Data.Profunctor (Profunctor, dimap, lmap)
-import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
+import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import qualified Data.List.NonEmpty as NEL
 import           Data.Monoid (Monoid, mempty, mappend)
@@ -24,7 +24,7 @@ import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Arrow as Arr
 
 -- | Define a table as follows, where \"id\", \"color\", \"location\",
--- \"quantity\" and \"radius\" are the tables columns in Postgres and
+-- \"quantity\" and \"radius\" are the table's fields in Postgres and
 -- the types are given in the type signature.  The @id@ field is an
 -- autoincrementing field (i.e. optional for writes).
 --
@@ -35,27 +35,27 @@ import qualified Control.Arrow as Arr
 --                                , quantity :: d
 --                                , radius   :: e }
 --
--- $('Data.Profunctor.Product.TH.makeAdaptorAndInstance' \"pWidget\" ''Widget)
+-- \$('Data.Profunctor.Product.TH.makeAdaptorAndInstance' \"pWidget\" ''Widget)
 --
--- widgetTable :: Table (Widget (Maybe (Column PGInt4)) (Column PGText) (Column PGText)
---                              (Column PGInt4) (Column PGFloat8))
---                      (Widget (Column PGText) (Column PGText) (Column PGText)
---                              (Column PGInt4) (Column PGFloat8))
+-- widgetTable :: Table (Widget (Maybe (Field SqlInt4)) (Field SqlText) (Field SqlText)
+--                              (Field SqlInt4) (Field SqlFloat8))
+--                      (Widget (Field SqlText) (Field SqlText) (Field SqlText)
+--                              (Field SqlInt4) (Field SqlFloat8))
 -- widgetTable = table \"widgetTable\"
---                      (pWidget Widget { wid      = tableColumn \"id\"
---                                      , color    = tableColumn \"color\"
---                                      , location = tableColumn \"location\"
---                                      , quantity = tableColumn \"quantity\"
---                                      , radius   = tableColumn \"radius\" })
+--                      (pWidget Widget { wid      = tableField \"id\"
+--                                      , color    = tableField \"color\"
+--                                      , location = tableField \"location\"
+--                                      , quantity = tableField \"quantity\"
+--                                      , radius   = tableField \"radius\" })
 -- @
 --
 -- The constructors of Table are internal only and will be
 -- deprecated in version 0.7.
-data Table writerColumns viewColumns
-  = Table String (TableFields writerColumns viewColumns)
+data Table writeFields viewFields
+  = Table String (TableFields writeFields viewFields)
     -- ^ For unqualified table names. Do not use the constructor.  It
     -- is internal and will be deprecated in version 0.7.
-  | TableWithSchema String String (TableFields writerColumns viewColumns)
+  | TableWithSchema String String (TableFields writeFields viewFields)
     -- ^ Schema name, table name, table properties.  Do not use the
     -- constructor.  It is internal and will be deprecated in version 0.7.
 
@@ -113,36 +113,57 @@ newtype Writer columns dummy =
   Writer (forall f. Functor f =>
           PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
 
--- | 'required' is for columns which are not 'optional'.  You must
--- provide them on writes.
-required :: String -> TableFields (Column a) (Column a)
-required columnName = TableProperties
+-- | 'requiredTableField' is for fields which are not optional.  You
+-- must provide them on writes.
+requiredTableField :: String -> TableFields (Column a) (Column a)
+requiredTableField columnName = TableProperties
   (requiredW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
--- | 'optional' is for columns that you can omit on writes, such as
---  columns which have defaults or which are SERIAL.
-optional :: String -> TableFields (Maybe (Column a)) (Column a)
-optional columnName = TableProperties
+-- | 'optionalTableField' is for fields that you can omit on writes, such as
+--  fields which have defaults or which are SERIAL.
+optionalTableField :: String -> TableFields (Maybe (Column a)) (Column a)
+optionalTableField columnName = TableProperties
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
+-- | 'readOnlyTableField' is for fields that you must omit on writes, such as
+--  SERIAL fields intended to auto-increment only.
+readOnlyTableField :: String -> TableFields () (Column a)
+readOnlyTableField = lmap (const Nothing) . optionalTableField
+
+-- | Use 'requiredTableField' instead.  'required' will be deprecated
+-- in 0.7.
+required :: String -> TableFields (Column a) (Column a)
+required = requiredTableField
+
+-- | Use 'optionalTableField' instead.  'optional' will be deprecated
+-- in 0.7.
+optional :: String -> TableFields (Maybe (Column a)) (Column a)
+optional = optionalTableField
+
+-- | Use 'readOnlyTableField' instead.  'readOnly' will be deprecated
+-- in 0.7.
+readOnly :: String -> TableFields () (Column a)
+readOnly = readOnlyTableField
+
 class TableColumn writeType sqlType | writeType -> sqlType where
-    -- | Infer either a 'required' or 'optional' column depending on
+    -- | Do not use.  Use 'tableField' instead.  Will be deprecated in
+    -- 0.7.
+    tableColumn :: String -> TableFields writeType (Column sqlType)
+    tableColumn = tableField
+    -- | Infer either a required ('requiredTableField') or optional
+    -- ('optionalTableField') field depending on
     -- the write type.  It's generally more convenient to use this
     -- than 'required' or 'optional' but you do have to provide a type
     -- signature instead.
-    tableColumn :: String -> TableFields writeType (Column sqlType)
+    tableField  :: String -> TableFields writeType (Column sqlType)
 
 instance TableColumn (Column a) a where
-    tableColumn = required
+    tableField = requiredTableField
 
 instance TableColumn (Maybe (Column a)) a where
-    tableColumn = optional
-
-tableField :: TableColumn writeType sqlType
-           => String -> TableFields writeType (Column sqlType)
-tableField = tableColumn
+    tableField = optionalTableField
 
 queryTable :: U.Unpackspec viewColumns columns
             -> Table writeColumns viewColumns
@@ -219,8 +240,8 @@ instance Profunctor Writer where
   dimap f _ (Writer h) = Writer (lmap (fmap f) h)
 
 instance ProductProfunctor Writer where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance Functor (TableProperties a) where
   fmap f (TableProperties w (View v)) = TableProperties (fmap f w) (View (f v))
@@ -234,8 +255,8 @@ instance Profunctor TableProperties where
   dimap f g (TableProperties w (View v)) = TableProperties (dimap f g w)
                                                             (View (g v))
 instance ProductProfunctor TableProperties where
-  empty = PP.defaultEmpty
-  (***!) = PP.defaultProfunctorProduct
+  purePP = pure
+  (****) = (<*>)
 
 instance Functor (Table a) where
   fmap f (Table t tp) = Table t (fmap f tp)

@@ -1,3 +1,62 @@
+* Add `optionalTableField`, `readOnlyTableField`,
+  `requiredTableField`, to replace `optional`, `readOnly` and
+  `required` in a later version.
+
+* Add `Opaleye.Unpackspec` as the forward-compatible place to import
+  `Unpackspec` from
+
+* Unicode characters are escaped properly in `sqlString`/`toFields`
+
+* Add `inSelect`, to replace `inQuery` in a future version.
+
+* Add `unsafeCoerceField`, to replace `unsafeCoerceColumn` in a future
+  version.
+
+* Generalise label to type `label :: String -> S.SelectArr a b ->
+S.SelectArr a b`
+
+* [Fix invalid queries
+  bug](https://github.com/tomjaguarpaw/haskell-opaleye/pull/468) in
+  `union`, `unionAll`, `except` and `exceptAll` where one side was
+  empty.
+
+## 0.6.7004.2
+
+* No user-visible changes
+
+## 0.6.7004.1
+
+* Fixed exponential slowdown in `removeEmpty`.
+
+* Fixed `read` compatibility with time-1.9 in test suite.
+
+## 0.6.7004.0
+
+* Many changes to the documentation that use the new names.  See entry
+  for version 0.6.7000.0.
+
+* Added `fromPGSFromField` to replace `fieldQueryRunnerColumn`.
+
+* Added `fromPGSFieldParser` to replace `fieldParserQueryRunnerColumn`.
+
+* Added `defaultFromField` to replace `queryRunnerColumnDefault`.
+
+* Added `tableField` to replace `tableColumn`.
+
+* Added `unsafeFromField` to replace `queryRunnerColumn`.
+
+* Added `toFieldsExplicit` to replace `constantExplicit`.
+
+* Added `TableRecordField` to replace `TableField` in
+  `Opaleye.TypeFamilies`.  The latter may be used to replace
+  `TableColumn` in the future.
+
+* Added array functions `arrayAppend`, `arrayRemove`, `arrayRemoveNulls`.
+
+## 0.6.7003.1
+
+* Bumped some depedencies so there is an install plan on GHC 8.6
+
 ## 0.6.7003.0
 
 * Add `tableField` as a future replacement for `tableColumn`

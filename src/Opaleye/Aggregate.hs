@@ -53,7 +53,7 @@ import qualified Opaleye.Join      as J
 
 {-|
 Given a 'S.Select' producing rows of type @a@ and an 'Aggregator' accepting rows of
-type @a@, apply the aggregator to the query.
+type @a@, apply the aggregator to the select.
 
 If you simply want to count the number of rows in a query you might
 find the 'countRows' function more convenient.
@@ -129,7 +129,8 @@ boolAnd = A.makeAggr HPQ.AggrBoolAnd
 arrayAgg :: Aggregator (C.Column a) (C.Column (T.SqlArray a))
 arrayAgg = A.makeAggr HPQ.AggrArr
 
-stringAgg :: C.Column T.SqlText -> Aggregator (C.Column T.SqlText) (C.Column T.SqlText)
+stringAgg :: C.Column T.SqlText
+          -> Aggregator (C.Column T.SqlText) (C.Column T.SqlText)
 stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 
 -- | Count the number of rows in a query.  This is different from

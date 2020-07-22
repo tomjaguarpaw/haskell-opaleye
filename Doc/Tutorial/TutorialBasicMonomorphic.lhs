@@ -12,7 +12,7 @@
 >                          Select, (.==),
 >                          aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runSelect,
->                          showSqlForPostgres, Unpackspec,
+>                          showSql, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
 > import qualified Opaleye                 as O
@@ -45,19 +45,19 @@ there is no support for creating databases or tables, though these
 features may be added later according to demand.
 
 A table is defined with the `table` function.  The syntax is
-simple.  You specify the types of the columns, the name of the table
-and the names of the columns in the underlying database, and whether
-the columns are required or optional.
+simple.  You specify the types of the fields, the name of the table
+and the names of the fields in the underlying database, and whether
+the fields are required or optional.
 
 (Note: This simple syntax is supported by an extra combinator that
-describes the shape of the container that you are storing the columns
+describes the shape of the container that you are storing the fields
 in.  In the first example we are using a tuple of size 3 and the
 combinator is called `p3`.  We'll see examples of others later.)
 
 The `Table` type constructor has two arguments.  The first one tells
-us what columns we can write to the table and the second what columns
+us what fields we can write to the table and the second what fields
 we can read from the table.  In this document we will always make all
-columns required, so the write and read types will be the same.  All
+fields required, so the write and read types will be the same.  All
 `Table` types will have the same type argument repeated twice.  In the
 manipulation tutorial you can see an example of when they might differ.
 
@@ -268,7 +268,7 @@ GROUP BY style, color
 
 Note: In `widgetTable` and `aggregateWidgets` we see more explicit
 uses of our Template Haskell derived code.  We use the 'pWidget'
-"adaptor" to specify how columns are aggregated.  Note that this is
+"adaptor" to specify how fields are aggregated.  Note that this is
 yet another example of avoiding a headache by keeping your datatype
 fully polymorphic, because the 'count' aggregator changes a 'Field
 String' into a 'Field Int64'.
@@ -280,8 +280,8 @@ Opaleye supports left joins.  (Full outer joins and right joins are
 left to be added as a simple starter project for a new Opaleye
 contributer!)
 
-Because left joins can change non-nullable columns into nullable
-columns we have to make sure the type of the output supports
+Because left joins can change non-nullable fields into nullable
+fields we have to make sure the type of the output supports
 nullability.  We introduce the following type synonym for this
 purpose, which is just a notational convenience.
 
@@ -377,7 +377,7 @@ the following type
 > -- runSelect :: Database.PostgreSQL.Simple.Connection
 > --          -> Select fields -> IO [haskells]
 
-It converts a "record" of Opaleye columns to a list of "records" of
+It converts a "record" of Opaleye fields to a list of "records" of
 Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
@@ -405,4 +405,4 @@ Utilities
 This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres
+> printSql = putStrLn . maybe "Empty query" id . showSql

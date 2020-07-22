@@ -3,6 +3,9 @@
 --
 -- Please note that numeric 'Column' types are instances of 'Num', so
 -- you can use '*', '/', '+', '-' on them.
+--
+-- 'Column' will be renamed to 'Opaleye.Field.Field_' in version 0.7,
+-- so you might want to use the latter as much as you can.
 
 module Opaleye.Column (-- * 'Column'
                        Column,

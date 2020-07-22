@@ -13,10 +13,10 @@
 -- Example specialization:
 --
 -- @
--- leftJoin :: Select (Column a, Column b)
---          -> Select (Column c, Column (Nullable d))
---          -> (((Column a, Column b), (Column c, Column (Nullable d))) -> Column 'Opaleye.SqlTypes.SqlBool')
---          -> Select ((Column a, Column b), (Column (Nullable c), Column (Nullable d)))
+-- leftJoin :: Select (Field a, Field b)
+--          -> Select (Field c, FieldNullable d)
+--          -> (((Field a, Field b), (Field c, FieldNullable d)) -> Field 'Opaleye.SqlTypes.SqlBool')
+--          -> Select ((Field a, Field b), (FieldNullable c, FieldNullable d))
 -- @
 
 {-# LANGUAGE FlexibleContexts      #-}
@@ -33,9 +33,6 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Map as Map
 import qualified Opaleye.Select   as S
 import qualified Opaleye.SqlTypes as T
-import qualified Opaleye.PGTypes  as T
-import           Opaleye.QueryArr (Query)
-import           Opaleye.Column (Column)
 
 import qualified Data.Profunctor.Product.Default as D
 
@@ -120,47 +117,47 @@ fullJoinExplicit uA uB nullmakerA nullmakerB =
 
 -- * Inferrable versions
 
-leftJoinInferrable :: (D.Default U.Unpackspec columnsL columnsL,
-                       D.Default U.Unpackspec columnsR columnsR,
-                       D.Default J.NullMaker columnsR nullableColumnsR,
-                       Map.Map J.Nulled columnsR ~ nullableColumnsR)
-                   => Query columnsL
+leftJoinInferrable :: (D.Default U.Unpackspec fieldsL fieldsL,
+                       D.Default U.Unpackspec fieldsR fieldsR,
+                       D.Default J.NullMaker fieldsR nullableFieldsR,
+                       Map.Map J.Nulled fieldsR ~ nullableFieldsR)
+                   => S.Select fieldsL
                    -- ^ Left query
-                   -> Query columnsR
+                   -> S.Select fieldsR
                    -- ^ Right query
-                   -> ((columnsL, columnsR) -> Column T.PGBool)
+                   -> ((fieldsL, fieldsR) -> F.Field T.SqlBool)
                    -- ^ Condition on which to join
-                   -> Query (columnsL, nullableColumnsR)
+                   -> S.Select (fieldsL, nullableFieldsR)
                    -- ^ Left join
 leftJoinInferrable = leftJoin
 
-rightJoinInferrable :: (D.Default U.Unpackspec columnsL columnsL,
-                        D.Default U.Unpackspec columnsR columnsR,
-                        D.Default J.NullMaker columnsL nullableColumnsL,
-                        Map.Map J.Nulled columnsL ~ nullableColumnsL)
-                    => Query columnsL
+rightJoinInferrable :: (D.Default U.Unpackspec fieldsL fieldsL,
+                        D.Default U.Unpackspec fieldsR fieldsR,
+                        D.Default J.NullMaker fieldsL nullableFieldsL,
+                        Map.Map J.Nulled fieldsL ~ nullableFieldsL)
+                    => S.Select fieldsL
                     -- ^ Left query
-                    -> Query columnsR
+                    -> S.Select fieldsR
                     -- ^ Right query
-                    -> ((columnsL, columnsR) -> Column T.PGBool)
+                    -> ((fieldsL, fieldsR) -> F.Field T.SqlBool)
                     -- ^ Condition on which to join
-                    -> Query (nullableColumnsL, columnsR)
+                    -> S.Select (nullableFieldsL, fieldsR)
                     -- ^ Right join
 rightJoinInferrable = rightJoin
 
 
-fullJoinInferrable  :: (D.Default U.Unpackspec columnsL columnsL,
-                        D.Default U.Unpackspec columnsR columnsR,
-                        D.Default J.NullMaker columnsL nullableColumnsL,
-                        D.Default J.NullMaker columnsR nullableColumnsR,
-                        Map.Map J.Nulled columnsL ~ nullableColumnsL,
-                        Map.Map J.Nulled columnsR ~ nullableColumnsR)
-                    => Query columnsL
+fullJoinInferrable  :: (D.Default U.Unpackspec fieldsL fieldsL,
+                        D.Default U.Unpackspec fieldsR fieldsR,
+                        D.Default J.NullMaker fieldsL nullableFieldsL,
+                        D.Default J.NullMaker fieldsR nullableFieldsR,
+                        Map.Map J.Nulled fieldsL ~ nullableFieldsL,
+                        Map.Map J.Nulled fieldsR ~ nullableFieldsR)
+                    => S.Select fieldsL
                     -- ^ Left query
-                    -> Query columnsR
+                    -> S.Select fieldsR
                     -- ^ Right query
-                    -> ((columnsL, columnsR) -> Column T.PGBool)
+                    -> ((fieldsL, fieldsR) -> F.Field T.SqlBool)
                     -- ^ Condition on which to join
-                    -> Query (nullableColumnsL, nullableColumnsR)
+                    -> S.Select (nullableFieldsL, nullableFieldsR)
                     -- ^ Full outer join
 fullJoinInferrable = fullJoin

@@ -1,6 +1,6 @@
 name:            opaleye
-copyright:       Copyright (c) 2014-2018 Purely Agile Limited
-version:         0.6.7003.0
+copyright:       Copyright (c) 2014-2018 Purely Agile Limited; 2019-2020 Tom Ellis
+version:         0.6.7004.2
 synopsis:        An SQL-generating DSL targeting PostgreSQL
 description:     An SQL-generating DSL targeting PostgreSQL.  Allows
                  Postgres queries to be written within Haskell in a
@@ -18,7 +18,7 @@ extra-doc-files: README.md
                  CHANGELOG.md
                  *.md
                  Doc/*.md
-tested-with:     GHC==8.6.1, GHC==8.4.4, GHC==8.2.2, GHC==8.0.2
+tested-with:     GHC==8.10.1, GHC==8.8.3, GHC==8.6.5, GHC==8.4.4, GHC==8.2.2, GHC==8.0.2
 
 source-repository head
   type:     git
@@ -28,7 +28,7 @@ library
   default-language: Haskell2010
   hs-source-dirs: src
   build-depends:
-      aeson               >= 0.6     && < 1.5
+      aeson               >= 0.6     && < 1.6
     , base                >= 4.9     && < 5
     , base16-bytestring   >= 0.1.1.6 && < 0.2
     , case-insensitive    >= 1.2     && < 1.3
@@ -36,10 +36,10 @@ library
     , contravariant       >= 1.2     && < 1.6
     , postgresql-simple   >= 0.5.3   && < 0.7
     , pretty              >= 1.1.1.0 && < 1.2
-    , product-profunctors >= 0.6.2   && < 0.11
-    , profunctors         >= 4.0     && < 5.4
+    , product-profunctors >= 0.8.0.0 && < 0.11
+    , profunctors         >= 4.0     && < 5.6
     , scientific          >= 0.3     && < 0.4
-    , semigroups          >= 0.13    && < 0.19
+    , semigroups          >= 0.13    && < 0.20
     , text                >= 0.11    && < 1.3
     , transformers        >= 0.3     && < 0.6
     , time                >= 1.4     && < 1.10
@@ -68,8 +68,10 @@ library
                    Opaleye.Sql,
                    Opaleye.SqlTypes,
                    Opaleye.Table,
+                   Opaleye.ToFields,
                    Opaleye.TypeFamilies,
                    Opaleye.Values,
+                   Opaleye.Unpackspec,
                    Opaleye.Internal.Aggregate,
                    Opaleye.Internal.Binary,
                    Opaleye.Internal.Column,
@@ -77,6 +79,7 @@ library
                    Opaleye.Internal.Helpers,
                    Opaleye.Internal.Join,
                    Opaleye.Internal.Label,
+                   Opaleye.Internal.Lateral,
                    Opaleye.Internal.Manipulation,
                    Opaleye.Internal.Order,
                    Opaleye.Internal.Operators,
@@ -106,10 +109,11 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules: QuickCheck,
-                 TypeFamilies
+                 TypeFamilies,
+                 Wrapped
   hs-source-dirs: Test
   build-depends:
-    aeson >= 0.6 && < 1.3,
+    aeson >= 0.6 && < 1.6,
     base >= 4 && < 5,
     containers,
     contravariant,
