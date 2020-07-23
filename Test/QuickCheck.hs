@@ -16,7 +16,6 @@ import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
 import qualified Opaleye.Internal.Distinct as OD
 import qualified Opaleye.ToFields as O
-import qualified Rectangular as R
 import           Wrapped (constructor, asSumProfunctor,
                           constructorDecidable, asDecidable)
 import qualified Database.PostgreSQL.Simple as PGS
@@ -29,7 +28,6 @@ import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Either
 import           Data.List (sort)
 import qualified Data.List as List
-import qualified Data.List.NonEmpty as NEL
 import qualified Data.MultiSet as MultiSet
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
@@ -1048,34 +1046,5 @@ maximumBy c xs@(_:_) = Just (List.maximumBy c xs)
 
 minimumBy :: (a -> a -> Ord.Ordering) -> [a] -> Maybe a
 minimumBy = maximumBy . flip
-
--- Opaleye's 'values' applied to a list of rows, when the rows match,
--- i.e. they have the same length and the constructors of the elements
--- match at each index.  IF they don't match, then Nothing.
-rectangularValues :: [Fields] -> Maybe (O.Select Fields)
-rectangularValues bs' = case NEL.nonEmpty bs' of
-  Nothing -> Just (O.valuesSafeExplicit (pure emptyChoices) [])
-  Just bs -> case defPPChoicesFieldsU of
-    R.U g -> case g (fmap (\x -> ((), x)) bs) of
-      Nothing -> Nothing
-      Just (R.W p1' ar) ->
-        Just (O.valuesSafeExplicit p1' (NEL.toList (fmap snd ar)))
-
-ppChoicesFieldsU :: PP.ProductProfunctor p
-                 => p (O.Field O.SqlInt4) (O.Field O.SqlInt4)
-                 -> p (O.Field O.SqlBool) (O.Field O.SqlBool)
-                 -> p (O.Field O.SqlText) (O.Field O.SqlText)
-                 -> p (O.Field O.SqlBool) (O.Field O.SqlBool)
-                 -> R.U p Fields Fields
-ppChoicesFieldsU i b s boo = ppChoices
-                                (choicePP (R.pureU i) (R.pureU b) (R.pureU s))
-                                (OM.productProfunctorMaybeFields (R.pureU boo))
-
-defPPChoicesFieldsU :: (PP.ProductProfunctor p,
-                        D.Default p (O.Field O.SqlBool) (O.Field O.SqlBool),
-                        D.Default p (O.Field O.SqlInt4) (O.Field O.SqlInt4),
-                        D.Default p (O.Field O.SqlText) (O.Field O.SqlText))
-                    => R.U p Fields Fields
-defPPChoicesFieldsU = ppChoicesFieldsU D.def D.def D.def D.def
 
 -- }
