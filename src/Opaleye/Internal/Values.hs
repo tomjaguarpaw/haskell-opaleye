@@ -151,8 +151,8 @@ nullspecEitherRight :: Nullspec a b'
                     -> Nullspec a (Either b b')
 nullspecEitherRight = fmap Right
 
-instance Opaleye.SqlTypes.IsSqlType a
-  => Default Nullspec (Column a) (Column a) where
+instance Opaleye.SqlTypes.IsSqlType b
+  => Default Nullspec a (Column b) where
   def = nullspecField
 
 -- | All fields @NULL@, even though technically the type may forbid
