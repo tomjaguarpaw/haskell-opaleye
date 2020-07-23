@@ -105,13 +105,16 @@ fieldsOfHaskells = O.toFieldsExplicit toFieldsFields
 fieldsList :: (a, b) -> Choices m a b s
 fieldsList (x, y) = Choices [Left (CInt x), Left (CBool y)]
 
+type FieldsTuple = (O.Field O.SqlInt4, O.Field O.SqlBool)
+type HaskellsTuple = (Int, Bool)
+
 listFieldsG :: Choices m i b s -> i -> b -> (i, b)
 listFieldsG f i b = (fst (firstIntOr i f), fst (firstBoolOrTrue b f))
 
-listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
+listFields :: Fields -> FieldsTuple
 listFields f = listFieldsG f 1 (O.sqlBool True)
 
-listHaskells :: Haskells -> (Int, Bool)
+listHaskells :: Haskells -> HaskellsTuple
 listHaskells f = listFieldsG f 1 True
 
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
@@ -121,7 +124,7 @@ newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
 newtype ArbitraryHaskells = ArbitraryHaskells { unArbitraryHaskells :: Haskells }
                         deriving Show
 newtype ArbitraryHaskellsList =
-  ArbitraryHaskellsList { unArbitraryHaskellsList :: [(Int, Bool)] }
+  ArbitraryHaskellsList { unArbitraryHaskellsList :: [HaskellsTuple] }
                              deriving Show
 newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
                             deriving Show
