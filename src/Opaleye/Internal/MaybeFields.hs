@@ -9,6 +9,7 @@ module Opaleye.Internal.MaybeFields where
 import           Control.Applicative hiding (optional)
 import           Control.Arrow (returnA, (<<<), (>>>))
 
+import qualified Opaleye.Internal.Binary as B
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Constant as Constant
 import qualified Opaleye.Internal.Distinct as D
@@ -267,6 +268,11 @@ distinctspecMaybeFields :: WithNulls D.Distinctspec a b
                         -> D.Distinctspec (MaybeFields a) (MaybeFields b)
 distinctspecMaybeFields = unWithNulls PP.def
 
+binaryspecMaybeFields
+  :: WithNulls B.Binaryspec a b
+  -> B.Binaryspec (MaybeFields a) (MaybeFields b)
+binaryspecMaybeFields = unWithNulls PP.def
+
 instance P.Profunctor p => P.Profunctor (WithNulls p) where
   dimap f g (WithNulls d) = WithNulls (P.dimap (fmap f) g d)
 
@@ -310,3 +316,7 @@ instance (P.Profunctor p, IsSqlType a, PP.Default p (IC.Column a) (IC.Column a))
 instance PP.Default (WithNulls D.Distinctspec) a b
   => PP.Default D.Distinctspec (MaybeFields a) (MaybeFields b) where
   def = distinctspecMaybeFields PP.def
+
+instance PP.Default (WithNulls B.Binaryspec) a b
+  => PP.Default B.Binaryspec (MaybeFields a) (MaybeFields b) where
+  def = binaryspecMaybeFields PP.def

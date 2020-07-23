@@ -17,6 +17,7 @@ module Opaleye.MaybeFields (
   nullspecList,
   nullspecEitherLeft,
   nullspecEitherRight,
+  binaryspecMaybeFields,
   distinctspecMaybeFields,
   fromFieldsMaybeFields,
   toFieldsMaybeFields,
