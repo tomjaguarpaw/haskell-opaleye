@@ -212,14 +212,13 @@ optionalDenotation = \case
   [] -> [Nothing]
   xs -> map Just xs
 
-traverseDenotation :: SelectArrDenotation Haskells Haskells
-                   -> SelectDenotation (Maybe Haskells)
+traverseDenotation :: SelectArrDenotation a Haskells
+                   -> SelectDenotation (Maybe a)
                    -> SelectDenotation (Maybe Haskells)
 traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
   (SelectArrDenotation (\conn l -> do
                            qr <- q conn l
                            let nothings :: [()]
-                               justs :: [Haskells]
                                (nothings, justs) =
                                  Data.Either.partitionEithers
                                    (map (\case
