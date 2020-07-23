@@ -263,6 +263,10 @@ withNullsField col = result
         columnProxy :: f (IC.Column sqlType) -> Maybe sqlType
         columnProxy _ = Nothing
 
+distinctspecMaybeFields :: WithNulls D.Distinctspec a b
+                        -> D.Distinctspec (MaybeFields a) (MaybeFields b)
+distinctspecMaybeFields = unWithNulls PP.def
+
 instance P.Profunctor p => P.Profunctor (WithNulls p) where
   dimap f g (WithNulls d) = WithNulls (P.dimap (fmap f) g d)
 
@@ -305,4 +309,4 @@ instance (P.Profunctor p, IsSqlType a, PP.Default p (IC.Column a) (IC.Column a))
 
 instance PP.Default (WithNulls D.Distinctspec) a b
   => PP.Default D.Distinctspec (MaybeFields a) (MaybeFields b) where
-  def = unWithNulls PP.def PP.def
+  def = distinctspecMaybeFields PP.def
