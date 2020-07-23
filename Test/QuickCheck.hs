@@ -964,8 +964,7 @@ firstIntOr else_ c = (b, c)
           []    -> else_
           (x:_) -> x
 
-isBool :: Choice a b s
-       -> Maybe b
+isBool :: Choice a b s -> Maybe b
 isBool (CInt _)  = Nothing
 isBool (CBool l) = Just l
 isBool (CString _) = Nothing
