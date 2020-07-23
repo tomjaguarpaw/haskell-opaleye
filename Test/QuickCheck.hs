@@ -102,20 +102,31 @@ ppChoices p f = ps
 fieldsOfHaskells :: Haskells -> Fields
 fieldsOfHaskells = O.toFieldsExplicit toFieldsFields
 
-fieldsList :: (a, b) -> Choices m a b s
-fieldsList (x, y) = Choices [Left (CInt x), Left (CBool y)]
+fieldsList :: Functor m => (a, b, m s) -> Choices m a b s
+fieldsList (x, y, ms) =
+  Choices [ Left (CInt x),
+            Left (CBool y),
+            Right (fmap (Choices . pure . Left . CString) ms)
+          ]
 
-type FieldsTuple = (O.Field O.SqlInt4, O.Field O.SqlBool)
-type HaskellsTuple = (Int, Bool)
+type FieldsTuple = (O.Field O.SqlInt4,
+                    O.Field O.SqlBool,
+                    O.MaybeFields (O.Field O.SqlText))
+type HaskellsTuple = (Int, Bool, Maybe String)
 
-listFieldsG :: Choices m i b s -> i -> b -> (i, b)
-listFieldsG f i b = (fst (firstIntOr i f), fst (firstBoolOrTrue b f))
+listFieldsG :: Functor m
+            => Choices m i b s -> i -> b -> s -> m s -> (i, b, m s)
+listFieldsG f i b s ms = (fst (firstIntOr i f),
+                          fst (firstBoolOrTrue b f),
+                          ms')
+  where ms' = maybe ms (fmap (fst . firstStringOr s)) (firstMaybe f)
 
 listFields :: Fields -> FieldsTuple
-listFields f = listFieldsG f 1 (O.sqlBool True)
+listFields f =
+  listFieldsG f 1 (O.sqlBool True) (O.sqlString "xyz") O.nothingFields
 
 listHaskells :: Haskells -> HaskellsTuple
-listHaskells f = listFieldsG f 1 True
+listHaskells f = listFieldsG f 1 True "xyz" Nothing
 
 newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitrarySelectMaybe =
@@ -528,7 +539,13 @@ instance TQ.Arbitrary ArbitraryHaskellsList where
   -- multiplying.
   arbitrary = do
     k <- TQ.choose (0, 5)
-    l <- TQ.vectorOf k TQ.arbitrary
+    l <- TQ.vectorOf k $ do
+      i <- TQ.arbitrary
+      b <- TQ.arbitrary
+      ms <- TQ.oneof [ pure Nothing
+                     , Just <$> arbitraryPGString
+                     ]
+      pure (i, b, ms)
     return (ArbitraryHaskellsList l)
 
 instance TQ.Arbitrary ArbitraryPositiveInt where
@@ -648,13 +665,12 @@ denotationExplicit qr q =
 denotation :: O.Select Fields -> SelectDenotation Haskells
 denotation = denotationExplicit fromFieldsFields
 
-denotationArr :: O.SelectArr Fields Fields
-              -> SelectArrDenotation Haskells Haskells
+denotationArr :: O.SelectArr FieldsTuple Fields
+              -> SelectArrDenotation HaskellsTuple Haskells
 denotationArr q =
   SelectArrDenotation (\conn hs ->
-    case rectangularValues (map fieldsOfHaskells hs) of
-      Nothing -> error "Jagged"
-      Just fs -> O.runSelectExplicit fromFieldsFields conn (q <<< fs))
+      let fs = O.valuesSafe (map O.toFields hs)
+      in O.runSelectExplicit fromFieldsFields conn (q <<< fs))
 
 denotation2 :: O.Select (Fields, Fields)
             -> SelectDenotation (Haskells, Haskells)
@@ -722,8 +738,10 @@ compose :: PGS.Connection
         -> ArbitrarySelect
         -> IO TQ.Property
 compose conn (ArbitrarySelectArr a) (ArbitrarySelect q) = do
-  compare conn (denotation (a . q))
-               (denotationArr a . denotation q)
+  compare conn (denotation (a' . Arrow.arr listFields . q))
+               (denotationArr a' . fmap listHaskells (denotation q))
+    where a' = a . Arrow.arr fieldsList
+
 
 -- Would prefer to write 'compare conn (denotation id) id' but that
 -- requires extending compare to compare SelectArrs.
@@ -845,9 +863,12 @@ traverseMaybeFields :: PGS.Connection
                     -> IO TQ.Property
 traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
   compare conn
-    (denotationMaybeFields (O.traverseMaybeFieldsExplicit u u q <<< qm))
-    (traverseDenotation (denotationArr q) (denotationMaybeFields qm))
+    (denotationMaybeFields (travMF q' . Arrow.arr (fmap listFields) . qm))
+    (traverseDenotation (denotationArr q')
+       ((fmap . fmap) listHaskells (denotationMaybeFields qm)))
   where u = unpackFields
+        q' = q . Arrow.arr fieldsList
+        travMF = O.traverseMaybeFieldsExplicit D.def u
 
 
 {- TODO
@@ -964,6 +985,20 @@ firstIntOr else_ c = (b, c)
           []    -> else_
           (x:_) -> x
 
+-- We could try to be clever and look inside the MaybeFields, but this
+-- will do for now.
+firstStringOr :: s -> Choices m a b s -> (s, Choices m a b s)
+firstStringOr else_ c = (b, c)
+  where b = case Maybe.mapMaybe (either isString (const Nothing)) (unChoices c) of
+          []    -> else_
+          (x:_) -> x
+
+firstMaybe :: Choices m a b s
+           -> Maybe (m (Choices m a b s))
+firstMaybe c = case Maybe.mapMaybe (either (const Nothing) Just) (unChoices c) of
+          []    -> Nothing
+          (x:_) -> Just x
+
 isBool :: Choice a b s -> Maybe b
 isBool (CInt _)  = Nothing
 isBool (CBool l) = Just l
@@ -973,6 +1008,11 @@ isInt :: Choice a b s -> Maybe a
 isInt (CInt a)  = Just a
 isInt (CBool _) = Nothing
 isInt (CString _) = Nothing
+
+isString :: Choice a b s -> Maybe s
+isString (CInt _)  = Nothing
+isString (CBool _) = Nothing
+isString (CString s) = Just s
 
 fieldsToMaybeFields :: Applicative m => Choices m i b s -> m (Choices m i b s)
 fieldsToMaybeFields fs = case Maybe.listToMaybe (subMaybeFields fs) of
