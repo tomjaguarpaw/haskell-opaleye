@@ -917,9 +917,6 @@ traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
 -- always return the same result when it is part of a larger query.
 -- This happens rarely.  We could sort before LIMIT or OFFSET to make
 -- it even rarer.
---
--- Another way is "resource vanished".  That's not our fault.  That's
--- Postgres segfaulting on perfectly good queries.
 
 run :: Connection -> IO ()
 run conn = do

@@ -30,6 +30,7 @@ import qualified Opaleye                          as O
 import qualified Opaleye.Internal.Aggregate       as IA
 import           Opaleye.Internal.RunQuery        (DefaultFromField)
 import           Opaleye.Internal.MaybeFields     as OM
+import qualified Connection
 import qualified QuickCheck
 import           System.Environment               (lookupEnv)
 import           Test.Hspec
@@ -1186,9 +1187,14 @@ main = do
   insert (table8, table8fielddata)
   insert (table9, table9fielddata)
 
+  PGS.close conn
+
+  conn <- Connection.connectPostgreSQL connectString
   -- Need to run quickcheck after table data has been inserted
   QuickCheck.run conn
+  Connection.close conn
 
+  conn <- PGS.connectPostgreSQL connectString
   hspec $ do
     before (return conn) $ do
       describe "core dsl?" $ do
