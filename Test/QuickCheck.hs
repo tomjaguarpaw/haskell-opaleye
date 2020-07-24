@@ -246,6 +246,11 @@ traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
                            return ((Just <$> justs')
                                    ++ (Nothing <$ nothings))))
 
+lateralDenotation :: (a -> SelectDenotation r)
+               -> SelectArrDenotation a r
+lateralDenotation f = SelectArrDenotation (\conn l ->
+  concatMapM (\r -> unSelectArrDenotation (f r) conn [()]) l)
+
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
                               (O.showSqlExplicit unpackFields q)
@@ -936,6 +941,23 @@ traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
         q' = q . Arrow.arr fieldsList
         travMF = O.traverseMaybeFieldsExplicit D.def u
 
+lateral :: Connection
+        -> ArbitraryKleisli
+        -> ArbitrarySelect
+        -> IO TQ.Property
+lateral conn (ArbitraryKleisli f) (ArbitrarySelect q) =
+  compare conn (lateralDenotation denotation_f . denotation_q)
+               (denotationArr (OL.lateral f') . denotation_q)
+  where _ = f :: Fields -> O.Select Fields
+
+        f' :: FieldsTuple -> O.Select Fields
+        f' = f . Arrow.arr fieldsList
+
+        denotation_q :: SelectDenotation HaskellsTuple
+        denotation_q = fmap listHaskells (denotation q)
+
+        denotation_f  :: HaskellsTuple -> SelectDenotation Haskells
+        denotation_f = denotation . f' . O.toFields
 
 {- TODO
 
@@ -997,6 +1019,7 @@ run conn = do
   test1 optionalRestrict
   test1 maybeFieldsToSelect
   test2 traverseMaybeFields
+  test2 lateral
 
 -- }
 
