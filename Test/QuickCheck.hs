@@ -461,8 +461,8 @@ genSelect =
           , -- We test empty lists of values separately, because we
             -- used to not support them
             do
-              l <- TQ.arbitrary
-              let _ = l :: [()]
+              s <- TQ.choose (0, 5)
+              l <- TQ.vectorOf s (pure ())
               return (fmap (const emptyChoices) (O.valuesSafe l))
           ]
     ]
