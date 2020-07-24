@@ -13,7 +13,6 @@ import qualified Opaleye as O
 import qualified Opaleye.Join as OJ
 import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
-import qualified Opaleye.ToFields as O
 import           Connection (Connection, withConnection)
 import           Wrapped (constructor, asSumProfunctor,
                           constructorDecidable, asDecidable)
