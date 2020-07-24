@@ -1159,12 +1159,14 @@ main = do
 
   let connectString = connectStringEnvVar <|> connectStringDotEnv
 
-  conn <- maybe
+  connectString' <- maybe
     (fail ("Set " ++ envVarName ++ " environment variable\n"
            ++ "For example " ++ envVarName ++ "='user=tom dbname=opaleye_test "
            ++ "host=localhost port=25433 password=tom'"))
-    (PGS.connectPostgreSQL . String.fromString)
+    (pure . String.fromString)
     connectString
+
+  conn <- PGS.connectPostgreSQL connectString'
 
   dropAndCreateDB conn
 
