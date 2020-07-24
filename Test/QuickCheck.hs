@@ -497,9 +497,9 @@ genSelectMapper =
     , do
         let q' q = P.dimap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))
                            (fieldsList
-                            . OM.fromMaybeFields (0,
-                                                  O.sqlBool True,
-                                                  O.justFields (O.sqlString "field"))
+                            . O.fromMaybeFields (0,
+                                                 O.sqlBool True,
+                                                 O.justFields (O.sqlString "field"))
                             . fmap listFields)
                            (O.optionalRestrictExplicit unpackFields q)
         return q'
