@@ -110,12 +110,19 @@ instance Arr.ArrowChoice QueryArr where
             Left a -> first3 Left (runQueryArr f (a, primQ, t0))
             Right b -> (Right b, primQ, t0)
 
+instance Arr.ArrowApply QueryArr where
+  app = arrowApply
+
 instance Functor (QueryArr a) where
   fmap f = (arr f <<<)
 
 instance Applicative (QueryArr a) where
   pure = arr . const
   f <*> g = arr (uncurry ($)) <<< (f &&& g)
+
+instance Monad (QueryArr a) where
+  return = pure
+  (>>=) = bind
 
 instance P.Profunctor QueryArr where
   dimap f g a = arr g <<< a <<< arr f
