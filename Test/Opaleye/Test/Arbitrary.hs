@@ -82,20 +82,6 @@ aggregateFields =
                       (O.stringAgg (O.sqlString ", ")))
             (const (PP.purePP (O.nothingFieldsExplicit (pure emptyChoices))))
 
-aggregateLaterally :: O.Aggregator b b'
-                   -> O.SelectArr i (Fields, b)
-                   -> O.SelectArr i (Fields, b')
-aggregateLaterally agg q = proc i -> do
-  (a, b) <- q -< i
-
-  b' <- O.lateral
-    (\(a, b) ->
-        let aLateralInt :: O.Field O.SqlInt4
-            aLateralInt = fst (firstIntOr 0 a)
-        in O.aggregateOrdered (O.asc (const aLateralInt)) agg (pure b))
-            -< (a, b)
-  Arrow.returnA -< (a, b')
-
 arbitraryOrder :: ArbitraryOrder -> O.Order Fields
 arbitraryOrder =
   Monoid.mconcat
@@ -403,12 +389,6 @@ genSelectArrMapper =
     [ do
         thisLabel        <- TQ.arbitrary
         return (O.label thisLabel)
-    , -- This is stupidly simple way of generating lateral subqueries.
-      -- All it does is run a lateral aggregation.
-      do
-        return (fmap unpairColums
-                . aggregateLaterally aggregateFields
-                . fmap pairColumns)
     ]
 
 genSelectArrMaybeMapper :: [TQ.Gen (O.SelectArr a Fields
