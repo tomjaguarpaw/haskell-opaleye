@@ -67,11 +67,12 @@ type SelectArr = QueryArr
 
 -- | Implements @LATERAL@ subqueries.
 --
--- @LATERAL@ gives us goodies like 'Monad' and 'Control.Arrow.ArrowApply'
--- instances for 'SelectArr'. It also allows us to bypass the scoping rules
--- of SQL that otherwise restrict operations like
--- 'Opaleye.Aggregate.aggregate' and 'Opaleye.Binary.union' to 'Select's
--- rather than 'SelectArr's.
+-- You might find it easier to use 'Opaleye.Lateral.laterally' (if you
+-- want to apply 'Opaleye.Aggregate.aggregate',
+-- 'Opaleye.Order.orderBy' or 'Opaleye.Order.limit' to a 'SelectArr')
+-- or 'Opaleye.Lateral.bilaterally' (if you want to apply
+-- 'Opaleye.Binary.union', 'Opaleye.Binary.intersect' and
+-- 'Opaleye.Binary.except' to two 'SelectArr's).
 lateral :: (i -> Select a) -> SelectArr i a
 lateral f = QueryArr qa
   where
