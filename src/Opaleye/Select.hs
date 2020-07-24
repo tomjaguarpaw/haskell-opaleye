@@ -5,18 +5,6 @@
 -- 'SelectArr' is a parametrised version of 'Select', i.e. it can be
 -- passed arguments.
 
-module Opaleye.Select where
+module Opaleye.Select (Select, SelectArr) where
 
-import qualified Opaleye.QueryArr as Q
-
--- | A @SELECT@, i.e. an SQL query which produces a collection of
--- rows.
---
--- @Select a@ is analogous to a Haskell value @[a]@.
-type Select = SelectArr ()
-
--- | A parametrised 'Select'.  A @SelectArr a b@ accepts an argument
--- of type @a@.
---
--- @SelectArr a b@ is analogous to a Haskell function @a -> [b]@.
-type SelectArr = Q.QueryArr
+import Opaleye.Internal.QueryArr

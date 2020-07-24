@@ -50,6 +50,18 @@ runQueryArrUnpack unpackspec q = (primExprs, primQ, endTag)
 first3 :: (a1 -> b) -> (a1, a2, a3) -> (b, a2, a3)
 first3 f (a1, a2, a3) = (f a1, a2, a3)
 
+-- | A @SELECT@, i.e. an SQL query which produces a collection of
+-- rows.
+--
+-- @Select a@ is analogous to a Haskell value @[a]@.
+type Select = SelectArr ()
+
+-- | A parametrised 'Select'.  A @SelectArr a b@ accepts an argument
+-- of type @a@.
+--
+-- @SelectArr a b@ is analogous to a Haskell function @a -> [b]@.
+type SelectArr = QueryArr
+
 instance C.Category QueryArr where
   id = QueryArr id
   QueryArr f . QueryArr g = QueryArr (f . g)
