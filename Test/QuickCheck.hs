@@ -20,7 +20,7 @@ import           Wrapped (constructor, asSumProfunctor,
                           constructorDecidable, asDecidable)
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Test.QuickCheck as TQ
-import           Test.QuickCheck ((===))
+import           Test.QuickCheck ((===), (.&&.))
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
 import           Control.Category (Category, (.), id)
 import           Control.Monad (when, (<=<))
@@ -725,17 +725,17 @@ compare conn one two = do
   two' <- unSelectDenotation two conn
   return (sort one' === sort two')
 
-compareSortedBy :: Ord a
+compareSortedBy :: (Show a, Ord a)
                 => (a -> a -> Ord.Ordering)
                 -> PGS.Connection
                 -> SelectDenotation a
                 -> SelectDenotation a
-                -> IO Bool
+                -> IO TQ.Property
 compareSortedBy o conn one two = do
   one' <- unSelectDenotation one conn
   two' <- unSelectDenotation two conn
-  return ((sort one' == sort two')
-          && isSortedBy o one')
+  return ((sort one' === sort two')
+          .&&. isSortedBy o one')
 
 -- }
 
@@ -787,7 +787,7 @@ limit :: PGS.Connection
       -> ArbitraryPositiveInt
       -> ArbitrarySelect
       -> ArbitraryOrder
-      -> IO Bool
+      -> IO TQ.Property
 limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
   let q' = O.limit l (O.orderBy (arbitraryOrder o) q)
 
@@ -806,8 +806,8 @@ limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
       condBool :: Bool
       condBool = Maybe.fromMaybe True cond
 
-  return ((length one' == min l (length two'))
-          && condBool)
+  return ((length one' === min l (length two'))
+          .&&. condBool)
 
 offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect
        -> IO TQ.Property
@@ -815,7 +815,7 @@ offset conn (ArbitraryPositiveInt l) (ArbitrarySelect q) =
   compareNoSort conn (denotation (O.offset l q))
                      (onList (drop l) (denotation q))
 
-order :: PGS.Connection -> ArbitraryOrder -> ArbitrarySelect -> IO Bool
+order :: PGS.Connection -> ArbitraryOrder -> ArbitrarySelect -> IO TQ.Property
 order conn o (ArbitrarySelect q) =
   compareSortedBy (arbitraryOrdering o)
                   conn
