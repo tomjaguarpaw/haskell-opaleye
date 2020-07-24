@@ -49,17 +49,6 @@ table1 :: O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
                   (O.Field O.SqlInt4, O.Field O.SqlInt4)
 table1 = twoIntTable "table1"
 
-newtype SelectArrDenotation a b =
-  SelectArrDenotation { unSelectArrDenotation :: PGS.Connection -> [a] -> IO [b] }
-
-type SelectDenotation = SelectArrDenotation ()
-
-unSelectDenotation :: SelectDenotation b -> PGS.Connection -> IO [b]
-unSelectDenotation sa conn = unSelectArrDenotation sa conn [()]
-
-onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
-onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
-
 data Choice i b s = CInt i | CBool b | CString s deriving (Show, Eq, Ord)
 
 chooseChoice :: Divisible.Decidable f
@@ -190,66 +179,6 @@ aggregateLaterally agg q = proc i -> do
         in O.aggregateOrdered (O.asc (const aLateralInt)) agg (pure b))
             -< (a, b)
   Arrow.returnA -< (a, b')
-
--- This is taking liberties.  Firstly it errors out when two fields
--- are of different types.  It should probably return a Maybe or an
--- Either.  Secondly, it doesn't detect when lists are the same
--- length and it probably should.
---
--- We don't have the ability to aggregate MaybeFields, at least, not
--- yet.  Therefore we just replace them with Nothing.
-aggregateDenotation :: [Haskells] -> [Haskells]
-aggregateDenotation cs = if null cs
-                         then []
-                         else (pure
-                              . List.foldl1' combine
-                              . map emptyOutChoices
-                              ) cs
-  where combine h1 h2 = Choices (zipWith (curry (\case
-          (Left l1, Left l2) -> Left $ case (l1, l2) of
-            (CInt  i1, CInt i2)  -> CInt (i1 + i2)
-            (CBool b1, CBool b2) -> CBool (b1 && b2)
-            (CString s1, CString s2) -> CString (s1 ++ ", " ++ s2)
-            _ -> error "Impossible"
-          (Right _, Right _) -> Right Nothing
-          _ -> error "Impossible")) (unChoices h1) (unChoices h2))
-
-        emptyOutChoices c = Choices $ flip map (unChoices c) $ \case
-            Left l  -> Left l
-            Right _ -> Right Nothing
-
-optionalDenotation :: [Haskells] -> [Maybe Haskells]
-optionalDenotation = \case
-  [] -> [Nothing]
-  xs -> map Just xs
-
-optionalRestrictDenotation :: [Haskells] -> [Maybe Haskells]
-optionalRestrictDenotation = optionalDenotation . restrictFirstBoolList
-
-traverseDenotation :: SelectArrDenotation a Haskells
-                   -> SelectDenotation (Maybe a)
-                   -> SelectDenotation (Maybe Haskells)
-traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
-  (SelectArrDenotation (\conn l -> do
-                           qr <- q conn l
-                           let nothings :: [()]
-                               (nothings, justs) =
-                                 Data.Either.partitionEithers
-                                   (map (\case
-                                            Nothing -> Left ()
-                                            Just j -> Right j)
-                                        qr)
-
-                           justs' <- f conn justs
-                           let _ = justs' :: [Haskells]
-
-                           return ((Just <$> justs')
-                                   ++ (Nothing <$ nothings))))
-
-lateralDenotation :: (a -> SelectDenotation r)
-               -> SelectArrDenotation a r
-lateralDenotation f = SelectArrDenotation (\conn l ->
-  concatMapM (\r -> unSelectArrDenotation (f r) conn [()]) l)
 
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
@@ -687,6 +616,77 @@ arbitraryOrdering =
                                   else
                                        CInt 0)))
   . unArbitraryOrder
+
+newtype SelectArrDenotation a b =
+  SelectArrDenotation { unSelectArrDenotation :: PGS.Connection -> [a] -> IO [b] }
+
+type SelectDenotation = SelectArrDenotation ()
+
+unSelectDenotation :: SelectDenotation b -> PGS.Connection -> IO [b]
+unSelectDenotation sa conn = unSelectArrDenotation sa conn [()]
+
+onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
+onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
+
+-- This is taking liberties.  Firstly it errors out when two fields
+-- are of different types.  It should probably return a Maybe or an
+-- Either.  Secondly, it doesn't detect when lists are the same
+-- length and it probably should.
+--
+-- We don't have the ability to aggregate MaybeFields, at least, not
+-- yet.  Therefore we just replace them with Nothing.
+aggregateDenotation :: [Haskells] -> [Haskells]
+aggregateDenotation cs = if null cs
+                         then []
+                         else (pure
+                              . List.foldl1' combine
+                              . map emptyOutChoices
+                              ) cs
+  where combine h1 h2 = Choices (zipWith (curry (\case
+          (Left l1, Left l2) -> Left $ case (l1, l2) of
+            (CInt  i1, CInt i2)  -> CInt (i1 + i2)
+            (CBool b1, CBool b2) -> CBool (b1 && b2)
+            (CString s1, CString s2) -> CString (s1 ++ ", " ++ s2)
+            _ -> error "Impossible"
+          (Right _, Right _) -> Right Nothing
+          _ -> error "Impossible")) (unChoices h1) (unChoices h2))
+
+        emptyOutChoices c = Choices $ flip map (unChoices c) $ \case
+            Left l  -> Left l
+            Right _ -> Right Nothing
+
+optionalDenotation :: [Haskells] -> [Maybe Haskells]
+optionalDenotation = \case
+  [] -> [Nothing]
+  xs -> map Just xs
+
+optionalRestrictDenotation :: [Haskells] -> [Maybe Haskells]
+optionalRestrictDenotation = optionalDenotation . restrictFirstBoolList
+
+traverseDenotation :: SelectArrDenotation a Haskells
+                   -> SelectDenotation (Maybe a)
+                   -> SelectDenotation (Maybe Haskells)
+traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
+  (SelectArrDenotation (\conn l -> do
+                           qr <- q conn l
+                           let nothings :: [()]
+                               (nothings, justs) =
+                                 Data.Either.partitionEithers
+                                   (map (\case
+                                            Nothing -> Left ()
+                                            Just j -> Right j)
+                                        qr)
+
+                           justs' <- f conn justs
+                           let _ = justs' :: [Haskells]
+
+                           return ((Just <$> justs')
+                                   ++ (Nothing <$ nothings))))
+
+lateralDenotation :: (a -> SelectDenotation r)
+               -> SelectArrDenotation a r
+lateralDenotation f = SelectArrDenotation (\conn l ->
+  concatMapM (\r -> unSelectArrDenotation (f r) conn [()]) l)
 
 instance Functor (SelectArrDenotation a) where
   fmap f = SelectArrDenotation
