@@ -1189,14 +1189,14 @@ main = do
 
   PGS.close conn
 
-  conn <- Connection.connectPostgreSQL connectString
+  conn2 <- Connection.connectPostgreSQL connectString
   -- Need to run quickcheck after table data has been inserted
-  QuickCheck.run conn
-  Connection.close conn
+  QuickCheck.run conn2
+  Connection.close conn2
 
-  conn <- PGS.connectPostgreSQL connectString
+  conn3 <- PGS.connectPostgreSQL connectString
   hspec $ do
-    before (return conn) $ do
+    before (return conn3) $ do
       describe "core dsl?" $ do
         testSelect
         testProduct
