@@ -4,7 +4,7 @@
 -- probably won't want to create values of type 'MaybeFields'
 -- directly; instead they will appear as the result of
 -- left\/right\/outer join-like operations, such as
--- 'Opaleye.Join.optionalRestrict' and 'optional'.
+-- 'Opaleye.Join.optionalRestrict' and 'Opaleye.Join.optional'.
 
 module Opaleye.MaybeFields (
   MaybeFields,
