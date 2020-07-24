@@ -384,7 +384,7 @@ arbitrarySelectArrRecurse0 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse0 =
   (fmap . fmap) ArbitrarySelectArr $
      map (fmap ignoreArguments) genSelect
-  ++ genFieldsFunction
+  ++ genSelectArr
   where ignoreArguments = P.lmap (const ())
 
 arbitrarySelectArrRecurse1 :: [TQ.Gen ArbitrarySelectArr]
@@ -471,8 +471,8 @@ genSelect =
           ]
     ]
 
-genFieldsFunction :: [TQ.Gen (O.SelectArr Fields Fields)]
-genFieldsFunction =
+genSelectArr :: [TQ.Gen (O.SelectArr Fields Fields)]
+genSelectArr =
     [ do
         f                <- TQ.arbitrary
         return (Arrow.arr (unArbitraryFunction f))
