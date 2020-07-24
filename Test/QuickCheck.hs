@@ -694,6 +694,16 @@ denotationMaybeFields :: O.Select (O.MaybeFields Fields)
 denotationMaybeFields =
   denotationExplicit (O.fromFieldsMaybeFields fromFieldsFields)
 
+unSelectDenotations :: PGS.Connection
+                    -> SelectDenotation a
+                    -> SelectDenotation b
+                    -> ([a] -> [b] -> IO TQ.Property)
+                    -> IO TQ.Property
+unSelectDenotations conn one two k = do
+  one' <- unSelectDenotation one conn
+  two' <- unSelectDenotation two conn
+  k one' two'
+
 -- { Comparing the results
 
 -- compareNoSort is stronger than compare so prefer to use it where
@@ -704,10 +714,8 @@ compareNoSort :: (Ord a, Show a)
               -> SelectDenotation a
               -> SelectDenotation a
               -> IO TQ.Property
-compareNoSort conn one two = do
-  one' <- unSelectDenotation one conn
-  two' <- unSelectDenotation two conn
-
+compareNoSort conn one two =
+  unSelectDenotations conn one two $ \one' two' -> do
   when (one' /= two')
        (putStrLn $ if sort one' == sort two'
                    then "[but they are equal sorted]"
@@ -720,9 +728,7 @@ compare :: (Show a, Ord a)
          -> SelectDenotation a
          -> SelectDenotation a
          -> IO TQ.Property
-compare conn one two = do
-  one' <- unSelectDenotation one conn
-  two' <- unSelectDenotation two conn
+compare conn one two = unSelectDenotations conn one two $ \one' two' ->
   return (sort one' === sort two')
 
 compareSortedBy :: (Show a, Ord a)
@@ -731,9 +737,7 @@ compareSortedBy :: (Show a, Ord a)
                 -> SelectDenotation a
                 -> SelectDenotation a
                 -> IO TQ.Property
-compareSortedBy o conn one two = do
-  one' <- unSelectDenotation one conn
-  two' <- unSelectDenotation two conn
+compareSortedBy o conn one two = unSelectDenotations conn one two $ \one' two' ->
   return ((sort one' === sort two')
           .&&. isSortedBy o one')
 
@@ -791,23 +795,21 @@ limit :: PGS.Connection
 limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
   let q' = O.limit l (O.orderBy (arbitraryOrder o) q)
 
-  one' <- unSelectDenotation (denotation q') conn
-  two' <- unSelectDenotation (denotation q) conn
+  unSelectDenotations conn (denotation q') (denotation q) $ \one' two' -> do
+      let remainder = MultiSet.fromList two'
+                      `MultiSet.difference`
+                      MultiSet.fromList one'
+          maxChosen :: Maybe Haskells
+          maxChosen = maximumBy (arbitraryOrdering o) one'
+          minRemain :: Maybe Haskells
+          minRemain = minimumBy (arbitraryOrdering o) (MultiSet.toList remainder)
+          cond :: Maybe Bool
+          cond = lteBy (arbitraryOrdering o) <$> maxChosen <*> minRemain
+          condBool :: Bool
+          condBool = Maybe.fromMaybe True cond
 
-  let remainder = MultiSet.fromList two'
-                  `MultiSet.difference`
-                  MultiSet.fromList one'
-      maxChosen :: Maybe Haskells
-      maxChosen = maximumBy (arbitraryOrdering o) one'
-      minRemain :: Maybe Haskells
-      minRemain = minimumBy (arbitraryOrdering o) (MultiSet.toList remainder)
-      cond :: Maybe Bool
-      cond = lteBy (arbitraryOrdering o) <$> maxChosen <*> minRemain
-      condBool :: Bool
-      condBool = Maybe.fromMaybe True cond
-
-  return ((length one' === min l (length two'))
-          .&&. condBool)
+      return ((length one' === min l (length two'))
+              .&&. condBool)
 
 offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect
        -> IO TQ.Property
