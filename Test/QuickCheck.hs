@@ -448,8 +448,7 @@ arbitraryKleisliRecurse2 =
                  ; ArbitraryKleisli q2 <- TQ.arbitrary
                  ; f <- fg
                  ; return (ArbitraryKleisli (f q1 q2)) })
-  [ pure (.<=<) , pure (liftA2 (liftA2 appendChoices)) ]
-  where q1 .<=< q2 = \a -> q1 a `OL.bind` q2
+  [ pure (<=<) , pure (liftA2 (liftA2 appendChoices)) ]
 
 genSelect :: [TQ.Gen (O.Select Fields)]
 genSelect =
