@@ -131,6 +131,7 @@ newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitrarySelectMaybe =
   ArbitrarySelectMaybe (O.Select (O.MaybeFields Fields))
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
+newtype ArbitraryKleisli = ArbitraryKleisli (Fields -> O.Select Fields)
 newtype ArbitraryHaskells = ArbitraryHaskells { unArbitraryHaskells :: Haskells }
                         deriving Show
 newtype ArbitraryHaskellsList =
@@ -258,6 +259,10 @@ instance Show ArbitrarySelectArr where
   -- We could plug in dummy data here, or maybe just an empty list
   show _ = "ArbitrarySelectArr"
 
+instance Show ArbitraryKleisli where
+  -- We could plug in dummy data here, or maybe just an empty list
+  show _ = "ArbitraryKleisli"
+
 instance Show ArbitraryFunction where
   show = const "A function"
 
@@ -289,6 +294,12 @@ instance TQ.Arbitrary ArbitrarySelectArr where
                   arbitrarySelectArrRecurse0
                   arbitrarySelectArrRecurse1
                   arbitrarySelectArrRecurse2
+
+instance TQ.Arbitrary ArbitraryKleisli where
+  arbitrary = recurseSafelyOneof
+                  arbitraryKleisliRecurse0
+                  arbitraryKleisliRecurse1
+                  arbitraryKleisliRecurse2
 
 -- It would be better if ArbitrarySelect recursively called this, but
 -- it will do for now.
@@ -388,6 +399,11 @@ arbitrarySelectArrRecurse1 =
                    ; f <- fg
                    ; pure (fmap (Choices . pure . Right) (f q)) })
         genSelectArrMaybeMapper
+    ++
+    map (\fg -> do { ArbitraryKleisli q <- TQ.arbitrary
+                   ; f <- fg
+                   ; pure (f q) })
+        [ pure OL.lateral ]
 
 arbitrarySelectArrRecurse2 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse2 =
@@ -408,6 +424,27 @@ arbitrarySelectArrRecurse2 =
     ++
     genSelectArrMapper2
     )
+
+arbitraryKleisliRecurse0 :: [TQ.Gen ArbitraryKleisli]
+arbitraryKleisliRecurse0 =
+  (fmap . fmap) (ArbitraryKleisli . const) genSelect
+  ++ [ pure (ArbitraryKleisli pure) ]
+
+arbitraryKleisliRecurse1 :: [TQ.Gen ArbitraryKleisli]
+arbitraryKleisliRecurse1 =
+  map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+                 ; f <- fg
+                 ; return (ArbitraryKleisli (f q)) })
+  [ pure OL.viaLateral ]
+
+arbitraryKleisliRecurse2 :: [TQ.Gen ArbitraryKleisli]
+arbitraryKleisliRecurse2 =
+  map (\fg -> do { ArbitraryKleisli q1 <- TQ.arbitrary
+                 ; ArbitraryKleisli q2 <- TQ.arbitrary
+                 ; f <- fg
+                 ; return (ArbitraryKleisli (f q1 q2)) })
+  [ pure (.<=<) , pure (liftA2 (liftA2 appendChoices)) ]
+  where q1 .<=< q2 = \a -> q1 a `OL.bind` q2
 
 genSelect :: [TQ.Gen (O.Select Fields)]
 genSelect =
