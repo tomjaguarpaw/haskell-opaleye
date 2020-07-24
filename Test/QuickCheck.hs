@@ -67,6 +67,22 @@ newtype SelectArrDenotation a b =
 
 type SelectDenotation = SelectArrDenotation ()
 
+instance Functor (SelectArrDenotation a) where
+  fmap f = SelectArrDenotation
+           . (fmap . fmap . fmap . fmap) f
+           . unSelectArrDenotation
+
+instance Applicative (SelectArrDenotation a) where
+  pure    = SelectArrDenotation . pure . pure . pure . pure
+  f <*> x = SelectArrDenotation ((liftA2 . liftA2 . liftA2 . liftA2) ($)
+                                   (unSelectArrDenotation f)
+                                   (unSelectArrDenotation x))
+
+instance Category SelectArrDenotation where
+  id = SelectArrDenotation (\_ -> pure)
+  (.) = \(SelectArrDenotation f) (SelectArrDenotation g) ->
+          SelectArrDenotation (\conn -> f conn <=< g conn)
+
 unSelectDenotation :: SelectDenotation b -> PGS.Connection -> IO [b]
 unSelectDenotation sa conn = unSelectArrDenotation sa conn [()]
 
@@ -133,24 +149,8 @@ lateralDenotation :: (a -> SelectDenotation r)
 lateralDenotation f = SelectArrDenotation (\conn l ->
   concatMapM (\r -> unSelectArrDenotation (f r) conn [()]) l)
 
-instance Functor (SelectArrDenotation a) where
-  fmap f = SelectArrDenotation
-           . (fmap . fmap . fmap . fmap) f
-           . unSelectArrDenotation
-
 pureList :: [a] -> SelectDenotation a
 pureList = SelectArrDenotation . pure . pure . pure
-
-instance Applicative (SelectArrDenotation a) where
-  pure    = SelectArrDenotation . pure . pure . pure . pure
-  f <*> x = SelectArrDenotation ((liftA2 . liftA2 . liftA2 . liftA2) ($)
-                                   (unSelectArrDenotation f)
-                                   (unSelectArrDenotation x))
-
-instance Category SelectArrDenotation where
-  id = SelectArrDenotation (\_ -> pure)
-  (.) = \(SelectArrDenotation f) (SelectArrDenotation g) ->
-          SelectArrDenotation (\conn -> f conn <=< g conn)
 
 concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
 concatMapM f = fmap concat . mapM f
