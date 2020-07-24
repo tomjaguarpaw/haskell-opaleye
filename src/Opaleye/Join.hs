@@ -75,7 +75,11 @@ optionalRestrict :: D.Default U.Unpackspec a a
                  -- single row of \"Nothing\"
 optionalRestrict = J.optionalRestrict
 
--- | Convenient access to lateral left/right join
+-- | NB Opaleye exports @Opaleye.Table.'Opaleye.Table.optional'@ from
+-- the top level.  If you want this @optional@ you will have to import
+-- it from this module.
+--
+-- Convenient access to lateral left/right join
 -- functionality. Performs a @LATERAL LEFT JOIN@ under the hood and
 -- has behaviour equivalent to the following Haskell function:
 --
