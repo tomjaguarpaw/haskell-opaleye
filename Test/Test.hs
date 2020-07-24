@@ -1157,16 +1157,16 @@ main = do
                          `Dotenv.onMissingFile`
                          return Nothing
 
-  let connectString = connectStringEnvVar <|> connectStringDotEnv
+  let mconnectString = connectStringEnvVar <|> connectStringDotEnv
 
-  connectString' <- maybe
+  connectString <- maybe
     (fail ("Set " ++ envVarName ++ " environment variable\n"
            ++ "For example " ++ envVarName ++ "='user=tom dbname=opaleye_test "
            ++ "host=localhost port=25433 password=tom'"))
     (pure . String.fromString)
-    connectString
+    mconnectString
 
-  conn <- PGS.connectPostgreSQL connectString'
+  conn <- PGS.connectPostgreSQL connectString
 
   dropAndCreateDB conn
 
