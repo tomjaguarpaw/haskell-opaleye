@@ -112,6 +112,8 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules: Connection,
+                 Opaleye.Test.Arbitrary,
+                 Opaleye.Test.Fields,
                  QuickCheck,
                  TypeFamilies,
                  Wrapped
