@@ -22,6 +22,7 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.FunctionalJoin
                , module Opaleye.Join
                , module Opaleye.Label
+               , module Opaleye.Lateral
                , module Opaleye.Manipulation
                , module Opaleye.MaybeFields
                , module Opaleye.Operators
@@ -54,6 +55,7 @@ import Opaleye.FunctionalJoin
 import Opaleye.Join
   hiding (optional)
 import Opaleye.Label
+import Opaleye.Lateral
 import Opaleye.Manipulation
 import Opaleye.MaybeFields
   hiding (optional)

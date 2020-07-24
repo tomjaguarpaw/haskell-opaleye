@@ -11,7 +11,6 @@ module QuickCheck where
 import           Prelude hiding (compare, (.), id)
 import qualified Opaleye as O
 import qualified Opaleye.MaybeFields as OMF
-import qualified Opaleye.Internal.Lateral as OL
 import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
 import qualified Opaleye.Internal.Distinct as OD
@@ -183,7 +182,7 @@ aggregateLaterally :: O.Aggregator b b'
 aggregateLaterally agg q = proc i -> do
   (a, b) <- q -< i
 
-  b' <- OL.lateral
+  b' <- O.lateral
     (\(a, b) ->
         let aLateralInt :: O.Field O.SqlInt4
             aLateralInt = fst (firstIntOr 0 a)
@@ -392,7 +391,7 @@ arbitrarySelectArrRecurse1 =
     (fmap . fmap) ArbitrarySelectArr $
     map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
                    ; f <- fg
-                   ; pure (OL.laterally f q) })
+                   ; pure (O.laterally f q) })
         genSelectMapper
     ++
     map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
@@ -408,7 +407,7 @@ arbitrarySelectArrRecurse1 =
     map (\fg -> do { ArbitraryKleisli q <- TQ.arbitrary
                    ; f <- fg
                    ; pure (f q) })
-        [ pure OL.lateral ]
+        [ pure O.lateral ]
 
 arbitrarySelectArrRecurse2 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse2 =
@@ -416,7 +415,7 @@ arbitrarySelectArrRecurse2 =
     map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
                    ; ArbitrarySelectArr q2 <- TQ.arbitrary
                    ; f <- fg
-                   ; pure (OL.bilaterally f q1 q2) })
+                   ; pure (O.bilaterally f q1 q2) })
         genSelectMapper2
     ++
     (
@@ -440,7 +439,7 @@ arbitraryKleisliRecurse1 =
   map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
                  ; f <- fg
                  ; return (ArbitraryKleisli (f q)) })
-  [ pure OL.viaLateral ]
+  [ pure O.viaLateral ]
 
 arbitraryKleisliRecurse2 :: [TQ.Gen ArbitraryKleisli]
 arbitraryKleisliRecurse2 =
@@ -946,7 +945,7 @@ lateral :: Connection
         -> IO TQ.Property
 lateral conn (ArbitraryKleisli f) (ArbitrarySelect q) =
   compare conn (lateralDenotation denotation_f . denotation_q)
-               (denotationArr (OL.lateral f') . denotation_q)
+               (denotationArr (O.lateral f') . denotation_q)
   where _ = f :: Fields -> O.Select Fields
 
         f' :: FieldsTuple -> O.Select Fields
