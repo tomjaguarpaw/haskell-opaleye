@@ -13,7 +13,6 @@ import qualified Opaleye as O
 import qualified Opaleye.Join as OJ
 import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
-import qualified Opaleye.Internal.Distinct as OD
 import qualified Opaleye.ToFields as O
 import           Connection (Connection, withConnection)
 import           Wrapped (constructor, asSumProfunctor,
@@ -149,11 +148,11 @@ data Order = Asc | Desc deriving Show
 unpackFields :: O.Unpackspec Fields Fields
 unpackFields = defChoicesPP O.unpackspecMaybeFields
 
-distinctNullsFields :: OM.WithNulls OD.Distinctspec Fields Fields
+distinctNullsFields :: OM.WithNulls O.Distinctspec Fields Fields
 distinctNullsFields =
   ppChoices defChoicePP (OM.mapMaybeFieldsWithNulls D.def)
 
-distinctFields :: OD.Distinctspec Fields Fields
+distinctFields :: O.Distinctspec Fields Fields
 distinctFields = P.dimap unChoices Choices (PP.list
     (defChoicePP PP.+++! OM.unWithNulls D.def distinctNullsFields))
 

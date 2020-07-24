@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.Distinct (module Opaleye.Distinct, distinctExplicit)
+module Opaleye.Distinct (module Opaleye.Distinct, Distinctspec, distinctExplicit)
        where
 
 import           Opaleye.Select (Select)
