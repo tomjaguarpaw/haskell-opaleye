@@ -9,17 +9,20 @@
 module QuickCheck where
 
 import           Prelude hiding (compare, (.), id)
+
+import           Connection (Connection, withConnection)
+import           Wrapped (constructor, asSumProfunctor,
+                          constructorDecidable, asDecidable)
+
 import qualified Opaleye as O
 import qualified Opaleye.Join as OJ
 import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
-import           Connection (Connection, withConnection)
-import           Wrapped (constructor, asSumProfunctor,
-                          constructorDecidable, asDecidable)
+
 import qualified Database.PostgreSQL.Simple as PGS
-import qualified Test.QuickCheck as TQ
-import           Test.QuickCheck ((===), (.&&.))
 import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
+import qualified Control.Arrow as Arrow
+import           Control.Arrow ((<<<), (>>>))
 import           Control.Category (Category, (.), id)
 import           Control.Monad (when, (<=<))
 import qualified Data.Profunctor.Product.Default as D
@@ -33,8 +36,9 @@ import qualified Data.Monoid as Monoid
 import qualified Data.Ord as Ord hiding (compare)
 import qualified Data.Set as Set
 import qualified Data.Maybe as Maybe
-import qualified Control.Arrow as Arrow
-import           Control.Arrow ((<<<), (>>>))
+import qualified Test.QuickCheck as TQ
+import           Test.QuickCheck ((===), (.&&.))
+
 
 twoIntTable :: String
             -> O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
