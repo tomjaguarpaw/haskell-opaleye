@@ -33,6 +33,7 @@ module Opaleye.MaybeFields (
   nothingFieldsExplicit,
   fromMaybeFieldsExplicit,
   maybeFieldsExplicit,
+  Opaleye.Join.optionalExplicit,
   traverseMaybeFieldsExplicit,
   ) where
 
