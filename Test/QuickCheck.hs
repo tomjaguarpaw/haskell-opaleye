@@ -24,7 +24,6 @@ import           Control.Category (Category, (.), id)
 import           Control.Monad (when, (<=<))
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Either
-import           Data.List (sort)
 import qualified Data.List as List
 import qualified Data.MultiSet as MultiSet
 import qualified Data.Profunctor as P
@@ -762,7 +761,7 @@ compareNoSort :: (Ord a, Show a)
 compareNoSort conn one two =
   unSelectDenotations conn one two $ \one' two' -> do
   when (one' /= two')
-       (putStrLn $ if sort one' == sort two'
+       (putStrLn $ if List.sort one' == List.sort two'
                    then "[but they are equal sorted]"
                    else "AND THEY'RE NOT EVEN EQUAL SORTED!")
 
@@ -774,7 +773,7 @@ compare :: (Show a, Ord a)
          -> SelectDenotation a
          -> IO TQ.Property
 compare conn one two = unSelectDenotations conn one two $ \one' two' ->
-  return (sort one' === sort two')
+  return (List.sort one' === List.sort two')
 
 compareSortedBy :: (Show a, Ord a)
                 => (a -> a -> Ord.Ordering)
@@ -783,7 +782,7 @@ compareSortedBy :: (Show a, Ord a)
                 -> SelectDenotation a
                 -> IO TQ.Property
 compareSortedBy o conn one two = unSelectDenotations conn one two $ \one' two' ->
-  return ((sort one' === sort two')
+  return ((List.sort one' === List.sort two')
           .&&. isSortedBy o one')
 
 -- }
