@@ -14,7 +14,7 @@ module Opaleye.MaybeFields (
   maybeFields,
   maybeFieldsToSelect,
   catMaybeFields,
-  optional,
+  Opaleye.Join.optional,
   Opaleye.MaybeFields.traverseMaybeFields,
   -- * Adaptors
   Nullspec,
@@ -39,6 +39,7 @@ module Opaleye.MaybeFields (
 import Opaleye.Internal.Distinct
 import Opaleye.Internal.MaybeFields
 import Opaleye.Internal.Values
+import Opaleye.Join
 import Opaleye.Unpackspec
 import Opaleye.Select
 

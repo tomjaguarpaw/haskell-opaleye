@@ -10,7 +10,7 @@ module QuickCheck where
 
 import           Prelude hiding (compare, (.), id)
 import qualified Opaleye as O
-import qualified Opaleye.MaybeFields as OMF
+import qualified Opaleye.Join as OJ
 import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
 import qualified Opaleye.Internal.Distinct as OD
@@ -543,7 +543,7 @@ genSelectArrMaybeMapper :: [TQ.Gen (O.SelectArr a Fields
                                     -> O.SelectArr a (O.MaybeFields Fields))]
 genSelectArrMaybeMapper =
   [ do
-      return OMF.optional
+      return (OJ.optionalExplicit unpackFields)
   ]
 
 genSelectArrPoly :: [TQ.Gen (O.SelectArr a Fields
@@ -911,7 +911,7 @@ label conn comment (ArbitrarySelect q) =
 
 optional :: Connection -> ArbitrarySelect -> IO TQ.Property
 optional conn (ArbitrarySelect q) =
-  compare conn (denotationMaybeFields (OMF.optional q))
+  compare conn (denotationMaybeFields (OJ.optionalExplicit unpackFields q))
                (onList optionalDenotation (denotation q))
 
 optionalRestrict :: Connection -> ArbitrarySelect -> IO TQ.Property
