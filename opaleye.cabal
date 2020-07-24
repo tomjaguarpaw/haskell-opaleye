@@ -110,7 +110,8 @@ test-suite test
   default-language: Haskell2010
   type: exitcode-stdio-1.0
   main-is: Test.hs
-  other-modules: QuickCheck,
+  other-modules: Connection,
+                 QuickCheck,
                  TypeFamilies,
                  Wrapped
   hs-source-dirs: Test

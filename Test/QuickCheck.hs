@@ -16,6 +16,7 @@ import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
 import qualified Opaleye.Internal.Distinct as OD
 import qualified Opaleye.ToFields as O
+import           Connection (Connection, withConnection)
 import           Wrapped (constructor, asSumProfunctor,
                           constructorDecidable, asDecidable)
 import qualified Database.PostgreSQL.Simple as PGS
@@ -694,15 +695,21 @@ denotationMaybeFields :: O.Select (O.MaybeFields Fields)
 denotationMaybeFields =
   denotationExplicit (O.fromFieldsMaybeFields fromFieldsFields)
 
-unSelectDenotations :: PGS.Connection
+unSelectDenotations :: Connection
                     -> SelectDenotation a
                     -> SelectDenotation b
                     -> ([a] -> [b] -> IO TQ.Property)
                     -> IO TQ.Property
 unSelectDenotations conn one two k = do
-  one' <- unSelectDenotation one conn
-  two' <- unSelectDenotation two conn
-  k one' two'
+  withConnection conn (unSelectDenotation one) >>= \case
+    Left _ -> discard
+    Right oner -> withConnection conn (unSelectDenotation two) >>= \case
+      Left _ -> discard
+      Right twor -> k oner twor
+
+  where discard = do
+          putStrLn "A denotation failed to run but it was not our fault"
+          pure (TQ.property TQ.Discard)
 
 -- { Comparing the results
 
@@ -710,7 +717,7 @@ unSelectDenotations conn one two k = do
 -- possible.  If the queries do not compare equal but do compare equal
 -- sorted then switch to "compare".  That's no big deal.
 compareNoSort :: (Ord a, Show a)
-              => PGS.Connection
+              => Connection
               -> SelectDenotation a
               -> SelectDenotation a
               -> IO TQ.Property
@@ -724,7 +731,7 @@ compareNoSort conn one two =
   return (one' === two')
 
 compare :: (Show a, Ord a)
-         => PGS.Connection
+         => Connection
          -> SelectDenotation a
          -> SelectDenotation a
          -> IO TQ.Property
@@ -733,7 +740,7 @@ compare conn one two = unSelectDenotations conn one two $ \one' two' ->
 
 compareSortedBy :: (Show a, Ord a)
                 => (a -> a -> Ord.Ordering)
-                -> PGS.Connection
+                -> Connection
                 -> SelectDenotation a
                 -> SelectDenotation a
                 -> IO TQ.Property
@@ -745,12 +752,12 @@ compareSortedBy o conn one two = unSelectDenotations conn one two $ \one' two' -
 
 -- { The tests
 
-fields :: PGS.Connection -> ArbitraryHaskells -> IO TQ.Property
+fields :: Connection -> ArbitraryHaskells -> IO TQ.Property
 fields conn (ArbitraryHaskells c) =
   compareNoSort conn (denotation (pure (fieldsOfHaskells c)))
                      (pure c)
 
-compose :: PGS.Connection
+compose :: Connection
         -> ArbitrarySelectArr
         -> ArbitrarySelect
         -> IO TQ.Property
@@ -762,19 +769,19 @@ compose conn (ArbitrarySelectArr a) (ArbitrarySelect q) = do
 
 -- Would prefer to write 'compare conn (denotation id) id' but that
 -- requires extending compare to compare SelectArrs.
-identity :: PGS.Connection
+identity :: Connection
          -> ArbitrarySelect
          -> IO TQ.Property
 identity conn (ArbitrarySelect q) = do
   compare conn (denotation (id . q))
                (id . denotation q)
 
-fmap' :: PGS.Connection -> ArbitraryFunction -> ArbitrarySelect -> IO TQ.Property
+fmap' :: Connection -> ArbitraryFunction -> ArbitrarySelect -> IO TQ.Property
 fmap' conn f (ArbitrarySelect q) =
   compareNoSort conn (denotation (fmap (unArbitraryFunction f) q))
                      (onList (fmap (unArbitraryFunction f)) (denotation q))
 
-apply :: PGS.Connection -> ArbitrarySelect -> ArbitrarySelect -> IO TQ.Property
+apply :: Connection -> ArbitrarySelect -> ArbitrarySelect -> IO TQ.Property
 apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
   compare conn (denotation2 ((,) <$> q1 <*> q2))
                 ((,) <$> denotation q1 <*> denotation q2)
@@ -787,7 +794,7 @@ apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
 -- the remainder under the applied ordering.
 --
 -- Strangely the same caveat doesn't apply to offset.
-limit :: PGS.Connection
+limit :: Connection
       -> ArbitraryPositiveInt
       -> ArbitrarySelect
       -> ArbitraryOrder
@@ -811,20 +818,20 @@ limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
       return ((length one' === min l (length two'))
               .&&. condBool)
 
-offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect
+offset :: Connection -> ArbitraryPositiveInt -> ArbitrarySelect
        -> IO TQ.Property
 offset conn (ArbitraryPositiveInt l) (ArbitrarySelect q) =
   compareNoSort conn (denotation (O.offset l q))
                      (onList (drop l) (denotation q))
 
-order :: PGS.Connection -> ArbitraryOrder -> ArbitrarySelect -> IO TQ.Property
+order :: Connection -> ArbitraryOrder -> ArbitrarySelect -> IO TQ.Property
 order conn o (ArbitrarySelect q) =
   compareSortedBy (arbitraryOrdering o)
                   conn
                   (denotation (O.orderBy (arbitraryOrder o) q))
                   (denotation q)
 
-distinct :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
+distinct :: Connection -> ArbitrarySelect -> IO TQ.Property
 distinct conn (ArbitrarySelect q) =
   compare conn (denotation (O.distinctExplicit distinctFields q))
                 (onList nub (denotation q))
@@ -832,12 +839,12 @@ distinct conn (ArbitrarySelect q) =
 -- When we added <*> to the arbitrary queries we started getting some
 -- consequences to do with the order of the returned rows and so
 -- restrict had to start being compared sorted.
-restrict :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
+restrict :: Connection -> ArbitrarySelect -> IO TQ.Property
 restrict conn (ArbitrarySelect q) =
   compare conn (denotation (restrictFirstBool <<< q))
                 (onList restrictFirstBoolList (denotation q))
 
-values :: PGS.Connection -> ArbitraryHaskellsList -> IO TQ.Property
+values :: Connection -> ArbitraryHaskellsList -> IO TQ.Property
 values conn (ArbitraryHaskellsList l) =
   compareNoSort conn
                 (denotation (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
@@ -845,41 +852,41 @@ values conn (ArbitraryHaskellsList l) =
 
 -- We test values entries of length two in values, and values entries
 -- of length zero here.  Ideally we would find some way to merge them.
-valuesEmpty :: PGS.Connection -> [()] -> IO TQ.Property
+valuesEmpty :: Connection -> [()] -> IO TQ.Property
 valuesEmpty conn l =
   compareNoSort conn
                 (denotationExplicit D.def (O.valuesSafe l))
                 (pureList l)
 
-aggregate :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
+aggregate :: Connection -> ArbitrarySelect -> IO TQ.Property
 aggregate conn (ArbitrarySelect q) =
   compareNoSort conn (denotation (O.aggregate aggregateFields q))
                      (onList aggregateDenotation (denotation q))
 
 
-label :: PGS.Connection -> String -> ArbitrarySelect -> IO TQ.Property
+label :: Connection -> String -> ArbitrarySelect -> IO TQ.Property
 label conn comment (ArbitrarySelect q) =
   compareNoSort conn (denotation (O.label comment q))
                      (denotation q)
 
-optional :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
+optional :: Connection -> ArbitrarySelect -> IO TQ.Property
 optional conn (ArbitrarySelect q) =
   compare conn (denotationMaybeFields (OMF.optional q))
                (onList optionalDenotation (denotation q))
 
-optionalRestrict :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
+optionalRestrict :: Connection -> ArbitrarySelect -> IO TQ.Property
 optionalRestrict conn (ArbitrarySelect q) =
   compare conn (denotationMaybeFields q1)
                (onList optionalRestrictDenotation (denotation q))
   where q1 = P.lmap (\() -> fst . firstBoolOrTrue (O.sqlBool True))
                     (O.optionalRestrictExplicit unpackFields q)
 
-maybeFieldsToSelect :: PGS.Connection -> ArbitrarySelectMaybe -> IO TQ.Property
+maybeFieldsToSelect :: Connection -> ArbitrarySelectMaybe -> IO TQ.Property
 maybeFieldsToSelect conn (ArbitrarySelectMaybe q) =
   compare conn (denotation (O.maybeFieldsToSelect <<< q))
                (onList (Maybe.maybeToList =<<) (denotationMaybeFields q))
 
-traverseMaybeFields :: PGS.Connection
+traverseMaybeFields :: Connection
                     -> ArbitrarySelectArr
                     -> ArbitrarySelectMaybe
                     -> IO TQ.Property
@@ -914,25 +921,25 @@ traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
 -- Another way is "resource vanished".  That's not our fault.  That's
 -- Postgres segfaulting on perfectly good queries.
 
-run :: PGS.Connection -> IO ()
+run :: Connection -> IO ()
 run conn = do
   let prop1 p = fmap          TQ.ioProperty (p conn)
       prop2 p = (fmap . fmap) TQ.ioProperty (p conn)
       prop3 p = (fmap . fmap . fmap) TQ.ioProperty (p conn)
 
       test1 :: (Show a, TQ.Arbitrary a, TQ.Testable prop)
-               => (PGS.Connection -> a -> IO prop) -> IO ()
+               => (Connection -> a -> IO prop) -> IO ()
       test1 = t . prop1
 
       test2 :: (Show a1, Show a2, TQ.Arbitrary a1, TQ.Arbitrary a2,
                 TQ.Testable prop)
-               => (PGS.Connection -> a1 -> a2 -> IO prop) -> IO ()
+               => (Connection -> a1 -> a2 -> IO prop) -> IO ()
       test2 = t . prop2
 
       test3 :: (Show a1, Show a2, Show a3,
                 TQ.Arbitrary a1, TQ.Arbitrary a2, TQ.Arbitrary a3,
                 TQ.Testable prop)
-               => (PGS.Connection -> a1 -> a2 -> a3 -> IO prop) -> IO ()
+               => (Connection -> a1 -> a2 -> a3 -> IO prop) -> IO ()
       test3 = t . prop3
 
       t p = errorIfNotSuccess
