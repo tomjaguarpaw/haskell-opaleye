@@ -34,10 +34,13 @@ newtype NullMaker a b = NullMaker (a -> b)
 toNullable :: NullMaker a b -> a -> b
 toNullable (NullMaker f) = f
 
-instance D.Default NullMaker (Column a) (Column (Nullable a)) where
+-- These instances will only be non-overlapping when we switch Column to Field
+instance {-# OVERLAPPABLE #-} Column (Nullable a) ~ column_nullable_a
+  => D.Default NullMaker (Column a) column_nullable_a where
   def = NullMaker C.toNullable
 
-instance D.Default NullMaker (Column (Nullable a)) (Column (Nullable a)) where
+instance Column (Nullable a) ~ column_nullable_a
+  => D.Default NullMaker (Column (Nullable a)) column_nullable_a where
   def = NullMaker id
 
 joinExplicit :: U.Unpackspec columnsA columnsA

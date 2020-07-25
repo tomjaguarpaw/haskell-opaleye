@@ -2,6 +2,8 @@
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE TemplateHaskell #-}
+> {-# LANGUAGE TypeFamilies #-}
+> {-# LANGUAGE UndecidableInstances #-}
 >
 > module TutorialBasic where
 >
@@ -12,13 +14,14 @@
 >                          Select, restrict, (.==), (.<=), (.&&), (.<),
 >                          (.===),
 >                          (.++), ifThenElse, sqlString, aggregate, groupBy,
->                          count, avg, sum, leftJoin, runSelect,
+>                          count, avg, sum, leftJoin, runSelect, runSelectI,
 >                          showSql, viaLateral, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8, SqlBool)
 >
 > import           Data.Profunctor.Product (p2, p3)
 > import           Data.Profunctor.Product.Default (Default)
-> import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
+> import           Data.Profunctor.Product.TH (makeAdaptorAndInstance,
+>                                              makeAdaptorAndInstanceInferrable)
 > import           Data.Time.Calendar (Day)
 >
 > import qualified Database.PostgreSQL.Simple as PGS
@@ -737,7 +740,7 @@ and integer quantity of goods.
 >                                   , wLocation :: b
 >                                   , wNumGoods :: c }
 >
-> $(makeAdaptorAndInstance "pWarehouse" ''Warehouse')
+> $(makeAdaptorAndInstanceInferrable "pWarehouse" ''Warehouse')
 
 We could represent the integer ID in Opaleye as a `SqlInt4`
 
@@ -761,7 +764,7 @@ it holds.
 On the other hand we can make a newtype for the warehouse ID
 
 > newtype WarehouseId' a = WarehouseId a
-> $(makeAdaptorAndInstance "pWarehouseId" ''WarehouseId')
+> $(makeAdaptorAndInstanceInferrable "pWarehouseId" ''WarehouseId')
 >
 > type WarehouseIdField = WarehouseId' (Field SqlInt4)
 >
@@ -833,11 +836,6 @@ We could run the select `selectTable goodWarehouseTable` like this.
 
 > type WarehouseId = WarehouseId' Int
 > type GoodWarehouse = Warehouse' WarehouseId String Int
->
-> runWarehouseSelect :: PGS.Connection
->                   -> Select GoodWarehouseField
->                   -> IO [GoodWarehouse]
-> runWarehouseSelect = runSelect
 
 
 Conclusion
