@@ -107,33 +107,43 @@ ways.
 -}
 
 twoIntTable :: String
-            -> O.Table (Field O.SqlInt4, Field O.SqlInt4) (Field O.SqlInt4, Field O.SqlInt4)
+            -> O.Table (Field O.SqlInt4, Field O.SqlInt4)
+                       (Field O.SqlInt4, Field O.SqlInt4)
 twoIntTable n = O.Table n (PP.p2 (O.required "column1", O.required "column2"))
 
-table1 :: O.Table (Field O.SqlInt4, Field O.SqlInt4) (Field O.SqlInt4, Field O.SqlInt4)
+table1 :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
+                  (Field O.SqlInt4, Field O.SqlInt4)
 table1 = twoIntTable "table1"
 
-table1F :: O.Table (Field O.SqlInt4, Field O.SqlInt4) (Field O.SqlInt4, Field O.SqlInt4)
+table1F :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
+                   (Field O.SqlInt4, Field O.SqlInt4)
 table1F = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1
 
--- This is implicitly testing our ability to handle upper case letters in table names.
-table2 :: O.Table (Field O.SqlInt4, Field O.SqlInt4) (Field O.SqlInt4, Field O.SqlInt4)
+-- This is implicitly testing our ability to handle upper case letters
+-- in table names.
+table2 :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
+                  (Field O.SqlInt4, Field O.SqlInt4)
 table2 = twoIntTable "TABLE2"
 
-table3 :: O.Table (Field O.SqlInt4, Field O.SqlInt4) (Field O.SqlInt4, Field O.SqlInt4)
+table3 :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
+                  (Field O.SqlInt4, Field O.SqlInt4)
 table3 = twoIntTable "table3"
 
-table4 :: O.Table (Field O.SqlInt4, Field O.SqlInt4) (Field O.SqlInt4, Field O.SqlInt4)
+table4 :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
+                  (Field O.SqlInt4, Field O.SqlInt4)
 table4 = twoIntTable "table4"
 
 table5 :: O.Table (Maybe (Field O.SqlInt4), Maybe (Field  O.SqlInt4))
                   (Field O.SqlInt4, Field O.SqlInt4)
-table5 = O.TableWithSchema "public" "table5" (PP.p2 (O.optional "column1", O.optional "column2"))
+table5 = O.TableWithSchema "public" "table5"
+  (PP.p2 (O.optional "column1", O.optional "column2"))
 
-table6 :: O.Table (Field O.SqlText, Field O.SqlText) (Field O.SqlText, Field O.SqlText)
+table6 :: O.Table (Field O.SqlText, Field O.SqlText)
+                  (Field O.SqlText, Field O.SqlText)
 table6 = O.Table "table6" (PP.p2 (O.required "column1", O.required "column2"))
 
-table7 :: O.Table (Field O.SqlText, Field O.SqlText) (Field O.SqlText, Field O.SqlText)
+table7 :: O.Table (Field O.SqlText, Field O.SqlText)
+                  (Field O.SqlText, Field O.SqlText)
 table7 = O.Table "table7" (PP.p2 (O.required "column1", O.required "column2"))
 
 table8 :: O.Table (Field O.SqlJson) (Field O.SqlJson)
@@ -147,7 +157,8 @@ table10 = O.Table "table10" (O.required "column1")
 
 tableKeywordColNames :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
                                 (Field O.SqlInt4, Field O.SqlInt4)
-tableKeywordColNames = O.Table "keywordtable" (PP.p2 (O.required "column", O.required "where"))
+tableKeywordColNames = O.Table "keywordtable"
+  (PP.p2 (O.required "column", O.required "where"))
 
 table1Q :: Select (Field O.SqlInt4, Field O.SqlInt4)
 table1Q = O.selectTable table1
@@ -215,7 +226,8 @@ table6data :: [(String, String)]
 table6data = [("xy", "a"), ("z", "a"), ("more text", "a")]
 
 table6fielddata :: [(Field O.SqlText, Field O.SqlText)]
-table6fielddata = map (\(field1, field2) -> (O.sqlString field1, O.sqlString field2)) table6data
+table6fielddata = map (\(field1, field2) ->
+  (O.sqlString field1, O.sqlString field2)) table6data
 
 table7data :: [(String, String)]
 table7data = [("foo", "c"), ("bar", "a"), ("baz", "b")]
@@ -332,29 +344,34 @@ testH q p conn = do
   result <- O.runSelect conn q
   p result
 
-selectShouldReturnSorted :: (D.Default O.FromFields fields haskells, Show haskells, Ord haskells) =>
+selectShouldReturnSorted :: (D.Default O.FromFields fields haskells
+                            , Show haskells, Ord haskells) =>
          Select fields
          -> [haskells]
          -> PGS.Connection
          -> Expectation
-selectShouldReturnSorted q expected = testH q (\res -> L.sort res `shouldBe` L.sort expected)
+selectShouldReturnSorted q expected = testH q (\res ->
+  L.sort res `shouldBe` L.sort expected)
 
 testSelect :: Test
 testSelect = it "selects" $ table1Q `selectShouldReturnSorted` table1data
 
 testProduct :: Test
-testProduct = it "joins tables" $ select `selectShouldReturnSorted` A.liftA2 (,) table1data table2data
+testProduct = it "joins tables" $
+    select `selectShouldReturnSorted` A.liftA2 (,) table1data table2data
   where select = table1Q &&& table2Q
 
 testRestrict :: Test
-testRestrict = it "restricts the rows returned" $ select `selectShouldReturnSorted` filter ((== 1) . fst) (L.sort table1data)
+testRestrict = it "restricts the rows returned" $
+    select `selectShouldReturnSorted` filter ((== 1) . fst) (L.sort table1data)
   where select = proc () -> do
           t <- table1Q -< ()
           O.restrict -< fst t .== 1
           Arr.returnA -< t
 
 testExists :: Test
-testExists = it "restricts the rows returned with EXISTS" $ select `selectShouldReturnSorted` filter ((== 1) . fst) (L.sort table1data)
+testExists = it "restricts the rows returned with EXISTS" $
+    select `selectShouldReturnSorted` filter ((== 1) . fst) (L.sort table1data)
   where select = proc () -> do
           t <- table1Q -< ()
           () <- O.restrictExists (proc t -> do
@@ -363,7 +380,8 @@ testExists = it "restricts the rows returned with EXISTS" $ select `selectShould
           Arr.returnA -< t
 
 testNotExists :: Test
-testNotExists = it "restricts the rows returned with NOT EXISTS" $ select `selectShouldReturnSorted` filter ((== 2) . fst)  (L.sort table1data)
+testNotExists = it "restricts the rows returned with NOT EXISTS" $
+    select `selectShouldReturnSorted` filter ((== 2) . fst)  (L.sort table1data)
   where select = proc () -> do
           t <- table1Q -< ()
           () <- O.restrictNotExists (proc t -> do
@@ -372,7 +390,9 @@ testNotExists = it "restricts the rows returned with NOT EXISTS" $ select `selec
           Arr.returnA -< t
 
 testIn :: Test
-testIn = it "restricts values to a range" $ select `selectShouldReturnSorted` filter (flip elem [100, 200] . snd) (L.sort table1data)
+testIn = it "restricts values to a range" $
+    select `selectShouldReturnSorted` filter (flip elem [100, 200] . snd)
+                                             (L.sort table1data)
   where select = proc () -> do
           t <- table1Q -< ()
           O.restrict -< O.in_ [O.sqlInt4 100, O.sqlInt4 200] (snd t)
@@ -423,7 +443,8 @@ testCaseEmpty = it "" $ q `selectShouldReturnSorted` expected
         expected = [33, 33, 33, 33]
 
 testDistinct :: Test
-testDistinct = it "" $ O.distinct table1Q `selectShouldReturnSorted` L.nub table1data
+testDistinct =
+  it "" $ O.distinct table1Q `selectShouldReturnSorted` L.nub table1data
 
 
 testDistinctOn :: Test
@@ -465,7 +486,8 @@ testDistinctOn = do
     where
 
         pgTriples :: [(O.Field O.SqlInt8, O.Field O.SqlInt8, O.Field O.SqlText)]
-        pgTriples = (\(x,y,z) -> (O.sqlInt8 x, O.sqlInt8 y, O.sqlStrictText z)) <$> triples
+        pgTriples = (\(x,y,z) ->
+                      (O.sqlInt8 x, O.sqlInt8 y, O.sqlStrictText z)) <$> triples
 
         triples :: [(Int64, Int64, T.Text)]
         triples =
@@ -491,34 +513,42 @@ aggregateCoerceFIXME' = O.unsafeCoerceField
 testAggregate :: Test
 testAggregate = it "" $ (Arr.second aggregateCoerceFIXME
                         <<< O.aggregate (PP.p2 (O.groupBy, O.sum))
-                                           table1Q) `selectShouldReturnSorted` [(1, 400) :: (Int, Int64), (2, 300)]
+                                           table1Q)
+                      `selectShouldReturnSorted` [ (1, 400) :: (Int, Int64)
+                                                 , (2, 300) ]
 
 testAggregate0 :: Test
 testAggregate0 = it "" $ (Arr.second aggregateCoerceFIXME
                         <<< O.aggregate (PP.p2 (O.sum, O.sum))
                                         (O.keepWhen (const (O.sqlBool False))
-                                         <<< table1Q)) `selectShouldReturnSorted` ([] :: [(Int, Int64)])
+                                         <<< table1Q))
+                         `selectShouldReturnSorted` ([] :: [(Int, Int64)])
 
 testAggregateFunction :: Test
 testAggregateFunction = it "" $ (Arr.second aggregateCoerceFIXME
                         <<< O.aggregate (PP.p2 (O.groupBy, O.sum))
                                         (fmap (\(x, y) -> (x + 1, y)) table1Q))
-                      `selectShouldReturnSorted` [(2, 400) :: (Int, Int64), (3, 300)]
+                      `selectShouldReturnSorted` [ (2, 400) :: (Int, Int64)
+                                                 , (3, 300) ]
 
 testAggregateProfunctor :: Test
-testAggregateProfunctor = it "" $ q `selectShouldReturnSorted` [(1, 1200) :: (Int, Int64), (2, 300)]
+testAggregateProfunctor = it "" $
+    q `selectShouldReturnSorted` [ (1, 1200) :: (Int, Int64), (2, 300)]
   where q = O.aggregate (PP.p2 (O.groupBy, countsum)) table1Q
         countsum = P.dimap (\x -> (x,x))
                            (\(x, y) -> aggregateCoerceFIXME' x * y)
                            (PP.p2 (O.sum, O.count))
 
 testStringArrayAggregate :: Test
-testStringArrayAggregate = it "" $ q `selectShouldReturnSorted` [(map fst table6data, minimum (map snd table6data))]
+testStringArrayAggregate = it "" $
+    q `selectShouldReturnSorted` [(map fst table6data,
+                                   minimum (map snd table6data))]
   where q = O.aggregate (PP.p2 (O.arrayAgg, O.min)) table6Q
 
 testStringAggregate :: Test
 testStringAggregate = it "" $ q `selectShouldReturnSorted` expected
-  where q = O.aggregate (PP.p2 ((O.stringAgg . O.sqlString) "_", O.groupBy)) table6Q
+  where q = O.aggregate (PP.p2 ((O.stringAgg . O.sqlString) "_", O.groupBy))
+                        table6Q
         expected = [(
           (foldl1 (\x y -> x ++ "_" ++ y) . map fst) table6data ,
           head (map snd table6data))]
@@ -527,7 +557,8 @@ testStringAggregate = it "" $ q `selectShouldReturnSorted` expected
 
 testStringArrayAggregateOrdered :: Test
 testStringArrayAggregateOrdered = it "" $ q `selectShouldReturnSorted` expected
-  where q = O.aggregateOrdered (O.asc snd) (PP.p2 (O.arrayAgg, O.stringAgg . O.sqlString $ ",")) table7Q
+  where q = O.aggregateOrdered (O.asc snd)
+                               (PP.p2 (O.arrayAgg, O.stringAgg . O.sqlString $ ",")) table7Q
         expected = [( map fst sortedData
                       , L.intercalate "," . map snd $ sortedData
                       )
@@ -545,7 +576,9 @@ testMultipleAggregateOrdered = it "" $ q `selectShouldReturnSorted` expected
                                                    (P.lmap snd (O.stringAgg . O.sqlString $ ","))
                         ) table7Q
         expected = [( map fst . L.sortBy (Ord.comparing snd) $ table7data
-                      , L.intercalate "," . map snd . L.sortBy (Ord.comparing (Ord.Down . snd)) $ table7data
+                      , L.intercalate ","
+                        . map snd
+                        . L.sortBy (Ord.comparing (Ord.Down . snd)) $ table7data
                       )
                      ]
 
@@ -590,7 +623,8 @@ testOrderBySame = it "" $ selectShouldReturnSortBy (O.desc fst <> O.asc fst)
                                (flip (Ord.comparing fst) <> Ord.comparing fst)
 
 testOrderExact :: Test
-testOrderExact = it "" $ testH (O.orderBy (O.exact cols snd) table1Q) (result `shouldBe`)
+testOrderExact = it "" $ testH (O.orderBy (O.exact cols snd) table1Q)
+                               (result `shouldBe`)
   where cols   = map O.toFields [300,200::Int]
         result = [ (2::Int, 300::Int)
                  , (1, 200)
@@ -598,8 +632,10 @@ testOrderExact = it "" $ testH (O.orderBy (O.exact cols snd) table1Q) (result `s
                  , (1, 100)
                  ]
 
-limitOrderShouldMatch :: (Select (Field O.SqlInt4, Field O.SqlInt4) -> Select (Field O.SqlInt4, Field O.SqlInt4))
-           -> ([(Int, Int)] -> [(Int, Int)]) -> (PGS.Connection -> Expectation)
+limitOrderShouldMatch :: (Select (Field O.SqlInt4, Field O.SqlInt4)
+                          -> Select (Field O.SqlInt4, Field O.SqlInt4))
+                      -> ([(Int, Int)] -> [(Int, Int)])
+                      -> (PGS.Connection -> Expectation)
 limitOrderShouldMatch olQ ol = testH (olQ (orderQ table1Q))
                        (ol (order table1data) `shouldBe`)
   where orderQ = O.orderBy (O.desc snd)
@@ -630,9 +666,9 @@ one = Arr.arr (const (1 :: Field O.SqlInt4))
 
 -- The point of the "double" tests is to ensure that we do not
 -- introduce name clashes in the operations which create new field names
-testDoubleH :: (Show haskells, Eq haskells, D.Default O.FromFields fields haskells) =>
-               (SelectArr () (Field O.SqlInt4) -> SelectArr () fields) -> [haskells]
-               -> (PGS.Connection -> Expectation)
+testDoubleH :: (Show haskells, Eq haskells, D.Default O.FromFields fields haskells)
+            => (SelectArr () (Field O.SqlInt4) -> SelectArr () fields) -> [haskells]
+            -> (PGS.Connection -> Expectation)
 testDoubleH q expected1 = testH (q one &&& q one) (`shouldBe` expected2)
   where expected2 = A.liftA2 (,) expected1 expected1
 
@@ -731,7 +767,8 @@ testValuesEmpty = it "" $ testH (O.values values) (values' `shouldBe`)
         values' = []
 
 testUnionAll :: Test
-testUnionAll = it "" $  (table1Q `O.unionAll` table2Q) `selectShouldReturnSorted` (table1data ++ table2data)
+testUnionAll = it "" $ (table1Q `O.unionAll` table2Q)
+                       `selectShouldReturnSorted` (table1data ++ table2data)
 
 testTableFunctor :: Test
 testTableFunctor = it "" $ testH (O.selectTable table1F) (result `shouldBe`)
@@ -792,7 +829,8 @@ testDeleteReturning :: Test
 testDeleteReturning = it "" $ \conn -> do
   result <- O.runDelete_ conn delete
   _ <- O.runInsert_ conn O.Insert { O.iTable = table4
-                                  , O.iRows = [(40,50)] :: [(Field O.SqlInt4, Field O.SqlInt4)]
+                                  , O.iRows = [(40,50)]
+                                    :: [(Field O.SqlInt4, Field O.SqlInt4)]
                                   , O.iReturning = O.rCount
                                   , O.iOnConflict = Nothing } :: IO Int64
   result `shouldBe` expected
@@ -890,26 +928,31 @@ testInSelect = it "" $ \conn -> do
   -- and r && and s `shouldBe` True
 
 testAtTimeZone :: Test
-testAtTimeZone = it "" $ testH (A.pure (O.timestamptzAtTimeZone t (O.sqlString "CET"))) (`shouldBe` [t'])
+testAtTimeZone =
+  it "" $ testH (A.pure (O.timestamptzAtTimeZone t (O.sqlString "CET")))
+                (`shouldBe` [t'])
   where t = O.sqlUTCTime (Time.UTCTime d (Time.secondsToDiffTime 3600))
         t' = Time.LocalTime d (Time.TimeOfDay 2 0 0)
         d = Time.fromGregorian 2015 1 1
 
 testArrayLiterals :: Test
-testArrayLiterals = it "" $ testH (A.pure $ O.sqlArray O.sqlInt4 vals) (`shouldBe` [vals])
+testArrayLiterals = it "" $ testH (A.pure $ O.sqlArray O.sqlInt4 vals)
+                                  (`shouldBe` [vals])
   where vals = [1,2,3]
 
 -- This test fails without the explicit cast in pgArray since postgres
 -- can't determine the type of the array.
 
 testEmptyArray :: Test
-testEmptyArray = it "" $ testH (A.pure $ O.sqlArray O.sqlInt4 []) (`shouldBe` [[] :: [Int]])
+testEmptyArray = it "" $ testH (A.pure $ O.sqlArray O.sqlInt4 [])
+                               (`shouldBe` [[] :: [Int]])
 
 -- This test fails without the explicit cast in pgArray since postgres
 -- defaults the numbers to 'integer' but postgresql-simple expects 'float8'.
 
 testFloatArray :: Test
-testFloatArray = it "" $ testH (A.pure $ O.sqlArray O.sqlDouble doubles) (`shouldBe` [doubles])
+testFloatArray = it "" $ testH (A.pure $ O.sqlArray O.sqlDouble doubles)
+                               (`shouldBe` [doubles])
   where
     doubles = [1 :: Double, 2]
 
@@ -930,12 +973,14 @@ testSingletonArray = it "constructs a singleton PGInt8 array" $
 
 testArrayAppend :: Test
 testArrayAppend = it "appends two arrays" $
-  testH (A.pure $ O.sqlArray O.sqlInt4 [5,6,7] `O.arrayAppend` O.sqlArray O.sqlInt4 [1,2,3])
+  testH (A.pure $ O.sqlArray O.sqlInt4 [5,6,7]
+                  `O.arrayAppend` O.sqlArray O.sqlInt4 [1,2,3])
         (`shouldBe` ([[5,6,7,1,2,3]] :: [[Int]]))
 
 type JsonTest a = SpecWith (Select (Field a) -> PGS.Connection -> Expectation)
 -- Test opaleye's equivalent of c1->'c'
-testJsonGetFieldValue :: (O.SqlIsJson a, DefaultFromField a Json.Value) => Select (Field a) -> Test
+testJsonGetFieldValue :: (O.SqlIsJson a, DefaultFromField a Json.Value)
+                      => Select (Field a) -> Test
 testJsonGetFieldValue dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
             Arr.returnA -< O.toNullable c1 O..-> O.sqlStrictText "c"
@@ -950,16 +995,19 @@ testJsonGetFieldText dataSelect = it "" $ testH q (`shouldBe` expected)
         expected :: [Maybe T.Text]
         expected = [Just "21"]
 
--- Special Test for Github Issue #350 : https://github.com/tomjaguarpaw/haskell-opaleye/issues/350
+-- Special Test for Github Issue #350 :
+-- https://github.com/tomjaguarpaw/haskell-opaleye/issues/350
 testRestrictWithJsonOp :: (O.SqlIsJson a) => Select (Field a) -> Test
 testRestrictWithJsonOp dataSelect = it "restricts the rows returned by checking equality with a value extracted using JSON operator" $ testH select (`shouldBe` table8data)
   where select = dataSelect >>> proc col1 -> do
           t <- table8Q -< ()
-          O.restrict -< (O.toNullable col1 O..->> O.sqlStrictText "c") .== O.toNullable (O.sqlStrictText "21")
+          O.restrict -< (O.toNullable col1 O..->> O.sqlStrictText "c")
+                         .== O.toNullable (O.sqlStrictText "21")
           Arr.returnA -< t
 
 -- Test opaleye's equivalent of c1->'a'->2
-testJsonGetArrayValue :: (O.SqlIsJson a, DefaultFromField a Json.Value) => Select (Field a) -> Test
+testJsonGetArrayValue :: (O.SqlIsJson a, DefaultFromField a Json.Value)
+                      => Select (Field a) -> Test
 testJsonGetArrayValue dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
             Arr.returnA -< O.toNullable c1 O..-> O.sqlStrictText "a" O..-> O.sqlInt4 2
@@ -984,7 +1032,8 @@ testJsonGetMissingField dataSelect = it "" $ testH q (`shouldBe` expected)
         expected = [Nothing]
 
 -- Test opaleye's equivalent of c1#>'{b,x}'
-testJsonGetPathValue :: (O.SqlIsJson a, DefaultFromField a Json.Value) => Select (Field a) -> Test
+testJsonGetPathValue :: (O.SqlIsJson a, DefaultFromField a Json.Value)
+                     => Select (Field a) -> Test
 testJsonGetPathValue dataSelect = it "" $ testH q (`shouldBe` expected)
   where q = dataSelect >>> proc c1 -> do
               Arr.returnA -< O.toNullable c1 O..#> O.sqlArray O.sqlStrictText ["b", "x"]
@@ -1069,13 +1118,15 @@ testRangeRightOf = it "generates 'right of'" $ testH q (`shouldBe` [True])
         q = A.pure (range 50 60 O..>> range 20 30)
 
 testRangeRightExtension :: Test
-testRangeRightExtension = it "generates right extension" $ testH q (`shouldBe` [True])
+testRangeRightExtension = it "generates right extension" $
+    testH q (`shouldBe` [True])
   where range :: Int -> Int -> Field (O.SqlRange O.SqlInt4)
         range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 1 20 O..&< range 18 20)
 
 testRangeLeftExtension :: Test
-testRangeLeftExtension = it "generates left extension" $ testH q (`shouldBe` [True])
+testRangeLeftExtension = it "generates left extension" $
+    testH q (`shouldBe` [True])
   where range :: Int -> Int -> Field (O.SqlRange O.SqlInt4)
         range a b = O.sqlRange O.sqlInt4 (R.Inclusive a) (R.Inclusive b)
         q = A.pure (range 7 20 O..&> range 5 10)
@@ -1091,7 +1142,8 @@ testRangeBoundsEnum :: forall a b.
     , DefaultFromField b a )
         => String -> (a -> Field b) -> a -> a -> Test
 testRangeBoundsEnum msg mkCol x y = it msg $ \conn -> do
-    -- bound functions for discrete range types return fields as from the form [x,y)
+    -- bound functions for discrete range types return fields as from
+    -- the form [x,y)
     let pgr = O.sqlRange mkCol
         ranges_expecteds =
           [ (pgr (R.Inclusive x) R.PosInfinity,   (Just x, Nothing))
