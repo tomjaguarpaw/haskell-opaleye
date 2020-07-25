@@ -43,7 +43,7 @@ unionAll :: Default B.Binaryspec fields fields =>
             S.Select fields -> S.Select fields -> S.Select fields
 unionAll = unionAllExplicit def
 
--- | The same as unionAll, except that it additionally removes any
+-- | The same as 'unionAll', except that it additionally removes any
 --   duplicate rows.
 union :: Default B.Binaryspec fields fields =>
          S.Select fields -> S.Select fields -> S.Select fields
@@ -53,7 +53,7 @@ intersectAll :: Default B.Binaryspec fields fields =>
             S.Select fields -> S.Select fields -> S.Select fields
 intersectAll = intersectAllExplicit def
 
--- | The same as intersectAll, except that it additionally removes any
+-- | The same as 'intersectAll', except that it additionally removes any
 --   duplicate rows.
 intersect :: Default B.Binaryspec fields fields =>
          S.Select fields -> S.Select fields -> S.Select fields
@@ -63,7 +63,7 @@ exceptAll :: Default B.Binaryspec fields fields =>
             S.Select fields -> S.Select fields -> S.Select fields
 exceptAll = exceptAllExplicit def
 
--- | The same as exceptAll, except that it additionally removes any
+-- | The same as 'exceptAll', except that it additionally removes any
 --   duplicate rows.
 except :: Default B.Binaryspec fields fields =>
          S.Select fields -> S.Select fields -> S.Select fields
