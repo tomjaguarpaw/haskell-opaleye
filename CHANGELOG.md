@@ -11,7 +11,7 @@
   generates incorrect queries when mixed with @OUTER@/@LEFT@/@RIGHT
   JOIN@s.  `valuesSafe` will replace it in version 0.7
 
-* Add `Opaleye.Unpackspec` as the forward-compatible place to import
+* Add `Opaleye.Adaptors` as the forward-compatible place to import
   `Unpackspec` and `unpackspecField` from
 
 * Unicode characters are escaped properly in `sqlString`/`toFields`

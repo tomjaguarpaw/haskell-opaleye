@@ -41,7 +41,7 @@ import Opaleye.Internal.Distinct
 import Opaleye.Internal.MaybeFields
 import Opaleye.Internal.Values
 import Opaleye.Join
-import Opaleye.Unpackspec
+import Opaleye.Internal.Unpackspec
 import Opaleye.Select
 
 import Data.Profunctor.Product.Default

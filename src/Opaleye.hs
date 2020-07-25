@@ -13,7 +13,8 @@
 -- * If you are confused about the @Default@ typeclass, then
 -- the <https://github.com/tomjaguarpaw/haskell-opaleye/blob/master/Doc/Tutorial/DefaultExplanation.lhs Default explanation>
 
-module Opaleye ( module Opaleye.Aggregate
+module Opaleye ( module Opaleye.Adaptors
+               , module Opaleye.Aggregate
                , module Opaleye.Binary
                , module Opaleye.Column
                , module Opaleye.Constant
@@ -37,9 +38,9 @@ module Opaleye ( module Opaleye.Aggregate
                , module Opaleye.Table
                , module Opaleye.ToFields
                , module Opaleye.Values
-               , module Opaleye.Unpackspec
                ) where
 
+import Opaleye.Adaptors
 import Opaleye.Aggregate
 import Opaleye.Binary
 import Opaleye.Column
@@ -76,4 +77,3 @@ import Opaleye.SqlTypes
 import Opaleye.Table
 import Opaleye.ToFields
 import Opaleye.Values
-import Opaleye.Unpackspec
