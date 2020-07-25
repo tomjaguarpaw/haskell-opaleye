@@ -175,7 +175,7 @@ rCount = MI.Count
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- 'rReturning'.
-rReturning :: D.Default RQ.QueryRunner fields haskells
+rReturning :: D.Default RQ.FromFields fields haskells
            => (fieldsR -> fields)
            -- ^
            -> MI.Returning fieldsR [haskells]
@@ -183,7 +183,7 @@ rReturning = rReturningExplicit D.def
 
 -- | Return a function of the inserted or updated rows.  Explicit
 -- version.  You probably just want to use 'rReturning' instead.
-rReturningExplicit :: RQ.QueryRunner fields haskells
+rReturningExplicit :: RQ.FromFields fields haskells
                    -- ^
                    -> (fieldsR -> fields)
                    -- ^
