@@ -28,6 +28,7 @@ module Opaleye.Adaptors
   (
     -- * Binaryspec
     Binaryspec,
+    binaryspecField,
     binaryspecMaybeFields,
     -- * Distinctspec
     Distinctspec,
@@ -35,8 +36,10 @@ module Opaleye.Adaptors
     distinctspecMaybeFields,
     -- * EqPP
     EqPP,
+    eqPPField,
     -- * IfPP
     IfPP,
+    ifPPField,
     ifPPMaybeFields,
     -- * FromFields
     FromFields,
@@ -72,6 +75,7 @@ import Opaleye.Internal.Manipulation
 import Opaleye.Internal.Operators
 import Opaleye.Internal.MaybeFields
 
+import Opaleye.Binary
 import Opaleye.Distinct
 import Opaleye.ToFields
 import Opaleye.MaybeFields

@@ -47,11 +47,14 @@ not = C.unOp HPQ.OpNot
 
 newtype EqPP a b = EqPP (a -> a -> Column T.PGBool)
 
+eqPPField :: EqPP (Column a) ignored
+eqPPField = EqPP C.unsafeEq
+
 eqExplicit :: EqPP columns a -> columns -> columns -> Column T.PGBool
 eqExplicit (EqPP f) = f
 
 instance D.Default EqPP (Column a) (Column a) where
-  def = EqPP C.unsafeEq
+  def = eqPPField
 
 
 newtype IfPP a b = IfPP (Column T.PGBool -> a -> a -> b)
@@ -62,6 +65,9 @@ ifExplict :: IfPP columns columns'
           -> columns
           -> columns'
 ifExplict (IfPP f) = f
+
+ifPPField :: IfPP (Column a) (Column a)
+ifPPField = D.def
 
 instance D.Default IfPP (Column a) (Column a) where
   def = IfPP C.unsafeIfThenElse

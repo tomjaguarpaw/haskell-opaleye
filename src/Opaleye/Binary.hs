@@ -37,6 +37,7 @@
 module Opaleye.Binary where
 
 import qualified Opaleye.Internal.Binary as B
+import qualified Opaleye.Internal.Column
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Select             as S
 
@@ -99,3 +100,10 @@ exceptAllExplicit = B.sameTypeBinOpHelper PQ.ExceptAll
 exceptExplicit :: B.Binaryspec fields fields'
               -> S.Select fields -> S.Select fields -> S.Select fields'
 exceptExplicit = B.sameTypeBinOpHelper PQ.Except
+
+-- * Adaptors
+
+binaryspecField :: (B.Binaryspec
+                        (Opaleye.Internal.Column.Column a)
+                        (Opaleye.Internal.Column.Column a))
+binaryspecField = B.binaryspecColumn
