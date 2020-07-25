@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.Distinct (module Opaleye.Distinct, Distinctspec, distinctExplicit,
+module Opaleye.Distinct (module Opaleye.Distinct, Distinctspec,
+                         -- * Explicit versions
+                         distinctExplicit,
                          -- * Adaptors
                          distinctspecField,
                          distinctspecMaybeFields,
