@@ -64,7 +64,7 @@ The overall approach to testing should probably go as follows.
    "The denotation is an arrow morphism" means that for each arrow
    operation, the denotation preserves the operation.  If we have
 
-       f :: SelectArr wiresa wiresb
+       f :: SelectArr fieldsa fieldsb
 
    then [f] should be something like
 
@@ -322,8 +322,8 @@ dropAndCreateDB conn = do
 
 type Test = SpecWith PGS.Connection
 
-testH :: D.Default O.FromFields wires haskells =>
-         Select wires
+testH :: D.Default O.FromFields fields haskells =>
+         Select fields
          -> ([haskells] -> IO expectation)
          -> PGS.Connection
          -> IO expectation
@@ -332,8 +332,8 @@ testH q p conn = do
   result <- O.runSelect conn q
   p result
 
-selectShouldReturnSorted :: (D.Default O.FromFields wires haskells, Show haskells, Ord haskells) =>
-         Select wires
+selectShouldReturnSorted :: (D.Default O.FromFields fields haskells, Show haskells, Ord haskells) =>
+         Select fields
          -> [haskells]
          -> PGS.Connection
          -> Expectation
@@ -1196,7 +1196,7 @@ main = do
 
   conn2 <- Connection.connectPostgreSQL connectString
   -- Need to run quickcheck after table data has been inserted
---  QuickCheck.run conn2
+  QuickCheck.run conn2
   Connection.close conn2
 
   conn3 <- PGS.connectPostgreSQL connectString
