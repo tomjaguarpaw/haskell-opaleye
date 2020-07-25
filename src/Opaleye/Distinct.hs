@@ -1,10 +1,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.Distinct (module Opaleye.Distinct, Distinctspec, distinctExplicit)
+module Opaleye.Distinct (module Opaleye.Distinct, Distinctspec, distinctExplicit,
+                         -- * Adaptors
+                         distinctspecField,
+                         distinctspecMaybeFields,
+                        )
        where
 
 import           Opaleye.Select (Select)
-import           Opaleye.Internal.Distinct (distinctExplicit, Distinctspec)
+import           Opaleye.Internal.Distinct
 
 import qualified Data.Profunctor.Product.Default as D
 

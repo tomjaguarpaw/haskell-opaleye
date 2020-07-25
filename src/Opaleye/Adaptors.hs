@@ -31,6 +31,7 @@ module Opaleye.Adaptors
     binaryspecMaybeFields,
     -- * Distinctspec
     Distinctspec,
+    distinctspecField,
     distinctspecMaybeFields,
     -- * EqPP
     EqPP,

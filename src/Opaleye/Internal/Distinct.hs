@@ -27,6 +27,9 @@ newtype Distinctspec a b = Distinctspec (Aggregator a b)
 instance Default Distinctspec (Column a) (Column a) where
   def = Distinctspec groupBy
 
+distinctspecField :: Distinctspec (Column a) (Column a)
+distinctspecField = def
+
 distinctspecMaybeFields :: M.WithNulls Distinctspec a b
                         -> Distinctspec (M.MaybeFields a) (M.MaybeFields b)
 distinctspecMaybeFields = M.unWithNulls def
