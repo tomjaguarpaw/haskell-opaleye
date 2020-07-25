@@ -1,3 +1,7 @@
+* Add a `Monad` instance for `Select (and `SelectArr i`).
+
+* Add `Opaleye.Lateral`, to support LATERAL subqueries.
+
 * Add `Opaleye.Join.optionalRestrict` and `Opaleye.Join.optional`, as
   more convenient and composable ways of doing left/right joins.
 
@@ -12,7 +16,7 @@
   JOIN@s.  `valuesSafe` will replace it in version 0.7
 
 * Add `Opaleye.Adaptors` as the forward-compatible place to import
-  `Unpackspec` and `unpackspecField` from
+  `Unpackspec` and `unpackspecField` from, as well as other adaptors.
 
 * Unicode characters are escaped properly in `sqlString`/`toFields`
 
