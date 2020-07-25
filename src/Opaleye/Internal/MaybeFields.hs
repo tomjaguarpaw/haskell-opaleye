@@ -24,8 +24,8 @@ import           Opaleye.Select (Select, SelectArr)
 import qualified Opaleye.Column
 import qualified Opaleye.Field
 import           Opaleye.Field (Field)
-import           Opaleye.Internal.Operators ((.&&), (.||), restrict, not,
-                                             ifExplict, IfPP)
+import           Opaleye.Internal.Operators ((.&&), (.||), (.==), restrict, not,
+                                             ifExplict, IfPP, EqPP(EqPP))
 import qualified Opaleye.Internal.Lateral
 import qualified Opaleye.SqlTypes
 import           Opaleye.SqlTypes (SqlBool, IsSqlType)
@@ -206,6 +206,16 @@ toFieldsMaybeFields n p = Constant.Constant $ \case
 ifPPMaybeFields :: IfPP a b -> IfPP (MaybeFields a) (MaybeFields b)
 ifPPMaybeFields = productProfunctorMaybeFields PP.def
 
+-- I'd rather not crack open EqPP to implement this but the
+-- alternative is adding an operation eqPPOr :: EqPP a b -> EqPP a' b
+-- -> EqPP (a, a') b, and possibly even more than that, so I can't be
+-- bothered right now.
+eqPPMaybeFields :: EqPP a b -> EqPP (MaybeFields a) (MaybeFields b)
+eqPPMaybeFields (EqPP eqFields) = EqPP (\m1 m2 ->
+    (mfPresent m1 .== mfPresent m2)
+    .&& (mfPresent m1 `implies` eqFields (mfFields m1) (mfFields m2)))
+  where a `implies` b = Opaleye.Internal.Operators.not a .|| b
+
 -- | This is only safe if d is OK with having nulls passed through it
 -- when they claim to be non-null.
 unWithNulls :: PP.ProductProfunctor p
@@ -286,6 +296,10 @@ instance (PP.Default Constant.Constant a b, PP.Default V.Nullspec a b)
 instance PP.Default IfPP a b
   => PP.Default IfPP (MaybeFields a) (MaybeFields b) where
   def = ifPPMaybeFields PP.def
+
+instance PP.Default EqPP a b
+  => PP.Default EqPP (MaybeFields a) (MaybeFields b) where
+  def = eqPPMaybeFields PP.def
 
 instance (P.Profunctor p, IsSqlType a, PP.Default p (IC.Column a) (IC.Column a))
   => PP.Default (WithNulls p) (IC.Column a) (IC.Column a) where

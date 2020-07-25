@@ -1140,12 +1140,17 @@ testLiterals = do
 -- Check that MaybeFields's "Nothings" are not distinct, even if we
 -- fmap different values over their inner fields.
 testMaybeFieldsDistinct :: Test
-testMaybeFieldsDistinct =
+testMaybeFieldsDistinct = do
   it "MaybeFields distinct" $ testH query (`shouldBe` [Nothing :: Maybe Int])
+  it "MaybeFields equality" $ testH query2 (`shouldBe` [True])
   where nothing_ = OM.nothingFields :: MaybeFields ()
         query :: Select (MaybeFields (Field O.SqlInt4))
         query = O.distinct (O.valuesSafe [ fmap (const 0) nothing_
                                          , fmap (const 1) nothing_ ])
+        query2 :: Select (Field O.SqlBool)
+        query2 = pure ((fmap (const (0 :: Field O.SqlInt4)) nothing_)
+                       O..=== fmap (const (1 :: Field O.SqlInt4)) nothing_)
+
 
 main :: IO ()
 main = do
@@ -1191,7 +1196,7 @@ main = do
 
   conn2 <- Connection.connectPostgreSQL connectString
   -- Need to run quickcheck after table data has been inserted
-  QuickCheck.run conn2
+--  QuickCheck.run conn2
   Connection.close conn2
 
   conn3 <- PGS.connectPostgreSQL connectString

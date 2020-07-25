@@ -37,6 +37,7 @@ module Opaleye.Adaptors
     -- * EqPP
     EqPP,
     eqPPField,
+    eqPPMaybeFields,
     -- * IfPP
     IfPP,
     ifPPField,
