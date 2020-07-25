@@ -22,9 +22,12 @@ import qualified Data.Profunctor.Product.Default as D
 -- distinct :: Select (Foo (Field a) (Field b) (Field c)) -> Select (Foo (Field a) (Field b) (Field c))
 -- @
 --
--- By design there is no @distinct@ function of type @SelectArr a b ->
--- SelectArr a b@.  Such a function would allow violation of SQL's
--- scoping rules and lead to invalid queries.
+-- If you want to run 'distinct' on 'Select.SelectArr's you should
+-- apply 'Opaleye.Lateral.laterally' to it:
+--
+-- @
+-- 'Opaleye.Lateral.laterally' 'distinct' :: 'Data.Profunctor.Product.Default' 'Distinctspec' fields fields => 'Opaleye.Select.SelectArr' i fields -> 'Opaleye.Select.SelectArr' i fields
+-- @
 distinct :: D.Default Distinctspec fields fields =>
             Select fields -> Select fields
 distinct = distinctExplicit D.def

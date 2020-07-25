@@ -58,9 +58,12 @@ type @a@, apply the aggregator to the select.
 If you simply want to count the number of rows in a query you might
 find the 'countRows' function more convenient.
 
-By design there is no aggregation function of type @Aggregator b b' ->
-'S.SelectArr' a b -> 'S.SelectArr' a b'@.  Such a function would allow violation
-of SQL's scoping rules and lead to invalid queries.
+If you want to use 'aggregate' with 'S.SelectArr's then you should
+compose it with 'Opaleye.Lateral.laterally':
+
+@
+'Opaleye.Lateral.laterally' . 'aggregate' :: 'Aggregator' a b -> 'S.SelectArr' a b -> 'S.SelectArr' a b
+@
 
 Please note that when aggregating an empty query with no @GROUP BY@
 clause, Opaleye's behaviour differs from Postgres's behaviour.

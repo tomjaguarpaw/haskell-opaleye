@@ -18,10 +18,15 @@
 --          -> S.Select (Foo (Field a) (Field b) (Field c))
 -- @
 --
--- Please note that by design there are no binary relational functions
--- of type @S.SelectArr a b -> S.SelectArr a b -> S.SelectArr a b@.  Such
--- functions would allow violation of SQL's scoping rules and lead to
--- invalid queries.
+-- If you want to run a binary relational operator on
+-- 'Select.SelectArr's you should apply 'Opaleye.Lateral.bilaterally'
+-- to it, for example
+--
+-- @
+-- 'Opaleye.Lateral.bilaterally' 'union'
+--   :: 'Data.Profunctor.Product.Default' 'B.Binaryspec' fields fields
+--   => 'S.SelectArr' i fields -> 'S.SelectArr' i fields -> 'S.SelectArr' i fields
+-- @
 --
 -- `unionAll` is very close to being the @\<|\>@ operator of a
 -- @Control.Applicative.Alternative@ instance but it fails to work
