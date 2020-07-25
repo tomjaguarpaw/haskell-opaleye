@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 
--- | Ordering, @LIMIT@, @OFFSET@ and @DISTINCT ON@
+-- | @ORDER BY@, @LIMIT@, @OFFSET@ and @DISTINCT ON@
 
 module Opaleye.Order ( -- * Order by
                        orderBy
