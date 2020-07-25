@@ -1,5 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-duplicate-exports #-}
--- | Functions for working directly with 'Column's.
+-- | Do not use.  Will be deprecated in version 0.7.  Use
+-- "Opaleye.Field" instead.
+--
+-- Functions for working directly with 'Column's.
 --
 -- Please note that numeric 'Column' types are instances of 'Num', so
 -- you can use '*', '/', '+', '-' on them.
