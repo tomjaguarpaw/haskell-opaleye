@@ -43,66 +43,44 @@ import Opaleye.Manipulation (Delete (Delete))
 Status
 ======
 
-The tests here are very superficial and pretty much the bare mininmum
-that needs to be tested.
+The Hspec tests are very superficial and pretty much the bare mininmum
+that needs to be tested.  The property tests are very thorough, but
+could be made even more thorough.
 
 
 Future
 ======
 
-The overall approach to testing should probably go as follows.
+The property testing strategy is to define a denotation for SelectArrs
+and to show that the denotation of two SelectArrs combined with an
+operation is the same as using the operation to combine the
+denotations.  The denotation that we will choose is roughly `Kleisli
+[]` but we have to do IO operations over a Postgres connection so it's
+slightly different in practice in a way that doesn't impinge on what I
+am about to say.
 
-1. Test all individual units of functionality by running them on a
-   table and checking that they produce the expected result.  This type
-   of testing is amenable to the QuickCheck approach if we reimplement
-   the individual units of functionality in Haskell.
+For example, using brackets "[.]" to stand for denotation, we want to
+ensure the property
 
-2. Test that "the denotation is an arrow morphism" is correct.  I
-   think in combination with 1. this is all that will be required to
-   demonstrate that the library is correct.
+* [f <<< g] = [f] <<< [g]
 
-   "The denotation is an arrow morphism" means that for each arrow
-   operation, the denotation preserves the operation.  If we have
+That is, running `f <<< g` on some input should be the same as running
+`g` on the input, followed by running `f` on the output of `g`.
+Likewise we want to ensure typeclass-general properties like
 
-       f :: SelectArr fieldsa fieldsb
+* [id] = id
 
-   then [f] should be something like
+* [f <*> g] = [f] <*> [g]
 
-       [f] :: a -> IO [b]
-       f as = runSelect (toValues as >>> f)
+as well as Postgres-specific properties like
 
-   For example, take the operation >>>.  We need to check that
+* [restrict] = guard
 
-       [f >>> g] = [f] >>> [g]
+* [limit n q] = arr (take n) . [q]
 
-   for all f and g, where [] means the denotation.  We would also want
-   to check that
-
-       [id] = id
-
-   and
-
-       [first f] = first [f]
-
-   I think checking these operations is sufficient because all the
-   other SelectArr operations are implemented in terms of them.
-
-   (Here I'm taking a slight liberty as `a -> IO [b]` is not directly
-   an arrow, but it could be made one straightforwardly.  (For the laws
-   to be satisfied, perhaps we have to assume that the IO actions
-   commute.))
-
-   I don't think this type of testing is amenable to QuickCheck.  It
-   seems we have to check the properties for arbitrary arrows indexed by
-   arbitrary types.  I don't think QuickCheck supports this sort of
-   randomised testing.
-
-Note
-----
-
-This seems to be equivalent to just reimplementing Opaleye in
-Haskell-side terms and comparing the results of queries run in both
-ways.
+The property tests are not written quite as neatly as this because
+there is a lot of scaffolding to make things line up.  It's probably
+possible to simplify the property tests though.
 
 -}
 
