@@ -83,8 +83,11 @@ instance Category SelectArrDenotation where
   (.) = \(SelectArrDenotation f) (SelectArrDenotation g) ->
           SelectArrDenotation (\conn -> f conn <=< g conn)
 
-unSelectDenotation :: SelectDenotation b -> PGS.Connection -> IO [b]
-unSelectDenotation sa conn = unSelectArrDenotation sa conn [()]
+runSelectArrDenotation :: SelectArrDenotation a b
+                       -> a
+                       -> PGS.Connection
+                       -> IO [b]
+runSelectArrDenotation sab a conn = unSelectArrDenotation sab conn [a]
 
 onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
@@ -186,10 +189,18 @@ unSelectDenotations :: Connection
                     -> SelectDenotation b
                     -> ([a] -> [b] -> IO TQ.Property)
                     -> IO TQ.Property
-unSelectDenotations conn one two k = do
-  withConnection conn (unSelectDenotation one) >>= \case
+unSelectDenotations conn one two k = unSelectArrDenotations conn one two () k
+
+unSelectArrDenotations :: Connection
+                       -> SelectArrDenotation i a
+                       -> SelectArrDenotation i b
+                       -> i
+                       -> ([a] -> [b] -> IO TQ.Property)
+                       -> IO TQ.Property
+unSelectArrDenotations conn one two i k = do
+  withConnection conn (runSelectArrDenotation one i) >>= \case
     Left _ -> discard
-    Right oner -> withConnection conn (unSelectDenotation two) >>= \case
+    Right oner -> withConnection conn (runSelectArrDenotation two i) >>= \case
       Left _ -> discard
       Right twor -> k oner twor
 
