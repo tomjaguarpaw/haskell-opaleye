@@ -276,7 +276,7 @@ identity conn (ArbitrarySelect q) = do
 fmap' :: Connection -> ArbitraryFunction -> ArbitrarySelect -> IO TQ.Property
 fmap' conn (ArbitraryFunction f) (ArbitrarySelect q) =
   compareNoSort conn (denotation (fmap f q))
-                     (onList (fmap f) (denotation q))
+                     (fmap f (denotation q))
 
 apply :: Connection -> ArbitrarySelect -> ArbitrarySelect -> IO TQ.Property
 apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
