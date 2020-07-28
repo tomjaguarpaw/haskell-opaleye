@@ -107,10 +107,7 @@ fromMaybeFieldsExplicit :: IfPP b b -> b -> MaybeFields b -> b
 fromMaybeFieldsExplicit ifpp = flip (maybeFieldsExplicit ifpp) id
 
 nothingFieldsExplicit :: V.Nullspec a b -> MaybeFields b
-nothingFieldsExplicit n = MaybeFields {
-    mfPresent = Opaleye.SqlTypes.sqlBool False
-  , mfFields  = V.nullFields n
-  }
+nothingFieldsExplicit = nothingFieldsOfTypeOf . V.nullFields
 
 traverseMaybeFields :: SelectArr a b -> SelectArr (MaybeFields a) (MaybeFields b)
 traverseMaybeFields query = proc mfInput -> do
