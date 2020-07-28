@@ -67,6 +67,15 @@ nothingFields = nothingFieldsExplicit def
   where def :: PP.Default V.Nullspec a a => V.Nullspec a a
         def = PP.def
 
+-- | The Opaleye analogue of @'Prelude.const' 'Data.Maybe.Nothing'@.
+-- Can be useful to avoid type inference problems, because it doesn't
+-- pick up a type class constraint.
+nothingFieldsOfTypeOf :: a -> MaybeFields a
+nothingFieldsOfTypeOf a = MaybeFields {
+    mfPresent = Opaleye.SqlTypes.sqlBool False
+  , mfFields  = a
+  }
+
 -- | The Opaleye analogue of 'Data.Maybe.Just'.  Equivalent to
 -- 'Control.Applicative.pure'.
 justFields :: a -> MaybeFields a

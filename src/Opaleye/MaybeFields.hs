@@ -13,6 +13,7 @@ module Opaleye.MaybeFields (
   fromMaybeFields,
   maybeFields,
   maybeFieldsToSelect,
+  nothingFieldsOfTypeOf,
   catMaybeFields,
   Opaleye.Join.optional,
   Opaleye.MaybeFields.traverseMaybeFields,
