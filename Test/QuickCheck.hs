@@ -28,7 +28,6 @@ import qualified Data.Either
 import qualified Data.List as List
 import qualified Data.MultiSet as MultiSet
 import qualified Data.Profunctor as P
-import qualified Data.Profunctor.Product as PP
 import qualified Data.Monoid as Monoid
 import qualified Data.Ord as Ord hiding (compare)
 import qualified Data.Set as Set
@@ -184,10 +183,6 @@ denotationArr q =
       let fs = pure (O.toFields h)
       in O.runSelectExplicit fromFieldsFields conn (q <<< fs))
 
-denotation2 :: O.Select (Fields, Fields)
-            -> SelectDenotation (Haskells, Haskells)
-denotation2 = denotationExplicit (fromFieldsFields PP.***! fromFieldsFields)
-
 denotationMaybeFields :: O.Select (O.MaybeFields Fields)
                       -> SelectDenotation (Maybe Haskells)
 denotationMaybeFields =
@@ -254,6 +249,14 @@ compareSortedBy o conn one two = unSelectDenotations conn one two $ \one' two' -
   return ((List.sort one' === List.sort two')
           .&&. isSortedBy o one')
 
+compareDenotation :: Connection
+                  -> O.SelectArr Fields Fields
+                  -> SelectArrDenotation Haskells Haskells
+                  -> ArbitraryFields
+                  -> IO TQ.Property
+compareDenotation conn q d (ArbitraryFields f) =
+  compare conn (denotation (q . pure f)) (d . denotation (pure f))
+
 -- }
 
 -- { The tests
@@ -268,18 +271,15 @@ compose :: Connection
         -> ArbitrarySelectArr
         -> ArbitraryFields
         -> IO TQ.Property
-compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) (ArbitraryFields f) = do
-  compare conn (denotation (q1 . q2 . pure f))
-               (denotationArr' q1 . denotationArr' q2 . denotation (pure f))
+compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
+  compareDenotation conn (q1 . q2) (denotationArr' q1 . denotationArr' q2)
 
 -- Would prefer to write 'compare conn (denotation id) id' but that
 -- requires extending compare to compare SelectArrs.
 identity :: Connection
          -> ArbitraryFields
          -> IO TQ.Property
-identity conn (ArbitraryFields f) = do
-  compare conn (denotation (id . pure f))
-               (id . denotation (pure f))
+identity conn = compareDenotation conn id id
 
 fmap' :: Connection -> ArbitraryFunction -> ArbitrarySelect -> IO TQ.Property
 fmap' conn (ArbitraryFunction f) (ArbitrarySelect q) =
@@ -291,9 +291,12 @@ apply :: Connection
       -> ArbitrarySelectArr
       -> ArbitraryFields
       -> IO TQ.Property
-apply conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) (ArbitraryFields f) =
-  compare conn (denotation2 (((,) <$> q1 <*> q2) . pure f))
-                (((,) <$> denotationArr' q1 <*> denotationArr' q2) . denotation (pure f))
+apply conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) =
+  compareDenotation conn (pair <$> q1 <*> q2)
+                         (pair <$> denotationArr' q1 <*> denotationArr' q2)
+
+  where pair x y = Choices [Right (pure x), Right (pure y)]
+
 
 -- When combining arbitrary queries with the applicative product <*>
 -- the limit of the denotation is not always the denotation of the
