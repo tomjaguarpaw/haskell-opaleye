@@ -243,6 +243,9 @@ compare :: (Show a, Ord a)
 compare conn one two = unSelectDenotations conn one two $ \one' two' ->
   return (List.sort one' === List.sort two')
 
+-- The condition is *not* that denotation of the sort is equal to sort
+-- of the denotation, because the ordering may not fully specify the
+-- order.
 compareSortedBy :: (Show a, Ord a)
                 => (a -> a -> Ord.Ordering)
                 -> Connection
