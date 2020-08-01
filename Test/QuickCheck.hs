@@ -271,21 +271,19 @@ compareDenotationNoSort conn q d (ArbitraryFields f) =
 
 compareDenotation' :: Connection
                    -> (O.Select Fields -> O.Select Fields)
-                   -> (SelectDenotation Haskells
-                     -> SelectDenotation Haskells)
+                   -> ([Haskells] -> [Haskells])
                    -> ArbitrarySelect
                    -> IO TQ.Property
 compareDenotation' conn f g (ArbitrarySelect q) =
-  compare conn (denotation (f q)) (g (denotation q))
+  compare conn (denotation (f q)) (onList g (denotation q))
 
 compareDenotationNoSort' :: Connection
                          -> (O.Select Fields -> O.Select Fields)
-                         -> (SelectDenotation Haskells
-                             -> SelectDenotation Haskells)
+                         -> ([Haskells] -> [Haskells])
                          -> ArbitrarySelect
                          -> IO TQ.Property
 compareDenotationNoSort' conn f g (ArbitrarySelect q) =
-  compareNoSort conn (denotation (f q)) (g (denotation q))
+  compareNoSort conn (denotation (f q)) (onList g (denotation q))
 
 -- }
 
@@ -374,7 +372,7 @@ limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
 offset :: Connection -> ArbitraryPositiveInt -> ArbitrarySelect
        -> IO TQ.Property
 offset conn (ArbitraryPositiveInt l) =
-  compareDenotationNoSort' conn (O.offset l) (onList (drop l))
+  compareDenotationNoSort' conn (O.offset l) (drop l)
 
 order :: Connection -> ArbitraryOrder -> ArbitrarySelect -> IO TQ.Property
 order conn o (ArbitrarySelect q) =
@@ -385,7 +383,7 @@ order conn o (ArbitrarySelect q) =
 
 distinct :: Connection -> ArbitrarySelect -> IO TQ.Property
 distinct conn =
-  compareDenotation' conn (O.distinctExplicit distinctFields) (onList nub)
+  compareDenotation' conn (O.distinctExplicit distinctFields) nub
 
 -- When we added <*> to the arbitrary queries we started getting some
 -- consequences to do with the order of the returned rows and so
@@ -412,7 +410,7 @@ valuesEmpty conn l =
 aggregate :: Connection -> ArbitrarySelect -> IO TQ.Property
 aggregate conn =
   compareDenotationNoSort' conn (O.aggregate aggregateFields)
-                                (onList aggregateDenotation)
+                                aggregateDenotation
 
 
 label :: Connection -> String -> ArbitrarySelect -> IO TQ.Property
