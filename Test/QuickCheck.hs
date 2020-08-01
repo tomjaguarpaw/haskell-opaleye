@@ -255,14 +255,22 @@ compareDenotation :: Connection
 compareDenotation conn q d (ArbitraryFields f) =
   compare conn (denotation (q . pure f)) (d . denotation (pure f))
 
+compareDenotationNoSort :: Connection
+                        -> O.SelectArr Fields Fields
+                        -> SelectArrDenotation Haskells Haskells
+                        -> ArbitraryFields
+                        -> IO TQ.Property
+compareDenotationNoSort conn q d (ArbitraryFields f) =
+  compareNoSort conn (denotation (q . pure f)) (d . denotation (pure f))
+
 -- }
 
 -- { The tests
 
-fields :: Connection -> ArbitraryHaskells -> IO TQ.Property
+fields :: Connection -> ArbitraryHaskells -> ArbitraryFields -> IO TQ.Property
+       -- ^ The ArbitraryFields aren't really used
 fields conn (ArbitraryHaskells c) =
-  compareNoSort conn (denotation (pure (fieldsOfHaskells c)))
-                     (pure c)
+  compareDenotationNoSort conn (pure (fieldsOfHaskells c)) (pure c)
 
 compose :: Connection
         -> ArbitrarySelectArr
@@ -462,7 +470,7 @@ run conn = do
 
   test1 identity
   test3 compose
-  test1 fields
+  test2 fields
   test2 fmap'
   test3 apply
   test3 limit
