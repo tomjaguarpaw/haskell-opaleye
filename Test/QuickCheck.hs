@@ -302,6 +302,13 @@ identity :: Connection
          -> IO TQ.Property
 identity conn = compareDenotation conn id id
 
+arr :: Connection
+    -> ArbitraryFunction
+    -> ArbitraryFields
+    -> IO TQ.Property
+arr conn (ArbitraryFunction f) =
+  compareDenotationNoSort conn (Arrow.arr f) (Arrow.arr f)
+
 fmap' :: Connection
       -> ArbitraryFunction
       -> ArbitrarySelectArr
@@ -486,6 +493,7 @@ run conn = do
         =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
   test1 identity
+  test2 arr
   test3 compose
   test2 fields
   test3 fmap'
