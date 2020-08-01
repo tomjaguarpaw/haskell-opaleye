@@ -147,7 +147,7 @@ traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
                                    ++ (Nothing <$ nothings))))
 
 lateralDenotation :: (a -> SelectDenotation r)
-               -> SelectArrDenotation a r
+                  -> SelectArrDenotation a r
 lateralDenotation f = SelectArrDenotation (\conn l ->
     (\r -> unSelectArrDenotation (f r) conn ()) l)
 
