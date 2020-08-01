@@ -275,11 +275,11 @@ compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) (ArbitraryFields f)
 -- Would prefer to write 'compare conn (denotation id) id' but that
 -- requires extending compare to compare SelectArrs.
 identity :: Connection
-         -> ArbitrarySelect
+         -> ArbitraryFields
          -> IO TQ.Property
-identity conn (ArbitrarySelect q) = do
-  compare conn (denotation (id . q))
-               (id . denotation q)
+identity conn (ArbitraryFields f) = do
+  compare conn (denotation (id . pure f))
+               (id . denotation (pure f))
 
 fmap' :: Connection -> ArbitraryFunction -> ArbitrarySelect -> IO TQ.Property
 fmap' conn (ArbitraryFunction f) (ArbitrarySelect q) =
