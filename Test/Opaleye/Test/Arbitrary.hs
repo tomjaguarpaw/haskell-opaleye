@@ -34,6 +34,7 @@ newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
 newtype ArbitraryKleisli = ArbitraryKleisli (Fields -> O.Select Fields)
 newtype ArbitraryHaskells = ArbitraryHaskells { unArbitraryHaskells :: Haskells }
                         deriving Show
+newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Fields }
 newtype ArbitraryHaskellsList =
   ArbitraryHaskellsList { unArbitraryHaskellsList :: [HaskellsTuple] }
                              deriving Show
@@ -127,6 +128,9 @@ instance Show ArbitraryKleisli where
 
 instance Show ArbitraryFunction where
   show = const "A function"
+
+instance Show ArbitraryFields where
+  show = const "Fields"
 
 recurseSafelyOneof :: [TQ.Gen a] -> [TQ.Gen a] -> [TQ.Gen a] -> TQ.Gen a
 recurseSafelyOneof r0 r1 r2 =
@@ -416,6 +420,10 @@ genSelectArrMapper2 =
 
 instance TQ.Arbitrary ArbitraryHaskells where
     arbitrary = arbitraryHaskells 6
+
+instance TQ.Arbitrary ArbitraryFields where
+    arbitrary = (ArbitraryFields . fieldsOfHaskells . unArbitraryHaskells)
+                   <$> TQ.arbitrary
 
 -- Postgres strings cannot contain the zero codepoint.  See
 --
