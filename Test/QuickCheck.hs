@@ -390,9 +390,9 @@ valuesEmpty conn l =
                 (pureList l)
 
 aggregate :: Connection -> ArbitrarySelect -> IO TQ.Property
-aggregate conn (ArbitrarySelect q) =
-  compareNoSort conn (denotation (O.aggregate aggregateFields q))
-                     (onList aggregateDenotation (denotation q))
+aggregate conn =
+  compareDenotationNoSort' conn (O.aggregate aggregateFields)
+                                (onList aggregateDenotation)
 
 
 label :: Connection -> String -> ArbitrarySelect -> IO TQ.Property
