@@ -90,7 +90,7 @@ runSelectArrDenotation :: SelectArrDenotation a b
                        -> IO [b]
 runSelectArrDenotation sab a conn = unSelectArrDenotation sab conn a
 
-onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
+onList :: ([a] -> [b]) -> SelectArrDenotation i a -> SelectArrDenotation i b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
 
 -- This is taking liberties.  Firstly it errors out when two fields
