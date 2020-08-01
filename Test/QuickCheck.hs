@@ -265,13 +265,12 @@ fields conn (ArbitraryHaskells c) =
 
 compose :: Connection
         -> ArbitrarySelectArr
-        -> ArbitrarySelect
+        -> ArbitrarySelectArr
+        -> ArbitraryFields
         -> IO TQ.Property
-compose conn (ArbitrarySelectArr a) (ArbitrarySelect q) = do
-  compare conn (denotation (a' . Arrow.arr listFields . q))
-               (denotationArr a' . fmap listHaskells (denotation q))
-    where a' = a . Arrow.arr fieldsList
-
+compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) (ArbitraryFields f) = do
+  compare conn (denotation (q1 . q2 . pure f))
+               (denotationArr' q1 . denotationArr' q2 . denotation (pure f))
 
 -- Would prefer to write 'compare conn (denotation id) id' but that
 -- requires extending compare to compare SelectArrs.
@@ -466,7 +465,7 @@ run conn = do
         =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
   test1 identity
-  test2 compose
+  test3 compose
   test1 fields
   test2 fmap'
   test2 apply
