@@ -505,9 +505,14 @@ errorIfNotSuccess r = case r of
   _             -> error "Failed"
 
 restrictFirstBoolList :: [Haskells] -> [Haskells]
-restrictFirstBoolList = map snd
-                        . filter fst
-                        . map (firstBoolOrTrue True)
+restrictFirstBoolList hs = do
+  h <- hs
+  restrictFirstBoolListK h
+
+restrictFirstBoolListK :: Haskells -> [Haskells]
+restrictFirstBoolListK h = if fst (firstBoolOrTrue True h)
+                           then [h]
+                           else []
 
 isSortedBy ::(a -> a -> Ord.Ordering) -> [a] -> Bool
 isSortedBy comp xs = all (uncurry (.<=)) (zip xs (tail' xs))
