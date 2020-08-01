@@ -82,6 +82,12 @@ instance Category SelectArrDenotation where
                                   bs <- g conn a
                                   concatMapM (f conn) bs)
 
+instance Arrow.Arrow SelectArrDenotation where
+  arr f = SelectArrDenotation (\_ -> pure . pure . f)
+  first f = SelectArrDenotation (\conn (a, b) -> do
+                                    as' <- unSelectArrDenotation f conn a
+                                    pure (fmap (\a' -> (a', b)) as'))
+
 runSelectArrDenotation :: SelectArrDenotation a b
                        -> a
                        -> PGS.Connection
