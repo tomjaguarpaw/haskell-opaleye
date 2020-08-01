@@ -1,3 +1,5 @@
+## 0.6.7005.0
+
 * Add a `Monad` instance for `Select` (and `SelectArr i`).
 
 * Add `Opaleye.Lateral`, to support LATERAL subqueries.
