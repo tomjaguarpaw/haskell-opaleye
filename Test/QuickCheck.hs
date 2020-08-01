@@ -411,21 +411,12 @@ traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
 
 lateral :: Connection
         -> ArbitraryKleisli
-        -> ArbitrarySelect
+        -> ArbitraryFields
         -> IO TQ.Property
-lateral conn (ArbitraryKleisli f) (ArbitrarySelect q) =
-  compare conn (lateralDenotation denotation_f . denotation_q)
-               (denotationArr (O.lateral f') . denotation_q)
-  where _ = f :: Fields -> O.Select Fields
-
-        f' :: FieldsTuple -> O.Select Fields
-        f' = f . Arrow.arr fieldsList
-
-        denotation_q :: SelectDenotation HaskellsTuple
-        denotation_q = fmap listHaskells (denotation q)
-
-        denotation_f  :: HaskellsTuple -> SelectDenotation Haskells
-        denotation_f = denotation . f' . O.toFields
+lateral conn (ArbitraryKleisli f) =
+  compareDenotation conn (O.lateral f) (lateralDenotation denotation_f)
+  where denotation_f  :: Haskells -> SelectDenotation Haskells
+        denotation_f = denotation . f . fieldsOfHaskells
 
 {- TODO
 
