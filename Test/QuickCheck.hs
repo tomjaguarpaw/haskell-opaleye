@@ -442,12 +442,9 @@ traverseMaybeFields :: Connection
                     -> IO TQ.Property
 traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
   compare conn
-    (denotationMaybeFields (travMF q' . Arrow.arr (fmap listFields) . qm))
-    (traverseDenotation (denotationArr q')
-       ((fmap . fmap) listHaskells (denotationMaybeFields qm)))
-  where u = unpackFields
-        q' = q . Arrow.arr fieldsList
-        travMF = O.traverseMaybeFieldsExplicit D.def u
+    (denotationMaybeFields (traverse' q . qm))
+    (traverseDenotation (denotationArr' q) (denotationMaybeFields qm))
+  where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
 
 lateral :: Connection
         -> ArbitraryKleisli
