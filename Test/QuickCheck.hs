@@ -396,9 +396,7 @@ aggregate conn (ArbitrarySelect q) =
 
 
 label :: Connection -> String -> ArbitrarySelect -> IO TQ.Property
-label conn comment (ArbitrarySelect q) =
-  compareNoSort conn (denotation (O.label comment q))
-                     (denotation q)
+label conn comment = compareDenotationNoSort' conn (O.label comment) id
 
 optional :: Connection -> ArbitrarySelect -> IO TQ.Property
 optional conn (ArbitrarySelect q) =
