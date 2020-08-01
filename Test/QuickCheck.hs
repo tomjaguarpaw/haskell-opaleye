@@ -67,9 +67,7 @@ newtype SelectArrDenotation a b =
 type SelectDenotation = SelectArrDenotation ()
 
 instance Functor (SelectArrDenotation a) where
-  fmap f = SelectArrDenotation
-           . (fmap . fmap . fmap . fmap) f
-           . unSelectArrDenotation
+  fmap = onList . fmap
 
 instance Applicative (SelectArrDenotation a) where
   pure    = SelectArrDenotation . pure . pure . pure . pure
