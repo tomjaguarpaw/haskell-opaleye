@@ -286,10 +286,14 @@ fmap' conn (ArbitraryFunction f) (ArbitrarySelect q) =
   compareNoSort conn (denotation (fmap f q))
                      (fmap f (denotation q))
 
-apply :: Connection -> ArbitrarySelect -> ArbitrarySelect -> IO TQ.Property
-apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
-  compare conn (denotation2 ((,) <$> q1 <*> q2))
-                ((,) <$> denotation q1 <*> denotation q2)
+apply :: Connection
+      -> ArbitrarySelectArr
+      -> ArbitrarySelectArr
+      -> ArbitraryFields
+      -> IO TQ.Property
+apply conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) (ArbitraryFields f) =
+  compare conn (denotation2 (((,) <$> q1 <*> q2) . pure f))
+                (((,) <$> denotationArr' q1 <*> denotationArr' q2) . denotation (pure f))
 
 -- When combining arbitrary queries with the applicative product <*>
 -- the limit of the denotation is not always the denotation of the
@@ -468,7 +472,7 @@ run conn = do
   test3 compose
   test1 fields
   test2 fmap'
-  test2 apply
+  test3 apply
   test3 limit
   test2 offset
   test2 order
