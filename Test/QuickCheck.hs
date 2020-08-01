@@ -269,6 +269,15 @@ compareDenotationNoSort :: Connection
 compareDenotationNoSort conn q d (ArbitraryFields f) =
   compareNoSort conn (denotation (q . pure f)) (d . denotation (pure f))
 
+compareDenotation' :: Connection
+                   -> (O.Select Fields -> O.Select Fields)
+                   -> (SelectDenotation Haskells
+                     -> SelectDenotation Haskells)
+                   -> ArbitrarySelect
+                   -> IO TQ.Property
+compareDenotation' conn f g (ArbitrarySelect q) =
+  compare conn (denotation (f q)) (g (denotation q))
+
 compareDenotationNoSort' :: Connection
                          -> (O.Select Fields -> O.Select Fields)
                          -> (SelectDenotation Haskells
@@ -364,9 +373,8 @@ limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
 
 offset :: Connection -> ArbitraryPositiveInt -> ArbitrarySelect
        -> IO TQ.Property
-offset conn (ArbitraryPositiveInt l) (ArbitrarySelect q) =
-  compareNoSort conn (denotation (O.offset l q))
-                     (onList (drop l) (denotation q))
+offset conn (ArbitraryPositiveInt l) =
+  compareDenotationNoSort' conn (O.offset l) (onList (drop l))
 
 order :: Connection -> ArbitraryOrder -> ArbitrarySelect -> IO TQ.Property
 order conn o (ArbitrarySelect q) =
@@ -376,9 +384,8 @@ order conn o (ArbitrarySelect q) =
                   (denotation q)
 
 distinct :: Connection -> ArbitrarySelect -> IO TQ.Property
-distinct conn (ArbitrarySelect q) =
-  compare conn (denotation (O.distinctExplicit distinctFields q))
-                (onList nub (denotation q))
+distinct conn =
+  compareDenotation' conn (O.distinctExplicit distinctFields) (onList nub)
 
 -- When we added <*> to the arbitrary queries we started getting some
 -- consequences to do with the order of the returned rows and so
