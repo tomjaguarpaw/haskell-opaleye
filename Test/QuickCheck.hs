@@ -22,7 +22,7 @@ import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
 import qualified Control.Arrow as Arrow
 import           Control.Arrow ((<<<))
 import           Control.Category (Category, (.), id)
-import           Control.Monad (when, (<=<))
+import           Control.Monad (when)
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Either
 import qualified Data.List as List
@@ -63,7 +63,7 @@ arbitraryOrdering =
   . unArbitraryOrder
 
 newtype SelectArrDenotation a b =
-  SelectArrDenotation { unSelectArrDenotation :: PGS.Connection -> [a] -> IO [b] }
+  SelectArrDenotation { unSelectArrDenotation :: PGS.Connection -> a -> IO [b] }
 
 type SelectDenotation = SelectArrDenotation ()
 
@@ -79,15 +79,17 @@ instance Applicative (SelectArrDenotation a) where
                                    (unSelectArrDenotation x))
 
 instance Category SelectArrDenotation where
-  id = SelectArrDenotation (\_ -> pure)
+  id = SelectArrDenotation (\_ -> pure . pure)
   (.) = \(SelectArrDenotation f) (SelectArrDenotation g) ->
-          SelectArrDenotation (\conn -> f conn <=< g conn)
+          SelectArrDenotation (\conn a -> do
+                                  bs <- g conn a
+                                  concatMapM (f conn) bs)
 
 runSelectArrDenotation :: SelectArrDenotation a b
                        -> a
                        -> PGS.Connection
                        -> IO [b]
-runSelectArrDenotation sab a conn = unSelectArrDenotation sab conn [a]
+runSelectArrDenotation sab a conn = unSelectArrDenotation sab conn a
 
 onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
@@ -141,7 +143,7 @@ traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
                                             Just j -> Right j)
                                         qr)
 
-                           justs' <- f conn justs
+                           justs' <- concatMapM (f conn) justs
                            let _ = justs' :: [Haskells]
 
                            return ((Just <$> justs')
@@ -150,7 +152,7 @@ traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
 lateralDenotation :: (a -> SelectDenotation r)
                -> SelectArrDenotation a r
 lateralDenotation f = SelectArrDenotation (\conn l ->
-  concatMapM (\r -> unSelectArrDenotation (f r) conn [()]) l)
+    (\r -> unSelectArrDenotation (f r) conn ()) l)
 
 pureList :: [a] -> SelectDenotation a
 pureList = SelectArrDenotation . pure . pure . pure
@@ -162,8 +164,8 @@ denotationExplicit :: O.FromFields fields a
                    -> O.Select fields
                    -> SelectDenotation a
 denotationExplicit qr q =
-  SelectArrDenotation (\conn rs ->
-    flip concatMapM rs (\() -> O.runSelectExplicit qr conn q))
+  SelectArrDenotation (\conn r ->
+    flip ($) r (\() -> O.runSelectExplicit qr conn q))
 
 denotation :: O.Select Fields -> SelectDenotation Haskells
 denotation = denotationExplicit fromFieldsFields
@@ -171,8 +173,8 @@ denotation = denotationExplicit fromFieldsFields
 denotationArr :: O.SelectArr FieldsTuple Fields
               -> SelectArrDenotation HaskellsTuple Haskells
 denotationArr q =
-  SelectArrDenotation (\conn hs ->
-      let fs = O.valuesSafe (map O.toFields hs)
+  SelectArrDenotation (\conn h ->
+      let fs = pure (O.toFields h)
       in O.runSelectExplicit fromFieldsFields conn (q <<< fs))
 
 denotation2 :: O.Select (Fields, Fields)
