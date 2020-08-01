@@ -287,10 +287,14 @@ identity :: Connection
          -> IO TQ.Property
 identity conn = compareDenotation conn id id
 
-fmap' :: Connection -> ArbitraryFunction -> ArbitrarySelect -> IO TQ.Property
-fmap' conn (ArbitraryFunction f) (ArbitrarySelect q) =
-  compareNoSort conn (denotation (fmap f q))
-                     (fmap f (denotation q))
+fmap' :: Connection
+      -> ArbitraryFunction
+      -> ArbitrarySelectArr
+      -> ArbitraryFields
+      -> IO TQ.Property
+fmap' conn (ArbitraryFunction f) (ArbitrarySelectArr q) =
+  compareDenotationNoSort conn (fmap f q)
+                               (fmap f (denotationArr' q))
 
 apply :: Connection
       -> ArbitrarySelectArr
@@ -471,7 +475,7 @@ run conn = do
   test1 identity
   test3 compose
   test2 fields
-  test2 fmap'
+  test3 fmap'
   test3 apply
   test3 limit
   test2 offset
