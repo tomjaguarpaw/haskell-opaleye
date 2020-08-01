@@ -349,10 +349,10 @@ distinct conn (ArbitrarySelect q) =
 -- When we added <*> to the arbitrary queries we started getting some
 -- consequences to do with the order of the returned rows and so
 -- restrict had to start being compared sorted.
-restrict :: Connection -> ArbitrarySelect -> IO TQ.Property
-restrict conn (ArbitrarySelect q) =
-  compare conn (denotation (restrictFirstBool <<< q))
-                (onList restrictFirstBoolList (denotation q))
+restrict :: Connection -> ArbitraryFields -> IO TQ.Property
+restrict conn =
+  compareDenotation conn restrictFirstBool
+                         (onList (>>= restrictFirstBoolListK) id)
 
 values :: Connection -> ArbitraryHaskellsList -> IO TQ.Property
 values conn (ArbitraryHaskellsList l) =
