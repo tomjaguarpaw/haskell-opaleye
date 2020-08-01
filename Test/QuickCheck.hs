@@ -263,6 +263,15 @@ compareDenotationNoSort :: Connection
 compareDenotationNoSort conn q d (ArbitraryFields f) =
   compareNoSort conn (denotation (q . pure f)) (d . denotation (pure f))
 
+compareDenotationNoSort' :: Connection
+                         -> (O.Select Fields -> O.Select Fields)
+                         -> (SelectDenotation Haskells
+                             -> SelectDenotation Haskells)
+                         -> ArbitrarySelect
+                         -> IO TQ.Property
+compareDenotationNoSort' conn f g (ArbitrarySelect q) =
+  compareNoSort conn (denotation (f q)) (g (denotation q))
+
 -- }
 
 -- { The tests
