@@ -23,7 +23,7 @@ import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
 import qualified Control.Arrow as Arrow
 import           Control.Arrow ((<<<))
 import           Control.Category (Category, (.), id)
-import           Control.Monad (when)
+import           Control.Monad (when, guard)
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.List as List
 import qualified Data.MultiSet as MultiSet
@@ -147,7 +147,7 @@ lateralDenotation :: (a -> SelectDenotation r)
 lateralDenotation = unApply
 
 restrictDenotation :: SelectArrDenotation Bool ()
-restrictDenotation = onListK (\case { True -> [()]; False -> [] })
+restrictDenotation = onListK guard
 
 optionalRestrictDenotation :: SelectArrDenotation () Haskells
                            -> SelectArrDenotation (Haskells -> Bool) (Maybe Haskells)
