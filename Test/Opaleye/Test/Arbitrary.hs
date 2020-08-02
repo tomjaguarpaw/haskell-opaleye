@@ -108,9 +108,9 @@ arbitraryOrder =
   . unArbitraryOrder
 
 restrictFirstBool :: O.SelectArr Fields Fields
-restrictFirstBool = Arrow.arr snd
-      <<< Arrow.first O.restrict
-      <<< Arrow.arr (firstBoolOrTrue (O.sqlBool True))
+restrictFirstBool = proc fields -> do
+  O.restrict -< fst (firstBoolOrTrue (O.sqlBool True) fields)
+  Arrow.returnA -< fields
 
 instance Show ArbitrarySelect where
   show (ArbitrarySelect q) = maybe "Empty query" id
