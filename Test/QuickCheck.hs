@@ -94,6 +94,9 @@ runSelectArrDenotation :: SelectArrDenotation a b
                        -> IO [b]
 runSelectArrDenotation sab a conn = unSelectArrDenotation sab conn a
 
+($$) :: Arrow.Arrow arr => arr a b -> a -> arr () b
+($$) f a = f <<< Arrow.arr (const a)
+
 onList :: ([a] -> [b]) -> SelectArrDenotation i a -> SelectArrDenotation i b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
 
