@@ -97,8 +97,7 @@ runSelectArrDenotation sab a conn = unSelectArrDenotation sab conn a
 ($$) f a = f <<< Arrow.arr (const a)
 
 unApply :: (a -> SelectDenotation b) -> SelectArrDenotation a b
-unApply f = SelectArrDenotation (\conn a -> case f a of
-                                    SelectArrDenotation g -> g conn ())
+unApply f = SelectArrDenotation (\conn a -> unSelectArrDenotation (f a) conn ())
 
 onList :: ([a] -> [b]) -> SelectArrDenotation i a -> SelectArrDenotation i b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
