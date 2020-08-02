@@ -459,10 +459,9 @@ traverseMaybeFields :: Connection
                     -> ArbitrarySelectArr
                     -> ArbitraryMaybeHaskells
                     -> IO TQ.Property
-traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitraryMaybeHaskells mh) =
-  compare conn
-    (denotationMaybeFields (traverse' q . pure (fieldsOfMaybeHaskells mh)))
-    (traverseDenotation (denotationArr' q) $$ mh)
+traverseMaybeFields conn (ArbitrarySelectArr q) =
+  compareDenotationMaybe2 conn (traverse' q)
+                               (traverseDenotation (denotationArr' q))
   where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
 
 lateral :: Connection
