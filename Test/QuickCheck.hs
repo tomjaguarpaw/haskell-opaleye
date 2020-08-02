@@ -405,12 +405,9 @@ distinct :: Connection -> ArbitrarySelect -> IO TQ.Property
 distinct conn =
   compareDenotation' conn (O.distinctExplicit distinctFields) nub
 
--- When we added <*> to the arbitrary queries we started getting some
--- consequences to do with the order of the returned rows and so
--- restrict had to start being compared sorted.
 restrict :: Connection -> ArbitraryArgument -> IO TQ.Property
 restrict conn =
-  compareDenotation conn restrictFirstBool restrictFirstBoolDenotation
+  compareDenotationNoSort conn restrictFirstBool restrictFirstBoolDenotation
 
 values :: Connection -> ArbitraryHaskellsList -> IO TQ.Property
 values conn (ArbitraryHaskellsList l) =
