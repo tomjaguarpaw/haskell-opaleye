@@ -24,7 +24,6 @@ import           Control.Arrow ((<<<))
 import           Control.Category (Category, (.), id)
 import           Control.Monad (when)
 import qualified Data.Profunctor.Product.Default as D
-import qualified Data.Either
 import qualified Data.List as List
 import qualified Data.MultiSet as MultiSet
 import qualified Data.Profunctor as P
@@ -140,24 +139,8 @@ optionalRestrictDenotation :: [Haskells] -> [Maybe Haskells]
 optionalRestrictDenotation = optionalDenotation . restrictFirstBoolList
 
 traverseDenotation :: SelectArrDenotation a Haskells
-                   -> SelectDenotation (Maybe a)
-                   -> SelectDenotation (Maybe Haskells)
-traverseDenotation (SelectArrDenotation f) (SelectArrDenotation q) =
-  (SelectArrDenotation (\conn l -> do
-                           qr <- q conn l
-                           let nothings :: [()]
-                               (nothings, justs) =
-                                 Data.Either.partitionEithers
-                                   (map (\case
-                                            Nothing -> Left ()
-                                            Just j -> Right j)
-                                        qr)
-
-                           justs' <- concatMapM (f conn) justs
-                           let _ = justs' :: [Haskells]
-
-                           return ((Just <$> justs')
-                                   ++ (Nothing <$ nothings))))
+                   -> SelectArrDenotation (Maybe a) (Maybe Haskells)
+traverseDenotation f = unApply (traverse (f $$))
 
 lateralDenotation :: (a -> SelectDenotation r)
                   -> SelectArrDenotation a r
@@ -455,12 +438,12 @@ maybeFieldsToSelect conn (ArbitrarySelectMaybe q) =
 
 traverseMaybeFields :: Connection
                     -> ArbitrarySelectArr
-                    -> ArbitrarySelectMaybe
+                    -> ArbitraryMaybeHaskells
                     -> IO TQ.Property
-traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
+traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitraryMaybeHaskells mh) =
   compare conn
-    (denotationMaybeFields (traverse' q . qm))
-    (traverseDenotation (denotationArr' q) (denotationMaybeFields qm))
+    (denotationMaybeFields (traverse' q . pure (fieldsOfMaybeHaskells mh)))
+    (traverseDenotation (denotationArr' q) $$ mh)
   where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
 
 lateral :: Connection
