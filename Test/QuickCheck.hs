@@ -164,9 +164,9 @@ denotationExplicit qr q =
 denotation :: O.Select Fields -> SelectDenotation Haskells
 denotation = denotationExplicit fromFieldsFields
 
-denotationArr' :: O.SelectArr Fields Fields
+denotationArr :: O.SelectArr Fields Fields
               -> SelectArrDenotation Haskells Haskells
-denotationArr' q =
+denotationArr q =
   SelectArrDenotation (\conn h ->
       let fs = pure (fieldsOfHaskells h)
       in O.runSelectExplicit fromFieldsFields conn (q <<< fs))
@@ -315,7 +315,7 @@ compose :: Connection
         -> ArbitraryArgument
         -> IO TQ.Property
 compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
-  compareDenotation conn (q1 . q2) (denotationArr' q1 . denotationArr' q2)
+  compareDenotation conn (q1 . q2) (denotationArr q1 . denotationArr q2)
 
 -- Would prefer to write 'compare conn (denotation id) id' but that
 -- requires extending compare to compare SelectArrs.
@@ -338,7 +338,7 @@ fmap' :: Connection
       -> IO TQ.Property
 fmap' conn (ArbitraryFunction f) (ArbitrarySelectArr q) =
   compareDenotationNoSort conn (fmap f q)
-                               (fmap f (denotationArr' q))
+                               (fmap f (denotationArr q))
 
 apply :: Connection
       -> ArbitrarySelectArr
@@ -347,7 +347,7 @@ apply :: Connection
       -> IO TQ.Property
 apply conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) =
   compareDenotation conn (pair <$> q1 <*> q2)
-                         (pair <$> denotationArr' q1 <*> denotationArr' q2)
+                         (pair <$> denotationArr q1 <*> denotationArr q2)
 
   where pair x y = Choices [Right (pure x), Right (pure y)]
 
@@ -454,7 +454,7 @@ traverseMaybeFields :: Connection
                     -> IO TQ.Property
 traverseMaybeFields conn (ArbitrarySelectArr q) =
   compareDenotationMaybe2 conn (traverse' q)
-                               (traverseDenotation (denotationArr' q))
+                               (traverseDenotation (denotationArr q))
   where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
 
 lateral :: Connection
