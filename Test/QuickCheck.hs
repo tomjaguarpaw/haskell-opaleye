@@ -146,7 +146,7 @@ lateralDenotation :: (a -> SelectDenotation r)
                   -> SelectArrDenotation a r
 lateralDenotation = unApply
 
-optionalRestrictDenotation :: SelectArrDenotation () Haskells
+optionalRestrictDenotation :: SelectDenotation Haskells
                            -> SelectArrDenotation (Haskells -> Bool) (Maybe Haskells)
 optionalRestrictDenotation hs = optionalDenotation $ proc cond -> do
   a <- hs -< ()
