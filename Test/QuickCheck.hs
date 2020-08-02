@@ -13,6 +13,7 @@ import           Prelude hiding (compare, (.), id)
 import           Connection (Connection, withConnection)
 import           Opaleye.Test.Arbitrary
 import           Opaleye.Test.Fields
+import           Opaleye.Test.TraverseA (traverseA1)
 
 import qualified Opaleye as O
 import qualified Opaleye.Join as OJ
@@ -144,10 +145,6 @@ optionalDenotation = \case
 
 optionalRestrictDenotation :: [Haskells] -> [Maybe Haskells]
 optionalRestrictDenotation = optionalDenotation . restrictFirstBoolList
-
-traverseDenotation :: SelectArrDenotation a Haskells
-                   -> SelectArrDenotation (Maybe a) (Maybe Haskells)
-traverseDenotation f = unApply (traverse (f $$))
 
 lateralDenotation :: (a -> SelectDenotation r)
                   -> SelectArrDenotation a r
@@ -459,7 +456,7 @@ traverseMaybeFields :: Connection
                     -> IO TQ.Property
 traverseMaybeFields conn (ArbitrarySelectArr q) =
   compareDenotationMaybe2 conn (traverse' q)
-                               (traverseDenotation (denotationArr q))
+                               (traverseA1 (denotationArr q))
   where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
 
 lateral :: Connection
