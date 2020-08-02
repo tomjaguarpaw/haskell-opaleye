@@ -256,10 +256,12 @@ compareSortedBy o conn one two = unSelectDenotations conn one two $ \one' two' -
   return ((List.sort one' === List.sort two')
           .&&. isSortedBy o one')
 
+type ArbitraryArgument = ArbitraryFields
+
 compareDenotation :: Connection
                   -> O.SelectArr Fields Fields
                   -> SelectArrDenotation Haskells Haskells
-                  -> ArbitraryFields
+                  -> ArbitraryArgument
                   -> IO TQ.Property
 compareDenotation conn q d (ArbitraryFields f) =
   compare conn (denotation (q . pure f)) (d . denotation (pure f))
@@ -267,7 +269,7 @@ compareDenotation conn q d (ArbitraryFields f) =
 compareDenotationNoSort :: Connection
                         -> O.SelectArr Fields Fields
                         -> SelectArrDenotation Haskells Haskells
-                        -> ArbitraryFields
+                        -> ArbitraryArgument
                         -> IO TQ.Property
 compareDenotationNoSort conn q d (ArbitraryFields f) =
   compareNoSort conn (denotation (q . pure f)) (d . denotation (pure f))
@@ -292,15 +294,15 @@ compareDenotationNoSort' conn f g (ArbitrarySelect q) =
 
 -- { The tests
 
-fields :: Connection -> ArbitraryHaskells -> ArbitraryFields -> IO TQ.Property
-       -- ^ The ArbitraryFields aren't really used
+fields :: Connection -> ArbitraryHaskells -> ArbitraryArgument -> IO TQ.Property
+       -- ^ The ArbitraryArgument isn't really used
 fields conn (ArbitraryHaskells c) =
   compareDenotationNoSort conn (pure (fieldsOfHaskells c)) (pure c)
 
 compose :: Connection
         -> ArbitrarySelectArr
         -> ArbitrarySelectArr
-        -> ArbitraryFields
+        -> ArbitraryArgument
         -> IO TQ.Property
 compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
   compareDenotation conn (q1 . q2) (denotationArr' q1 . denotationArr' q2)
@@ -308,13 +310,13 @@ compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
 -- Would prefer to write 'compare conn (denotation id) id' but that
 -- requires extending compare to compare SelectArrs.
 identity :: Connection
-         -> ArbitraryFields
+         -> ArbitraryArgument
          -> IO TQ.Property
 identity conn = compareDenotation conn id id
 
 arr :: Connection
     -> ArbitraryFunction
-    -> ArbitraryFields
+    -> ArbitraryArgument
     -> IO TQ.Property
 arr conn (ArbitraryFunction f) =
   compareDenotationNoSort conn (Arrow.arr f) (Arrow.arr f)
@@ -322,7 +324,7 @@ arr conn (ArbitraryFunction f) =
 fmap' :: Connection
       -> ArbitraryFunction
       -> ArbitrarySelectArr
-      -> ArbitraryFields
+      -> ArbitraryArgument
       -> IO TQ.Property
 fmap' conn (ArbitraryFunction f) (ArbitrarySelectArr q) =
   compareDenotationNoSort conn (fmap f q)
@@ -331,7 +333,7 @@ fmap' conn (ArbitraryFunction f) (ArbitrarySelectArr q) =
 apply :: Connection
       -> ArbitrarySelectArr
       -> ArbitrarySelectArr
-      -> ArbitraryFields
+      -> ArbitraryArgument
       -> IO TQ.Property
 apply conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) =
   compareDenotation conn (pair <$> q1 <*> q2)
@@ -391,7 +393,7 @@ distinct conn =
 -- When we added <*> to the arbitrary queries we started getting some
 -- consequences to do with the order of the returned rows and so
 -- restrict had to start being compared sorted.
-restrict :: Connection -> ArbitraryFields -> IO TQ.Property
+restrict :: Connection -> ArbitraryArgument -> IO TQ.Property
 restrict conn =
   compareDenotation conn restrictFirstBool
                          (onList (>>= restrictFirstBoolListK) id)
@@ -448,7 +450,7 @@ traverseMaybeFields conn (ArbitrarySelectArr q) (ArbitrarySelectMaybe qm) =
 
 lateral :: Connection
         -> ArbitraryKleisli
-        -> ArbitraryFields
+        -> ArbitraryArgument
         -> IO TQ.Property
 lateral conn (ArbitraryKleisli f) =
   compareDenotation conn (O.lateral f) (lateralDenotation denotation_f)
