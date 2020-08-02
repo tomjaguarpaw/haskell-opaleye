@@ -413,6 +413,9 @@ distinct :: Connection -> ArbitrarySelect -> IO TQ.Property
 distinct conn =
   compareDenotation' conn (O.distinctExplicit distinctFields) nub
 
+-- When we generalise compareDenotation... we can just test
+--
+--    compareDenotation... conn restrict restrictDenotation
 restrict :: Connection -> ArbitraryArgument -> IO TQ.Property
 restrict conn =
   compareDenotationNoSort conn restrictFirstBool restrictFirstBoolDenotation
