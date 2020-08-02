@@ -87,6 +87,11 @@ instance Arrow.Arrow SelectArrDenotation where
                                     as' <- unSelectArrDenotation f conn a
                                     pure (fmap (\a' -> (a', b)) as'))
 
+instance Arrow.ArrowChoice SelectArrDenotation where
+  left f = SelectArrDenotation $ \conn -> \case
+    Left l -> (fmap . fmap) Left (unSelectArrDenotation f conn l)
+    Right r -> (pure . pure . pure) r
+
 runSelectArrDenotation :: SelectArrDenotation a b
                        -> a
                        -> PGS.Connection
