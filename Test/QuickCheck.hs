@@ -429,10 +429,10 @@ optionalRestrict conn (ArbitrarySelect q) =
   where q1 = P.lmap (\() -> fst . firstBoolOrTrue (O.sqlBool True))
                     (O.optionalRestrictExplicit unpackFields q)
 
-maybeFieldsToSelect :: Connection -> ArbitrarySelectMaybe -> IO TQ.Property
-maybeFieldsToSelect conn (ArbitrarySelectMaybe q) =
-  compare conn (denotation (O.maybeFieldsToSelect <<< q))
-               (onList (Maybe.maybeToList =<<) (denotationMaybeFields q))
+maybeFieldsToSelect :: Connection -> ArbitraryMaybeHaskells -> IO TQ.Property
+maybeFieldsToSelect conn (ArbitraryMaybeHaskells mh) =
+  compare conn (denotation (O.maybeFieldsToSelect . pure (fieldsOfMaybeHaskells mh)))
+               (onList (Maybe.maybeToList =<<) (pure mh))
 
 traverseMaybeFields :: Connection
                     -> ArbitrarySelectArr
