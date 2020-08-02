@@ -143,8 +143,7 @@ traverseDenotation f = unApply (traverse (f $$))
 
 lateralDenotation :: (a -> SelectDenotation r)
                   -> SelectArrDenotation a r
-lateralDenotation f = SelectArrDenotation (\conn l ->
-    (\r -> unSelectArrDenotation (f r) conn ()) l)
+lateralDenotation = unApply
 
 pureList :: [a] -> SelectDenotation a
 pureList = SelectArrDenotation . pure . pure . pure
