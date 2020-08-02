@@ -259,23 +259,23 @@ compareSortedBy o conn one two = unSelectDenotations conn one two $ \one' two' -
   return ((List.sort one' === List.sort two')
           .&&. isSortedBy o one')
 
-type ArbitraryArgument = ArbitraryFields
+type ArbitraryArgument = ArbitraryHaskells
 
 compareDenotation :: Connection
                   -> O.SelectArr Fields Fields
                   -> SelectArrDenotation Haskells Haskells
                   -> ArbitraryArgument
                   -> IO TQ.Property
-compareDenotation conn q d (ArbitraryFields f) =
-  compare conn (denotation (q . pure f)) (d . denotation (pure f))
+compareDenotation conn q d (ArbitraryHaskells h) =
+  compare conn (denotation (q . pure (fieldsOfHaskells h))) (d $$ h)
 
 compareDenotationNoSort :: Connection
                         -> O.SelectArr Fields Fields
                         -> SelectArrDenotation Haskells Haskells
                         -> ArbitraryArgument
                         -> IO TQ.Property
-compareDenotationNoSort conn q d (ArbitraryFields f) =
-  compareNoSort conn (denotation (q . pure f)) (d . denotation (pure f))
+compareDenotationNoSort conn q d (ArbitraryHaskells h) =
+  compareNoSort conn (denotation (q . pure (fieldsOfHaskells h))) (d $$ h)
 
 compareDenotation' :: Connection
                    -> (O.Select Fields -> O.Select Fields)
