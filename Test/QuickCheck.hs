@@ -406,8 +406,7 @@ distinct conn =
 -- restrict had to start being compared sorted.
 restrict :: Connection -> ArbitraryArgument -> IO TQ.Property
 restrict conn =
-  compareDenotation conn restrictFirstBool
-                         (onListK restrictFirstBoolListK)
+  compareDenotation conn restrictFirstBool restrictFirstBoolDenotation
 
 values :: Connection -> ArbitraryHaskellsList -> IO TQ.Property
 values conn (ArbitraryHaskellsList l) =
@@ -557,10 +556,10 @@ errorIfNotSuccess r = case r of
   TQ.Success {} -> return ()
   _             -> error "Failed"
 
-restrictFirstBoolListK :: Haskells -> [Haskells]
-restrictFirstBoolListK h = if fst (firstBoolOrTrue True h)
-                           then [h]
-                           else []
+restrictFirstBoolDenotation :: SelectArrDenotation Haskells Haskells
+restrictFirstBoolDenotation = proc hs -> do
+  restrictDenotation -< fst (firstBoolOrTrue True hs)
+  Arrow.returnA -< hs
 
 isSortedBy ::(a -> a -> Ord.Ordering) -> [a] -> Bool
 isSortedBy comp xs = all (uncurry (.<=)) (zip xs (tail' xs))
