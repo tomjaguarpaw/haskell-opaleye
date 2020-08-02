@@ -395,7 +395,7 @@ distinct conn =
 restrict :: Connection -> ArbitraryArgument -> IO TQ.Property
 restrict conn =
   compareDenotation conn restrictFirstBool
-                         (onList (>>= restrictFirstBoolListK) id)
+                         (onListK restrictFirstBoolListK)
 
 values :: Connection -> ArbitraryHaskellsList -> IO TQ.Property
 values conn (ArbitraryHaskellsList l) =
@@ -435,7 +435,7 @@ optionalRestrict conn (ArbitrarySelect q) =
 maybeFieldsToSelect :: Connection -> ArbitraryMaybeHaskells -> IO TQ.Property
 maybeFieldsToSelect conn (ArbitraryMaybeHaskells mh) =
   compare conn (denotation (O.maybeFieldsToSelect . pure (fieldsOfMaybeHaskells mh)))
-               (onList (Maybe.maybeToList =<<) (pure mh))
+               (onListK Maybe.maybeToList $$ mh)
 
 traverseMaybeFields :: Connection
                     -> ArbitrarySelectArr
