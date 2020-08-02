@@ -399,8 +399,8 @@ limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
 
 offset :: Connection -> ArbitraryPositiveInt -> ArbitrarySelect
        -> IO TQ.Property
-offset conn (ArbitraryPositiveInt l) =
-  compareDenotationNoSort' conn (O.offset l) (drop l)
+offset conn (ArbitraryPositiveInt n) =
+  compareDenotationNoSort' conn (O.offset n) (drop n)
 
 order :: Connection -> ArbitraryOrder -> ArbitrarySelect -> IO TQ.Property
 order conn o (ArbitrarySelect q) =
