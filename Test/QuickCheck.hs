@@ -446,12 +446,12 @@ optionalRestrict conn (ArbitrarySelect q) =
 
         optionalRestrictFDenotation hs =
           Arrow.arr (\() -> fst . firstBoolOrTrue True)
-          Arrow.>>> (optionalRestrictDenotation1 hs)
+          Arrow.>>> (optionalRestrictDenotation hs)
 
-        optionalRestrictDenotation1
+        optionalRestrictDenotation
           :: SelectArrDenotation () Haskells
           -> SelectArrDenotation (Haskells -> Bool) (Maybe Haskells)
-        optionalRestrictDenotation1 hs = onList optionalDenotation $ proc cond -> do
+        optionalRestrictDenotation hs = onList optionalDenotation $ proc cond -> do
           a <- hs -< ()
           restrictDenotation -< cond a
           Arrow.returnA -< a
