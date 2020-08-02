@@ -266,6 +266,14 @@ compareDenotation :: Connection
                   -> IO TQ.Property
 compareDenotation = denotationC compare
 
+compareDenotationMaybe :: Connection
+                       -> O.SelectArr (O.MaybeFields Fields) Fields
+                       -> SelectArrDenotation (Maybe Haskells) Haskells
+                       -> ArbitraryMaybeHaskells
+                       -> IO TQ.Property
+compareDenotationMaybe conn q d (ArbitraryMaybeHaskells h) =
+  compare conn (denotation (q . pure (fieldsOfMaybeHaskells h))) (d $$ h)
+
 compareDenotationNoSort :: Connection
                         -> O.SelectArr Fields Fields
                         -> SelectArrDenotation Haskells Haskells
