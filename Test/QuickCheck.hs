@@ -441,9 +441,9 @@ optionalRestrict conn (ArbitrarySelect q) =
                     (O.optionalRestrictExplicit unpackFields q)
 
 maybeFieldsToSelect :: Connection -> ArbitraryMaybeHaskells -> IO TQ.Property
-maybeFieldsToSelect conn (ArbitraryMaybeHaskells mh) =
-  compare conn (denotation (O.maybeFieldsToSelect . pure (fieldsOfMaybeHaskells mh)))
-               (onListK Maybe.maybeToList $$ mh)
+maybeFieldsToSelect conn =
+  compareDenotationMaybe conn O.maybeFieldsToSelect
+                              (onListK Maybe.maybeToList)
 
 traverseMaybeFields :: Connection
                     -> ArbitrarySelectArr
