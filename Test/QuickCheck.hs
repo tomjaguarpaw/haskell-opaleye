@@ -27,7 +27,6 @@ import           Control.Monad (when)
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.List as List
 import qualified Data.MultiSet as MultiSet
-import qualified Data.Profunctor as P
 import qualified Data.Monoid as Monoid
 import qualified Data.Ord as Ord hiding (compare)
 import qualified Data.Set as Set
@@ -142,9 +141,6 @@ optionalDenotation :: [Haskells] -> [Maybe Haskells]
 optionalDenotation = \case
   [] -> [Nothing]
   xs -> map Just xs
-
-optionalRestrictDenotation :: [Haskells] -> [Maybe Haskells]
-optionalRestrictDenotation = optionalDenotation . restrictFirstBoolList
 
 lateralDenotation :: (a -> SelectDenotation r)
                   -> SelectArrDenotation a r
@@ -440,10 +436,26 @@ optional conn (ArbitrarySelect q) =
 
 optionalRestrict :: Connection -> ArbitrarySelect -> IO TQ.Property
 optionalRestrict conn (ArbitrarySelect q) =
-  compare conn (denotationMaybeFields q1)
-               (onList optionalRestrictDenotation (denotation q))
-  where q1 = P.lmap (\() -> fst . firstBoolOrTrue (O.sqlBool True))
-                    (O.optionalRestrictExplicit unpackFields q)
+  compare conn (denotationMaybeFields (optionalRestrictF q))
+               (optionalRestrictFDenotation (denotation q))
+  where optionalRestrictF fs =
+          Arrow.arr (\() -> fst . firstBoolOrTrue (O.sqlBool True))
+          Arrow.>>> (O.optionalRestrictExplicit unpackFields fs)
+
+        optionalRestrictFDenotation hs =
+          Arrow.arr (\() -> fst . firstBoolOrTrue True)
+          Arrow.>>> (optionalRestrictDenotation1 hs)
+
+        optionalRestrictDenotation1
+          :: SelectArrDenotation () Haskells
+          -> SelectArrDenotation (Haskells -> Bool) (Maybe Haskells)
+        optionalRestrictDenotation1 hs = onList optionalDenotation $ proc cond -> do
+          a <- hs -< ()
+          restrict' -< cond a
+          Arrow.returnA -< a
+
+          where restrict' :: SelectArrDenotation Bool ()
+                restrict' = onListK (\case { True -> [()]; False -> [] })
 
 maybeFieldsToSelect :: Connection -> ArbitraryMaybeHaskells -> IO TQ.Property
 maybeFieldsToSelect conn =
