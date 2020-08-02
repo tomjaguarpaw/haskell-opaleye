@@ -149,6 +149,13 @@ lateralDenotation = unApply
 restrictDenotation :: SelectArrDenotation Bool ()
 restrictDenotation = onListK (\case { True -> [()]; False -> [] })
 
+optionalRestrictDenotation :: SelectArrDenotation () Haskells
+                           -> SelectArrDenotation (Haskells -> Bool) (Maybe Haskells)
+optionalRestrictDenotation hs = onList optionalDenotation $ proc cond -> do
+  a <- hs -< ()
+  restrictDenotation -< cond a
+  Arrow.returnA -< a
+
 pureList :: [a] -> SelectDenotation a
 pureList = SelectArrDenotation . pure . pure . pure
 
@@ -447,14 +454,6 @@ optionalRestrict conn (ArbitrarySelect q) =
                                         optionalRestrictDenotation
 
         f x y z = Arrow.arr (\() -> fst . x) Arrow.>>> (y z)
-
-        optionalRestrictDenotation
-          :: SelectArrDenotation () Haskells
-          -> SelectArrDenotation (Haskells -> Bool) (Maybe Haskells)
-        optionalRestrictDenotation hs = onList optionalDenotation $ proc cond -> do
-          a <- hs -< ()
-          restrictDenotation -< cond a
-          Arrow.returnA -< a
 
 maybeFieldsToSelect :: Connection -> ArbitraryMaybeHaskells -> IO TQ.Property
 maybeFieldsToSelect conn =
