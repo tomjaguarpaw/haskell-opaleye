@@ -440,13 +440,13 @@ optionalRestrict :: Connection -> ArbitrarySelect -> IO TQ.Property
 optionalRestrict conn (ArbitrarySelect q) =
   compare conn (denotationMaybeFields (optionalRestrictF q))
                (optionalRestrictFDenotation (denotation q))
-  where optionalRestrictF fs =
-          Arrow.arr (\() -> fst . firstBoolOrTrue (O.sqlBool True))
-          Arrow.>>> (O.optionalRestrictExplicit unpackFields fs)
+  where optionalRestrictF = f (firstBoolOrTrue (O.sqlBool True))
+                              (O.optionalRestrictExplicit unpackFields)
 
-        optionalRestrictFDenotation hs =
-          Arrow.arr (\() -> fst . firstBoolOrTrue True)
-          Arrow.>>> (optionalRestrictDenotation hs)
+        optionalRestrictFDenotation = f (firstBoolOrTrue True)
+                                        optionalRestrictDenotation
+
+        f x y z = Arrow.arr (\() -> fst . x) Arrow.>>> (y z)
 
         optionalRestrictDenotation
           :: SelectArrDenotation () Haskells
