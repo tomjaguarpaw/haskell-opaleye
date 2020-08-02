@@ -297,6 +297,14 @@ compareDenotation' :: Connection
 compareDenotation' conn f g (ArbitrarySelect q) =
   compare conn (denotation (f q)) (onList g (denotation q))
 
+compareDenotationMaybe' :: Connection
+                        -> (O.Select Fields -> O.Select (O.MaybeFields Fields))
+                        -> (SelectDenotation Haskells -> SelectDenotation (Maybe Haskells))
+                        -> ArbitrarySelect
+                        -> IO TQ.Property
+compareDenotationMaybe' conn f g (ArbitrarySelect q) =
+  compare conn (denotationMaybeFields (f q)) (g (denotation q))
+
 compareDenotationNoSort' :: Connection
                          -> (O.Select Fields -> O.Select Fields)
                          -> ([Haskells] -> [Haskells])
@@ -433,14 +441,12 @@ label :: Connection -> String -> ArbitrarySelect -> IO TQ.Property
 label conn comment = compareDenotationNoSort' conn (O.label comment) id
 
 optional :: Connection -> ArbitrarySelect -> IO TQ.Property
-optional conn (ArbitrarySelect q) =
-  compare conn (denotationMaybeFields (OJ.optionalExplicit unpackFields q))
-               (optionalDenotation (denotation q))
+optional conn = compareDenotationMaybe' conn (OJ.optionalExplicit unpackFields)
+                                             optionalDenotation
 
 optionalRestrict :: Connection -> ArbitrarySelect -> IO TQ.Property
-optionalRestrict conn (ArbitrarySelect q) =
-  compare conn (denotationMaybeFields (optionalRestrictF q))
-               (optionalRestrictFDenotation (denotation q))
+optionalRestrict conn =
+  compareDenotationMaybe' conn optionalRestrictF optionalRestrictFDenotation
   where optionalRestrictF = f (firstBoolOrTrue (O.sqlBool True))
                               (O.optionalRestrictExplicit unpackFields)
 
