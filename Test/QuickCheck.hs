@@ -171,13 +171,6 @@ denotationArr' q =
       let fs = pure (fieldsOfHaskells h)
       in O.runSelectExplicit fromFieldsFields conn (q <<< fs))
 
-denotationArr :: O.SelectArr FieldsTuple Fields
-              -> SelectArrDenotation HaskellsTuple Haskells
-denotationArr q =
-  SelectArrDenotation (\conn h ->
-      let fs = pure (O.toFields h)
-      in O.runSelectExplicit fromFieldsFields conn (q <<< fs))
-
 denotationMaybeFields :: O.Select (O.MaybeFields Fields)
                       -> SelectDenotation (Maybe Haskells)
 denotationMaybeFields =
