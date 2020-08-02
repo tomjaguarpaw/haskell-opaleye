@@ -66,6 +66,12 @@ ppChoices p f = ps
 fieldsOfHaskells :: Haskells -> Fields
 fieldsOfHaskells = O.toFieldsExplicit toFieldsFields
 
+fieldsOfMaybeHaskells :: Maybe Haskells -> O.MaybeFields Fields
+fieldsOfMaybeHaskells =
+  O.toFieldsExplicit (O.toFieldsMaybeFields
+                        (Choices <$> O.nullspecList)
+                        toFieldsFields)
+
 fieldsList :: Functor m => (a, b, m s) -> Choices m a b s
 fieldsList (x, y, ms) =
   Choices [ Left (CInt x),
