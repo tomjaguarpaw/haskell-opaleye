@@ -146,14 +146,11 @@ lateralDenotation :: (a -> SelectDenotation r)
                   -> SelectArrDenotation a r
 lateralDenotation = unApply
 
-restrictDenotation :: SelectArrDenotation Bool ()
-restrictDenotation = onListK guard
-
 optionalRestrictDenotation :: SelectArrDenotation () Haskells
                            -> SelectArrDenotation (Haskells -> Bool) (Maybe Haskells)
 optionalRestrictDenotation hs = optionalDenotation $ proc cond -> do
   a <- hs -< ()
-  restrictDenotation -< cond a
+  onListK guard -< cond a
   Arrow.returnA -< a
 
 pureList :: [a] -> SelectDenotation a
@@ -557,7 +554,7 @@ errorIfNotSuccess r = case r of
 
 restrictFirstBoolDenotation :: SelectArrDenotation Haskells Haskells
 restrictFirstBoolDenotation = proc hs -> do
-  restrictDenotation -< fst (firstBoolOrTrue True hs)
+  onListK guard -< fst (firstBoolOrTrue True hs)
   Arrow.returnA -< hs
 
 isSortedBy ::(a -> a -> Ord.Ordering) -> [a] -> Bool
