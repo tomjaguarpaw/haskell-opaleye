@@ -137,8 +137,8 @@ aggregateDenotation cs = if null cs
             Left l  -> Left l
             Right _ -> Right Nothing
 
-optionalDenotation :: [Haskells] -> [Maybe Haskells]
-optionalDenotation = \case
+optionalDenotation :: SelectArrDenotation i a -> SelectArrDenotation i (Maybe a)
+optionalDenotation = onList $ \case
   [] -> [Nothing]
   xs -> map Just xs
 
@@ -151,7 +151,7 @@ restrictDenotation = onListK (\case { True -> [()]; False -> [] })
 
 optionalRestrictDenotation :: SelectArrDenotation () Haskells
                            -> SelectArrDenotation (Haskells -> Bool) (Maybe Haskells)
-optionalRestrictDenotation hs = onList optionalDenotation $ proc cond -> do
+optionalRestrictDenotation hs = optionalDenotation $ proc cond -> do
   a <- hs -< ()
   restrictDenotation -< cond a
   Arrow.returnA -< a
@@ -441,7 +441,7 @@ label conn comment = compareDenotationNoSort' conn (O.label comment) id
 optional :: Connection -> ArbitrarySelect -> IO TQ.Property
 optional conn (ArbitrarySelect q) =
   compare conn (denotationMaybeFields (OJ.optionalExplicit unpackFields q))
-               (onList optionalDenotation (denotation q))
+               (optionalDenotation (denotation q))
 
 optionalRestrict :: Connection -> ArbitrarySelect -> IO TQ.Property
 optionalRestrict conn (ArbitrarySelect q) =
