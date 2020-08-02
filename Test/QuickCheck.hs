@@ -557,11 +557,6 @@ errorIfNotSuccess r = case r of
   TQ.Success {} -> return ()
   _             -> error "Failed"
 
-restrictFirstBoolList :: [Haskells] -> [Haskells]
-restrictFirstBoolList hs = do
-  h <- hs
-  restrictFirstBoolListK h
-
 restrictFirstBoolListK :: Haskells -> [Haskells]
 restrictFirstBoolListK h = if fst (firstBoolOrTrue True h)
                            then [h]
