@@ -34,6 +34,9 @@ newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
 newtype ArbitraryKleisli = ArbitraryKleisli (Fields -> O.Select Fields)
 newtype ArbitraryHaskells = ArbitraryHaskells { unArbitraryHaskells :: Haskells }
                         deriving Show
+newtype ArbitraryMaybeHaskells =
+  ArbitraryMaybeHaskells { unArbitraryMaybeHaskells :: Maybe Haskells }
+  deriving Show
 newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Fields }
 newtype ArbitraryHaskellsList =
   ArbitraryHaskellsList { unArbitraryHaskellsList :: [HaskellsTuple] }
@@ -420,6 +423,14 @@ genSelectArrMapper2 =
 
 instance TQ.Arbitrary ArbitraryHaskells where
     arbitrary = arbitraryHaskells 6
+
+instance TQ.Arbitrary ArbitraryMaybeHaskells where
+    arbitrary = do
+      TQ.frequency [ (1, pure (ArbitraryMaybeHaskells Nothing))
+                   , (20, do
+                         ArbitraryHaskells hs <- TQ.arbitrary
+                         pure (ArbitraryMaybeHaskells (Just hs)))
+                   ]
 
 instance TQ.Arbitrary ArbitraryFields where
     arbitrary = (ArbitraryFields . fieldsOfHaskells . unArbitraryHaskells)
