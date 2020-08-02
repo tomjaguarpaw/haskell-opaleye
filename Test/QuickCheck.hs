@@ -469,9 +469,8 @@ lateral :: Connection
         -> ArbitraryArgument
         -> IO TQ.Property
 lateral conn (ArbitraryKleisli f) =
-  compareDenotation conn (O.lateral f) (lateralDenotation denotation_f)
-  where denotation_f  :: Haskells -> SelectDenotation Haskells
-        denotation_f = denotation . f . fieldsOfHaskells
+  compareDenotation conn (O.lateral f) (lateralDenotation (denotation . f'))
+  where f' = f . fieldsOfHaskells
 
 {- TODO
 
