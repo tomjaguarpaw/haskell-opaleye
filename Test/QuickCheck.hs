@@ -102,6 +102,9 @@ unApply f = SelectArrDenotation (\conn a -> unSelectArrDenotation (f a) conn ())
 onList :: ([a] -> [b]) -> SelectArrDenotation i a -> SelectArrDenotation i b
 onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
 
+onListK :: (a -> [b]) -> SelectArrDenotation a b
+onListK f = SelectArrDenotation (\_ a -> pure (f a))
+
 -- This is taking liberties.  Firstly it errors out when two fields
 -- are of different types.  It should probably return a Maybe or an
 -- Either.  Secondly, it doesn't detect when lists are the same
