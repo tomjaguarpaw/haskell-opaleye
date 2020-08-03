@@ -1,5 +1,9 @@
 ## 0.6.7005.0
 
+* Thanks to Shane (@duairc) and Ollie Charles (@ocharles) for writing
+  most of the `lateral`- and `MaybeFields`-related code in this
+  release.
+
 * Add a `Monad` instance for `Select` (and `SelectArr i`).
 
 * Add `Opaleye.Lateral`, to support LATERAL subqueries.
