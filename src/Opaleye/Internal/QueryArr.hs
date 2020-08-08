@@ -83,6 +83,8 @@ lateral f = QueryArr qa
                                     :| [(PQ.Lateral, primQueryR)])
                                    []
 
+-- | Convert an arrow argument into a function argument so that it can
+-- be applied inside @do@-notation rather than arrow notation.
 viaLateral :: SelectArr i a -> i -> Select a
 viaLateral s i = s <<< pure i
 
