@@ -78,6 +78,7 @@ library
                    Opaleye.Internal.Binary,
                    Opaleye.Internal.Column,
                    Opaleye.Internal.Distinct,
+                   Opaleye.Internal.Locking,
                    Opaleye.Internal.Helpers,
                    Opaleye.Internal.Join,
                    Opaleye.Internal.Label,

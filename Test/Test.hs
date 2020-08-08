@@ -30,6 +30,7 @@ import qualified Opaleye                          as O
 import qualified Opaleye.Internal.Aggregate       as IA
 import           Opaleye.Internal.RunQuery        (DefaultFromField)
 import           Opaleye.Internal.MaybeFields     as OM
+import           Opaleye.Internal.Locking         as OL
 import qualified Connection
 import qualified QuickCheck
 import           System.Environment               (lookupEnv)
@@ -1181,6 +1182,11 @@ testMaybeFieldsDistinct = do
         query2 = pure ((fmap (const (0 :: Field O.SqlInt4)) nothing_)
                        O..=== fmap (const (1 :: Field O.SqlInt4)) nothing_)
 
+testForUpdate :: Test
+testForUpdate = do
+  it "Returns same rows from a table" $
+      testH (OL.forUpdate table1Q) (`shouldBe` table1data)
+
 
 main :: IO ()
 main = do
@@ -1328,3 +1334,5 @@ main = do
         testLiterals
       describe "MaybeFields" $ do
         testMaybeFieldsDistinct
+      describe "Locking" $ do
+        testForUpdate

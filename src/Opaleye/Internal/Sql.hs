@@ -45,7 +45,8 @@ data From = From {
   orderBy    :: [(HSql.SqlExpr, HSql.SqlOrder)],
   distinctOn :: Maybe (NEL.NonEmpty HSql.SqlExpr),
   limit      :: Maybe Int,
-  offset     :: Maybe Int
+  offset     :: Maybe Int,
+  for        :: Maybe LockStrength
   }
           deriving Show
 
@@ -70,6 +71,7 @@ data Binary = Binary {
 data JoinType = LeftJoin | RightJoin | FullJoin deriving Show
 data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
 data Lateral = Lateral | NonLateral deriving Show
+data LockStrength = Update deriving Show
 
 data Label = Label {
   lLabel  :: String,
@@ -100,6 +102,7 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.relExpr           = relExpr
   , PQ.existsf           = exists
   , PQ.rebind            = rebind
+  , PQ.forUpdate         = forUpdate
   }
 
 exists :: Bool -> Select -> Select -> Select
@@ -262,7 +265,8 @@ newSelect = From {
   orderBy    = [],
   distinctOn = Nothing,
   limit      = Nothing,
-  offset     = Nothing
+  offset     = Nothing,
+  for        = Nothing
   }
 
 sqlExpr :: HPQ.PrimExpr -> HSql.SqlExpr
@@ -301,3 +305,9 @@ rebind star pes select = SelectFrom newSelect
   where selectAttrs = case star of
           True  -> SelectAttrsStar
           False -> SelectAttrs
+
+forUpdate :: Select -> Select
+forUpdate s = SelectFrom newSelect {
+    tables = [(NonLateral, s)]
+  , for = Just Update
+  }

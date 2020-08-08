@@ -51,6 +51,7 @@ ppSelectFrom s = text "SELECT"
                  $$  HPrint.ppOrderBy (Sql.orderBy s)
                  $$  ppLimit (Sql.limit s)
                  $$  ppOffset (Sql.offset s)
+                 $$  ppFor (Sql.for s)
 
 
 ppSelectJoin :: Join -> Doc
@@ -147,6 +148,10 @@ ppLimit (Just n) = text ("LIMIT " ++ show n)
 ppOffset :: Maybe Int -> Doc
 ppOffset Nothing = empty
 ppOffset (Just n) = text ("OFFSET " ++ show n)
+
+ppFor :: Maybe Sql.LockStrength -> Doc
+ppFor Nothing       = empty
+ppFor (Just Sql.Update) = text "FOR UPDATE"
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
 ppValues v = HPrint.ppAs (Just "V") (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))

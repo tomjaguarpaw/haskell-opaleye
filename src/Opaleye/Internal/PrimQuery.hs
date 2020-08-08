@@ -85,6 +85,11 @@ data PrimQuery' a = Unit
                   | Rebind    Bool
                               (Bindings HPQ.PrimExpr)
                               (PrimQuery' a)
+                  | ForUpdate (PrimQuery' a)
+                  -- We may support more locking clauses than just
+                  -- ForUpdate in the future
+                  --
+                  -- https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE
                  deriving Show
 
 type PrimQuery = PrimQuery' ()
@@ -121,6 +126,7 @@ data PrimQueryFold' a p = PrimQueryFold
   , relExpr           :: HPQ.PrimExpr -> Bindings HPQ.PrimExpr -> p
     -- ^ A relation-valued expression
   , rebind            :: Bool -> Bindings HPQ.PrimExpr -> p -> p
+  , forUpdate         :: p -> p
   }
 
 
@@ -140,6 +146,7 @@ primQueryFoldDefault = PrimQueryFold
   , relExpr           = RelExpr
   , existsf           = Exists
   , rebind            = Rebind
+  , forUpdate         = ForUpdate
   }
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
@@ -159,6 +166,7 @@ foldPrimQuery f = fix fold
           RelExpr pe syms             -> relExpr           f pe syms
           Exists b q1 q2              -> existsf           f b (self q1) (self q2)
           Rebind star pes q           -> rebind            f star pes (self q)
+          ForUpdate q                 -> forUpdate         f (self q)
         fix g = let x = g x in x
 
 times :: PrimQuery -> PrimQuery -> PrimQuery
