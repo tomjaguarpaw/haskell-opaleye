@@ -114,6 +114,9 @@ distinctFields :: O.Distinctspec Fields Fields
 distinctFields = P.dimap unChoices Choices (PP.list
     (defChoicePP PP.+++! OM.unWithNulls D.def distinctNullsFields))
 
+nullspecFields :: O.Nullspec a Fields
+nullspecFields = fmap Choices O.nullspecList
+
 fromFieldsFields :: O.FromFields Fields Haskells
 fromFieldsFields = defChoicesPP O.fromFieldsMaybeFields
 
