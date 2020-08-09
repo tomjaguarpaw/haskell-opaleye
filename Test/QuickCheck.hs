@@ -19,7 +19,7 @@ import qualified Opaleye as O
 import qualified Opaleye.Join as OJ
 
 import qualified Database.PostgreSQL.Simple as PGS
-import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
+import           Control.Applicative (Applicative, pure, (<$>), (<*>))
 import qualified Control.Arrow as Arrow
 import           Control.Arrow ((<<<))
 import           Control.Category (Category, (.), id)
@@ -69,13 +69,11 @@ instance Functor (SelectArrDenotation a) where
   fmap = onList . fmap
 
 instance Applicative (SelectArrDenotation a) where
-  pure    = SelectArrDenotation . pure . pure . pure . pure
-  f <*> x = SelectArrDenotation ((liftA2 . liftA2 . liftA2 . liftA2) ($)
-                                   (unSelectArrDenotation f)
-                                   (unSelectArrDenotation x))
+  pure = Arrow.arr . const
+  f <*> x = fmap (uncurry ($)) (f Arrow.&&& x)
 
 instance Category SelectArrDenotation where
-  id = SelectArrDenotation (\_ -> pure . pure)
+  id = Arrow.arr id
   (.) = \(SelectArrDenotation f) (SelectArrDenotation g) ->
           SelectArrDenotation (\conn a -> do
                                   bs <- g conn a
