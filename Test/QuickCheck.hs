@@ -159,23 +159,26 @@ pureList = SelectArrDenotation . pure . pure . pure
 concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
 concatMapM f = fmap concat . mapM f
 
+denotationArrExplicit :: (ah -> af)
+                      -> O.FromFields bf bh
+                      -> O.SelectArr af bf
+                      -> SelectArrDenotation ah bh
+denotationArrExplicit toFields qr q =
+  SelectArrDenotation (\conn h ->
+      let fs = pure (toFields h)
+      in O.runSelectExplicit qr conn (q <<< fs))
+
 denotationExplicit :: O.FromFields fields a
                    -> O.Select fields
                    -> SelectDenotation a
-denotationExplicit qr q =
-  SelectArrDenotation (\conn h ->
-      let fs = pure (O.toFields h)
-      in O.runSelectExplicit qr conn (q <<< fs))
+denotationExplicit = denotationArrExplicit O.toFields
 
 denotation :: O.Select Fields -> SelectDenotation Haskells
 denotation = denotationExplicit fromFieldsFields
 
 denotationArr :: O.SelectArr Fields Fields
               -> SelectArrDenotation Haskells Haskells
-denotationArr q =
-  SelectArrDenotation (\conn h ->
-      let fs = pure (fieldsOfHaskells h)
-      in O.runSelectExplicit fromFieldsFields conn (q <<< fs))
+denotationArr = denotationArrExplicit fieldsOfHaskells fromFieldsFields
 
 denotationMaybeFields :: O.Select (O.MaybeFields Fields)
                       -> SelectDenotation (Maybe Haskells)
