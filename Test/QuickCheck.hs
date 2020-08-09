@@ -193,20 +193,20 @@ denotationArrMaybeFields =
     (O.toFieldsExplicit (O.toFieldsMaybeFields nullspecFields toFieldsFields))
     (O.fromFieldsMaybeFields fromFieldsFields)
 
-unSelectDenotations :: Connection
-                    -> SelectDenotation a
+unSelectDenotations :: SelectDenotation a
                     -> SelectDenotation b
                     -> ([a] -> [b] -> IO TQ.Property)
+                    -> Connection
                     -> IO TQ.Property
-unSelectDenotations conn one two k = unSelectArrDenotations conn one two () k
+unSelectDenotations one two = unSelectArrDenotations one two ()
 
-unSelectArrDenotations :: Connection
-                       -> SelectArrDenotation i a
+unSelectArrDenotations :: SelectArrDenotation i a
                        -> SelectArrDenotation i b
                        -> i
                        -> ([a] -> [b] -> IO TQ.Property)
+                       -> Connection
                        -> IO TQ.Property
-unSelectArrDenotations conn one two i k = do
+unSelectArrDenotations one two i k conn = do
   withConnection conn (runSelectArrDenotation one i) >>= \case
     Left _ -> discard
     Right oner -> withConnection conn (runSelectArrDenotation two i) >>= \case
@@ -223,12 +223,12 @@ unSelectArrDenotations conn one two i k = do
 -- possible.  If the queries do not compare equal but do compare equal
 -- sorted then switch to "compare".  That's no big deal.
 compareNoSort :: (Ord a, Show a)
-              => Connection
+              => SelectDenotation a
               -> SelectDenotation a
-              -> SelectDenotation a
+              -> Connection
               -> IO TQ.Property
-compareNoSort conn one two =
-  unSelectDenotations conn one two $ \one' two' -> do
+compareNoSort one two =
+  unSelectDenotations one two $ \one' two' -> do
   when (one' /= two')
        (putStrLn $ if List.sort one' == List.sort two'
                    then "[but they are equal sorted]"
@@ -237,11 +237,11 @@ compareNoSort conn one two =
   return (one' === two')
 
 compare :: (Show a, Ord a)
-         => Connection
+         => SelectDenotation a
          -> SelectDenotation a
-         -> SelectDenotation a
+         -> Connection
          -> IO TQ.Property
-compare conn one two = unSelectDenotations conn one two $ \one' two' ->
+compare one two = unSelectDenotations one two $ \one' two' ->
   return (List.sort one' === List.sort two')
 
 -- The condition is *not* that denotation of the sort is equal to sort
@@ -249,98 +249,98 @@ compare conn one two = unSelectDenotations conn one two $ \one' two' ->
 -- order.
 compareSortedBy :: (Show a, Ord a)
                 => (a -> a -> Ord.Ordering)
+                -> SelectDenotation a
+                -> SelectDenotation a
                 -> Connection
-                -> SelectDenotation a
-                -> SelectDenotation a
                 -> IO TQ.Property
-compareSortedBy o conn one two = unSelectDenotations conn one two $ \one' two' ->
+compareSortedBy o one two = unSelectDenotations one two $ \one' two' ->
   return ((List.sort one' === List.sort two')
           .&&. isSortedBy o one')
 
 type ArbitraryArgument = ArbitraryHaskells
 
 denotationC :: Arrow.Arrow selectArr
-            => (t1 -> SelectDenotation Haskells -> selectArr () b -> t2)
-            -> t1
+            => (SelectDenotation Haskells -> selectArr () b -> t1 -> t2)
             -> O.SelectArr Fields Fields
             -> selectArr Haskells b
             -> ArbitraryHaskells
+            -> t1
             -> t2
-denotationC compare_ conn q d (ArbitraryHaskells h) =
-  compare_ conn (denotation (q . pure (fieldsOfHaskells h))) (d $$ h)
+denotationC compare_ q d (ArbitraryHaskells h) conn =
+  compare_ (denotation (q . pure (fieldsOfHaskells h))) (d $$ h) conn
 
-compareDenotation :: Connection
-                  -> O.SelectArr Fields Fields
+compareDenotation :: O.SelectArr Fields Fields
                   -> SelectArrDenotation Haskells Haskells
                   -> ArbitraryArgument
+                  -> Connection
                   -> IO TQ.Property
 compareDenotation = denotationC compare
 
-compareDenotationMaybe :: Connection
-                       -> O.SelectArr (O.MaybeFields Fields) Fields
+compareDenotationMaybe :: O.SelectArr (O.MaybeFields Fields) Fields
                        -> SelectArrDenotation (Maybe Haskells) Haskells
                        -> ArbitraryMaybeHaskells
+                       -> Connection
                        -> IO TQ.Property
-compareDenotationMaybe conn q d (ArbitraryMaybeHaskells h) =
-  compare conn (denotation (q . pure (fieldsOfMaybeHaskells h))) (d $$ h)
+compareDenotationMaybe q d (ArbitraryMaybeHaskells h) =
+  compare (denotation (q . pure (fieldsOfMaybeHaskells h))) (d $$ h)
 
-compareDenotationMaybe2 :: Connection
-                        -> O.SelectArr (O.MaybeFields Fields)
+compareDenotationMaybe2 :: O.SelectArr (O.MaybeFields Fields)
                                        (O.MaybeFields Fields)
                         -> SelectArrDenotation (Maybe Haskells) (Maybe Haskells)
                         -> ArbitraryMaybeHaskells
+                        -> Connection
                         -> IO TQ.Property
-compareDenotationMaybe2 conn q d (ArbitraryMaybeHaskells h) =
-  compare conn (denotationMaybeFields (q . pure (fieldsOfMaybeHaskells h)))
-               (d $$ h)
+compareDenotationMaybe2 q d (ArbitraryMaybeHaskells h) =
+  compare (denotationMaybeFields (q . pure (fieldsOfMaybeHaskells h)))
+          (d $$ h)
 
-compareDenotationNoSort :: Connection
-                        -> O.SelectArr Fields Fields
+compareDenotationNoSort :: O.SelectArr Fields Fields
                         -> SelectArrDenotation Haskells Haskells
                         -> ArbitraryArgument
+                        -> Connection
                         -> IO TQ.Property
 compareDenotationNoSort = denotationC compareNoSort
 
-compareDenotation' :: Connection
-                   -> (O.Select Fields -> O.Select Fields)
+compareDenotation' :: (O.Select Fields -> O.Select Fields)
                    -> ([Haskells] -> [Haskells])
                    -> ArbitrarySelect
+                   -> Connection
                    -> IO TQ.Property
-compareDenotation' conn f g (ArbitrarySelect q) =
-  compare conn (denotation (f q)) (onList g (denotation q))
+compareDenotation' f g (ArbitrarySelect q) =
+  compare (denotation (f q)) (onList g (denotation q))
 
-compareDenotationMaybe' :: Connection
-                        -> (O.Select Fields -> O.Select (O.MaybeFields Fields))
+compareDenotationMaybe' :: (O.Select Fields -> O.Select (O.MaybeFields Fields))
                         -> (SelectDenotation Haskells -> SelectDenotation (Maybe Haskells))
                         -> ArbitrarySelect
+                        -> Connection
                         -> IO TQ.Property
-compareDenotationMaybe' conn f g (ArbitrarySelect q) =
-  compare conn (denotationMaybeFields (f q)) (g (denotation q))
+compareDenotationMaybe' f g (ArbitrarySelect q) =
+  compare (denotationMaybeFields (f q)) (g (denotation q))
 
-compareDenotationNoSort' :: Connection
-                         -> (O.Select Fields -> O.Select Fields)
+compareDenotationNoSort' :: (O.Select Fields -> O.Select Fields)
                          -> ([Haskells] -> [Haskells])
                          -> ArbitrarySelect
+                         -> Connection
                          -> IO TQ.Property
-compareDenotationNoSort' conn f g (ArbitrarySelect q) =
-  compareNoSort conn (denotation (f q)) (onList g (denotation q))
+compareDenotationNoSort' f g (ArbitrarySelect q) =
+  compareNoSort (denotation (f q)) (onList g (denotation q))
 
 -- }
 
 -- { The tests
 
-fields :: Connection -> ArbitraryHaskells -> ArbitraryArgument -> IO TQ.Property
+fields :: ArbitraryHaskells -> ArbitraryArgument -> Connection -> IO TQ.Property
        -- ^ The ArbitraryArgument isn't really used
-fields conn (ArbitraryHaskells c) =
-  compareDenotationNoSort conn (pure (fieldsOfHaskells c)) (pure c)
+fields (ArbitraryHaskells c) =
+  compareDenotationNoSort (pure (fieldsOfHaskells c)) (pure c)
 
-compose :: Connection
-        -> ArbitrarySelectArr
+compose :: ArbitrarySelectArr
         -> ArbitrarySelectArr
         -> ArbitraryArgument
+        -> Connection
         -> IO TQ.Property
-compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
-  compareDenotation conn (q1 . q2) (denotationArr q1 . denotationArr q2)
+compose (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
+  compareDenotation (q1 . q2) (denotationArr q1 . denotationArr q2)
 
 -- We need to test this separately otherwise traverseMaybeFields won't
 -- be properly tested.  We need that [traverseMaybeFields q <<< q'] is
@@ -348,46 +348,46 @@ compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
 -- the form pure h.  The 'compose' tests do the rest, therefore we
 -- need a version of 'compose' that checks composition of things whose
 -- types are 'MaybeFields Fields'.
-composeMaybe :: Connection
-             -> ArbitrarySelectArrMaybe
+composeMaybe :: ArbitrarySelectArrMaybe
              -> ArbitrarySelectArrMaybe
              -> ArbitraryMaybeHaskells
+             -> Connection
              -> IO TQ.Property
-composeMaybe conn (ArbitrarySelectArrMaybe q1) (ArbitrarySelectArrMaybe q2) = do
-  compareDenotationMaybe2 conn (q1 . q2) (denotation_ q1 . denotation_ q2)
+composeMaybe (ArbitrarySelectArrMaybe q1) (ArbitrarySelectArrMaybe q2) = do
+  compareDenotationMaybe2 (q1 . q2) (denotation_ q1 . denotation_ q2)
   where denotation_ = denotationArrMaybeFields
 
 -- Would prefer to write 'compare conn (denotation id) id' but that
 -- requires extending compare to compare SelectArrs.
-identity :: Connection
-         -> ArbitraryArgument
+identity :: ArbitraryArgument
+         -> Connection
          -> IO TQ.Property
-identity conn = compareDenotation conn id id
+identity = compareDenotation id id
 
-arr :: Connection
-    -> ArbitraryFunction
+arr :: ArbitraryFunction
     -> ArbitraryArgument
+    -> Connection
     -> IO TQ.Property
-arr conn (ArbitraryFunction f) =
-  compareDenotationNoSort conn (Arrow.arr f) (Arrow.arr f)
+arr (ArbitraryFunction f) =
+  compareDenotationNoSort (Arrow.arr f) (Arrow.arr f)
 
-fmap' :: Connection
-      -> ArbitraryFunction
+fmap' :: ArbitraryFunction
       -> ArbitrarySelectArr
       -> ArbitraryArgument
+      -> Connection
       -> IO TQ.Property
-fmap' conn (ArbitraryFunction f) (ArbitrarySelectArr q) =
-  compareDenotationNoSort conn (fmap f q)
-                               (fmap f (denotationArr q))
+fmap' (ArbitraryFunction f) (ArbitrarySelectArr q) =
+  compareDenotationNoSort (fmap f q)
+                          (fmap f (denotationArr q))
 
-apply :: Connection
-      -> ArbitrarySelectArr
+apply :: ArbitrarySelectArr
       -> ArbitrarySelectArr
       -> ArbitraryArgument
+      -> Connection
       -> IO TQ.Property
-apply conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) =
-  compareDenotation conn (pair <$> q1 <*> q2)
-                         (pair <$> denotationArr q1 <*> denotationArr q2)
+apply (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) =
+  compareDenotation (pair <$> q1 <*> q2)
+                    (pair <$> denotationArr q1 <*> denotationArr q2)
 
   where pair x y = Choices [Right (pure x), Right (pure y)]
 
@@ -400,15 +400,15 @@ apply conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) =
 -- the remainder under the applied ordering.
 --
 -- Strangely the same caveat doesn't apply to offset.
-limit :: Connection
-      -> ArbitraryPositiveInt
+limit :: ArbitraryPositiveInt
       -> ArbitrarySelect
       -> ArbitraryOrder
+      -> Connection
       -> IO TQ.Property
-limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
+limit (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
   let q' = O.limit l (O.orderBy (arbitraryOrder o) q)
 
-  unSelectDenotations conn (denotation q') (denotation q) $ \one' two' -> do
+  unSelectDenotations (denotation q') (denotation q) $ \one' two' -> do
       let remainder = MultiSet.fromList two'
                       `MultiSet.difference`
                       MultiSet.fromList one'
@@ -424,59 +424,56 @@ limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
       return ((length one' === min l (length two'))
               .&&. condBool)
 
-offset :: Connection -> ArbitraryPositiveInt -> ArbitrarySelect
+offset :: ArbitraryPositiveInt -> ArbitrarySelect -> Connection
        -> IO TQ.Property
-offset conn (ArbitraryPositiveInt n) =
-  compareDenotationNoSort' conn (O.offset n) (drop n)
+offset (ArbitraryPositiveInt n) =
+  compareDenotationNoSort' (O.offset n) (drop n)
 
-order :: Connection -> ArbitraryOrder -> ArbitrarySelect -> IO TQ.Property
-order conn o (ArbitrarySelect q) =
+order :: ArbitraryOrder -> ArbitrarySelect -> Connection -> IO TQ.Property
+order o (ArbitrarySelect q) =
   compareSortedBy (arbitraryOrdering o)
-                  conn
                   (denotation (O.orderBy (arbitraryOrder o) q))
                   (denotation q)
 
-distinct :: Connection -> ArbitrarySelect -> IO TQ.Property
-distinct conn =
-  compareDenotation' conn (O.distinctExplicit distinctFields) nub
+distinct :: ArbitrarySelect -> Connection -> IO TQ.Property
+distinct =
+  compareDenotation' (O.distinctExplicit distinctFields) nub
 
 -- When we generalise compareDenotation... we can just test
 --
 --    compareDenotation... conn restrict restrictDenotation
-restrict :: Connection -> ArbitraryArgument -> IO TQ.Property
-restrict conn =
-  compareDenotationNoSort conn restrictFirstBool restrictFirstBoolDenotation
+restrict :: ArbitraryArgument -> Connection -> IO TQ.Property
+restrict =
+  compareDenotationNoSort restrictFirstBool restrictFirstBoolDenotation
 
-values :: Connection -> ArbitraryHaskellsList -> IO TQ.Property
-values conn (ArbitraryHaskellsList l) =
-  compareNoSort conn
-                (denotation (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
+values :: ArbitraryHaskellsList -> Connection -> IO TQ.Property
+values (ArbitraryHaskellsList l) =
+  compareNoSort (denotation (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
                 (pureList (fmap fieldsList l))
 
 -- We test values entries of length two in values, and values entries
 -- of length zero here.  Ideally we would find some way to merge them.
-valuesEmpty :: Connection -> [()] -> IO TQ.Property
-valuesEmpty conn l =
-  compareNoSort conn
-                (denotationExplicit D.def (O.valuesSafe l))
+valuesEmpty :: [()] -> Connection -> IO TQ.Property
+valuesEmpty l =
+  compareNoSort (denotationExplicit D.def (O.valuesSafe l))
                 (pureList l)
 
-aggregate :: Connection -> ArbitrarySelect -> IO TQ.Property
-aggregate conn =
-  compareDenotationNoSort' conn (O.aggregate aggregateFields)
-                                aggregateDenotation
+aggregate :: ArbitrarySelect -> Connection -> IO TQ.Property
+aggregate =
+  compareDenotationNoSort' (O.aggregate aggregateFields)
+                           aggregateDenotation
 
 
-label :: Connection -> String -> ArbitrarySelect -> IO TQ.Property
-label conn comment = compareDenotationNoSort' conn (O.label comment) id
+label :: String -> ArbitrarySelect -> Connection -> IO TQ.Property
+label comment = compareDenotationNoSort' (O.label comment) id
 
-optional :: Connection -> ArbitrarySelect -> IO TQ.Property
-optional conn = compareDenotationMaybe' conn (OJ.optionalExplicit unpackFields)
-                                             optionalDenotation
+optional :: ArbitrarySelect -> Connection -> IO TQ.Property
+optional = compareDenotationMaybe' (OJ.optionalExplicit unpackFields)
+                                   optionalDenotation
 
-optionalRestrict :: Connection -> ArbitrarySelect -> IO TQ.Property
-optionalRestrict conn =
-  compareDenotationMaybe' conn optionalRestrictF optionalRestrictFDenotation
+optionalRestrict :: ArbitrarySelect -> Connection -> IO TQ.Property
+optionalRestrict =
+  compareDenotationMaybe' optionalRestrictF optionalRestrictFDenotation
   where optionalRestrictF = f (firstBoolOrTrue (O.sqlBool True))
                               (O.optionalRestrictExplicit unpackFields)
 
@@ -485,26 +482,26 @@ optionalRestrict conn =
 
         f x y z = Arrow.arr (\() -> fst . x) Arrow.>>> (y z)
 
-maybeFieldsToSelect :: Connection -> ArbitraryMaybeHaskells -> IO TQ.Property
-maybeFieldsToSelect conn =
-  compareDenotationMaybe conn O.maybeFieldsToSelect
-                              (onListK Maybe.maybeToList)
+maybeFieldsToSelect :: ArbitraryMaybeHaskells -> Connection -> IO TQ.Property
+maybeFieldsToSelect =
+  compareDenotationMaybe O.maybeFieldsToSelect
+                         (onListK Maybe.maybeToList)
 
-traverseMaybeFields :: Connection
-                    -> ArbitrarySelectArr
+traverseMaybeFields :: ArbitrarySelectArr
                     -> ArbitraryMaybeHaskells
+                    -> Connection
                     -> IO TQ.Property
-traverseMaybeFields conn (ArbitrarySelectArr q) =
-  compareDenotationMaybe2 conn (traverse' q)
-                               (traverseA1 (denotationArr q))
+traverseMaybeFields (ArbitrarySelectArr q) =
+  compareDenotationMaybe2 (traverse' q)
+                          (traverseA1 (denotationArr q))
   where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
 
-lateral :: Connection
-        -> ArbitraryKleisli
+lateral :: ArbitraryKleisli
         -> ArbitraryArgument
+        -> Connection
         -> IO TQ.Property
-lateral conn (ArbitraryKleisli f) =
-  compareDenotation conn (O.lateral f) (lateralDenotation (denotation . f'))
+lateral (ArbitraryKleisli f) =
+  compareDenotation (O.lateral f) (lateralDenotation (denotation . f'))
   where f' = f . fieldsOfHaskells
 
 {- TODO
@@ -526,23 +523,34 @@ lateral conn (ArbitraryKleisli f) =
 
 run :: Connection -> IO ()
 run conn = do
-  let prop1 p = fmap          TQ.ioProperty (p conn)
-      prop2 p = (fmap . fmap) TQ.ioProperty (p conn)
-      prop3 p = (fmap . fmap . fmap) TQ.ioProperty (p conn)
+  let prop1 :: TQ.Testable prop
+            => (a -> Connection -> IO prop) -> a -> TQ.Property
+      prop1 = fmap (\p -> TQ.ioProperty (p conn))
+
+      prop2 :: TQ.Testable prop
+            => (a1 -> a2 -> Connection -> IO prop)
+            -> a1 -> a2 -> TQ.Property
+      prop2 = (fmap . fmap) (\p -> TQ.ioProperty (p conn))
+
+
+      prop3 :: TQ.Testable prop
+            => (a1 -> a2 -> a3 -> Connection -> IO prop)
+            -> a1 -> a2 -> a3 -> TQ.Property
+      prop3 = (fmap . fmap . fmap) (\p -> TQ.ioProperty (p conn))
 
       test1 :: (Show a, TQ.Arbitrary a, TQ.Testable prop)
-               => (Connection -> a -> IO prop) -> IO ()
+               => (a -> Connection -> IO prop) -> IO ()
       test1 = t . prop1
 
       test2 :: (Show a1, Show a2, TQ.Arbitrary a1, TQ.Arbitrary a2,
                 TQ.Testable prop)
-               => (Connection -> a1 -> a2 -> IO prop) -> IO ()
+               => (a1 -> a2 -> Connection -> IO prop) -> IO ()
       test2 = t . prop2
 
       test3 :: (Show a1, Show a2, Show a3,
                 TQ.Arbitrary a1, TQ.Arbitrary a2, TQ.Arbitrary a3,
                 TQ.Testable prop)
-               => (Connection -> a1 -> a2 -> a3 -> IO prop) -> IO ()
+               => (a1 -> a2 -> a3 -> Connection -> IO prop) -> IO ()
       test3 = t . prop3
 
       t p = errorIfNotSuccess
