@@ -140,8 +140,7 @@ optionalDenotation = onList $ \case
   [] -> [Nothing]
   xs -> map Just xs
 
-lateralDenotation :: (a -> SelectDenotation r)
-                  -> SelectArrDenotation a r
+lateralDenotation :: (a -> SelectDenotation r) -> SelectArrDenotation a r
 lateralDenotation = unApply
 
 optionalRestrictDenotation :: SelectDenotation Haskells
