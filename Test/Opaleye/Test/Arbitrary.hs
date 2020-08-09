@@ -172,6 +172,9 @@ instance TQ.Arbitrary ArbitraryKleisli where
 
 -- It would be better if ArbitrarySelect recursively called this, but
 -- it will do for now.
+--
+-- We are skirting close to generating infinite query territory here!
+-- We should be careful about precisely how we recurse.
 instance TQ.Arbitrary ArbitrarySelectMaybe where
   arbitrary = do
     TQ.oneof $
