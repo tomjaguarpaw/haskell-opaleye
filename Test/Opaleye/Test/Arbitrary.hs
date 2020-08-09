@@ -31,6 +31,8 @@ newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
 newtype ArbitrarySelectMaybe =
   ArbitrarySelectMaybe (O.Select (O.MaybeFields Fields))
 newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
+newtype ArbitrarySelectArrMaybe =
+  ArbitrarySelectArrMaybe (O.SelectArr (O.MaybeFields Fields) (O.MaybeFields Fields))
 newtype ArbitraryKleisli = ArbitraryKleisli (Fields -> O.Select Fields)
 newtype ArbitraryHaskells = ArbitraryHaskells { unArbitraryHaskells :: Haskells }
                         deriving Show
@@ -125,6 +127,10 @@ instance Show ArbitrarySelectArr where
   -- We could plug in dummy data here, or maybe just an empty list
   show _ = "ArbitrarySelectArr"
 
+instance Show ArbitrarySelectArrMaybe where
+  -- We could plug in dummy data here, or maybe just an empty list
+  show _ = "ArbitrarySelectArr"
+
 instance Show ArbitraryKleisli where
   -- We could plug in dummy data here, or maybe just an empty list
   show _ = "ArbitraryKleisli"
@@ -189,6 +195,26 @@ instance TQ.Arbitrary ArbitrarySelectMaybe where
           ArbitrarySelect q <- TQ.arbitrary
           return (fmap fieldsToMaybeFields q)
       ]
+      ++
+      [ do
+          ArbitrarySelectMaybe qm <- TQ.arbitrary
+          ArbitrarySelectArrMaybe q <- TQ.arbitrary
+          return (q <<< qm)
+      ]
+
+instance TQ.Arbitrary ArbitrarySelectArrMaybe where
+  arbitrary = do
+    TQ.oneof $
+      (fmap . fmap) ArbitrarySelectArrMaybe $
+      [ do
+          ArbitrarySelectMaybe q <- TQ.arbitrary
+          return (P.lmap (const ()) q)
+      , do
+          ArbitrarySelectArr q <- TQ.arbitrary
+          return (traverse' q)
+      ]
+    where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
+
 
 -- [Note] Testing strategy
 --

@@ -342,6 +342,21 @@ compose :: Connection
 compose conn (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
   compareDenotation conn (q1 . q2) (denotationArr q1 . denotationArr q2)
 
+-- We need to test this separately otherwise traverseMaybeFields won't
+-- be properly tested.  We need that [traverseMaybeFields q <<< q'] is
+-- [traverseMaybeFields q] <<< [q] and we only test it when q' is of
+-- the form pure h.  The 'compose' tests do the rest, therefore we
+-- need a version of 'compose' that checks composition of things whose
+-- types are 'MaybeFields Fields'.
+composeMaybe :: Connection
+             -> ArbitrarySelectArrMaybe
+             -> ArbitrarySelectArrMaybe
+             -> ArbitraryMaybeHaskells
+             -> IO TQ.Property
+composeMaybe conn (ArbitrarySelectArrMaybe q1) (ArbitrarySelectArrMaybe q2) = do
+  compareDenotationMaybe2 conn (q1 . q2) (denotation_ q1 . denotation_ q2)
+  where denotation_ = denotationArrMaybeFields
+
 -- Would prefer to write 'compare conn (denotation id) id' but that
 -- requires extending compare to compare SelectArrs.
 identity :: Connection
@@ -496,7 +511,6 @@ lateral conn (ArbitraryKleisli f) =
 
   * Nullability
   * Operators (mathematical, logical, etc.)
-  * Use traverseMaybeFields in generated queries
 
 -}
 
@@ -537,6 +551,7 @@ run conn = do
   test1 identity
   test2 arr
   test3 compose
+  test3 composeMaybe
   test2 fields
   test3 fmap'
   test3 apply
