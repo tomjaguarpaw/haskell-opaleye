@@ -185,6 +185,14 @@ denotationMaybeFields :: O.Select (O.MaybeFields Fields)
 denotationMaybeFields =
   denotationExplicit (O.fromFieldsMaybeFields fromFieldsFields)
 
+denotationArrMaybeFields
+  :: O.SelectArr (O.MaybeFields Fields) (O.MaybeFields Fields)
+  -> SelectArrDenotation (Maybe Haskells) (Maybe Haskells)
+denotationArrMaybeFields =
+  denotationArrExplicit
+    (O.toFieldsExplicit (O.toFieldsMaybeFields nullspecFields toFieldsFields))
+    (O.fromFieldsMaybeFields fromFieldsFields)
+
 unSelectDenotations :: Connection
                     -> SelectDenotation a
                     -> SelectDenotation b
