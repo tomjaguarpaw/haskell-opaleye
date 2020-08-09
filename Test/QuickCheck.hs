@@ -163,8 +163,9 @@ denotationExplicit :: O.FromFields fields a
                    -> O.Select fields
                    -> SelectDenotation a
 denotationExplicit qr q =
-  SelectArrDenotation (\conn r ->
-    flip ($) r (\() -> O.runSelectExplicit qr conn q))
+  SelectArrDenotation (\conn h ->
+      let fs = pure (O.toFields h)
+      in O.runSelectExplicit qr conn (q <<< fs))
 
 denotation :: O.Select Fields -> SelectDenotation Haskells
 denotation = denotationExplicit fromFieldsFields
