@@ -271,8 +271,13 @@ arrayColumn = C.unsafeCoerceColumn
 
 instance (Typeable b, DefaultFromField a b) =>
          QueryRunnerColumnDefault (T.PGArray a) [b] where
-  defaultFromField = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
-    where QueryRunnerColumn c f = defaultFromField
+  defaultFromField = fromFieldArray defaultFromField
+
+fromFieldArray :: Typeable h => FromField f h -> FromField (T.PGArray f) [h]
+fromFieldArray q =
+  QueryRunnerColumn (P.lmap arrayColumn c)
+                    ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
+  where QueryRunnerColumn c f = q
 
 -- }
 
