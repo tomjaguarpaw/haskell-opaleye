@@ -119,7 +119,7 @@ instance Opaleye.Internal.PGTypes.IsSqlType a
   => Default ValuesspecSafe (Column a) (Column a) where
   def = def_
     where def_ = ValuesspecSafe (PM.PackMap (\f () -> fmap Column (f null_)))
-                                U.unpackspecColumn
+                                U.unpackspecField
           null_ = nullPE sqlType
 
           sqlType = columnProxy def_

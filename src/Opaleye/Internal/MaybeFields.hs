@@ -139,7 +139,7 @@ optional = Opaleye.Internal.Lateral.laterally optionalSelect
         present = isNotNull (IC.unsafeCoerceColumn t')
 
         (t', bindings) =
-          PM.run (U.runUnpackspec U.unpackspecColumn (PM.extractAttr "maybe" tag') t)
+          PM.run (U.runUnpackspec U.unpackspecField (PM.extractAttr "maybe" tag') t)
         join = PQ.Join PQ.LeftJoin true [] bindings left right
     true = HPQ.ConstExpr (HPQ.BoolLit True)
     isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
@@ -172,7 +172,7 @@ optionalRestrictOptional q = optional $ proc cond -> do
 fromFieldsMaybeFields :: RQ.FromFields fields haskells
                       -> RQ.FromFields (MaybeFields fields) (Maybe haskells)
 fromFieldsMaybeFields (RQ.QueryRunner u p c) = RQ.QueryRunner u' p' c'
-  where u' = () <$ productProfunctorMaybeFields U.unpackspecColumn u
+  where u' = () <$ productProfunctorMaybeFields U.unpackspecField u
 
         p' = \mf -> do
           hIsPresent <- PGSR.field

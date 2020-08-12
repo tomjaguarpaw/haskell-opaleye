@@ -109,7 +109,7 @@ optionalRestrictExplicit uA q =
       in MaybeFields { mfPresent = present
                      , mfFields  = rest
                      }) $
-  leftJoinAExplicit (PP.p2 (U.unpackspecColumn, uA))
+  leftJoinAExplicit (PP.p2 (U.unpackspecField, uA))
                     (Opaleye.Internal.Join.NullMaker id)
                     (fmap (\x -> (T.sqlBool True, x)) q)
 

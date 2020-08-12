@@ -80,7 +80,7 @@ data RelExprMaker a b =
     }
 
 relExprColumn :: RelExprMaker String (Column a)
-relExprColumn = RelExprMaker TM.tableColumn U.unpackspecColumn
+relExprColumn = RelExprMaker TM.tableColumn U.unpackspecField
 
 instance D.Default RelExprMaker String (Column a) where
   def = relExprColumn

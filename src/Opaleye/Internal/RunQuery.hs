@@ -120,7 +120,7 @@ fieldParserQueryRunnerColumn :: FieldParser haskell -> FromField pgType haskell
 fieldParserQueryRunnerColumn = fromPGSFieldParser
 
 fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
-fromPGSFieldParser = QueryRunnerColumn (P.rmap (const ()) U.unpackspecColumn)
+fromPGSFieldParser = QueryRunnerColumn (P.rmap (const ()) U.unpackspecField)
 
 queryRunner :: FromField a b -> FromFields (Column a) b
 queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const 1)

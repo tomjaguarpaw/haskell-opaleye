@@ -47,7 +47,7 @@ instance Default ViewColumnMaker String (C.Column a) where
 
 {-# DEPRECATED column "Use unpackspecColumn instead" #-}
 column :: ColumnMaker (C.Column a) (C.Column a)
-column = U.unpackspecColumn
+column = U.unpackspecField
 
 -- {
 
