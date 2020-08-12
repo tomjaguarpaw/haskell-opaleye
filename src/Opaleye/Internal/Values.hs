@@ -58,6 +58,8 @@ extractValuesField = PM.extractAttr "values"
 newtype Valuesspec columns columns' =
   Valuesspec (PM.PackMap () HPQ.PrimExpr () columns')
 
+type ValuesspecUnsafe = Valuesspec
+
 runValuesspec :: Applicative f => Valuesspec columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()

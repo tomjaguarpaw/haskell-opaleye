@@ -62,7 +62,7 @@ valuesSafeExplicit valuesspec fields =
 
 -- | Forward-compatible version of unsafe 'values' that will not be
 -- deprecated in 0.7, but in 0.8.
-valuesUnsafe :: (Default V.Valuesspec fields fields,
+valuesUnsafe :: (Default V.ValuesspecUnsafe fields fields,
                  Default U.Unpackspec fields fields) =>
                 [fields] -> S.Select fields
 valuesUnsafe = values
@@ -70,6 +70,6 @@ valuesUnsafe = values
 -- | Forward compatible version of unsafe 'valuesExplicit' that will
 -- not be deprecated in 0.7, but in 0.8.
 valuesUnsafeExplicit :: U.Unpackspec fields fields'
-                     -> V.Valuesspec fields fields'
+                     -> V.ValuesspecUnsafe fields fields'
                      -> [fields] -> S.Select fields'
 valuesUnsafeExplicit = valuesExplicit
