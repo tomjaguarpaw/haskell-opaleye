@@ -1,4 +1,6 @@
-module Opaleye.Label where
+module Opaleye.Label (
+  label
+  ) where
 
 import qualified Opaleye.Internal.Label as L
 import qualified Opaleye.Internal.QueryArr as Q
