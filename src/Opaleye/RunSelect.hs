@@ -3,7 +3,21 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Opaleye.RunSelect
-  (module Opaleye.RunSelect,
+  (-- * Running 'S.Select's
+   runSelect,
+   runSelectI,
+   runSelectTF,
+   runSelectFold,
+   -- * Cursor interface
+   declareCursor,
+   closeCursor,
+   foldForward,
+   -- * Creating new 'FromField's
+   unsafeFromField,
+   -- * Explicit versions
+   runSelectExplicit,
+   runSelectFoldExplicit,
+   declareCursorExplicit,
    -- * Datatypes
    IRQ.Cursor,
    IRQ.FromFields,
@@ -25,8 +39,6 @@ import qualified Opaleye.Internal.RunQuery as IRQ
 import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 
 import qualified Data.Profunctor.Product.Default as D
-
--- * Running 'S.Select's
 
 -- | @runSelect@'s use of the @'D.Default' 'FromFields'@
 -- typeclass means that the
@@ -82,8 +94,6 @@ runSelectFold
   -> IO b
 runSelectFold = RQ.runQueryFold
 
--- * Cursor interface
-
 -- | Declare a temporary cursor. The cursor is given a unique name for the given
 -- connection.
 declareCursor
@@ -114,8 +124,6 @@ foldForward
     -> IO (Either a a)
 foldForward = RQ.foldForward
 
--- * Creating new 'FromField's
-
 -- | Use 'unsafeFromField' to make an instance to allow you to run
 --   queries on your own datatypes.  For example:
 --
@@ -136,8 +144,6 @@ unsafeFromField haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
   where IRQ.QueryRunnerColumn u fp = qrc
         fmapFP = fmap . fmap . fmap
         colF = C.unsafeCoerceColumn
-
--- * Explicit versions
 
 runSelectExplicit :: FromFields fields haskells
                   -> PGS.Connection
