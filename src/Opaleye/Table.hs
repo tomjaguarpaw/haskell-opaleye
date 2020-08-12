@@ -4,7 +4,7 @@
 
 {- |
 
- Fields can be required or optional and, independently, nullable or
+ Table fields can be required or optional and, independently, nullable or
  non-nullable.
 
  A required non-nullable @SqlInt4@ (for example) is defined with
