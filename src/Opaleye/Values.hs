@@ -25,7 +25,7 @@ import           Data.Profunctor.Product.Default (Default, def)
 -- queries when mixed with @OUTER@\/@LEFT@\/@RIGHT JOIN@.  You should
 -- use 'valuesSafe' instead.  'valuesSafe' will replace 'values' in
 -- version 0.7.
-values :: (Default V.Valuesspec fields fields,
+values :: (Default V.ValuesspecUnsafe fields fields,
            Default U.Unpackspec fields fields) =>
           [fields] -> S.Select fields
 values = valuesExplicit def def
@@ -35,7 +35,7 @@ values = valuesExplicit def def
 -- You should use 'valuesSafeExplicit' instead.  'valuesSafeExplicit'
 -- will replace 'valuesExplicit' in version 0.7.
 valuesExplicit :: U.Unpackspec fields fields'
-               -> V.Valuesspec fields fields'
+               -> V.ValuesspecUnsafe fields fields'
                -> [fields] -> S.Select fields'
 valuesExplicit unpack valuesspec fields =
   Q.productQueryArr (V.valuesU unpack valuesspec fields)

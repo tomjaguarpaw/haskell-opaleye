@@ -23,7 +23,7 @@ import           Control.Applicative (Applicative, pure, (<*>))
 -- FIXME: We don't currently handle the case of zero columns.  Need to
 -- emit a dummy column and data.
 valuesU :: U.Unpackspec columns columns'
-        -> Valuesspec columns columns'
+        -> ValuesspecUnsafe columns columns'
         -> [columns]
         -> ((), T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
 valuesU unpack valuesspec rows ((), t) = (newColumns, primQ', T.next t)
@@ -55,18 +55,16 @@ extractValuesField :: T.Tag -> primExpr
                    -> PM.PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractValuesField = PM.extractAttr "values"
 
-newtype Valuesspec columns columns' =
+newtype ValuesspecUnsafe columns columns' =
   Valuesspec (PM.PackMap () HPQ.PrimExpr () columns')
 
-type ValuesspecUnsafe = Valuesspec
-
-runValuesspec :: Applicative f => Valuesspec columns columns'
+runValuesspec :: Applicative f => ValuesspecUnsafe columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
 -- For 0.7 put an `IsSqlType a` constraint on here, so that we can
 -- later use it without breaking the API
-instance Default Valuesspec (Column a) (Column a) where
+instance Default ValuesspecUnsafe (Column a) (Column a) where
   def = Valuesspec (PM.iso id Column)
 
 valuesUSafe :: ValuesspecSafe columns columns'
@@ -167,17 +165,17 @@ nullFields (Nullspec v) = runIdentity (runValuesspecSafe v pure)
 
 -- Boilerplate instance definitions.  Theoretically, these are derivable.
 
-instance Functor (Valuesspec a) where
+instance Functor (ValuesspecUnsafe a) where
   fmap f (Valuesspec g) = Valuesspec (fmap f g)
 
-instance Applicative (Valuesspec a) where
+instance Applicative (ValuesspecUnsafe a) where
   pure = Valuesspec . pure
   Valuesspec f <*> Valuesspec x = Valuesspec (f <*> x)
 
-instance Profunctor Valuesspec where
+instance Profunctor ValuesspecUnsafe where
   dimap _ g (Valuesspec q) = Valuesspec (rmap g q)
 
-instance ProductProfunctor Valuesspec where
+instance ProductProfunctor ValuesspecUnsafe where
   purePP = pure
   (****) = (<*>)
 
