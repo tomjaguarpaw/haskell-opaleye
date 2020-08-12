@@ -91,8 +91,6 @@ tableColumnsView :: TableFields writeColumns viewColumns
 tableColumnsView = tablePropertiesView
 
 {-# DEPRECATED View "Internal only.  Do not use.  'View' will be removed in version 0.8." #-}
--- | Internal only.  Do not use.  'View' will be deprecated in version
--- 0.7.
 newtype View columns = View columns
 
 {-# DEPRECATED Writer "Internal only.  Do not use.  'Writer' will be removed in 0.8." #-}
@@ -130,18 +128,15 @@ optionalTableField columnName = TableFields
 readOnlyTableField :: String -> TableFields () (Column a)
 readOnlyTableField = lmap (const Nothing) . optionalTableField
 
--- | Use 'requiredTableField' instead.  'required' will be deprecated
--- in 0.7.
+{-# DEPRECATED required  "Use 'requiredTableField' instead.  Will be removed in version 0.8." #-}
 required :: String -> TableFields (Column a) (Column a)
 required = requiredTableField
 
--- | Use 'optionalTableField' instead.  'optional' will be deprecated
--- in 0.7.
+{-# DEPRECATED optional "Use 'optionalTableField' instead.  Will be removed in version 0.8." #-}
 optional :: String -> TableFields (Maybe (Column a)) (Column a)
 optional = optionalTableField
 
--- | Use 'readOnlyTableField' instead.  'readOnly' will be deprecated
--- in 0.7.
+{-# DEPRECATED readOnly "Use 'readOnlyTableField' instead.  Will be removed in version 0.8." #-}
 readOnly :: String -> TableFields () (Column a)
 readOnly = readOnlyTableField
 
