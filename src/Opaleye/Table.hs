@@ -73,6 +73,8 @@ module Opaleye.Table (-- * Defining tables
                       -- * Other
                       T.TableColumns,
                       TableFields,
+                      -- * Explicit versions
+                      selectTableExplicit,
                       -- * Deprecated
                       T.optional,
                       T.readOnly,
@@ -81,8 +83,8 @@ module Opaleye.Table (-- * Defining tables
                       View,
                       Writer,
                       T.Table(T.Table, T.TableWithSchema),
-                      -- * Module reexport
-                      module Opaleye.Table) where
+                      queryTable,
+                      queryTableExplicit) where
 
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
