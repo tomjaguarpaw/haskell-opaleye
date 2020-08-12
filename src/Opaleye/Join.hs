@@ -167,7 +167,7 @@ leftJoin = leftJoinExplicit D.def D.def D.def
 
 -- | We suggest you don't use this.  'optionalRestrict' is probably
 -- better for your use case.  'Opaleye.Join.leftJoinA' is the same as
--- except 'optionalRestrict' without the return type wrapped in
+-- 'optionalRestrict' except without the return type wrapped in
 -- 'Opaleye.Internal.MaybeFields.MaybeFields'.
 
 leftJoinA :: (D.Default U.Unpackspec fieldsR fieldsR,
