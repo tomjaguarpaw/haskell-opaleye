@@ -1,6 +1,18 @@
 {-# LANGUAGE FlexibleContexts, ScopedTypeVariables #-}
 
-module Opaleye.Sql where
+module Opaleye.Sql (
+  -- * Showing SQL
+  showSql,
+  showSqlUnopt,
+  -- * Explicit versions
+  showSqlExplicit,
+  showSqlUnoptExplicit,
+  -- * Deprecated functions
+  showSqlForPostgres,
+  showSqlForPostgresUnopt,
+  showSqlForPostgresExplicit,
+  showSqlForPostgresUnoptExplicit,
+  ) where
 
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Print as Pr
@@ -11,8 +23,6 @@ import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Select as S
 
 import qualified Data.Profunctor.Product.Default as D
-
--- * Showing SQL
 
 -- | Show the SQL query string generated from the 'S.Select'.
 --
@@ -44,8 +54,6 @@ showSqlUnopt :: forall fields.
              -> Maybe String
 showSqlUnopt = showSqlUnoptExplicit (D.def :: U.Unpackspec fields fields)
 
--- * Explicit versions
-
 showSqlExplicit :: U.Unpackspec fields b -> S.Select fields -> Maybe String
 showSqlExplicit = Pr.formatAndShowSQL
                   . (\(x, y, z) -> (x, Op.optimize y, z))
@@ -53,8 +61,6 @@ showSqlExplicit = Pr.formatAndShowSQL
 
 showSqlUnoptExplicit :: U.Unpackspec fields b -> S.Select fields -> Maybe String
 showSqlUnoptExplicit = Pr.formatAndShowSQL .: Q.runQueryArrUnpack
-
--- * Deprecated functions
 
 {-# DEPRECATED showSqlForPostgres "Will be removed in version 0.8.  Use 'showSql' instead." #-}
 showSqlForPostgres :: forall columns . D.Default U.Unpackspec columns columns =>
