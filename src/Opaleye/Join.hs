@@ -253,7 +253,7 @@ optionalExplicit _ = M.optional
 
 -- * Inferrable versions (deprecated)
 
--- | Do not use.  Will be deprecated in 0.7.  Use 'optionalRestrict' instead.
+{-# DEPRECATED leftJoinInferrable "Use 'optionalRestrict' instead." #-}
 leftJoinInferrable :: (D.Default U.Unpackspec fieldsL fieldsL,
                        D.Default U.Unpackspec fieldsR fieldsR,
                        D.Default J.NullMaker fieldsR nullableFieldsR,
@@ -268,8 +268,7 @@ leftJoinInferrable :: (D.Default U.Unpackspec fieldsL fieldsL,
                    -- ^ Left join
 leftJoinInferrable = leftJoin
 
--- | Do not use.  Will be deprecated in 0.7.  Use 'optionalRestrict'
--- instead.
+{-# DEPRECATED rightJoinInferrable "Use 'optionalRestrict' instead." #-}
 rightJoinInferrable :: (D.Default U.Unpackspec fieldsL fieldsL,
                         D.Default U.Unpackspec fieldsR fieldsR,
                         D.Default J.NullMaker fieldsL nullableFieldsL,
@@ -285,8 +284,7 @@ rightJoinInferrable :: (D.Default U.Unpackspec fieldsL fieldsL,
 rightJoinInferrable = rightJoin
 
 
--- | Do not use.  Will be deprecated in 0.7.  Use
--- 'Opaleye.FunctionalJoin.rightJoinF' instead.
+{-# DEPRECATED fullJoinInferrable "Use 'Opaleye.FunctionalJoin.rightJoinF' instead." #-}
 fullJoinInferrable  :: (D.Default U.Unpackspec fieldsL fieldsL,
                         D.Default U.Unpackspec fieldsR fieldsR,
                         D.Default J.NullMaker fieldsL nullableFieldsL,
