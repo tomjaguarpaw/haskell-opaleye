@@ -248,12 +248,13 @@ inSelect c q = qj'
 -- Used to overload functions and operators that work on both 'T.SqlJson' and 'T.SqlJsonb'.
 --
 -- Warning: making additional instances of this class can lead to broken code!
-class PGIsJson a
+class SqlIsJson a
 
-type SqlIsJson = PGIsJson
+{-# DEPRECATED PGIsJson "Use SqlIsJson instead" #-}
+type PGIsJson = SqlIsJson
 
-instance PGIsJson T.SqlJson
-instance PGIsJson T.SqlJsonb
+instance SqlIsJson T.SqlJson
+instance SqlIsJson T.SqlJsonb
 
 -- | Class of Postgres types that can be used to index json values.
 --
