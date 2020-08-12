@@ -5,7 +5,12 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Opaleye.FunctionalJoin where
+module Opaleye.FunctionalJoin (
+  joinF,
+  leftJoinF,
+  rightJoinF,
+  fullJoinF,
+  ) where
 
 import           Control.Applicative             ((<$>), (<*>))
 import           Control.Arrow                   ((<<<))
