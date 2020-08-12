@@ -6,7 +6,7 @@
 -- | Operators on 'Column's.  Please note that numeric 'Column' types
 -- are instances of 'Num', so you can use '*', '/', '+', '-' on them.
 
-module Opaleye.Operators (module Opaleye.Operators) where
+module Opaleye.Operators where
 
 import qualified Control.Arrow as A
 import qualified Data.Foldable as F
