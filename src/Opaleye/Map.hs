@@ -1,8 +1,6 @@
 {-# LANGUAGE TypeFamilies #-}
 
--- | Do not use. This module will be deprecated in 0.7.
-
-module Opaleye.Map where
+module Opaleye.Map {-# DEPRECATED "This module will be removed in 0.8." #-} where
 
 type family Map f x
 
