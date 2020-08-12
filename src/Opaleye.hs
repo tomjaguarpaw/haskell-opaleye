@@ -28,7 +28,7 @@ module Opaleye ( module Opaleye.Adaptors
                , module Opaleye.MaybeFields
                , module Opaleye.Operators
                , module Opaleye.Order
-               , module Opaleye.PGTypes
+               , module Opaleye.Internal.PGTypesExternal
                , module Opaleye.QueryArr
                , module Opaleye.RunQuery
                , module Opaleye.RunSelect
@@ -64,7 +64,7 @@ import Opaleye.MaybeFields
   hiding (optional)
 import Opaleye.Operators
 import Opaleye.Order
-import Opaleye.PGTypes
+import Opaleye.Internal.PGTypesExternal
 import Opaleye.QueryArr
 import Opaleye.RunQuery
 import Opaleye.RunSelect
