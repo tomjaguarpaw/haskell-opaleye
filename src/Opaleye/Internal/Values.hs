@@ -67,7 +67,7 @@ runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 instance Default ValuesspecUnsafe (Column a) (Column a) where
   def = Valuesspec (PM.iso id Column)
 
-valuesUSafe :: ValuesspecSafe columns columns'
+valuesUSafe :: Valuesspec columns columns'
             -> [columns]
             -> ((), T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
 valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows ((), t) =
@@ -99,22 +99,24 @@ valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows ((), t) =
 
         primQ' = wrap (PQ.Values valuesPEs values)
 
-data ValuesspecSafe columns columns' =
+data Valuesspec columns columns' =
   ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
                  (U.Unpackspec columns columns')
 
+type ValuesspecSafe = Valuesspec
+
 runValuesspecSafe :: Applicative f
-                  => ValuesspecSafe columns columns'
+                  => Valuesspec columns columns'
                   -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                   -> f columns'
 runValuesspecSafe (ValuesspecSafe v _) f = PM.traversePM v f ()
 
 valuesspecField :: Opaleye.SqlTypes.IsSqlType a
-                => ValuesspecSafe (Column a) (Column a)
+                => Valuesspec (Column a) (Column a)
 valuesspecField = def
 
 instance Opaleye.Internal.PGTypes.IsSqlType a
-  => Default ValuesspecSafe (Column a) (Column a) where
+  => Default Valuesspec (Column a) (Column a) where
   def = def_
     where def_ = ValuesspecSafe (PM.PackMap (\f () -> fmap Column (f null_)))
                                 U.unpackspecField
@@ -129,7 +131,7 @@ nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
                               (HPQ.ConstExpr HPQ.NullLit)
 
 -- Implementing this in terms of Valuesspec for convenience
-newtype Nullspec fields fields' = Nullspec (ValuesspecSafe fields fields')
+newtype Nullspec fields fields' = Nullspec (Valuesspec fields fields')
 
 nullspecField :: Opaleye.SqlTypes.IsSqlType b
               => Nullspec a (Column b)
@@ -179,18 +181,18 @@ instance ProductProfunctor ValuesspecUnsafe where
   purePP = pure
   (****) = (<*>)
 
-instance Functor (ValuesspecSafe a) where
+instance Functor (Valuesspec a) where
   fmap f (ValuesspecSafe g h) = ValuesspecSafe (fmap f g) (fmap f h)
 
-instance Applicative (ValuesspecSafe a) where
+instance Applicative (Valuesspec a) where
   pure a = ValuesspecSafe (pure a) (pure a)
   ValuesspecSafe f f' <*> ValuesspecSafe x x' =
     ValuesspecSafe (f <*> x) (f' <*> x')
 
-instance Profunctor ValuesspecSafe where
+instance Profunctor Valuesspec where
   dimap f g (ValuesspecSafe q q') = ValuesspecSafe (rmap g q) (dimap f g q')
 
-instance ProductProfunctor ValuesspecSafe where
+instance ProductProfunctor Valuesspec where
   purePP = pure
   (****) = (<*>)
 

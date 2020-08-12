@@ -62,6 +62,7 @@ module Opaleye.Adaptors
     -- * Updater
     Updater,
     -- * Valuesspec
+    Valuesspec,
     ValuesspecSafe,
     valuesspecField,
     valuesspecMaybeFields,

@@ -204,8 +204,8 @@ unpackspecMaybeFields :: U.Unpackspec a b
                       -> U.Unpackspec (MaybeFields a) (MaybeFields b)
 unpackspecMaybeFields = productProfunctorMaybeFields U.unpackspecField
 
-valuesspecMaybeFields :: V.ValuesspecSafe a b
-                      -> V.ValuesspecSafe (MaybeFields a) (MaybeFields b)
+valuesspecMaybeFields :: V.Valuesspec a b
+                      -> V.Valuesspec (MaybeFields a) (MaybeFields b)
 valuesspecMaybeFields = productProfunctorMaybeFields V.valuesspecField
 
 toFieldsMaybeFields :: V.Nullspec a b
@@ -297,8 +297,8 @@ instance PP.Default U.Unpackspec a b
   => PP.Default U.Unpackspec (MaybeFields a) (MaybeFields b) where
   def = unpackspecMaybeFields PP.def
 
-instance PP.Default V.ValuesspecSafe a b
-  => PP.Default V.ValuesspecSafe (MaybeFields a) (MaybeFields b) where
+instance PP.Default V.Valuesspec a b
+  => PP.Default V.Valuesspec (MaybeFields a) (MaybeFields b) where
   def = valuesspecMaybeFields PP.def
 
 instance (PP.Default Constant.ToFields a b, PP.Default V.Nullspec a b)

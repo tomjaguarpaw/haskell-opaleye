@@ -5,6 +5,7 @@ module Opaleye.Values(
   -- * Explicit versions
   valuesSafeExplicit,
   -- * Adaptors
+  V.Valuesspec,
   V.ValuesspecSafe,
   V.valuesspecField,
   -- * Deprecated versions
@@ -55,11 +56,11 @@ valuesExplicit unpack valuesspec fields =
 -- @
 -- valuesSafe :: [Foo (Field a) (Field b) (Field c)] -> S.Select (Foo (Field a) (Field b) (Field c))
 -- @
-valuesSafe :: Default V.ValuesspecSafe fields fields =>
+valuesSafe :: Default V.Valuesspec fields fields =>
                [fields] -> S.Select fields
 valuesSafe = valuesSafeExplicit def
 
-valuesSafeExplicit :: V.ValuesspecSafe fields fields'
+valuesSafeExplicit :: V.Valuesspec fields fields'
                    -> [fields] -> S.Select fields'
 valuesSafeExplicit valuesspec fields =
   Q.productQueryArr (V.valuesUSafe valuesspec fields)
