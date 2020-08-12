@@ -1,5 +1,6 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Opaleye.Internal.PGTypesExternal
   (module Opaleye.Internal.PGTypesExternal, IsSqlType(..)) where
@@ -223,22 +224,42 @@ instance IsRangeType PGDate where
 
 -- * SQL datatypes
 
-data PGBool
-data PGDate
-data PGFloat4
-data PGFloat8
-data PGInt8
-data PGInt4
-data PGInt2
-data PGNumeric
-data PGText
-data PGTime
-data PGTimestamp
-data PGTimestamptz
-data PGUuid
-data PGCitext
-data PGArray a
-data PGBytea
-data PGJson
-data PGJsonb
-data PGRange a
+data SqlBool
+data SqlDate
+data SqlFloat4
+data SqlFloat8
+data SqlInt8
+data SqlInt4
+data SqlInt2
+data SqlNumeric
+data SqlText
+data SqlTime
+data SqlTimestamp
+data SqlTimestamptz
+data SqlUuid
+data SqlCitext
+data SqlArray a
+data SqlBytea
+data SqlJson
+data SqlJsonb
+data SqlRange a
+
+type PGBool = SqlBool
+type PGDate = SqlDate
+type PGFloat4 = SqlFloat4
+type PGFloat8 = SqlFloat8
+type PGInt8 = SqlInt8
+type PGInt4 = SqlInt4
+type PGInt2 = SqlInt2
+type PGNumeric = SqlNumeric
+type PGText = SqlText
+type PGTime = SqlTime
+type PGTimestamp = SqlTimestamp
+type PGTimestamptz = SqlTimestamptz
+type PGUuid = SqlUuid
+type PGCitext = SqlCitext
+type PGArray = SqlArray
+type PGBytea = SqlBytea
+type PGJson = SqlJson
+type PGJsonb = SqlJsonb
+type PGRange = SqlRange

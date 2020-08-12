@@ -4,11 +4,50 @@
 
 module Opaleye.SqlTypes (module Opaleye.SqlTypes,
                          P.IsSqlType,
-                         P.IsRangeType) where
+                         P.IsRangeType,
+                         SqlBool,
+                         SqlDate,
+                         SqlFloat4,
+                         SqlFloat8,
+                         SqlInt8,
+                         SqlInt4,
+                         SqlInt2,
+                         SqlNumeric,
+                         SqlText,
+                         SqlTime,
+                         SqlTimestamp,
+                         SqlTimestamptz,
+                         SqlUuid,
+                         SqlCitext,
+                         SqlArray,
+                         SqlBytea,
+                         SqlJson,
+                         SqlJsonb,
+                         SqlRange,
+                        ) where
 
 import qualified Opaleye.Field   as F
 import qualified Opaleye.Internal.PGTypesExternal as P
 import           Opaleye.Internal.PGTypesExternal (IsSqlType, IsRangeType)
+import           Opaleye.Internal.PGTypesExternal (SqlBool,
+                                                   SqlDate,
+                                                   SqlFloat4,
+                                                   SqlFloat8,
+                                                   SqlInt8,
+                                                   SqlInt4,
+                                                   SqlInt2,
+                                                   SqlNumeric,
+                                                   SqlText,
+                                                   SqlTime,
+                                                   SqlTimestamp,
+                                                   SqlTimestamptz,
+                                                   SqlUuid,
+                                                   SqlCitext,
+                                                   SqlArray,
+                                                   SqlBytea,
+                                                   SqlJson,
+                                                   SqlJsonb,
+                                                   SqlRange)
 
 import qualified Data.Aeson as Ae
 import qualified Data.ByteString as SByteString
@@ -125,25 +164,3 @@ sqlRange :: IsRangeType b
          -> R.RangeBound a
          -> F.Field (SqlRange b)
 sqlRange = P.pgRange
-
--- * SQL datatypes
-
-type SqlBool = P.PGBool
-type SqlDate = P.PGDate
-type SqlFloat4 = P.PGFloat4
-type SqlFloat8 = P.PGFloat8
-type SqlInt8 = P.PGInt8
-type SqlInt4 = P.PGInt4
-type SqlInt2 = P.PGInt2
-type SqlNumeric = P.PGNumeric
-type SqlText = P.PGText
-type SqlTime = P.PGTime
-type SqlTimestamp = P.PGTimestamp
-type SqlTimestamptz = P.PGTimestamptz
-type SqlUuid = P.PGUuid
-type SqlCitext = P.PGCitext
-type SqlArray = P.PGArray
-type SqlBytea = P.PGBytea
-type SqlJson = P.PGJson
-type SqlJsonb = P.PGJsonb
-type SqlRange = P.PGRange

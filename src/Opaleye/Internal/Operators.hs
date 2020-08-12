@@ -14,7 +14,6 @@ import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.PGTypesExternal as T
-import qualified Opaleye.SqlTypes as T
 import qualified Opaleye.Field as F
 import qualified Opaleye.Select as S
 
