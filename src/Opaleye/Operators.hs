@@ -400,7 +400,7 @@ timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
 
 -- * Deprecated
 
-{-# DEPRECATED exists "Identical to 'restrictExists'.  Will be deprecated in version 0.8." #-}
+{-# DEPRECATED exists "Identical to 'restrictExists'.  Will be removed in version 0.8." #-}
 exists :: QueryArr a b -> QueryArr a ()
 exists = restrictExists
 
@@ -408,7 +408,7 @@ exists = restrictExists
 notExists :: QueryArr a b -> QueryArr a ()
 notExists = restrictNotExists
 
-{-# DEPRECATED inQuery "Identical to 'inSelect'.  Will be deprecated in version 0.8." #-}
+{-# DEPRECATED inQuery "Identical to 'inSelect'.  Will be removed in version 0.8." #-}
 inQuery :: D.Default O.EqPP fields fields
         => fields -> Query fields -> S.Select (F.Field T.SqlBool)
 inQuery = inSelect
