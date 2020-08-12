@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-duplicate-exports #-}
--- | Do not use.  Will be deprecated in version 0.7.  Use
+-- | Do not use.  Will be deprecated in version 0.8.  Use
 -- "Opaleye.Field" instead.
 --
 -- Functions for working directly with 'Column's.
@@ -7,7 +7,7 @@
 -- Please note that numeric 'Column' types are instances of 'Num', so
 -- you can use '*', '/', '+', '-' on them.
 --
--- 'Column' will be renamed to 'Opaleye.Field.Field_' in version 0.7,
+-- 'Column' will be renamed to 'Opaleye.Field.Field_' in version 0.8,
 -- so you might want to use the latter as much as you can.
 
 module Opaleye.Column (-- * 'Column'
