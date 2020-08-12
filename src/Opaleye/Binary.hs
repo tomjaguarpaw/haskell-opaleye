@@ -34,7 +34,23 @@
 
 {-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
 
-module Opaleye.Binary where
+module Opaleye.Binary (-- * Binary operations
+                       unionAll,
+                       union,
+                       intersectAll,
+                       intersect,
+                       exceptAll,
+                       except,
+                       -- * Explicit versions
+                       unionAllExplicit,
+                       unionExplicit,
+                       intersectAllExplicit,
+                       intersectExplicit,
+                       exceptAllExplicit,
+                       exceptExplicit,
+                       -- * Adaptors
+                       binaryspecField,
+                      ) where
 
 import qualified Opaleye.Internal.Binary as B
 import qualified Opaleye.Internal.Column
@@ -42,8 +58,6 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Select             as S
 
 import           Data.Profunctor.Product.Default (Default, def)
-
--- * Binary operations
 
 unionAll :: Default B.Binaryspec fields fields =>
             S.Select fields -> S.Select fields -> S.Select fields
@@ -75,8 +89,6 @@ except :: Default B.Binaryspec fields fields =>
          S.Select fields -> S.Select fields -> S.Select fields
 except = exceptExplicit def
 
--- * Explicit versions
-
 unionAllExplicit :: B.Binaryspec fields fields'
                  -> S.Select fields -> S.Select fields -> S.Select fields'
 unionAllExplicit = B.sameTypeBinOpHelper PQ.UnionAll
@@ -100,8 +112,6 @@ exceptAllExplicit = B.sameTypeBinOpHelper PQ.ExceptAll
 exceptExplicit :: B.Binaryspec fields fields'
               -> S.Select fields -> S.Select fields -> S.Select fields'
 exceptExplicit = B.sameTypeBinOpHelper PQ.Except
-
--- * Adaptors
 
 binaryspecField :: (B.Binaryspec
                         (Opaleye.Internal.Column.Column a)
