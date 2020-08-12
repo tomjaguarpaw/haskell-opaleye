@@ -1,6 +1,11 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.ToFields (toFieldsI, C.ToFields, module Opaleye.ToFields) where
+module Opaleye.ToFields (toFields,
+                         toFieldsI,
+                         toToFields,
+                         C.ToFields,
+                         toFieldsExplicit,
+                         ) where
 
 import qualified Opaleye.Internal.Constant as C
 import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
