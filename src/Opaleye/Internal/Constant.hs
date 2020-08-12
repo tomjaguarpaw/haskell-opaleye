@@ -47,111 +47,111 @@ instance D.Default ToFields haskell (Column sql)
   def = ToFields (C.maybeToNullable . fmap f)
     where ToFields f = D.def
 
-toToField :: (haskells -> fields) -> ToFields haskells fields
-toToField = ToFields
+toToFields :: (haskells -> fields) -> ToFields haskells fields
+toToFields = ToFields
 
 instance D.Default ToFields (Column a) (Column a) where
-  def = toToField id
+  def = toToFields id
 
 instance D.Default ToFields String (Column T.SqlText) where
-  def = toToField T.sqlString
+  def = toToFields T.sqlString
 
 instance D.Default ToFields LBS.ByteString (Column T.SqlBytea) where
-  def = toToField T.sqlLazyByteString
+  def = toToFields T.sqlLazyByteString
 
 instance D.Default ToFields SBS.ByteString (Column T.SqlBytea) where
-  def = toToField T.sqlStrictByteString
+  def = toToFields T.sqlStrictByteString
 
 instance D.Default ToFields ST.Text (Column T.SqlText) where
-  def = toToField T.sqlStrictText
+  def = toToFields T.sqlStrictText
 
 instance D.Default ToFields LT.Text (Column T.SqlText) where
-  def = toToField T.sqlLazyText
+  def = toToFields T.sqlLazyText
 
 instance D.Default ToFields Sci.Scientific (Column T.SqlNumeric) where
-  def = toToField T.sqlNumeric
+  def = toToFields T.sqlNumeric
 
 instance D.Default ToFields Int (Column T.SqlInt4) where
-  def = toToField T.sqlInt4
+  def = toToFields T.sqlInt4
 
 instance D.Default ToFields Int.Int32 (Column T.SqlInt4) where
-  def = toToField $ T.sqlInt4 . fromIntegral
+  def = toToFields $ T.sqlInt4 . fromIntegral
 
 instance D.Default ToFields Int.Int64 (Column T.SqlInt8) where
-  def = toToField T.sqlInt8
+  def = toToFields T.sqlInt8
 
 instance D.Default ToFields Double (Column T.SqlFloat8) where
-  def = toToField T.sqlDouble
+  def = toToFields T.sqlDouble
 
 instance D.Default ToFields Bool (Column T.SqlBool) where
-  def = toToField T.sqlBool
+  def = toToFields T.sqlBool
 
 instance D.Default ToFields UUID.UUID (Column T.SqlUuid) where
-  def = toToField T.sqlUUID
+  def = toToFields T.sqlUUID
 
 instance D.Default ToFields Time.Day (Column T.SqlDate) where
-  def = toToField T.sqlDay
+  def = toToFields T.sqlDay
 
 instance D.Default ToFields Time.UTCTime (Column T.SqlTimestamptz) where
-  def = toToField T.sqlUTCTime
+  def = toToFields T.sqlUTCTime
 
 instance D.Default ToFields Time.LocalTime (Column T.SqlTimestamp) where
-  def = toToField T.sqlLocalTime
+  def = toToFields T.sqlLocalTime
 
 instance D.Default ToFields Time.ZonedTime (Column T.SqlTimestamptz) where
-  def = toToField T.sqlZonedTime
+  def = toToFields T.sqlZonedTime
 
 instance D.Default ToFields Time.TimeOfDay (Column T.SqlTime) where
-  def = toToField T.sqlTimeOfDay
+  def = toToFields T.sqlTimeOfDay
 
 instance D.Default ToFields (CI.CI ST.Text) (Column T.SqlCitext) where
-  def = toToField T.sqlCiStrictText
+  def = toToFields T.sqlCiStrictText
 
 instance D.Default ToFields (CI.CI LT.Text) (Column T.SqlCitext) where
-  def = toToField T.sqlCiLazyText
+  def = toToFields T.sqlCiLazyText
 
 instance D.Default ToFields SBS.ByteString (Column T.SqlJson) where
-  def = toToField T.sqlStrictJSON
+  def = toToFields T.sqlStrictJSON
 
 instance D.Default ToFields LBS.ByteString (Column T.SqlJson) where
-  def = toToField T.sqlLazyJSON
+  def = toToFields T.sqlLazyJSON
 
 instance D.Default ToFields Ae.Value (Column T.SqlJson) where
-  def = toToField T.sqlValueJSON
+  def = toToFields T.sqlValueJSON
 
 instance D.Default ToFields SBS.ByteString (Column T.SqlJsonb) where
-  def = toToField T.sqlStrictJSONB
+  def = toToFields T.sqlStrictJSONB
 
 instance D.Default ToFields LBS.ByteString (Column T.SqlJsonb) where
-  def = toToField T.sqlLazyJSONB
+  def = toToFields T.sqlLazyJSONB
 
 instance D.Default ToFields Ae.Value (Column T.SqlJsonb) where
-  def = toToField T.sqlValueJSONB
+  def = toToFields T.sqlValueJSONB
 
 instance D.Default ToFields haskell (Column sql) => D.Default ToFields (Maybe haskell) (Maybe (Column sql)) where
-  def = toToField (constant <$>)
+  def = toToFields (constant <$>)
 
 instance (D.Default ToFields a (Column b), T.IsSqlType b)
          => D.Default ToFields [a] (Column (T.SqlArray b)) where
-  def = toToField (T.sqlArray (constantExplicit D.def))
+  def = toToFields (T.sqlArray (constantExplicit D.def))
 
 instance D.Default ToFields (R.PGRange Int.Int) (Column (T.SqlRange T.SqlInt4)) where
-  def = toToField $ \(R.PGRange a b) -> T.sqlRange T.sqlInt4 a b
+  def = toToFields $ \(R.PGRange a b) -> T.sqlRange T.sqlInt4 a b
 
 instance D.Default ToFields (R.PGRange Int.Int64) (Column (T.SqlRange T.SqlInt8)) where
-  def = toToField $ \(R.PGRange a b) -> T.sqlRange T.sqlInt8 a b
+  def = toToFields $ \(R.PGRange a b) -> T.sqlRange T.sqlInt8 a b
 
 instance D.Default ToFields (R.PGRange Sci.Scientific) (Column (T.SqlRange T.SqlNumeric)) where
-  def = toToField $ \(R.PGRange a b) -> T.sqlRange T.sqlNumeric a b
+  def = toToFields $ \(R.PGRange a b) -> T.sqlRange T.sqlNumeric a b
 
 instance D.Default ToFields (R.PGRange Time.LocalTime) (Column (T.SqlRange T.SqlTimestamp)) where
-  def = toToField $ \(R.PGRange a b) -> T.sqlRange T.sqlLocalTime a b
+  def = toToFields $ \(R.PGRange a b) -> T.sqlRange T.sqlLocalTime a b
 
 instance D.Default ToFields (R.PGRange Time.UTCTime) (Column (T.SqlRange T.SqlTimestamptz)) where
-  def = toToField $ \(R.PGRange a b) -> T.sqlRange T.sqlUTCTime a b
+  def = toToFields $ \(R.PGRange a b) -> T.sqlRange T.sqlUTCTime a b
 
 instance D.Default ToFields (R.PGRange Time.Day) (Column (T.SqlRange T.SqlDate)) where
-  def = toToField $ \(R.PGRange a b) -> T.sqlRange T.sqlDay a b
+  def = toToFields $ \(R.PGRange a b) -> T.sqlRange T.sqlDay a b
 
 -- { Boilerplate instances
 

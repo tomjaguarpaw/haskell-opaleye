@@ -2,7 +2,7 @@
 
 module Opaleye.ToFields (toFields,
                          toFieldsI,
-                         toToFields,
+                         C.toToFields,
                          C.ToFields,
                          toFieldsExplicit,
                          ) where
@@ -37,9 +37,6 @@ toFieldsExplicit = C.constantExplicit
 -- instance of 'D.Default' 'ToFields' for your custom types.
 toFields :: D.Default C.ToFields haskells fields => haskells -> fields
 toFields = C.toFields
-
-toToFields :: (haskells -> fields) -> C.ToFields haskells fields
-toToFields = C.ToFields
 
 -- | Version of 'C.toFields' with better type inference
 toFieldsI :: (D.Default (Inferrable C.ToFields) haskells fields)

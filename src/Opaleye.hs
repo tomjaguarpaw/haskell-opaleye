@@ -45,7 +45,7 @@ import Opaleye.Aggregate
 import Opaleye.Binary
 import Opaleye.Column
 import Opaleye.Internal.Constant
-  hiding (toToField, toFields)
+  hiding (toFields)
 import Opaleye.Distinct
 import Opaleye.Field
   hiding (null,
