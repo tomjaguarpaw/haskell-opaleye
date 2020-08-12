@@ -54,7 +54,8 @@ newtype ArbitraryFunction =
 twoIntTable :: String
             -> O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
                        (O.Field O.SqlInt4, O.Field O.SqlInt4)
-twoIntTable n = O.Table n (PP.p2 (O.required "column1", O.required "column2"))
+twoIntTable n = O.Table n (PP.p2 (O.requiredTableField "column1",
+                                  O.requiredTableField "column2"))
 
 table1 :: O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
                   (O.Field O.SqlInt4, O.Field O.SqlInt4)

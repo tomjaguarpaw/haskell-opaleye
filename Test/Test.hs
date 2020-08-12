@@ -85,10 +85,13 @@ possible to simplify the property tests though.
 
 -}
 
+required :: String -> O.TableFields (O.Column a) (O.Column a)
+required = O.requiredTableField
+
 twoIntTable :: String
             -> O.Table (Field O.SqlInt4, Field O.SqlInt4)
                        (Field O.SqlInt4, Field O.SqlInt4)
-twoIntTable n = O.Table n (PP.p2 (O.required "column1", O.required "column2"))
+twoIntTable n = O.Table n (PP.p2 (required "column1", required "column2"))
 
 table1 :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
                   (Field O.SqlInt4, Field O.SqlInt4)
@@ -115,29 +118,29 @@ table4 = twoIntTable "table4"
 table5 :: O.Table (Maybe (Field O.SqlInt4), Maybe (Field  O.SqlInt4))
                   (Field O.SqlInt4, Field O.SqlInt4)
 table5 = O.TableWithSchema "public" "table5"
-  (PP.p2 (O.optional "column1", O.optional "column2"))
+  (PP.p2 (O.optionalTableField "column1", O.optionalTableField "column2"))
 
 table6 :: O.Table (Field O.SqlText, Field O.SqlText)
                   (Field O.SqlText, Field O.SqlText)
-table6 = O.Table "table6" (PP.p2 (O.required "column1", O.required "column2"))
+table6 = O.Table "table6" (PP.p2 (required "column1", required "column2"))
 
 table7 :: O.Table (Field O.SqlText, Field O.SqlText)
                   (Field O.SqlText, Field O.SqlText)
-table7 = O.Table "table7" (PP.p2 (O.required "column1", O.required "column2"))
+table7 = O.Table "table7" (PP.p2 (required "column1", required "column2"))
 
 table8 :: O.Table (Field O.SqlJson) (Field O.SqlJson)
-table8 = O.Table "table8" (O.required "column1")
+table8 = O.Table "table8" (required "column1")
 
 table9 :: O.Table (Field O.SqlJsonb) (Field O.SqlJsonb)
-table9 = O.Table "table9" (O.required "column1")
+table9 = O.Table "table9" (required "column1")
 
 table10 :: O.Table (Field O.SqlInt4) (Field O.SqlInt4)
-table10 = O.Table "table10" (O.required "column1")
+table10 = O.Table "table10" (required "column1")
 
 tableKeywordColNames :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
                                 (Field O.SqlInt4, Field O.SqlInt4)
 tableKeywordColNames = O.Table "keywordtable"
-  (PP.p2 (O.required "column", O.required "where"))
+  (PP.p2 (required "column", required "where"))
 
 table1Q :: Select (Field O.SqlInt4, Field O.SqlInt4)
 table1Q = O.selectTable table1
