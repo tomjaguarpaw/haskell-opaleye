@@ -6,7 +6,19 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 
-module Opaleye.Field where
+module Opaleye.Field (
+  Field_,
+  Nullability(..),
+  FieldNullable,
+  Field,
+  Opaleye.Field.null,
+  isNull,
+  matchNullable,
+  fromNullable,
+  toNullable,
+  maybeToNullable,
+  unsafeCoerceField
+  ) where
 
 import qualified Opaleye.Column   as C
 import qualified Opaleye.Internal.PGTypesExternal  as T
