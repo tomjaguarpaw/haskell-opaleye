@@ -30,6 +30,10 @@ values :: (Default V.Valuesspec fields fields,
           [fields] -> S.Select fields
 values = valuesExplicit def def
 
+-- | Please note that 'valuesExplict' of an empty list generates
+-- incorrect queries when mixed with @OUTER@\/@LEFT@\/@RIGHT JOIN@.
+-- You should use 'valuesSafeExplicit' instead.  'valuesSafeExplicit'
+-- will replace 'valuesExplicit' in version 0.7.
 valuesExplicit :: U.Unpackspec fields fields'
                -> V.Valuesspec fields fields'
                -> [fields] -> S.Select fields'
