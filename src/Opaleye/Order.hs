@@ -143,22 +143,23 @@ distinctOnBy proj ord q = Q.productQueryArr (O.distinctOnBy D.def proj ord . Q.r
 -- * Other
 
 -- | Typeclass for Postgres types which support ordering operations.
-class PGOrd a where
+class SqlOrd a where
 
-type SqlOrd = PGOrd
+{-# DEPRECATED PGOrd "Use SqlOrd instead" #-}
+type PGOrd = SqlOrd
 
-instance PGOrd T.SqlBool
-instance PGOrd T.SqlDate
-instance PGOrd T.SqlFloat8
-instance PGOrd T.SqlFloat4
-instance PGOrd T.SqlInt8
-instance PGOrd T.SqlInt4
-instance PGOrd T.SqlInt2
-instance PGOrd T.SqlNumeric
-instance PGOrd T.SqlText
-instance PGOrd T.SqlTime
-instance PGOrd T.SqlTimestamptz
-instance PGOrd T.SqlTimestamp
-instance PGOrd T.SqlCitext
-instance PGOrd T.SqlUuid
-instance PGOrd a => PGOrd (C.Nullable a)
+instance SqlOrd T.SqlBool
+instance SqlOrd T.SqlDate
+instance SqlOrd T.SqlFloat8
+instance SqlOrd T.SqlFloat4
+instance SqlOrd T.SqlInt8
+instance SqlOrd T.SqlInt4
+instance SqlOrd T.SqlInt2
+instance SqlOrd T.SqlNumeric
+instance SqlOrd T.SqlText
+instance SqlOrd T.SqlTime
+instance SqlOrd T.SqlTimestamptz
+instance SqlOrd T.SqlTimestamp
+instance SqlOrd T.SqlCitext
+instance SqlOrd T.SqlUuid
+instance SqlOrd a => SqlOrd (C.Nullable a)
