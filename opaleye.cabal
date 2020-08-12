@@ -75,6 +75,7 @@ library
                    Opaleye.Values,
                    Opaleye.Internal.Aggregate,
                    Opaleye.Internal.Binary,
+                   Opaleye.Internal.Constant,
                    Opaleye.Internal.Column,
                    Opaleye.Internal.Distinct,
                    Opaleye.Internal.Locking,

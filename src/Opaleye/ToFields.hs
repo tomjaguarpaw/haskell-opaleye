@@ -2,7 +2,7 @@
 
 module Opaleye.ToFields (toFieldsI, C.ToFields, module Opaleye.ToFields) where
 
-import qualified Opaleye.Constant as C
+import qualified Opaleye.Internal.Constant as C
 import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 
 import qualified Data.Profunctor.Product.Default as D

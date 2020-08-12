@@ -17,7 +17,7 @@ module Opaleye ( module Opaleye.Adaptors
                , module Opaleye.Aggregate
                , module Opaleye.Binary
                , module Opaleye.Column
-               , module Opaleye.Constant
+               , module Opaleye.Internal.Constant
                , module Opaleye.Distinct
                , module Opaleye.Field
                , module Opaleye.FunctionalJoin
@@ -44,7 +44,7 @@ import Opaleye.Adaptors
 import Opaleye.Aggregate
 import Opaleye.Binary
 import Opaleye.Column
-import Opaleye.Constant
+import Opaleye.Internal.Constant
   hiding (toToField, toFields)
 import Opaleye.Distinct
 import Opaleye.Field
