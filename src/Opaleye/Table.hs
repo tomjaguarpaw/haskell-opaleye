@@ -70,7 +70,7 @@ module Opaleye.Table (-- * Defining tables
                       T.requiredTableField,
                       -- * Selecting from tables
                       selectTable,
-                      -- * Other
+                      -- * Data types
                       T.TableColumns,
                       TableFields,
                       -- * Explicit versions
