@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.Distinct (module Opaleye.Distinct, Distinctspec,
+module Opaleye.Distinct (distinct,
+                         Distinctspec,
                          -- * Explicit versions
                          distinctExplicit,
                          -- * Adaptors
