@@ -8,7 +8,7 @@ module Opaleye.RunQuery {-# DEPRECATED "Use \"Opaleye.RunSelect\" instead." #-}
                          IRQ.FromField,
                          QueryRunner,
                          IRQ.QueryRunnerColumn,
-                         IRQ.QueryRunnerColumnDefault (..),
+                         IRQ.QueryRunnerColumnDefault,
                          -- * Creating new 'QueryRunnerColumn's
                          IRQ.fieldQueryRunnerColumn,
                          IRQ.fieldParserQueryRunnerColumn) where
