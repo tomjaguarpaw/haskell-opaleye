@@ -3,15 +3,15 @@
 module Opaleye.Values(
   valuesSafe,
   -- * Explicit versions
-  valuesExplicit,
   valuesSafeExplicit,
-  valuesUnsafeExplicit,
   -- * Adaptors
   V.ValuesspecSafe,
   V.valuesspecField,
   -- * Deprecated versions
   values,
   valuesUnsafe,
+  valuesExplicit,
+  valuesUnsafeExplicit,
   ) where
 
 import qualified Opaleye.Internal.QueryArr as Q
