@@ -8,7 +8,7 @@
  non-nullable.
 
  A required non-nullable @SqlInt4@ (for example) is defined with
- 'required' and gives rise to a
+ 'T.requiredTableField' and gives rise to a
 
  @
  TableFields (Field SqlInt4) (Field SqlInt4)
@@ -18,7 +18,7 @@
  update into this column you must give it a @Field SqlInt4@ (which you
  can define with @sqlInt4 :: Int -> Field SqlInt4@).
 
- A required nullable @SqlInt4@ is defined with 'required' and gives rise
+ A required nullable @SqlInt4@ is defined with 'T.requiredTableField' and gives rise
  to a
 
  @
@@ -30,7 +30,7 @@
  @toNullable :: Field a -> FieldNullable a@, or with @null ::
  FieldNullable a@.
 
- An optional non-nullable @SqlInt4@ is defined with 'optional' and gives
+ An optional non-nullable @SqlInt4@ is defined with 'T.optionalTableField' and gives
  rise to a
 
  @
@@ -44,7 +44,7 @@
  omitted from the query and the default value will be used. Otherwise
  you have to provide a @Just@ containing a @Field SqlInt4@.
 
- An optional nullable @SqlInt4@ is defined with 'optional' and gives
+ An optional nullable @SqlInt4@ is defined with 'T.optionalTableField' and gives
  rise to a
 
  @
