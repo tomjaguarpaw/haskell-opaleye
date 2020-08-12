@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-duplicate-exports #-}
 -- | Perform aggregation on 'S.Select's.  To aggregate a 'S.Select' you
 -- should construct an 'Aggregator' encoding how you want the
 -- aggregation to proceed, then call 'aggregate' on it.  The
@@ -10,10 +9,14 @@ module Opaleye.Aggregate
        (
        -- * Aggregation
          aggregate
+       , aggregateOrdered
+       , distinctAggregator
        , Aggregator
        -- * Basic 'Aggregator's
        , groupBy
        , Opaleye.Aggregate.sum
+       , sumInt4
+       , sumInt8
        , count
        , countStar
        , avg
@@ -25,8 +28,6 @@ module Opaleye.Aggregate
        , stringAgg
        -- * Counting rows
        , countRows
-       -- * Entire module
-       , module Opaleye.Aggregate
        ) where
 
 import           Control.Applicative (pure)
