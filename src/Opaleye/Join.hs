@@ -12,7 +12,7 @@ import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Join as J
 import qualified Opaleye.Internal.MaybeFields as M
 import qualified Opaleye.Internal.PrimQuery as PQ
-import qualified Opaleye.Map as Map
+import qualified Opaleye.Internal.Map as Map
 import qualified Opaleye.Select   as S
 import qualified Opaleye.SqlTypes as T
 

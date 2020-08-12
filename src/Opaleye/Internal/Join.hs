@@ -16,7 +16,7 @@ import qualified Opaleye.Internal.PGTypesExternal as T
 import qualified Opaleye.SqlTypes as T
 import qualified Opaleye.Column as C
 import           Opaleye.Field   (Field)
-import qualified Opaleye.Map     as Map
+import qualified Opaleye.Internal.Map as Map
 import           Opaleye.Internal.MaybeFields (MaybeFields(MaybeFields),
                                                mfPresent, mfFields)
 import qualified Opaleye.Select  as S

@@ -84,6 +84,7 @@ library
                    Opaleye.Internal.Join,
                    Opaleye.Internal.Label,
                    Opaleye.Internal.Lateral,
+                   Opaleye.Internal.Map,
                    Opaleye.Internal.Manipulation,
                    Opaleye.Internal.MaybeFields,
                    Opaleye.Internal.Order,
