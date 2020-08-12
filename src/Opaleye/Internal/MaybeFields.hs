@@ -3,6 +3,7 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Opaleye.Internal.MaybeFields where
 
@@ -11,7 +12,7 @@ import           Control.Arrow (returnA, (<<<), (>>>))
 
 import qualified Opaleye.Internal.Binary as B
 import qualified Opaleye.Internal.Column as IC
-import qualified Opaleye.Constant as Constant
+import qualified Opaleye.ToFields as Constant
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -205,9 +206,9 @@ valuesspecMaybeFields = productProfunctorMaybeFields V.valuesspecField
 toFieldsMaybeFields :: V.Nullspec a b
                     -> Constant.ToFields a b
                     -> Constant.ToFields (Maybe a) (MaybeFields b)
-toFieldsMaybeFields n p = Constant.Constant $ \case
+toFieldsMaybeFields n p = Constant.toToFields $ \case
   Nothing -> nothingFieldsExplicit n
-  Just a  -> justFields (Constant.constantExplicit p a)
+  Just a  -> justFields (Constant.toFieldsExplicit p a)
 
 ifPPMaybeFields :: IfPP a b -> IfPP (MaybeFields a) (MaybeFields b)
 ifPPMaybeFields = productProfunctorMaybeFields PP.def
@@ -295,8 +296,8 @@ instance PP.Default V.ValuesspecSafe a b
   => PP.Default V.ValuesspecSafe (MaybeFields a) (MaybeFields b) where
   def = valuesspecMaybeFields PP.def
 
-instance (PP.Default Constant.Constant a b, PP.Default V.Nullspec a b)
-  => PP.Default Constant.Constant (Maybe a) (MaybeFields b) where
+instance (PP.Default Constant.ToFields a b, PP.Default V.Nullspec a b)
+  => PP.Default Constant.ToFields (Maybe a) (MaybeFields b) where
   def = toFieldsMaybeFields PP.def PP.def
 
 instance PP.Default IfPP a b
