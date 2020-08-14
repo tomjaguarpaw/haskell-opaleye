@@ -23,6 +23,7 @@ import qualified Opaleye.RunQuery          as RQ
 import qualified Opaleye.TypeFamilies as TF
 import           Opaleye.Internal.RunQuery (FromFields)
 import qualified Opaleye.Internal.RunQuery as IRQ
+import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 
 import qualified Data.Profunctor.Product.Default as D
 
@@ -160,3 +161,12 @@ declareCursorExplicit
     -> S.Select fields
     -> IO (IRQ.Cursor haskells)
 declareCursorExplicit = RQ.declareCursorExplicit
+
+-- | Version of 'runSelect' with better type inference
+runSelectI :: (D.Default (Inferrable FromFields) fields haskells)
+           => PGS.Connection
+           -- ^
+           -> S.Select fields
+           -- ^
+           -> IO [haskells]
+runSelectI = RQ.runQueryExplicit (runInferrable D.def)
