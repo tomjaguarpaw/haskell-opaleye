@@ -80,6 +80,7 @@ library
                    Opaleye.Internal.Distinct,
                    Opaleye.Internal.Locking,
                    Opaleye.Internal.Helpers,
+                   Opaleye.Internal.Inferrable,
                    Opaleye.Internal.Join,
                    Opaleye.Internal.Label,
                    Opaleye.Internal.Lateral,

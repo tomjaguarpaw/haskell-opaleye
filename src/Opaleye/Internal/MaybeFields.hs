@@ -2,8 +2,11 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Opaleye.Internal.MaybeFields where
 
@@ -15,6 +18,8 @@ import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.ToFields as Constant
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import           Opaleye.Internal.Inferrable (Inferrable(Inferrable),
+                                              runInferrable)
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.QueryArr as IQ
 import qualified Opaleye.Internal.RunQuery as RQ
@@ -315,3 +320,13 @@ instance (P.Profunctor p, IsSqlType a, PP.Default p (IC.Column a) (IC.Column a))
 instance PP.Default (WithNulls B.Binaryspec) a b
   => PP.Default B.Binaryspec (MaybeFields a) (MaybeFields b) where
   def = binaryspecMaybeFields PP.def
+
+instance (PP.Default (Inferrable RQ.FromFields) fields haskells,
+          Maybe haskells ~ maybe_haskells)
+  => PP.Default (Inferrable RQ.FromFields) (MaybeFields fields) maybe_haskells where
+  def = Inferrable (fromFieldsMaybeFields (runInferrable PP.def))
+
+instance (PP.Default (Inferrable Constant.ToFields) a b, PP.Default V.Nullspec a b,
+          MaybeFields b ~ maybeFields_b)
+  => PP.Default (Inferrable Constant.ToFields) (Maybe a) maybeFields_b where
+  def = Inferrable (toFieldsMaybeFields PP.def (runInferrable PP.def))
