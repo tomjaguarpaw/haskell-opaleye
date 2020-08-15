@@ -1,4 +1,3 @@
-> {-# LANGUAGE Arrows #-}
 > {-# LANGUAGE FlexibleContexts #-}
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
@@ -10,19 +9,17 @@
 >
 > import           Opaleye (Field, FieldNullable, matchNullable, isNull,
 >                          Table, table, tableField, selectTable,
->                          Select, SelectArr, restrict, (.==), (.<=), (.&&), (.<),
+>                          Select, restrict, (.==), (.<=), (.&&), (.<),
 >                          (.===),
 >                          (.++), ifThenElse, sqlString, aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runSelect,
->                          showSql, Unpackspec,
+>                          showSql, viaLateral, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8, SqlBool)
 >
 > import           Data.Profunctor.Product (p2, p3)
 > import           Data.Profunctor.Product.Default (Default)
 > import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 > import           Data.Time.Calendar (Day)
->
-> import           Control.Arrow (returnA)
 >
 > import qualified Database.PostgreSQL.Simple as PGS
 
@@ -171,20 +168,17 @@ Projection
 example we might want to discard the "address" field of our
 `personSelect`.
 
-Projection gives us our first example of using "arrow notation" to
-write Opaleye queries.  Arrow notation is essentially a restricted
-version of "do notation".  Arrow notation allows you to write arrow
-computations, and do notation allows you to write monadic
-computations.
+Projection gives us our first example of using "do notation" to
+write Opaleye queries.
 
 Here we run the `personSelect` passing in () to signify "zero
 arguments".  We pattern match on the results and return only the
 fields we are interested in.
 
 > nameAge :: Select (Field SqlText, Field SqlInt4)
-> nameAge = proc () -> do
->   (name, age, _) <- personSelect -< ()
->   returnA -< (name, age)
+> nameAge = do
+>   (name, age, _) <- personSelect
+>   pure (name, age)
 
 ghci> printSql nameAge
 SELECT name0_1 as result1,
@@ -205,16 +199,16 @@ Product
 =======
 
 "Product" means taking the Cartesian product of two queries.  This is
-simple in arrow notation.  Here we take the product of `personSelect`
+simple in do notation.  Here we take the product of `personSelect`
 and `birthdaySelect`.
 
 > personBirthdayProduct ::
 >   Select ((Field SqlText, Field SqlInt4, Field SqlText), BirthdayField)
-> personBirthdayProduct = proc () -> do
->   personRow   <- personSelect -< ()
->   birthdayRow <- birthdaySelect -< ()
+> personBirthdayProduct = do
+>   personRow   <- personSelect
+>   birthdayRow <- birthdaySelect
 >
->   returnA -< (personRow, birthdayRow)
+>   pure (personRow, birthdayRow)
 
 ghci> printSql personBirthdayProduct
 SELECT name0_1 as result1,
@@ -257,11 +251,11 @@ We can restrict `personSelect` to the rows where the person is up to 18
 years old.
 
 > youngPeople :: Select (Field SqlText, Field SqlInt4, Field SqlText)
-> youngPeople = proc () -> do
->   row@(_, age, _) <- personSelect -< ()
->   restrict -< age .<= 18
+> youngPeople = do
+>   row@(_, age, _) <- personSelect
+>   viaLateral restrict (age .<= 18)
 >
->   returnA -< row
+>   pure row
 
 ghci> printSql youngPeople
 SELECT name0_1 as result1,
@@ -287,13 +281,13 @@ We can use a variety of operators to form more complex restriction
 conditions.
 
 > twentiesAtAddress :: Select (Field SqlText, Field SqlInt4, Field SqlText)
-> twentiesAtAddress = proc () -> do
->   row@(_, age, address) <- personSelect -< ()
+> twentiesAtAddress = do
+>   row@(_, age, address) <- personSelect
 >
->   restrict -< (20 .<= age) .&& (age .< 30)
->   restrict -< address .== sqlString "1 My Street, My Town"
+>   viaLateral restrict $ (20 .<= age) .&& (age .< 30)
+>   viaLateral restrict $ address .== sqlString "1 My Street, My Town"
 >
->   returnA -< row
+>   pure row
 
 ghci> printSql twentiesAtAddress
 
@@ -328,13 +322,13 @@ such.
 
 > personAndBirthday ::
 >   Select (Field SqlText, Field SqlInt4, Field SqlText, Field SqlDate)
-> personAndBirthday = proc () -> do
->   (name, age, address) <- personSelect -< ()
->   birthday             <- birthdaySelect -< ()
+> personAndBirthday = do
+>   (name, age, address) <- personSelect
+>   birthday             <- birthdaySelect
 >
->   restrict -< name .== bdName birthday
+>   viaLateral restrict $ name .== bdName birthday
 >
->   returnA -< (name, age, address, bdDay birthday)
+>   pure (name, age, address, bdDay birthday)
 
 
 ghci> printSql personAndBirthday
@@ -389,12 +383,12 @@ We can write a query that returns as string indicating for each
 employee whether they have a boss.
 
 > hasBoss :: Select (Field SqlText)
-> hasBoss = proc () -> do
->   (name, nullableBoss) <- selectTable employeeTable -< ()
+> hasBoss = do
+>   (name, nullableBoss) <- selectTable employeeTable
 >
 >   let aOrNo = ifThenElse (isNull nullableBoss) (sqlString "no") (sqlString "a")
 >
->   returnA -< name .++ sqlString " has " .++ aOrNo .++ sqlString " boss"
+>   pure $ name .++ sqlString " has " .++ aOrNo .++ sqlString " boss"
 
 ghci> printSql hasBoss
 
@@ -413,18 +407,18 @@ SELECT name || ' has '
 FROM employeeTable
 
 But we can do much more than just check for NULL of course.  We can
-write a query arrow to produce a string describing each employee's
+write a query to produce a string describing each employee's
 status along with the name of their boss, if any.  The combinator
 `matchNullable` checks whether `nullableBoss` is NULL.  If so it
 returns its first argument.  If not it passes the non-NULL value to
 the function that is the second argument.
 
-> bossSelect :: SelectArr (Field SqlText, FieldNullable SqlText) (Field SqlText)
-> bossSelect = proc (name, nullableBoss) -> do
->   returnA -< matchNullable (name .++ sqlString " has no boss")
->                            (\boss -> sqlString "The boss of " .++ name
->                                      .++ sqlString " is " .++ boss)
->                            nullableBoss
+> bossSelect :: (Field SqlText, FieldNullable SqlText) -> Select (Field SqlText)
+> bossSelect (name, nullableBoss) = do
+>   pure $ matchNullable (name .++ sqlString " has no boss")
+>                        (\boss -> sqlString "The boss of " .++ name
+>                                  .++ sqlString " is " .++ boss)
+>                        nullableBoss
 
 Note that `matchNullable` corresponds to Haskell's
 
@@ -474,13 +468,13 @@ fields of type `a` but do not return any fields.  (Note: `Select` is
 just a synonym for `SelectArr ()` which means that it is a `SelectArr`
 that does not read any fields.)
 
-> restrictIsTwenties :: SelectArr (Field SqlInt4) ()
-> restrictIsTwenties = proc age -> do
->   restrict -< (20 .<= age) .&& (age .< 30)
+> restrictIsTwenties :: Field SqlInt4 -> Select ()
+> restrictIsTwenties age = do
+>   viaLateral restrict $ (20 .<= age) .&& (age .< 30)
 >
-> restrictAddressIs1MyStreet :: SelectArr (Field SqlText) ()
-> restrictAddressIs1MyStreet = proc address -> do
->   restrict -< address .== sqlString "1 My Street, My Town"
+> restrictAddressIs1MyStreet :: Field SqlText -> Select ()
+> restrictAddressIs1MyStreet address = do
+>   viaLateral restrict $ address .== sqlString "1 My Street, My Town"
 
 We can't generate "the SQL of" these combinators.  They are not
 `Select`s so they don't have any SQL!  (This corresponds to the
@@ -489,13 +483,13 @@ functions cannot be "shown".) Instead we use them to reimplement
 `twentiesAtAddress` in a more neatly-factored way.
 
 > twentiesAtAddress' :: Select (Field SqlText, Field SqlInt4, Field SqlText)
-> twentiesAtAddress' = proc () -> do
->   row@(_, age, address) <- personSelect -< ()
+> twentiesAtAddress' = do
+>   row@(_, age, address) <- personSelect
 >
->   restrictIsTwenties -< age
->   restrictAddressIs1MyStreet -< address
+>   restrictIsTwenties age
+>   restrictAddressIs1MyStreet address
 >
->   returnA -< row
+>   pure row
 
 The SQL generated is exactly the same as before
 
@@ -519,23 +513,23 @@ We can perform a similar transformation for `personAndBirthday` by
 pulling out a `SelectArr` which perform the mapping of a person's name
 to their date of birth by looking up in `birthdaySelect`.
 
-> birthdayOfPerson :: SelectArr (Field SqlText) (Field SqlDate)
-> birthdayOfPerson = proc name -> do
->   birthday <- birthdaySelect -< ()
+> birthdayOfPerson :: Field SqlText -> Select (Field SqlDate)
+> birthdayOfPerson name = do
+>   birthday <- birthdaySelect
 >
->   restrict -< name .== bdName birthday
+>   viaLateral restrict $ name .== bdName birthday
 >
->   returnA -< bdDay birthday
+>   pure (bdDay birthday)
 
 We can then reimplement `personAndBirthday` as follows
 
 > personAndBirthday' ::
 >   Select (Field SqlText, Field SqlInt4, Field SqlText, Field SqlDate)
-> personAndBirthday' = proc () -> do
->   (name, age, address) <- personSelect -< ()
->   birthday <- birthdayOfPerson -< name
+> personAndBirthday' = do
+>   (name, age, address) <- personSelect
+>   birthday <- birthdayOfPerson name
 >
->   returnA -< (name, age, address, birthday)
+>   pure (name, age, address, birthday)
 
 and it yields the same SQL as before.
 
