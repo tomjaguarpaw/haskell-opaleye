@@ -99,8 +99,18 @@ groupBy :: Aggregator (C.Column a) (C.Column a)
 groupBy = A.makeAggr' Nothing
 
 -- | Sum all rows in a group.
+--
+-- WARNING! The type of this operation is wrong and will crash at
+-- runtime when the argument is 'T.SqlInt4' or 'T.SqlInt8'.  For those
+-- use 'sumInt4' or 'sumInt8' instead.
 sum :: Aggregator (C.Column a) (C.Column a)
 sum = A.makeAggr HPQ.AggrSum
+
+sumInt4 :: Aggregator (C.Column T.SqlInt4) (C.Column T.SqlInt8)
+sumInt4 = fmap C.unsafeCoerceColumn Opaleye.Aggregate.sum
+
+sumInt8 :: Aggregator (C.Column T.SqlInt8) (C.Column T.SqlNumeric)
+sumInt8 = fmap C.unsafeCoerceColumn Opaleye.Aggregate.sum
 
 -- | Count the number of non-null rows in a group.
 count :: Aggregator (C.Column a) (C.Column T.SqlInt8)
