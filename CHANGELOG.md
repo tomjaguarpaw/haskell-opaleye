@@ -1,10 +1,20 @@
-## 0.6.7006.1
+* Many renamings have taken place to help make Opaleye easier to
+  understand
 
-* Add `sumInt4` and `sumInt8` `Aggregator`s, which don't crash at run
-  time (`sum` currently does on those types).
-
-* Add inferrable `FromFields` instance for `SqlNumeric` to
-  `Scientific`.
+Old | New
+-----|-------
+Query | Select
+QueryArr | SelectArr
+PG*Type*  | Sql*Type*
+PG*Class* | Sql*Class*
+Constant | ToFields
+QueryRunner | FromFields
+QueryRunnerColumn | FromField
+QueryRunnerColumnDefault | DefaultFromField
+TableProperties | TableFields
+optional | optionalTableField
+required | requiredTableField
+readOnly | readOnlyTableField
 
 ## 0.6.7006.0
 
