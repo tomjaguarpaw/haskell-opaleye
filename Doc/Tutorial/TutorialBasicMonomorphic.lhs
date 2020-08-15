@@ -77,7 +77,7 @@ By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
 could have used the `tableWithSchema` constructor instead of `table`.
 
-To query a table we use `selectTable`.
+To select from a table we use `selectTable`.
 
 (Here and in a few other places in Opaleye there is some typeclass
 magic going on behind the scenes to reduce boilerplate.  However, you
@@ -405,4 +405,4 @@ Utilities
 This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . showSql
+> printSql = putStrLn . maybe "Empty select" id . showSql

@@ -168,7 +168,7 @@ Furthermore we will have basic ways of running queries which return
 > nullableIntRunner :: FromFields (FieldNullable SqlInt4) (Maybe Int)
 > nullableIntRunner = undefined
 
-If I have a very simple query with a single column of `SqlInt4` then I can
+If I have a very simple select with a single column of `SqlInt4` then I can
 run it using the `intRunner`.
 
 > mySelect3 :: Select (Field SqlInt4)
@@ -177,7 +177,7 @@ run it using the `intRunner`.
 > runTheSelect :: SQL.Connection -> IO [Int]
 > runTheSelect c = runSelectExplicit intRunner c mySelect3
 
-If my query has several columns of different types I need to build up
+If my select has several columns of different types I need to build up
 a larger `FromFields`.
 
 > mySelect4 :: Select (Field SqlInt4, Field SqlText, Field SqlBool, FieldNullable SqlInt4)
@@ -210,7 +210,7 @@ correct value of the type we want.
 > largerSelectRunner' = def
 
 And we can produce a version of `runSelect` which allows us to write
-our query without explicitly passing the product-profunctor value.
+our select without explicitly passing the product-profunctor value.
 
 > runSelect :: Default FromFields a b => SQL.Connection -> Select a -> IO [b]
 > runSelect = O.runSelectExplicit def

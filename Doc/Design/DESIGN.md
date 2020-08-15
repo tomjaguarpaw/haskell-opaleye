@@ -27,17 +27,17 @@ whereas this orders by the value of 1 + 1, i.e. 2.
 
     SELECT * from table ORDER BY 1 + 1;
 
-## `Query` and `Column`
+## `Select` and `Column`
 
-The most important types in Opaleye are `Query` and `Column`.  A
-`Query` represents the result of running a database query, i.e. a
+The most important types in Opaleye are `Select` and `Column`.  A
+`Select` represents the result of running a database `SELECT`, i.e. a
 collection of rows with particular column types.  The column types are
-specified in the type parameter to `Query` as a collection of
+specified in the type parameter to `Select` as a collection of
 `Column`s.  Each `Column` also has a type parameter reflecting its SQL
-type.  For example a `Query (Column PGInt4, Column PGText, Column
-PGBool)` is the type of a database query which has three columns, of
+type.  For example a `Select (Column PGInt4, Column PGText, Column
+PGBool)` is the type of a database `SELECT` which has three columns, of
 types `int4`, `text` and `bool`.
 
-A `Query` is a collection of rows and therefore if we have two of them
+A `Select` is a collection of rows and therefore if we have two of them
 we can form their Cartesian product.  This corresponds exactly to
 Haskells `Applicative` product on lists.
