@@ -50,9 +50,8 @@ instance int ~ Int => D.Default (Inferrable FromField) T.SqlInt4 int where
 instance int64 ~ Int64 => D.Default (Inferrable FromField) T.SqlInt8 int64 where
   def = Inferrable D.def
 
--- Do we really want to force PGText to go to String?
---instance string ~ String => D.Default (Inferrable FromField) T.SqlText string where
---  def = Inferrable D.def
+instance text ~ ST.Text => D.Default (Inferrable FromField) T.SqlText text where
+  def = Inferrable D.def
 
 instance (Typeable h, D.Default (Inferrable FromField) f h, hs ~ [h])
   => D.Default (Inferrable FromField) (T.SqlArray f) hs where
