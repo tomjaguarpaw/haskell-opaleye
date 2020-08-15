@@ -7,7 +7,7 @@ import Data.String
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 -- | A column of a @Query@, of type @pgType@.  For example 'Column'
--- @PGInt4@ is an @int4@ column and a 'Column' @PGText@ is a @text@
+-- @SqlInt4@ is an @int4@ column and a 'Column' @SqlText@ is a @text@
 -- column.
 --
 -- The name @Column@ will be replaced by @Field@ in version 0.8.
@@ -18,8 +18,8 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 newtype Column pgType = Column HPQ.PrimExpr
 
 -- | Only used within a 'Column', to indicate that it can be @NULL@.
--- For example, a 'Column' ('Nullable' @PGText@) can be @NULL@ but a
--- 'Column' @PGText@ cannot.
+-- For example, a 'Column' ('Nullable' @SqlText@) can be @NULL@ but a
+-- 'Column' @SqlText@ cannot.
 data Nullable a = Nullable
 
 unColumn :: Column a -> HPQ.PrimExpr
@@ -50,7 +50,7 @@ binOp op (Column e) (Column e') = Column (HPQ.BinExpr op e e')
 unOp :: HPQ.UnOp -> Column a -> Column b
 unOp op (Column e) = Column (HPQ.UnExpr op e)
 
--- For import order reasons we can't make the return type PGBool
+-- For import order reasons we can't make the return type SqlBool
 unsafeCase_ :: [(Column pgBool, Column a)] -> Column a -> Column a
 unsafeCase_ alts (Column otherwise_) = Column (HPQ.CaseExpr (unColumns alts) otherwise_)
   where unColumns = map (\(Column e, Column e') -> (e, e'))
@@ -64,13 +64,13 @@ unsafeGt = binOp (HPQ.:>)
 unsafeEq :: Column a -> Column a -> Column pgBool
 unsafeEq = binOp (HPQ.:==)
 
-class PGNum a where
+class SqlNum a where
   pgFromInteger :: Integer -> Column a
   pgFromInteger = sqlFromInteger
 
   sqlFromInteger :: Integer -> Column a
 
-type SqlNum = PGNum
+type PGNum = SqlNum
 
 instance SqlNum a => Num (Column a) where
   fromInteger = pgFromInteger
@@ -85,30 +85,30 @@ instance SqlNum a => Num (Column a) where
   -- numeric or a double
   signum c = unsafeCase_ [(c `unsafeGt` 0, 1), (c `unsafeEq` 0, 0)] (-1)
 
-class PGFractional a where
+class SqlFractional a where
   pgFromRational :: Rational -> Column a
   pgFromRational = sqlFromRational
 
   sqlFromRational :: Rational -> Column a
 
-type SqlFractional = PGFractional
+type PGFractional = SqlFractional
 
 instance (SqlNum a, SqlFractional a) => Fractional (Column a) where
   fromRational = sqlFromRational
   (/) = binOp (HPQ.:/)
 
 -- | A dummy typeclass whose instances support integral operations.
-class PGIntegral a
+class SqlIntegral a
 
-type SqlIntegral = PGIntegral
+type PGIntegral = SqlIntegral
 
-class PGString a where
+class SqlString a where
     pgFromString :: String -> Column a
     pgFromString = sqlFromString
 
     sqlFromString :: String -> Column a
 
-type SqlString = PGString
+type PGString = SqlString
 
 instance SqlString a => IsString (Column a) where
   fromString = sqlFromString

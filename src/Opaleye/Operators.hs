@@ -259,13 +259,13 @@ instance SqlIsJson T.SqlJsonb
 -- | Class of Postgres types that can be used to index json values.
 --
 -- Warning: making additional instances of this class can lead to broken code!
-class PGJsonIndex a
+class SqlJsonIndex a
 
-type SqlJsonIndex = PGJsonIndex
+type PGJsonIndex = SqlJsonIndex
 
-instance PGJsonIndex T.SqlInt4
-instance PGJsonIndex T.SqlInt8
-instance PGJsonIndex T.SqlText
+instance SqlJsonIndex T.SqlInt4
+instance SqlJsonIndex T.SqlInt8
+instance SqlJsonIndex T.SqlText
 
 -- | Get JSON object field by key.
 infixl 8 .->

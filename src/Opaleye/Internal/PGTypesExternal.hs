@@ -27,27 +27,27 @@ import           Data.Int (Int64)
 
 import qualified Database.PostgreSQL.Simple.Range as R
 
-instance C.PGNum PGFloat8 where
+instance C.SqlNum SqlFloat8 where
   sqlFromInteger = pgDouble . fromInteger
 
-instance C.PGNum PGInt4 where
+instance C.SqlNum SqlInt4 where
   sqlFromInteger = pgInt4 . fromInteger
 
-instance C.PGNum PGInt8 where
+instance C.SqlNum SqlInt8 where
   sqlFromInteger = pgInt8 . fromInteger
 
-instance C.PGFractional PGFloat8 where
+instance C.SqlFractional SqlFloat8 where
   sqlFromRational = pgDouble . fromRational
 
-instance C.PGIntegral PGInt2
-instance C.PGIntegral PGNumeric
-instance C.PGIntegral PGInt4
-instance C.PGIntegral PGInt8
+instance C.SqlIntegral SqlInt2
+instance C.SqlIntegral SqlNumeric
+instance C.SqlIntegral SqlInt4
+instance C.SqlIntegral SqlInt8
 
-instance C.PGString PGText where
+instance C.SqlString SqlText where
   sqlFromString = pgString
 
-instance C.PGString PGCitext where
+instance C.SqlString SqlCitext where
   sqlFromString = pgCiLazyText . CI.mk . LText.pack
 
 -- * Creating SQL values
@@ -162,64 +162,64 @@ pgRange pgEl start end =
         oneEl R.NegInfinity   = HPQ.NegInfinity
         oneEl R.PosInfinity   = HPQ.PosInfinity
 
-instance IsSqlType PGBool where
+instance IsSqlType SqlBool where
   showSqlType _ = "boolean"
-instance IsSqlType PGDate where
+instance IsSqlType SqlDate where
   showSqlType _ = "date"
-instance IsSqlType PGFloat4 where
+instance IsSqlType SqlFloat4 where
   showSqlType _ = "real"
-instance IsSqlType PGFloat8 where
+instance IsSqlType SqlFloat8 where
   showSqlType _ = "double precision"
-instance IsSqlType PGInt8 where
+instance IsSqlType SqlInt8 where
   showSqlType _ = "bigint"
-instance IsSqlType PGInt4 where
+instance IsSqlType SqlInt4 where
   showSqlType _ = "integer"
-instance IsSqlType PGInt2 where
+instance IsSqlType SqlInt2 where
   showSqlType _ = "smallint"
-instance IsSqlType PGNumeric where
+instance IsSqlType SqlNumeric where
   showSqlType _ = "numeric"
-instance IsSqlType PGText where
+instance IsSqlType SqlText where
   showSqlType _ = "text"
-instance IsSqlType PGTime where
+instance IsSqlType SqlTime where
   showSqlType _ = "time"
-instance IsSqlType PGTimestamp where
+instance IsSqlType SqlTimestamp where
   showSqlType _ = "timestamp"
-instance IsSqlType PGTimestamptz where
+instance IsSqlType SqlTimestamptz where
   showSqlType _ = "timestamp with time zone"
-instance IsSqlType PGUuid where
+instance IsSqlType SqlUuid where
   showSqlType _ = "uuid"
-instance IsSqlType PGCitext where
+instance IsSqlType SqlCitext where
   showSqlType _ =  "citext"
-instance IsSqlType PGBytea where
+instance IsSqlType SqlBytea where
   showSqlType _ = "bytea"
-instance IsSqlType a => IsSqlType (PGArray a) where
+instance IsSqlType a => IsSqlType (SqlArray a) where
   showSqlType _ = showSqlType ([] :: [a]) ++ "[]"
-instance IsSqlType PGJson where
+instance IsSqlType SqlJson where
   showSqlType _ = "json"
-instance IsSqlType PGJsonb where
+instance IsSqlType SqlJsonb where
   showSqlType _ = "jsonb"
-instance IsRangeType a => IsSqlType (PGRange a) where
+instance IsRangeType a => IsSqlType (SqlRange a) where
   showSqlType _ = showRangeType ([] :: [a])
 
 class IsSqlType pgType => IsRangeType pgType where
   showRangeType :: proxy pgType -> String
 
-instance IsRangeType PGInt4 where
+instance IsRangeType SqlInt4 where
   showRangeType _ = "int4range"
 
-instance IsRangeType PGInt8 where
+instance IsRangeType SqlInt8 where
   showRangeType _ = "int8range"
 
-instance IsRangeType PGNumeric where
+instance IsRangeType SqlNumeric where
   showRangeType _ = "numrange"
 
-instance IsRangeType PGTimestamp where
+instance IsRangeType SqlTimestamp where
   showRangeType _ = "tsrange"
 
-instance IsRangeType PGTimestamptz where
+instance IsRangeType SqlTimestamptz where
   showRangeType _ = "tstzrange"
 
-instance IsRangeType PGDate where
+instance IsRangeType SqlDate where
   showRangeType _ = "daterange"
 
 -- * SQL datatypes

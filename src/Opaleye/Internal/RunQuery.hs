@@ -105,7 +105,7 @@ data FromFields columns haskells =
               -- because we have a `SumProfunctor` instance.  For some
               -- values of 'columns' there may be zero columns and for
               -- other values one or more, for example, 'Maybe (Column
-              -- PGInt4)' has no columns when it is Nothing and one
+              -- SqlInt4)' has no columns when it is Nothing and one
               -- column when it is Just.
 
 type QueryRunner = FromFields
@@ -191,86 +191,86 @@ instance DefaultFromField sqlType haskellType
     => D.Default FromField sqlType haskellType where
   def = defaultFromField
 
-instance DefaultFromField T.PGNumeric Sci.Scientific where
+instance DefaultFromField T.SqlNumeric Sci.Scientific where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGInt4 Int where
+instance DefaultFromField T.SqlInt4 Int where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGInt4 Int32 where
+instance DefaultFromField T.SqlInt4 Int32 where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGInt8 Int64 where
+instance DefaultFromField T.SqlInt8 Int64 where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGText String where
+instance DefaultFromField T.SqlText String where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGFloat8 Double where
+instance DefaultFromField T.SqlFloat8 Double where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGBool Bool where
+instance DefaultFromField T.SqlBool Bool where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGUuid UUID where
+instance DefaultFromField T.SqlUuid UUID where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGBytea SBS.ByteString where
+instance DefaultFromField T.SqlBytea SBS.ByteString where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGBytea LBS.ByteString where
+instance DefaultFromField T.SqlBytea LBS.ByteString where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGText ST.Text where
+instance DefaultFromField T.SqlText ST.Text where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGText LT.Text where
+instance DefaultFromField T.SqlText LT.Text where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGDate Time.Day where
+instance DefaultFromField T.SqlDate Time.Day where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGTimestamptz Time.UTCTime where
+instance DefaultFromField T.SqlTimestamptz Time.UTCTime where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGTimestamp Time.LocalTime where
+instance DefaultFromField T.SqlTimestamp Time.LocalTime where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGTimestamptz Time.ZonedTime where
+instance DefaultFromField T.SqlTimestamptz Time.ZonedTime where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGTime Time.TimeOfDay where
+instance DefaultFromField T.SqlTime Time.TimeOfDay where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGCitext (CI.CI ST.Text) where
+instance DefaultFromField T.SqlCitext (CI.CI ST.Text) where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGCitext (CI.CI LT.Text) where
+instance DefaultFromField T.SqlCitext (CI.CI LT.Text) where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGJson String where
+instance DefaultFromField T.SqlJson String where
   defaultFromField = fieldParserQueryRunnerColumn jsonFieldParser
 
-instance DefaultFromField T.PGJson Ae.Value where
+instance DefaultFromField T.SqlJson Ae.Value where
   defaultFromField = fromPGSFromField
 
-instance DefaultFromField T.PGJsonb String where
+instance DefaultFromField T.SqlJsonb String where
   defaultFromField = fieldParserQueryRunnerColumn jsonbFieldParser
 
-instance DefaultFromField T.PGJsonb Ae.Value where
+instance DefaultFromField T.SqlJsonb Ae.Value where
   defaultFromField = fromPGSFromField
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
-arrayColumn :: Column (T.PGArray a) -> Column a
+arrayColumn :: Column (T.SqlArray a) -> Column a
 arrayColumn = C.unsafeCoerceColumn
 
 instance (Typeable b, DefaultFromField a b) =>
-         DefaultFromField (T.PGArray a) [b] where
+         DefaultFromField (T.SqlArray a) [b] where
   defaultFromField = QueryRunnerColumn (P.lmap arrayColumn c) ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
     where QueryRunnerColumn c f = defaultFromField
 
-fromFieldArray :: Typeable h => FromField f h -> FromField (T.PGArray f) [h]
+fromFieldArray :: Typeable h => FromField f h -> FromField (T.SqlArray f) [h]
 fromFieldArray q =
   QueryRunnerColumn (P.lmap arrayColumn c)
                     ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
