@@ -1,3 +1,11 @@
+## 0.6.7006.1
+
+* Add `sumInt4` and `sumInt8` `Aggregator`s, which don't crash at run
+  time (`sum` currently does on those types).
+
+* Add inferrable `FromFields` instance for `SqlNumeric` to
+  `Scientific`.
+
 ## 0.6.7006.0
 
 * Added `Opaleye.RunSelect.runSelectI` and
