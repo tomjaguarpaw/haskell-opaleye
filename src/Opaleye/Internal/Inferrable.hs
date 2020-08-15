@@ -27,6 +27,9 @@ import           Data.UUID (UUID)
 import qualified Database.PostgreSQL.Simple.Range as R
 import           GHC.Int (Int32, Int64)
 
+-- | Despite its name, 'Inferrable' doesn't provide any inferability
+-- improvements itself, it's just a conveniently-named newtype wrapper
+-- to hang instances with better inferrability off of.
 newtype Inferrable p a b = Inferrable { runInferrable :: p a b }
 
 -- FromFields
