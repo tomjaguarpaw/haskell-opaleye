@@ -1,10 +1,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.ToFields (toFields,
+module Opaleye.ToFields (-- * Creating 'Field's from Haskell values
+                         toFields,
                          toFieldsI,
+                         -- * Creating @ToFields@
                          C.toToFields,
-                         C.ToFields,
+                         -- * Explicit versions
                          toFieldsExplicit,
+                         -- * Adaptor
+                         C.ToFields,
                          ) where
 
 import qualified Opaleye.Internal.Constant as C
