@@ -125,6 +125,10 @@ instance (D.Default (Inferrable ToFields) a (C.Column b),
                                                (runInferrable D.def))))
 -}
 
+instance C.Column a ~ columnA
+  => D.Default (Inferrable ToFields) (C.Column a) columnA where
+  def = Inferrable D.def
+
 instance C.Column T.SqlText ~ cSqlText
   => D.Default (Inferrable ToFields) String cSqlText where
   def = Inferrable D.def

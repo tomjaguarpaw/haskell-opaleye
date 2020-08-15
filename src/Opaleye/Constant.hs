@@ -71,6 +71,9 @@ instance D.Default ToFields haskell (Column sql)
   def = Constant (C.maybeToNullable . fmap f)
     where Constant f = D.def
 
+instance D.Default ToFields (Column a) (Column a) where
+  def = Constant id
+
 instance D.Default ToFields String (Column T.SqlText) where
   def = Constant T.sqlString
 
