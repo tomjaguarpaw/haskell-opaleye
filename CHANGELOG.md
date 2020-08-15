@@ -1,3 +1,12 @@
+## 0.6.7006.0
+
+* Added `Opaleye.RunSelect.runSelectI` and
+  `Opaleye.ToFields.toFieldsI` which have better inferability.
+
+* Preliminary `FOR UPDATE` support in `Opaleye.Internal.Locking`.
+
+* Added `fromFieldArray` for making `FromField`s for arrays.
+
 ## 0.6.7005.0
 
 * Thanks to Shane (@duairc) and Ollie Charles (@ocharles) for writing
