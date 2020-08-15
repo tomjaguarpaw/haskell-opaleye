@@ -341,6 +341,8 @@
 >       (a2, s2) = O.toFieldsI (O.sqlArray O.toFieldsI [4 :: Int,5,6], " world")
 >   in pure (a1 `O.arrayAppend` a2, s1 O..++ s2)
 >
+> example14 = pure (O.toFieldsI (O.toNullable (O.toFieldsI "Hello"), "Hello"))
+>
 > --run
 > -- :: (Default (O.Wrap O.FromFields) fields a, Show a)
 > -- => O.Select fields -> IO (Either StartError [a])
