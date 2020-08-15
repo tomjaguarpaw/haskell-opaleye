@@ -1,5 +1,7 @@
 * Many renamings have taken place to help make Opaleye easier to
-  understand
+  understand.  The old versions have been deprecated.
+
+* All previously deprecated functions have been removed.
 
 Old | New
 -----|-------
