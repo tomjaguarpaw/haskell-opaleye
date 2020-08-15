@@ -74,7 +74,10 @@ instance day ~ Time.Day
   => D.Default (Inferrable FromField) T.SqlDate day where
   def = Inferrable D.def
 
--- Or ZonedTime
+-- I'm not certain what we should map timestamptz to.  The
+-- postgresql-simple types it maps to are ZonedTime and UTCTime, but
+-- maybe it's more accurate to map it to a *pair* of LocalTime and a
+-- time zone.
 
 --instance utctime ~ Time.UTCTime
 --  => D.Default (Inferrable FromField) T.SqlTimestamptz utctime where
@@ -91,6 +94,8 @@ instance timeofday ~ Time.TimeOfDay
 instance cttext ~ CI.CI ST.Text
   => D.Default (Inferrable FromField) T.SqlCitext cttext where
   def = Inferrable D.def
+
+-- It's not clear what to map JSON types to
 
 {-
 instance QueryRunnerColumnDefault T.PGJson String where
@@ -114,7 +119,9 @@ instance QueryRunnerColumnDefault T.PGTimestamptz Time.ZonedTime where
 
 -- ToFields
 
-{- This overlaps with String!
+{- The instance for arrays would clash with String.  String is going to
+   be use far more, so to get arrays you'll have to explicitly use
+   `sqlArray`.
 
 instance (D.Default (Inferrable ToFields) a (C.Column b),
           T.IsSqlType b,
@@ -224,22 +231,10 @@ instance C.Column (T.SqlRange T.SqlDate) ~ cRangeDate
   => D.Default (Inferrable ToFields) (R.PGRange Time.Day) cRangeDate where
   def = Inferrable D.def
 
-{-
-
-instance D.Default ToFields SBS.ByteString (Column T.SqlJson) where
-  def = Constant T.sqlStrictJSON
-
-instance D.Default ToFields LBS.ByteString (Column T.SqlJson) where
-  def = Constant T.sqlLazyJSON
+{-  It's not clear if Aeson Value should map to JSON or JSONB.
 
 instance D.Default ToFields Ae.Value (Column T.SqlJson) where
   def = Constant T.sqlValueJSON
-
-instance D.Default ToFields SBS.ByteString (Column T.SqlJsonb) where
-  def = Constant T.sqlStrictJSONB
-
-instance D.Default ToFields LBS.ByteString (Column T.SqlJsonb) where
-  def = Constant T.sqlLazyJSONB
 
 instance D.Default ToFields Ae.Value (Column T.SqlJsonb) where
   def = Constant T.sqlValueJSONB
