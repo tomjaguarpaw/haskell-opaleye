@@ -60,6 +60,10 @@ instance (Typeable h, D.Default (Inferrable FromField) f h, hs ~ [h])
 instance double ~ Double => D.Default (Inferrable FromField) T.SqlFloat8 double where
   def = Inferrable D.def
 
+instance scientific ~ Sci.Scientific
+  => D.Default (Inferrable FromField) T.SqlNumeric scientific where
+  def = Inferrable D.def
+
 instance bool ~ Bool => D.Default (Inferrable FromField) T.SqlBool bool where
   def = Inferrable D.def
 
