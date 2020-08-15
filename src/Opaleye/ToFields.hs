@@ -32,9 +32,14 @@ toFieldsExplicit = C.constantExplicit
 --      :: ( 'D.Default' 'ToFields' haskells fields )
 --      => Connection
 --      -> 'Opaleye.Table' fields fields'
---      -> haskells
+--      -> [haskells]
 --      -> IO Int64
---   customInsert conn table haskells = 'Opaleye.Manipulation.runInsert' conn table $ 'toFields' haskells
+--   customInsert conn table haskells = 'Opaleye.Manipulation.runInsert_' conn 'Opaleye.Manipulation.Insert' {
+--         iTable      = table
+--       , iRows       = map 'toFields' haskells
+--       , iReturning  = rCount
+--       , iOnConflict = Nothing
+--     }
 -- @
 --
 -- In order to use this function with your custom types, you need to define an
