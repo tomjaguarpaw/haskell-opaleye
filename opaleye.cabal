@@ -97,6 +97,7 @@ library
                    Opaleye.Internal.Print,
                    Opaleye.Internal.QueryArr,
                    Opaleye.Internal.RunQuery,
+                   Opaleye.Internal.RunQueryExternal,
                    Opaleye.Internal.Sql,
                    Opaleye.Internal.Table,
                    Opaleye.Internal.TableMaker,
