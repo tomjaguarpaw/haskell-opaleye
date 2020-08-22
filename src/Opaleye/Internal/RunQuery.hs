@@ -285,8 +285,9 @@ instance (Typeable b, DefaultFromField a b) =>
 fromFieldRange :: Typeable b
                => FromField a b
                -> FromField (T.PGRange a) (PGSR.PGRange b)
-fromFieldRange off = fromPGSFieldParser (PGSR.fromFieldRange pff)
-  where QueryRunnerColumn _ pff = off
+fromFieldRange off =
+  QueryRunnerColumn (P.lmap C.unsafeCoerceColumn c) (PGSR.fromFieldRange pff)
+  where QueryRunnerColumn c pff = off
 
 -- Boilerplate instances
 
