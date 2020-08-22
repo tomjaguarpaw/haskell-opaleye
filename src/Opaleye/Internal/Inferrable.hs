@@ -10,7 +10,7 @@ import qualified Opaleye.Column as C
 import           Opaleye.Internal.RunQuery (FromField, FromFields)
 import qualified Opaleye.Internal.RunQuery as RQ
 import qualified Opaleye.SqlTypes as T
-import           Opaleye.Constant (ToFields)
+import           Opaleye.Internal.Constant (ToFields)
 
 import qualified Data.ByteString as SBS
 import qualified Data.ByteString.Lazy as LBS
