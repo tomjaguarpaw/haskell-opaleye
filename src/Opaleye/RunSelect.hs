@@ -32,7 +32,7 @@ import qualified Database.PostgreSQL.Simple as PGS
 
 import qualified Opaleye.Column as C
 import qualified Opaleye.Select as S
-import qualified Opaleye.RunQuery          as RQ
+import qualified Opaleye.Internal.RunQueryExternal as RQ
 import qualified Opaleye.TypeFamilies as TF
 import           Opaleye.Internal.RunQuery (FromFields)
 import qualified Opaleye.Internal.RunQuery as IRQ
