@@ -278,9 +278,15 @@ fromFieldArray q =
 
 -- }
 
-instance (Typeable b, PGS.FromField b, DefaultFromField a b) =>
+instance (Typeable b, DefaultFromField a b) =>
          DefaultFromField (T.PGRange a) (PGSR.PGRange b) where
-  defaultFromField = fromPGSFromField
+  defaultFromField = fromFieldRange defaultFromField
+
+fromFieldRange :: Typeable b
+               => FromField a b
+               -> FromField (T.PGRange a) (PGSR.PGRange b)
+fromFieldRange off = fromPGSFieldParser (PGSR.fromFieldRange pff)
+  where QueryRunnerColumn _ pff = off
 
 -- Boilerplate instances
 
