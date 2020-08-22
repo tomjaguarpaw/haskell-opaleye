@@ -1,3 +1,5 @@
+## 0.7.0.0
+
 * Many renamings have taken place to help make Opaleye easier to
   understand.  The old versions have been deprecated.
 
