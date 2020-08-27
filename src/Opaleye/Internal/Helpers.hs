@@ -19,3 +19,6 @@ infixr 8 .::.
 
 (.::.) :: (r -> z) -> (a -> b -> c -> d -> e -> r) -> a -> b -> c -> d -> e -> z
 (.::.) f g a b c d e = f (g a b c d e)
+
+atSameType :: p a a -> p a a
+atSameType = id
