@@ -354,8 +354,6 @@ composeMaybe (ArbitrarySelectArrMaybe q1) (ArbitrarySelectArrMaybe q2) = do
   compareDenotationMaybe2 (q1 . q2) (denotation_ q1 . denotation_ q2)
   where denotation_ = denotationArrMaybeFields
 
--- Would prefer to write 'compare conn (denotation id) id' but that
--- requires extending compare to compare SelectArrs.
 identity :: ArbitraryArgument
          -> Connection
          -> IO TQ.Property
