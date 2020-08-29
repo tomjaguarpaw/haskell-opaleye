@@ -11,7 +11,7 @@
 >
 > module TutorialCool where
 >
-> import           Opaleye ((.===), (.++), (.<))
+> import           Opaleye ((.==), (.===), (.++), (.<))
 > import qualified Opaleye as O
 > import qualified Opaleye.Join as J
 > import qualified Database.PostgreSQL.Simple as PGS
@@ -343,6 +343,33 @@
 >
 > example14 = pure (O.toFieldsI (O.toNullable (O.toFieldsI "Hello"), "Hello"))
 >
+> icfpData = [ (2020 :: Int, 0 :: Int)
+>            , (2019, 1)
+>            , (2018, 2)
+>            , (2017, 3)
+>            , (2016, 4)
+>            ]
+>
+> citiesData = [ ("New Jersey", 0 :: Int)
+>              , ("Berlin", 1)
+>              , ("St Louis", 2)
+>              , ("Oxford", 3)
+>              , ("Nara", 4)
+>              ]
+>
+> selectTableicfp   = O.values (map O.toFieldsI icfpData)
+> selectTablecities = O.values (map O.toFieldsI citiesData)
+>
+> usaIcfp = do
+>   (year, cityId)      <- selectTableicfp
+>   (cityName, cityId') <- selectTablecities
+>
+>   where_ (cityId .== cityId')
+>
+>   pure (year, cityName)
+>
+> where_ = O.viaLateral O.restrict
+>
 > --run
 > -- :: (Default (O.Wrap O.FromFields) fields a, Show a)
 > -- => O.Select fields -> IO (Either StartError [a])
@@ -357,3 +384,29 @@
 >        ; Right ts -> pure ts
 >        }
 >      }
+
+> {-
+>            , (2015, 5)
+>            , (2014, 6)
+>            , (2013, 7)
+>            , (2012, 8)
+>            , (2011, 9)
+>            , (2010, 10)
+>
+>              , ("Vancouver", 5, 0)
+>              , ("Gothenburg", 6, 4)
+>              , ("Boston", 7, 6)
+>              , ("Copenhagen", 8, 1)
+>              , ("Tokyo", 9, 3)
+>              , ("Baltimore", 10, 6)
+>
+> countriesData = [ (0 :: Int, "Canada")
+>                 , (1, "Denmark")
+>                 , (2, "Germany")
+>                 , (3, "Japan")
+>                 , (4, "Sweden")
+>                 , (5, "UK")
+>                 , (6, "USA")
+>                 ]
+>
+> -}

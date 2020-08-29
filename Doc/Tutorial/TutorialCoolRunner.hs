@@ -24,6 +24,10 @@ runThem = do
   run example11_1
   run example11_2
   run example12
+  run example13
+  run example14
+
+  run usaIcfp
 
   run authorPaperCount
   run sameNamePapers
