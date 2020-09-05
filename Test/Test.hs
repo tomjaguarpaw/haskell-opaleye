@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows              #-}
+{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -1192,7 +1193,17 @@ testForUpdate = do
 
 
 main :: IO ()
-main = do
+#ifdef TEST_WITH_POSTGRES
+main = mainWithPostgres
+#else
+main = mainSkip
+#endif
+
+mainSkip :: IO ()
+mainSkip = putStrLn "Skipping tests that require a running PostgreSQL server; test with the 'test-with-postgres' Cabal flag enabled to run these tests."
+
+mainWithPostgres :: IO ()
+mainWithPostgres = do
   let envVarName = "POSTGRES_CONNSTRING"
 
   connectStringEnvVar <- lookupEnv envVarName
