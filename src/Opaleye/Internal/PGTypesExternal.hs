@@ -36,6 +36,9 @@ instance C.SqlNum SqlInt4 where
 instance C.SqlNum SqlInt8 where
   sqlFromInteger = pgInt8 . fromInteger
 
+instance C.SqlNum SqlNumeric where
+  sqlFromInteger = pgNumeric . fromInteger
+
 instance C.SqlFractional SqlFloat8 where
   sqlFromRational = pgDouble . fromRational
 
