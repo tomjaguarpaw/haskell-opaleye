@@ -135,6 +135,9 @@ queryRunnerColumnNullable qr =
         fromField' _ _ Nothing = pure Nothing
         fromField' fp' f bs = fmap Just (fp' f bs)
 
+unsafeFromFieldRaw :: FromField a (PGS.Field, Maybe SBS.ByteString)
+unsafeFromFieldRaw = fieldParserQueryRunnerColumn (\f mdata -> pure (f, mdata))
+
 -- { Instances for automatic derivation
 
 instance DefaultFromField a b =>
