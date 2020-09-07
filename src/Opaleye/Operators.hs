@@ -404,6 +404,9 @@ timestamptzAtTimeZone :: F.Field T.SqlTimestamptz
                       -> F.Field T.SqlTimestamp
 timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
 
+dateOfTimestamp :: F.Field T.SqlTimestamp -> F.Field T.SqlDate
+dateOfTimestamp (Column e) = Column (HPQ.FunExpr "date" [e])
+
 -- * Deprecated
 
 {-# DEPRECATED exists "Identical to 'restrictExists'.  Will be removed in version 0.8." #-}
