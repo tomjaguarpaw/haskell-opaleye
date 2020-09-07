@@ -197,8 +197,14 @@ like = C.binOp HPQ.OpLike
 ilike :: F.Field T.SqlText -> F.Field T.SqlText -> F.Field T.SqlBool
 ilike = C.binOp HPQ.OpILike
 
+-- {-# DEPRECATED charLength "You probably want to use 'sqlLength' instead" #-}
+-- | Do not use.  Will be deprecated in 0.8.  You probably want to use
+-- 'sqlLength' instead.
 charLength :: C.PGString a => Column a -> Column Int
 charLength (Column e) = Column (HPQ.FunExpr "char_length" [e])
+
+sqlLength :: C.PGString a => F.Field a -> F.Field T.SqlInt4
+sqlLength  (Column e) = Column (HPQ.FunExpr "length" [e])
 
 -- * Containment operators
 
