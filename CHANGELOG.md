@@ -1,3 +1,17 @@
+## 0.7.1.0
+
+* Added `Opaleye.Experimental.Enum` for an easy way to deal with
+  Postgres `ENUM` types.
+
+* Added `Opaleye.Manipulation.rReturningI` which has better type
+  inference.
+
+* Added `Opaleye.Operators.where_` for easier restriction in monadic
+  style.
+
+* Added `Opaleye.Operators.sqlLength` and
+  `Opaleye.Operators.dateOfTimestamp`.
+
 ## 0.7.0.0
 
 * Many renamings have taken place to help make Opaleye easier to
