@@ -39,21 +39,23 @@ import qualified Data.Profunctor.Product.Default as D
 
 -- * Restriction operators
 
-{-| Keep only the rows of a query satisfying a given condition, using
-an SQL @WHERE@ clause.
+{-| Keep only the rows of a query satisfying a given condition, using an
+SQL @WHERE@ clause.  It is equivalent to the Haskell function
 
-You would typically use 'restrict' if you want to write your query
-using 'A.Arrow' notation.  If you want to use a "point free" style
-then 'keepWhen' will suit you better.
-
-(If you are familiar with 'Control.Monad.MonadPlus' or
-'Control.Applicative.Alternative' it may help you to know that
-'restrict' corresponds to the 'Control.Monad.guard' function.) -}
-restrict :: S.SelectArr (F.Field T.SqlBool) ()
-restrict = O.restrict
-
+@
+where_ :: Bool -> [()]
+where_ True  = [()]
+where_ False = []
+@
+-}
 where_ :: F.Field T.SqlBool -> S.Select ()
 where_ = L.viaLateral restrict
+
+{-| You would typically use 'restrict' if you want to write your query
+using 'A.Arrow' notation.  If you want to use monadic style
+then 'where_' will suit you better. -}
+restrict :: S.SelectArr (F.Field T.SqlBool) ()
+restrict = O.restrict
 
 {-| Add a @WHERE EXISTS@ clause to the current query. -}
 restrictExists :: S.SelectArr a b -> S.SelectArr a ()
@@ -66,21 +68,6 @@ restrictNotExists :: S.SelectArr a b -> S.SelectArr a ()
 restrictNotExists criteria = QueryArr f where
   f (a, primQ, t0) = ((), PQ.notExists primQ existsQ, t1) where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
-
-{-| Keep only the rows of a query satisfying a given condition, using
-an SQL @WHERE@ clause.
-
-You would typically use 'keepWhen' if you want to write
-your query using a "point free" style.  If you want to use 'A.Arrow'
-notation then 'restrict' will suit you better.
-
-This is the 'S.SelectArr' equivalent of 'Prelude.filter' from the
-'Prelude'.
--}
-keepWhen :: (a -> F.Field T.SqlBool) -> S.SelectArr a a
-keepWhen p = proc a -> do
-  restrict  -< p a
-  A.returnA -< a
 
 -- * Equality operators
 
@@ -425,3 +412,21 @@ notExists = restrictNotExists
 inQuery :: D.Default O.EqPP fields fields
         => fields -> Query fields -> S.Select (F.Field T.SqlBool)
 inQuery = inSelect
+
+{-| This function is probably not useful and is likely to be deprecated
+  in the future.
+
+Keep only the rows of a query satisfying a given condition, using
+an SQL @WHERE@ clause.
+
+You would typically use 'keepWhen' if you want to write
+your query using a "point free" style.  If you want to use 'A.Arrow'
+notation then 'restrict' will suit you better.
+
+This is the 'S.SelectArr' equivalent of 'Prelude.filter' from the
+'Prelude'.
+-}
+keepWhen :: (a -> F.Field T.SqlBool) -> S.SelectArr a a
+keepWhen p = proc a -> do
+  restrict  -< p a
+  A.returnA -< a
