@@ -35,6 +35,7 @@ import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column)
 import           Opaleye.Internal.Helpers ((.:), (.:.))
+import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 import           Opaleye.Internal.Manipulation (Updater(Updater))
 import qualified Opaleye.Internal.Manipulation as MI
 import           Opaleye.SqlTypes (SqlBool)
@@ -168,6 +169,15 @@ rReturning :: D.Default RS.FromFields fields haskells
            -- ^
            -> MI.Returning fieldsR [haskells]
 rReturning = rReturningExplicit D.def
+
+-- | Like 'rReturning' but with better inference properties.  On the
+-- other hand the mapping from SQL fields to Haskell types is less
+-- flexible.
+rReturningI :: D.Default (Inferrable RS.FromFields) fields haskells
+            => (fieldsR -> fields)
+            -- ^
+            -> MI.Returning fieldsR [haskells]
+rReturningI = rReturningExplicit (runInferrable D.def)
 
 -- | Return a function of the inserted or updated rows.  Explicit
 -- version.  You probably just want to use 'rReturning' instead.
