@@ -21,6 +21,7 @@ import           Opaleye.Internal.QueryArr (SelectArr(QueryArr),
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Operators as O
 import           Opaleye.Internal.Helpers   ((.:))
+import qualified Opaleye.Lateral as L
 import qualified Opaleye.Order as Ord
 import qualified Opaleye.Select   as S
 import qualified Opaleye.SqlTypes as T
@@ -50,6 +51,9 @@ then 'keepWhen' will suit you better.
 'restrict' corresponds to the 'Control.Monad.guard' function.) -}
 restrict :: S.SelectArr (F.Field T.SqlBool) ()
 restrict = O.restrict
+
+where_ :: F.Field T.SqlBool -> S.Select ()
+where_ = L.viaLateral restrict
 
 {-| Add a @WHERE EXISTS@ clause to the current query. -}
 restrictExists :: S.SelectArr a b -> S.SelectArr a ()
