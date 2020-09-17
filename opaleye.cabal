@@ -29,7 +29,7 @@ library
   build-depends:
       aeson               >= 0.6     && < 1.6
     , base                >= 4.9     && < 5
-    , base16-bytestring   >= 0.1.1.6 && < 0.2
+    , base16-bytestring   >= 0.1.1.6 && < 1.1
     , case-insensitive    >= 1.2     && < 1.3
     , bytestring          >= 0.10    && < 0.11
     , contravariant       >= 1.2     && < 1.6
