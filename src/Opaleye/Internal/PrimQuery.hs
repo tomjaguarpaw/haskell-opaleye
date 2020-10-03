@@ -55,6 +55,8 @@ data PrimQuery' a = Unit
                   | Empty     a
                   | BaseTable TableIdentifier (Bindings HPQ.PrimExpr)
                   | Product   (NEL.NonEmpty (Lateral, PrimQuery' a)) [HPQ.PrimExpr]
+                  -- | The subqueries to take the product of and the
+                  --   restrictions to apply
                   | Aggregate (Bindings (Maybe (HPQ.AggrOp,
                                                 [HPQ.OrderExpr],
                                                 HPQ.AggrDistinct),
