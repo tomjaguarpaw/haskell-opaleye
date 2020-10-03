@@ -606,7 +606,7 @@ instance TQ.Arbitrary ArbitraryHaskellsList where
     return (ArbitraryHaskellsList l)
 
 instance TQ.Arbitrary ArbitraryPositiveInt where
-  arbitrary = fmap ArbitraryPositiveInt (TQ.choose (0, 100))
+  arbitrary = fmap ArbitraryPositiveInt (TQ.choose (0, 10))
 
 instance TQ.Arbitrary ArbitraryOrder where
   arbitrary = fmap ArbitraryOrder
