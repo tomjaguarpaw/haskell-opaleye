@@ -14,7 +14,7 @@ import           Control.Applicative ((<$>), (<*>), liftA2, pure)
 import           Control.Arrow (first)
 
 optimize :: PQ.PrimQuery' a -> PQ.PrimQuery' a
-optimize = mergeProduct . removeUnit
+optimize = removeTrivialProduct . mergeProduct . removeUnit
 
 removeUnit :: PQ.PrimQuery' a -> PQ.PrimQuery' a
 removeUnit = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
@@ -32,6 +32,12 @@ mergeProduct = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product
                 pes' = NEL.toList pqs >>= conds
                 conds (_lat, PQ.Product _ cs) = cs
                 conds _ = []
+
+removeTrivialProduct :: PQ.PrimQuery' a -> PQ.PrimQuery' a
+removeTrivialProduct =
+  PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product = product }
+  where product ((PQ.NonLateral, q) NEL.:| []) [] = q
+        product pqs pes = PQ.Product pqs pes
 
 removeEmpty :: PQ.PrimQuery' a -> Maybe (PQ.PrimQuery' b)
 removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
