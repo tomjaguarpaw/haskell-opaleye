@@ -8,8 +8,47 @@ import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Opaleye.Internal.HaskellDB.PrimQuery (Symbol)
 
+-- | @limit l . offset o@ corresponds to 'SELECT * FROM ... OFFSET o LIMIT l'
+--
+-- @limit l1 . limit l2 == limit (min l1 l2)@
+--
+-- @offset o1 . offset o2 == offset (o1 + o2)@
+--
+-- @offset o . limit l == limit ((l - o) `max` 0) . offset o@
+--
+-- Only positive numbers should be used as the offset and limit
+-- amount.
 data LimitOp = LimitOp Int | OffsetOp Int | LimitOffsetOp Int Int
-             deriving Show
+             deriving (Eq, Show)
+
+instance Semigroup LimitOp where
+  (<>) (LimitOp l) (OffsetOp 0) =
+    LimitOp l
+  (<>) (LimitOp l) (OffsetOp o) =
+    LimitOffsetOp l o
+  (<>) (LimitOp l1) (LimitOp l2) =
+    LimitOp (min l1 l2)
+  (<>) (LimitOp l1) (LimitOffsetOp l2 o) =
+    LimitOffsetOp (min l1 l2) o
+
+  (<>) (OffsetOp o1) (OffsetOp o2) =
+    OffsetOp (o1 + o2)
+  (<>) (OffsetOp 0) (LimitOp l) =
+    LimitOp l
+  (<>) (OffsetOp o) (LimitOp l) =
+    LimitOffsetOp ((l - o) `max` 0) o
+  (<>) (OffsetOp o1) (LimitOffsetOp l o2) =
+    LimitOffsetOp ((l - o1) `max` 0) (o1 + o2)
+
+  (<>) (LimitOffsetOp l o1) (OffsetOp o2) =
+    LimitOffsetOp l (o1 + o2)
+  (<>) (LimitOffsetOp l1 o) (LimitOp l2) =
+    LimitOffsetOp (min l1 ((l2 - o) `max` 0)) o
+  (<>) (LimitOffsetOp l1 o1) (LimitOffsetOp l2 o2) =
+    LimitOffsetOp (min l1 ((l2 - o1) `max` 0)) (o1 + o2)
+
+instance Monoid LimitOp where
+  mempty = OffsetOp 0
 
 data BinOp = Except
            | ExceptAll

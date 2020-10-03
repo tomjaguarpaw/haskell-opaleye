@@ -13,6 +13,7 @@ import           Prelude hiding (compare, (.), id)
 import           Connection (Connection, withConnection)
 import           Opaleye.Test.Arbitrary
 import           Opaleye.Test.Fields
+import qualified Opaleye.Test.Algebra (associative, identity)
 import           Opaleye.Test.TraverseA (traverseA1)
 
 import qualified Opaleye as O
@@ -508,6 +509,24 @@ exists = compareDenotationNoSort' (existsQ OE.exists) (existsQ existsList)
           pure (Choices [Left (CBool exists_)])
 
 
+limitOpAssociative :: Applicative io
+                   => ArbitraryLimitOp
+                   -> ArbitraryLimitOp
+                   -> ArbitraryLimitOp
+                   -> connection
+                   -> io TQ.Property
+limitOpAssociative (ArbitraryLimitOp x1)
+                   (ArbitraryLimitOp x2)
+                   (ArbitraryLimitOp x3)
+                   _ =
+  pure (Opaleye.Test.Algebra.associative x1 x2 x3)
+
+limitOpIdentity :: Applicative io
+                => ArbitraryLimitOp
+                -> connection
+                -> io TQ.Property
+limitOpIdentity (ArbitraryLimitOp x) _ = pure (Opaleye.Test.Algebra.identity x)
+
 {- TODO
 
   * Nullability
@@ -582,6 +601,8 @@ run conn = do
   test2 traverseMaybeFields
   test2 lateral
   test1 exists
+  test3 limitOpAssociative
+  test1 limitOpIdentity
 
 -- }
 

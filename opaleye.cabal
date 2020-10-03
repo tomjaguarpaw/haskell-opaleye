@@ -115,6 +115,7 @@ test-suite test
   main-is: Test.hs
   other-modules: Connection,
                  Opaleye.Test.Arbitrary,
+                 Opaleye.Test.Algebra,
                  Opaleye.Test.Fields,
                  Opaleye.Test.TraverseA,
                  QuickCheck,

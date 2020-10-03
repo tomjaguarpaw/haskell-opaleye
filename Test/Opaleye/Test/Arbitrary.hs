@@ -15,6 +15,7 @@ import           Opaleye.Test.Fields
 import qualified Opaleye as O
 import qualified Opaleye.Exists as OE
 import qualified Opaleye.Join as OJ
+import qualified Opaleye.Internal.PrimQuery as PQ
 
 import           Control.Applicative (pure, (<$>), (<*>), liftA2)
 import qualified Control.Arrow as Arrow
@@ -51,6 +52,7 @@ newtype ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
 newtype ArbitraryFunction =
   ArbitraryFunction { unArbitraryFunction :: forall m i b s.
                       Functor m => Choices m i b s -> Choices m i b s }
+newtype ArbitraryLimitOp = ArbitraryLimitOp PQ.LimitOp deriving Show
 
 twoIntTable :: String
             -> O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
@@ -613,3 +615,18 @@ instance TQ.Arbitrary ArbitraryOrder where
                    (TQ.listOf ((,)
                                <$> TQ.oneof [return Asc, return Desc]
                                <*> TQ.choose (0, 100)))
+
+instance TQ.Arbitrary ArbitraryLimitOp where
+  arbitrary = ArbitraryLimitOp <$> TQ.oneof [
+      do
+        l <- arbitraryPositiveInt
+        pure (PQ.LimitOp l)
+    , do
+        o <- arbitraryPositiveInt
+        pure (PQ.OffsetOp o)
+    , do
+        l <- arbitraryPositiveInt
+        o <- arbitraryPositiveInt
+        pure (PQ.LimitOffsetOp l o)
+    ]
+    where arbitraryPositiveInt = abs <$> TQ.arbitrary
