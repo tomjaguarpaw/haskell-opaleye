@@ -401,14 +401,14 @@ limit :: ArbitraryPositiveInt
       -> Connection
       -> IO TQ.Property
 limit (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
-  let q' = O.limit l (O.orderBy (arbitraryOrder o) q)
+  let limited = O.limit l (O.orderBy (arbitraryOrder o) q)
 
-  unSelectDenotations (denotation q') (denotation q) $ \one' two' -> do
-      let remainder = MultiSet.fromList two'
+  unSelectDenotations (denotation limited) (denotation q) $ \limited' unlimited' -> do
+      let remainder = MultiSet.fromList unlimited'
                       `MultiSet.difference`
-                      MultiSet.fromList one'
+                      MultiSet.fromList limited'
           maxChosen :: Maybe Haskells
-          maxChosen = maximumBy (arbitraryOrdering o) one'
+          maxChosen = maximumBy (arbitraryOrdering o) limited'
           minRemain :: Maybe Haskells
           minRemain = minimumBy (arbitraryOrdering o) (MultiSet.toList remainder)
           cond :: Maybe Bool
@@ -416,7 +416,7 @@ limit (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
           condBool :: Bool
           condBool = Maybe.fromMaybe True cond
 
-      return ((length one' === min l (length two'))
+      return ((length limited' === min l (length unlimited'))
               .&&. condBool)
 
 offset :: ArbitraryPositiveInt -> ArbitrarySelect -> Connection
