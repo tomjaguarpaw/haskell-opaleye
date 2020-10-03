@@ -380,10 +380,10 @@ genSelectMapper =
     [ do
         return (O.distinctExplicit distinctFields)
     , do
-        l                <- TQ.choose (0, 100)
+        ArbitraryPositiveInt l <- TQ.arbitrary
         return (O.limit l)
     , do
-        l                <- TQ.choose (0, 100)
+        ArbitraryPositiveInt l <- TQ.arbitrary
         return (O.offset l)
     , do
         o                <- TQ.arbitrary
