@@ -14,7 +14,7 @@ import           Control.Applicative ((<$>), (<*>), liftA2, pure)
 import           Control.Arrow (first)
 
 optimize :: PQ.PrimQuery' a -> PQ.PrimQuery' a
-optimize = mergeLimitOffset . removeTrivialProduct . mergeProduct . removeUnit
+optimize = mergeLimitOffset . removeTrivialProduct . removeUnit . mergeProduct
 
 removeUnit :: PQ.PrimQuery' a -> PQ.PrimQuery' a
 removeUnit = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
