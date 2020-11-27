@@ -197,15 +197,7 @@ arbitrarySelectMaybe = do
 arbitrarySelectArrMaybe :: TQ.Gen ArbitrarySelectArrMaybe
 arbitrarySelectArrMaybe = do
     TQ.oneof $
-      (fmap . fmap) ArbitrarySelectArrMaybe $
-      [ do
-          ArbitrarySelectMaybe q <- TQ.arbitrary
-          return (P.lmap (const ()) q)
-      , do
-          ArbitrarySelectArr q <- TQ.arbitrary
-          return (traverse' q)
-      ]
-    where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
+      arbitrarySelectArrMaybeRecurse1
 
 -- [Note] Size of expressions
 --
@@ -405,6 +397,19 @@ arbitrarySelectMaybeRecurse2 =
           ArbitrarySelectArrMaybe q <- TQ.arbitrary
           return (q <<< qm)
       ]
+
+arbitrarySelectArrMaybeRecurse1 :: [TQ.Gen ArbitrarySelectArrMaybe]
+arbitrarySelectArrMaybeRecurse1 =
+      (fmap . fmap) ArbitrarySelectArrMaybe $
+      [ do
+          ArbitrarySelectMaybe q <- TQ.arbitrary
+          return (P.lmap (const ()) q)
+      , do
+          ArbitrarySelectArr q <- TQ.arbitrary
+          return (traverse' q)
+      ]
+    where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
+
 
 genSelect :: [TQ.Gen (O.Select Fields)]
 genSelect =
