@@ -187,6 +187,37 @@ arbitraryKleisli size =
                   arbitraryKleisliRecurse1
                   arbitraryKleisliRecurse2
 
+arbitrarySelectMaybe :: TQ.Gen ArbitrarySelectMaybe
+arbitrarySelectMaybe = do
+    TQ.oneof $
+      (fmap . fmap) ArbitrarySelectMaybe $
+      map (\fg -> fg <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary)
+      genSelectArrMaybeMapper
+      ++
+      [ do
+          ArbitrarySelect q <- TQ.arbitrary
+          return (fmap fieldsToMaybeFields q)
+      ]
+      ++
+      [ do
+          ArbitrarySelectMaybe qm <- TQ.arbitrary
+          ArbitrarySelectArrMaybe q <- TQ.arbitrary
+          return (q <<< qm)
+      ]
+
+arbitrarySelectArrMaybe :: TQ.Gen ArbitrarySelectArrMaybe
+arbitrarySelectArrMaybe = do
+    TQ.oneof $
+      (fmap . fmap) ArbitrarySelectArrMaybe $
+      [ do
+          ArbitrarySelectMaybe q <- TQ.arbitrary
+          return (P.lmap (const ()) q)
+      , do
+          ArbitrarySelectArr q <- TQ.arbitrary
+          return (traverse' q)
+      ]
+    where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
+
 -- [Note] Size of expressions
 --
 -- 19 seems to be the biggest size we can get away with.  At 24 we see
@@ -251,36 +282,10 @@ instance TQ.Arbitrary ArbitraryKleisli where
 -- We are skirting close to generating infinite query territory here!
 -- We should be careful about precisely how we recurse.
 instance TQ.Arbitrary ArbitrarySelectMaybe where
-  arbitrary = do
-    TQ.oneof $
-      (fmap . fmap) ArbitrarySelectMaybe $
-      map (\fg -> fg <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary)
-      genSelectArrMaybeMapper
-      ++
-      [ do
-          ArbitrarySelect q <- TQ.arbitrary
-          return (fmap fieldsToMaybeFields q)
-      ]
-      ++
-      [ do
-          ArbitrarySelectMaybe qm <- TQ.arbitrary
-          ArbitrarySelectArrMaybe q <- TQ.arbitrary
-          return (q <<< qm)
-      ]
+  arbitrary = arbitrarySelectMaybe
 
 instance TQ.Arbitrary ArbitrarySelectArrMaybe where
-  arbitrary = do
-    TQ.oneof $
-      (fmap . fmap) ArbitrarySelectArrMaybe $
-      [ do
-          ArbitrarySelectMaybe q <- TQ.arbitrary
-          return (P.lmap (const ()) q)
-      , do
-          ArbitrarySelectArr q <- TQ.arbitrary
-          return (traverse' q)
-      ]
-    where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
-
+  arbitrary = arbitrarySelectArrMaybe
 
 -- [Note] Testing strategy
 --
