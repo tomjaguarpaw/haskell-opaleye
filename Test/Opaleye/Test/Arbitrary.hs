@@ -190,15 +190,14 @@ arbitraryKleisli size =
 arbitrarySelectMaybe :: TQ.Gen ArbitrarySelectMaybe
 arbitrarySelectMaybe = do
     TQ.oneof $
+      arbitrarySelectMaybeRecurse1
+      ++ (
       (fmap . fmap) ArbitrarySelectMaybe $
-      map (\fg -> fg <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary)
-      genSelectArrMaybeMapper
-      ++
       [ do
           ArbitrarySelectMaybe qm <- TQ.arbitrary
           ArbitrarySelectArrMaybe q <- TQ.arbitrary
           return (q <<< qm)
-      ]
+      ])
 
 arbitrarySelectArrMaybe :: TQ.Gen ArbitrarySelectArrMaybe
 arbitrarySelectArrMaybe = do
@@ -396,6 +395,12 @@ arbitraryKleisliRecurse2 =
   map (\fg size1 size2 -> fg <*> arbitraryKleisli size1 <*> arbitraryKleisli size2)
   [ pure (<=<) , pure (liftA2 (liftA2 appendChoices)) ]
   ]
+
+arbitrarySelectMaybeRecurse1 :: [TQ.Gen ArbitrarySelectMaybe]
+arbitrarySelectMaybeRecurse1 =
+      (fmap . fmap) ArbitrarySelectMaybe $
+      map (\fg -> fg <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary)
+      genSelectArrMaybeMapper
 
 genSelect :: [TQ.Gen (O.Select Fields)]
 genSelect =
