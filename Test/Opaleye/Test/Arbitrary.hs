@@ -191,13 +191,8 @@ arbitrarySelectMaybe :: TQ.Gen ArbitrarySelectMaybe
 arbitrarySelectMaybe = do
     TQ.oneof $
       arbitrarySelectMaybeRecurse1
-      ++ (
-      (fmap . fmap) ArbitrarySelectMaybe $
-      [ do
-          ArbitrarySelectMaybe qm <- TQ.arbitrary
-          ArbitrarySelectArrMaybe q <- TQ.arbitrary
-          return (q <<< qm)
-      ])
+      ++
+      arbitrarySelectMaybeRecurse2
 
 arbitrarySelectArrMaybe :: TQ.Gen ArbitrarySelectArrMaybe
 arbitrarySelectArrMaybe = do
@@ -401,6 +396,15 @@ arbitrarySelectMaybeRecurse1 =
       (fmap . fmap) ArbitrarySelectMaybe $
       map (\fg -> fg <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary)
       genSelectArrMaybeMapper
+
+arbitrarySelectMaybeRecurse2 :: [TQ.Gen ArbitrarySelectMaybe]
+arbitrarySelectMaybeRecurse2 =
+      (fmap . fmap) ArbitrarySelectMaybe $
+      [ do
+          ArbitrarySelectMaybe qm <- TQ.arbitrary
+          ArbitrarySelectArrMaybe q <- TQ.arbitrary
+          return (q <<< qm)
+      ]
 
 genSelect :: [TQ.Gen (O.Select Fields)]
 genSelect =
