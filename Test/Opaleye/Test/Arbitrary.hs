@@ -195,11 +195,6 @@ arbitrarySelectMaybe = do
       genSelectArrMaybeMapper
       ++
       [ do
-          ArbitrarySelect q <- TQ.arbitrary
-          return (fmap fieldsToMaybeFields q)
-      ]
-      ++
-      [ do
           ArbitrarySelectMaybe qm <- TQ.arbitrary
           ArbitrarySelectArrMaybe q <- TQ.arbitrary
           return (q <<< qm)
@@ -491,6 +486,8 @@ genSelectArrMaybeMapper :: [TQ.Gen (O.SelectArr a Fields
 genSelectArrMaybeMapper =
   [ do
       return (OJ.optionalExplicit unpackFields)
+  , do
+      return (fmap fieldsToMaybeFields)
   ]
 
 genSelectArrPoly :: [TQ.Gen (O.SelectArr a Fields
