@@ -159,23 +159,35 @@ recurseSafely r0 r1 r2 = do
     then r2
     else error "Impossible"
 
-instance TQ.Arbitrary ArbitrarySelect where
-  arbitrary = recurseSafelyOneof
+arbitrarySelect :: TQ.Gen ArbitrarySelect
+arbitrarySelect =
+               recurseSafelyOneof
                   arbitrarySelectRecurse0
                   arbitrarySelectRecurse1
                   arbitrarySelectRecurse2
 
-instance TQ.Arbitrary ArbitrarySelectArr where
-  arbitrary = recurseSafelyOneof
+arbitrarySelectArr :: TQ.Gen ArbitrarySelectArr
+arbitrarySelectArr =
+               recurseSafelyOneof
                   arbitrarySelectArrRecurse0
                   arbitrarySelectArrRecurse1
                   arbitrarySelectArrRecurse2
 
-instance TQ.Arbitrary ArbitraryKleisli where
-  arbitrary = recurseSafelyOneof
+arbitraryKleisli :: TQ.Gen ArbitraryKleisli
+arbitraryKleisli =
+               recurseSafelyOneof
                   arbitraryKleisliRecurse0
                   arbitraryKleisliRecurse1
                   arbitraryKleisliRecurse2
+
+instance TQ.Arbitrary ArbitrarySelect where
+  arbitrary = arbitrarySelect
+
+instance TQ.Arbitrary ArbitrarySelectArr where
+  arbitrary = arbitrarySelectArr
+
+instance TQ.Arbitrary ArbitraryKleisli where
+  arbitrary = arbitraryKleisli
 
 -- It would be better if ArbitrarySelect recursively called this, but
 -- it will do for now.
