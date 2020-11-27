@@ -221,7 +221,7 @@ instance TQ.Arbitrary ArbitrarySelectArrMaybe where
 --
 -- We have to be very careful otherwise we will generate
 -- infinite-sized expressions.  On the other hand we probably generate
--- far too small small expressions.  We should probably improve that
+-- far too many small expressions.  We should probably improve that
 -- but explicitly passing a size parameter to the sub-generators.
 --
 -- The idea here is that only arbitrary... generators can do
