@@ -192,7 +192,7 @@ arbitrarySelectMaybe size = do
   fmap (\case ArbitrarySelectMaybe q -> q) $
                recurseSafelyOneof
                   size
-                  []
+                  arbitrarySelectMaybeRecurse0
                   arbitrarySelectMaybeRecurse1
                   arbitrarySelectMaybeRecurse2
 
@@ -202,7 +202,7 @@ arbitrarySelectArrMaybe size = do
   fmap (\case ArbitrarySelectArrMaybe q -> q) $
                recurseSafelyOneof
                   size
-                  []
+                  arbitrarySelectArrMaybeRecurse0
                   arbitrarySelectArrMaybeRecurse1
                   []
 
@@ -389,6 +389,13 @@ arbitraryKleisliRecurse2 =
   [ pure (<=<) , pure (liftA2 (liftA2 appendChoices)) ]
   ]
 
+arbitrarySelectMaybeRecurse0 :: [TQ.Gen ArbitrarySelectMaybe]
+arbitrarySelectMaybeRecurse0 =
+  arbitraryG ArbitrarySelectMaybe
+  [ (fmap . fmap . fmap) (const (O.nothingFieldsExplicit nullspecFields)) genSelect
+  , (fmap . fmap . fmap) O.justFields genSelect
+  ]
+
 arbitrarySelectMaybeRecurse1 :: [Int -> TQ.Gen ArbitrarySelectMaybe]
 arbitrarySelectMaybeRecurse1 =
       (fmap . fmap . fmap) ArbitrarySelectMaybe $
@@ -404,15 +411,21 @@ arbitrarySelectMaybeRecurse2 =
           return (q <<< qm)
       ]
 
+arbitrarySelectArrMaybeRecurse0 :: [TQ.Gen ArbitrarySelectArrMaybe]
+arbitrarySelectArrMaybeRecurse0 =
+    arbitraryG ArbitrarySelectArrMaybe
+    [ fmap (\fg -> fg <*> TQ.arbitrary)
+    [ pure (Arrow.arr . fmap . unArbitraryFunction) ]
+    ]
+
 arbitrarySelectArrMaybeRecurse1 :: [Int -> TQ.Gen ArbitrarySelectArrMaybe]
 arbitrarySelectArrMaybeRecurse1 =
-      (fmap . fmap . fmap) ArbitrarySelectArrMaybe $
-      [ \size -> do
-          q <- arbitrarySelectMaybe size
-          return (P.lmap (const ()) q)
-      , \size -> do
-          q <- arbitrarySelectArr size
-          return (traverse' q)
+      arbitraryG (fmap ArbitrarySelectArrMaybe)
+      [
+      map (\fg size -> fg <*> arbitrarySelectMaybe size)
+      [ pure (P.lmap (const ())) ]
+      , map (\fg size -> fg <*> arbitrarySelectArr size)
+      [ pure traverse' ]
       ]
     where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
 
