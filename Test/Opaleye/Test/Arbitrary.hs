@@ -187,17 +187,24 @@ arbitraryKleisli size =
                   arbitraryKleisliRecurse1
                   arbitraryKleisliRecurse2
 
-arbitrarySelectMaybe :: TQ.Gen ArbitrarySelectMaybe
-arbitrarySelectMaybe = do
-    TQ.oneof $
-      arbitrarySelectMaybeRecurse1
-      ++
-      arbitrarySelectMaybeRecurse2
+arbitrarySelectMaybe :: Int -> TQ.Gen (O.Select (O.MaybeFields Fields))
+arbitrarySelectMaybe size = do
+  fmap (\case ArbitrarySelectMaybe q -> q) $
+               recurseSafelyOneof
+                  size
+                  []
+                  arbitrarySelectMaybeRecurse1
+                  arbitrarySelectMaybeRecurse2
 
-arbitrarySelectArrMaybe :: TQ.Gen ArbitrarySelectArrMaybe
-arbitrarySelectArrMaybe = do
-    TQ.oneof $
-      arbitrarySelectArrMaybeRecurse1
+arbitrarySelectArrMaybe :: Int
+                        -> TQ.Gen (O.SelectArr (O.MaybeFields Fields) (O.MaybeFields Fields))
+arbitrarySelectArrMaybe size = do
+  fmap (\case ArbitrarySelectArrMaybe q -> q) $
+               recurseSafelyOneof
+                  size
+                  []
+                  arbitrarySelectArrMaybeRecurse1
+                  []
 
 -- [Note] Size of expressions
 --
@@ -257,16 +264,15 @@ instance TQ.Arbitrary ArbitraryKleisli where
     size <- TQ.choose (1, 19)
     fmap ArbitraryKleisli (arbitraryKleisli size)
 
--- It would be better if ArbitrarySelect recursively called this, but
--- it will do for now.
---
--- We are skirting close to generating infinite query territory here!
--- We should be careful about precisely how we recurse.
 instance TQ.Arbitrary ArbitrarySelectMaybe where
-  arbitrary = arbitrarySelectMaybe
+  arbitrary = do
+    size <- TQ.choose (1, 19)
+    fmap ArbitrarySelectMaybe (arbitrarySelectMaybe size)
 
 instance TQ.Arbitrary ArbitrarySelectArrMaybe where
-  arbitrary = arbitrarySelectArrMaybe
+  arbitrary = do
+    size <- TQ.choose (1, 19)
+    fmap ArbitrarySelectArrMaybe (arbitrarySelectArrMaybe size)
 
 -- [Note] Testing strategy
 --
@@ -383,29 +389,29 @@ arbitraryKleisliRecurse2 =
   [ pure (<=<) , pure (liftA2 (liftA2 appendChoices)) ]
   ]
 
-arbitrarySelectMaybeRecurse1 :: [TQ.Gen ArbitrarySelectMaybe]
+arbitrarySelectMaybeRecurse1 :: [Int -> TQ.Gen ArbitrarySelectMaybe]
 arbitrarySelectMaybeRecurse1 =
-      (fmap . fmap) ArbitrarySelectMaybe $
-      map (\fg -> fg <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary)
+      (fmap . fmap . fmap) ArbitrarySelectMaybe $
+      map (\fg size -> fg <*> arbitrarySelect size)
       genSelectArrMaybeMapper
 
-arbitrarySelectMaybeRecurse2 :: [TQ.Gen ArbitrarySelectMaybe]
+arbitrarySelectMaybeRecurse2 :: [Int -> Int -> TQ.Gen ArbitrarySelectMaybe]
 arbitrarySelectMaybeRecurse2 =
-      (fmap . fmap) ArbitrarySelectMaybe $
-      [ do
-          ArbitrarySelectMaybe qm <- TQ.arbitrary
-          ArbitrarySelectArrMaybe q <- TQ.arbitrary
+      (fmap . fmap . fmap . fmap) ArbitrarySelectMaybe $
+      [ \size1 size2 -> do
+          qm <- arbitrarySelectMaybe size1
+          q <- arbitrarySelectArrMaybe size2
           return (q <<< qm)
       ]
 
-arbitrarySelectArrMaybeRecurse1 :: [TQ.Gen ArbitrarySelectArrMaybe]
+arbitrarySelectArrMaybeRecurse1 :: [Int -> TQ.Gen ArbitrarySelectArrMaybe]
 arbitrarySelectArrMaybeRecurse1 =
-      (fmap . fmap) ArbitrarySelectArrMaybe $
-      [ do
-          ArbitrarySelectMaybe q <- TQ.arbitrary
+      (fmap . fmap . fmap) ArbitrarySelectArrMaybe $
+      [ \size -> do
+          q <- arbitrarySelectMaybe size
           return (P.lmap (const ()) q)
-      , do
-          ArbitrarySelectArr q <- TQ.arbitrary
+      , \size -> do
+          q <- arbitrarySelectArr size
           return (traverse' q)
       ]
     where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
