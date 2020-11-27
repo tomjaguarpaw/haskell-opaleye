@@ -234,72 +234,84 @@ arbitrarySelectRecurse0 =
 
 arbitrarySelectRecurse1 :: [TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse1 =
-  (fmap . fmap) ArbitrarySelect $
+  (fmap . fmap) ArbitrarySelect $ concat
+  [
   -- I'm not sure this is neccessary anymore.  It should be covered by
   -- other generation pathways.
   map (\fg -> fg <*> fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary)
       [ pure (<<< pure emptyChoices) ]
-  ++
+  ,
   map (\fg -> fg <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary)
       genSelectMapper
+  ]
 
 arbitrarySelectRecurse2 :: [TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse2 =
-    (fmap . fmap) ArbitrarySelect $
+    (fmap . fmap) ArbitrarySelect $ concat
+    [
     map (\fg -> fg <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary
                    <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary)
     genSelectArrPoly
-    ++
+    ,
     map (\fg -> fg <*> fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
                    <*> fmap (\case ArbitrarySelect    q -> q) TQ.arbitrary)
     genSelectArrMapper2
-    ++
+    ,
     map (\fg -> fg <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary
                    <*> fmap (\case ArbitrarySelect q -> q) TQ.arbitrary)
     genSelectMapper2
+    ]
 
 arbitrarySelectArrRecurse0 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse0 =
-  (fmap . fmap) ArbitrarySelectArr $
-     map (fmap ignoreArguments) genSelect
-  ++ genSelectArr
+  (fmap . fmap) ArbitrarySelectArr $ concat
+    [
+    map (fmap ignoreArguments) genSelect
+    ,
+    genSelectArr
+    ]
   where ignoreArguments = P.lmap (const ())
 
 arbitrarySelectArrRecurse1 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse1 =
-    (fmap . fmap) ArbitrarySelectArr $
+    (fmap . fmap) ArbitrarySelectArr $ concat
+    [
     map (\fg -> fg <*> fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary)
         ((fmap . fmap) O.laterally genSelectMapper)
-    ++
+    ,
     map (\fg -> fg <*> fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary)
         genSelectArrMapper
-    ++
+    ,
     map (\fg -> fg <*> fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary)
         ((fmap . fmap . fmap . fmap) (Choices . pure . Right) genSelectArrMaybeMapper)
-    ++
+    ,
     map (\fg -> fg <*> fmap (\case ArbitraryKleisli q -> q) TQ.arbitrary)
         [ pure O.lateral ]
+    ]
 
 arbitrarySelectArrRecurse2 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse2 =
-    (fmap . fmap) ArbitrarySelectArr $
+    (fmap . fmap) ArbitrarySelectArr $ concat
+    [
     map (\fg -> fg <*> fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
                    <*> fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary)
         ((fmap . fmap) O.bilaterally genSelectMapper2)
-    ++
-    (
+    ,
     map (\fg -> fg <*> fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
                    <*> fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary) $
     genSelectArrPoly
     ++
     genSelectArrMapper2
-    )
+    ]
 
 arbitraryKleisliRecurse0 :: [TQ.Gen ArbitraryKleisli]
 arbitraryKleisliRecurse0 =
-  (fmap . fmap) ArbitraryKleisli $
+  (fmap . fmap) ArbitraryKleisli $ concat
+  [
   (fmap . fmap) const genSelect
-  ++ [ pure pure ]
+  ,
+  [ pure pure ]
+  ]
 
 arbitraryKleisliRecurse1 :: [TQ.Gen ArbitraryKleisli]
 arbitraryKleisliRecurse1 =
