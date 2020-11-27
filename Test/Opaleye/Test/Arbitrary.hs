@@ -142,55 +142,108 @@ instance Show ArbitraryFunction where
 instance Show ArbitraryFields where
   show = const "Fields"
 
-recurseSafelyOneof :: [TQ.Gen a] -> [TQ.Gen a] -> [TQ.Gen a] -> TQ.Gen a
-recurseSafelyOneof r0 r1 r2 =
-  recurseSafely (TQ.oneof r0) (TQ.oneof r1) (TQ.oneof r2)
+recurseSafelyOneof :: Int
+                   -> [TQ.Gen a]
+                   -> [Int -> TQ.Gen a]
+                   -> [Int -> Int -> TQ.Gen a]
+                   -> TQ.Gen a
+recurseSafelyOneof size r0 r1 r2 =
+  if size <= 1
+  then TQ.oneof r0
+  else TQ.oneof $
+         fmap (\g -> g (size - 1)) r1
+         ++ fmap (\g -> do
+                     -- TQ.choose is inclusive
+                     size1 <- TQ.choose (1, size - 2)
+                     let size2 = size - size1 - 1
+                     -- size1 and size2 are between 1 and size - 2
+                     -- inclusive.  Their sum is size - 1.
+                     g size1 size2) r2
 
-recurseSafely :: TQ.Gen a -> TQ.Gen a -> TQ.Gen a -> TQ.Gen a
-recurseSafely r0 r1 r2 = do
-    -- The range of choose is inclusive
-    c <- TQ.choose (1, 10 :: Int)
-
-    if c <= 3
-    then r0
-    else if c <= 8
-    then r1
-    else if c <= 10
-    then r2
-    else error "Impossible"
-
-arbitrarySelect :: TQ.Gen (O.Select Fields)
-arbitrarySelect =
+arbitrarySelect :: Int -> TQ.Gen (O.Select Fields)
+arbitrarySelect size =
   fmap (\case ArbitrarySelect q -> q) $
                recurseSafelyOneof
+                  size
                   arbitrarySelectRecurse0
                   arbitrarySelectRecurse1
                   arbitrarySelectRecurse2
 
-arbitrarySelectArr :: TQ.Gen (O.SelectArr Fields Fields)
-arbitrarySelectArr =
+arbitrarySelectArr :: Int -> TQ.Gen (O.SelectArr Fields Fields)
+arbitrarySelectArr size =
   fmap (\case ArbitrarySelectArr q -> q) $
                recurseSafelyOneof
+                  size
                   arbitrarySelectArrRecurse0
                   arbitrarySelectArrRecurse1
                   arbitrarySelectArrRecurse2
 
-arbitraryKleisli :: TQ.Gen (Fields -> O.Select Fields)
-arbitraryKleisli =
+arbitraryKleisli :: Int -> TQ.Gen (Fields -> O.Select Fields)
+arbitraryKleisli size =
   fmap (\case ArbitraryKleisli q -> q) $
                recurseSafelyOneof
+                  size
                   arbitraryKleisliRecurse0
                   arbitraryKleisliRecurse1
                   arbitraryKleisliRecurse2
 
+-- [Note] Size of expressions
+--
+-- 19 seems to be the biggest size we can get away with.  At 24 we see
+-- a lot of errors like the below in GitHub Actions (although not
+-- locally).  The Opaleye QuickCheck test process dies without
+-- printing any error. One would expect QuickCheck to print an error
+-- between its most recent success ("+++ OK, passed 1000 tests.") and
+-- cabal-install's output ("Test suite test: FAIL").  Since QuickCheck
+-- doesn't print anything I expect that the Opaleye test process must
+-- be dying in a drastic way (perhaps OOM killed by the OS or perhaps
+-- libpq is segfaulting).
+--
+-- Running 1 test suites...
+-- Test suite test: RUNNING...
+-- NOTICE:  table "table1" does not exist, skipping
+-- NOTICE:  table "TABLE2" does not exist, skipping
+-- NOTICE:  table "table3" does not exist, skipping
+-- NOTICE:  table "table4" does not exist, skipping
+-- NOTICE:  table "keywordtable" does not exist, skipping
+-- NOTICE:  table "table6" does not exist, skipping
+-- NOTICE:  table "table7" does not exist, skipping
+-- NOTICE:  table "table5" does not exist, skipping
+-- NOTICE:  table "table8" does not exist, skipping
+-- NOTICE:  table "table10" does not exist, skipping
+-- NOTICE:  table "table9" does not exist, skipping
+-- +++ OK, passed 1000 tests.
+-- +++ OK, passed 1000 tests.
+-- +++ OK, passed 1000 tests.
+-- +++ OK, passed 1000 tests.
+-- +++ OK, passed 1000 tests.
+-- +++ OK, passed 1000 tests.
+-- Test suite test: FAIL
+-- Test suite logged to:
+-- /tmp/extra-dir-43542418781377/opaleye-0.7.1.0/dist-newstyle/build/x86_64-linux/ghc-8.8.4/opaleye-0.7.1.0/t/test/test/opaleye-0.7.1.0-test.log
+-- 0 of 1 test suites (0 of 1 test cases) passed.
+-- cabal: Tests failed for test:test from opaleye-0.7.1.0.
+--
+-- neil: Failed when running system command: cabal v2-exec cabal v2-test
+-- CallStack (from HasCallStack):
+--   error, called at src/System/Process/Extra.hs:34:9 in extra-1.7.8-ba0157cc68fafaa3027316e0961d40ff9f524d841ce1db561c650f9b1f917124:System.Process.Extra
+--   system_, called at src/Cabal.hs:248:13 in main:Cabal
+-- Error: Process completed with exit code 1.
+
 instance TQ.Arbitrary ArbitrarySelect where
-  arbitrary = fmap ArbitrarySelect arbitrarySelect
+  arbitrary = do
+    size <- TQ.choose (1, 19)
+    fmap ArbitrarySelect (arbitrarySelect size)
 
 instance TQ.Arbitrary ArbitrarySelectArr where
-  arbitrary = fmap ArbitrarySelectArr arbitrarySelectArr
+  arbitrary = do
+    size <- TQ.choose (1, 19)
+    fmap ArbitrarySelectArr (arbitrarySelectArr size)
 
 instance TQ.Arbitrary ArbitraryKleisli where
-  arbitrary = fmap ArbitraryKleisli arbitraryKleisli
+  arbitrary = do
+    size <- TQ.choose (1, 19)
+    fmap ArbitraryKleisli (arbitraryKleisli size)
 
 -- It would be better if ArbitrarySelect recursively called this, but
 -- it will do for now.
@@ -252,30 +305,30 @@ arbitrarySelectRecurse0 =
   genSelect
   ]
 
-arbitrarySelectRecurse1 :: [TQ.Gen ArbitrarySelect]
+arbitrarySelectRecurse1 :: [Int -> TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse1 =
-  arbitraryG ArbitrarySelect
+  arbitraryG (fmap ArbitrarySelect)
   [
   -- I'm not sure this is neccessary anymore.  It should be covered by
   -- other generation pathways.
-  map (\fg -> fg <*> arbitrarySelectArr)
+  map (\fg size -> fg <*> arbitrarySelectArr size)
       [ pure (<<< pure emptyChoices) ]
   ,
-  map (\fg -> fg <*> arbitrarySelect)
+  map (\fg size -> fg <*> arbitrarySelect size)
       genSelectMapper
   ]
 
-arbitrarySelectRecurse2 :: [TQ.Gen ArbitrarySelect]
+arbitrarySelectRecurse2 :: [Int -> Int -> TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse2 =
-  arbitraryG ArbitrarySelect
+  arbitraryG ((fmap . fmap) ArbitrarySelect)
     [
-    map (\fg -> fg <*> arbitrarySelect <*> arbitrarySelect)
+    map (\fg size1 size2 -> fg <*> arbitrarySelect size1 <*> arbitrarySelect size2)
     genSelectArrPoly
     ,
-    map (\fg -> fg <*> arbitrarySelectArr <*> arbitrarySelect)
+    map (\fg size1 size2 -> fg <*> arbitrarySelectArr size1 <*> arbitrarySelect size2)
     genSelectArrMapper2
     ,
-    map (\fg -> fg <*> arbitrarySelect <*> arbitrarySelect)
+    map (\fg size1 size2 -> fg <*> arbitrarySelect size1 <*> arbitrarySelect size2)
     genSelectMapper2
     ]
 
@@ -289,31 +342,31 @@ arbitrarySelectArrRecurse0 =
     ]
   where ignoreArguments = P.lmap (const ())
 
-arbitrarySelectArrRecurse1 :: [TQ.Gen ArbitrarySelectArr]
+arbitrarySelectArrRecurse1 :: [Int -> TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse1 =
-  arbitraryG ArbitrarySelectArr
+  arbitraryG (fmap ArbitrarySelectArr)
     [
-    map (\fg -> fg <*> arbitrarySelectArr)
+    map (\fg size -> fg <*> arbitrarySelectArr size)
         ((fmap . fmap) O.laterally genSelectMapper)
     ,
-    map (\fg -> fg <*> arbitrarySelectArr)
+    map (\fg size -> fg <*> arbitrarySelectArr size)
         genSelectArrMapper
     ,
-    map (\fg -> fg <*> arbitrarySelectArr)
+    map (\fg size -> fg <*> arbitrarySelectArr size)
         ((fmap . fmap . fmap . fmap) (Choices . pure . Right) genSelectArrMaybeMapper)
     ,
-    map (\fg -> fg <*> arbitraryKleisli)
+    map (\fg size -> fg <*> arbitraryKleisli size)
         [ pure O.lateral ]
     ]
 
-arbitrarySelectArrRecurse2 :: [TQ.Gen ArbitrarySelectArr]
+arbitrarySelectArrRecurse2 :: [Int -> Int -> TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse2 =
-  arbitraryG ArbitrarySelectArr
+  arbitraryG ((fmap . fmap) ArbitrarySelectArr)
     [
-    map (\fg -> fg <*> arbitrarySelectArr <*> arbitrarySelectArr)
+    map (\fg size1 size2 -> fg <*> arbitrarySelectArr size1 <*> arbitrarySelectArr size2)
         ((fmap . fmap) O.bilaterally genSelectMapper2)
     ,
-    map (\fg -> fg <*> arbitrarySelectArr <*> arbitrarySelectArr) $
+    map (\fg size1 size2 -> fg <*> arbitrarySelectArr size1 <*> arbitrarySelectArr size2) $
     genSelectArrPoly
     ++
     genSelectArrMapper2
@@ -328,19 +381,19 @@ arbitraryKleisliRecurse0 =
   [ pure pure ]
   ]
 
-arbitraryKleisliRecurse1 :: [TQ.Gen ArbitraryKleisli]
+arbitraryKleisliRecurse1 :: [Int -> TQ.Gen ArbitraryKleisli]
 arbitraryKleisliRecurse1 =
-  arbitraryG ArbitraryKleisli
+  arbitraryG (fmap ArbitraryKleisli)
   [
-  map (\fg -> fg <*> arbitrarySelectArr)
+  map (\fg size -> fg <*> arbitrarySelectArr size)
   [ pure O.viaLateral ]
   ]
 
-arbitraryKleisliRecurse2 :: [TQ.Gen ArbitraryKleisli]
+arbitraryKleisliRecurse2 :: [Int -> Int -> TQ.Gen ArbitraryKleisli]
 arbitraryKleisliRecurse2 =
-  arbitraryG ArbitraryKleisli
+  arbitraryG ((fmap . fmap) ArbitraryKleisli)
   [
-  map (\fg -> fg <*> arbitraryKleisli <*> arbitraryKleisli)
+  map (\fg size1 size2 -> fg <*> arbitraryKleisli size1 <*> arbitraryKleisli size2)
   [ pure (<=<) , pure (liftA2 (liftA2 appendChoices)) ]
   ]
 
