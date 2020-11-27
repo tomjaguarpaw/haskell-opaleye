@@ -186,7 +186,7 @@ instance TQ.Arbitrary ArbitrarySelectMaybe where
   arbitrary = do
     TQ.oneof $
       (fmap . fmap) ArbitrarySelectMaybe $
-      map (\fg -> do { ArbitrarySelect q <- TQ.arbitrary
+      map (\fg -> do { q <- fmap (\case ArbitrarySelect q -> q) TQ.arbitrary
                      ; f <- fg
                      ; return (f q)
                      })
@@ -245,7 +245,7 @@ arbitrarySelectRecurse1 =
       return (q <<< pure emptyChoices)
   ]
   ++
-  map (\fg -> do { ArbitrarySelect q <- TQ.arbitrary
+  map (\fg -> do { q <- fmap (\case ArbitrarySelect q -> q) TQ.arbitrary
                  ; f <- fg
                  ; return (f q) })
       genSelectMapper
@@ -253,22 +253,22 @@ arbitrarySelectRecurse1 =
 arbitrarySelectRecurse2 :: [TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse2 =
     (fmap . fmap) ArbitrarySelect $
-    map (\fg -> do { ArbitrarySelect q1 <- TQ.arbitrary
-                   ; ArbitrarySelect q2 <- TQ.arbitrary
+    map (\fg -> do { q1 <- fmap (\case ArbitrarySelect q -> q) TQ.arbitrary
+                   ; q2 <- fmap (\case ArbitrarySelect q -> q) TQ.arbitrary
                    ; f <- fg
                    ; pure (f q1 q2)
                    })
     genSelectArrPoly
     ++
-    map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
-                   ; ArbitrarySelect q2 <- TQ.arbitrary
+    map (\fg -> do { q1 <- fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
+                   ; q2 <- fmap (\case ArbitrarySelect q -> q) TQ.arbitrary
                    ; f <- fg
                    ; pure (f q1 q2)
                    })
     genSelectArrMapper2
     ++
-    map (\fg -> do { ArbitrarySelect q1 <- TQ.arbitrary
-                   ; ArbitrarySelect q2 <- TQ.arbitrary
+    map (\fg -> do { q1 <- fmap (\case ArbitrarySelect q -> q) TQ.arbitrary
+                   ; q2 <- fmap (\case ArbitrarySelect q -> q) TQ.arbitrary
                    ; f <- fg
                    ; pure (f q1 q2)
                    })
@@ -284,22 +284,22 @@ arbitrarySelectArrRecurse0 =
 arbitrarySelectArrRecurse1 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse1 =
     (fmap . fmap) ArbitrarySelectArr $
-    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+    map (\fg -> do { q <- fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
                    ; f <- fg
                    ; pure (O.laterally f q) })
         genSelectMapper
     ++
-    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+    map (\fg -> do { q <- fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
                    ; f <- fg
                    ; pure (f q) })
         genSelectArrMapper
     ++
-    map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+    map (\fg -> do { q <- fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
                    ; f <- fg
                    ; pure (fmap (Choices . pure . Right) (f q)) })
         genSelectArrMaybeMapper
     ++
-    map (\fg -> do { ArbitraryKleisli q <- TQ.arbitrary
+    map (\fg -> do { q <- fmap (\case ArbitraryKleisli q -> q) TQ.arbitrary
                    ; f <- fg
                    ; pure (f q) })
         [ pure O.lateral ]
@@ -307,15 +307,15 @@ arbitrarySelectArrRecurse1 =
 arbitrarySelectArrRecurse2 :: [TQ.Gen ArbitrarySelectArr]
 arbitrarySelectArrRecurse2 =
     (fmap . fmap) ArbitrarySelectArr $
-    map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
-                   ; ArbitrarySelectArr q2 <- TQ.arbitrary
+    map (\fg -> do { q1 <- fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
+                   ; q2 <- fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
                    ; f <- fg
                    ; pure (O.bilaterally f q1 q2) })
         genSelectMapper2
     ++
     (
-    map (\fg -> do { ArbitrarySelectArr q1 <- TQ.arbitrary
-                   ; ArbitrarySelectArr q2 <- TQ.arbitrary
+    map (\fg -> do { q1 <- fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
+                   ; q2 <- fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
                    ; f <- fg
                    ; pure (f q1 q2)
                    }) $
@@ -331,15 +331,15 @@ arbitraryKleisliRecurse0 =
 
 arbitraryKleisliRecurse1 :: [TQ.Gen ArbitraryKleisli]
 arbitraryKleisliRecurse1 =
-  map (\fg -> do { ArbitrarySelectArr q <- TQ.arbitrary
+  map (\fg -> do { q <- fmap (\case ArbitrarySelectArr q -> q) TQ.arbitrary
                  ; f <- fg
                  ; return (ArbitraryKleisli (f q)) })
   [ pure O.viaLateral ]
 
 arbitraryKleisliRecurse2 :: [TQ.Gen ArbitraryKleisli]
 arbitraryKleisliRecurse2 =
-  map (\fg -> do { ArbitraryKleisli q1 <- TQ.arbitrary
-                 ; ArbitraryKleisli q2 <- TQ.arbitrary
+  map (\fg -> do { q1 <- fmap (\case ArbitraryKleisli q -> q) TQ.arbitrary
+                 ; q2 <- fmap (\case ArbitraryKleisli q -> q) TQ.arbitrary
                  ; f <- fg
                  ; return (ArbitraryKleisli (f q1 q2)) })
   [ pure (<=<) , pure (liftA2 (liftA2 appendChoices)) ]
