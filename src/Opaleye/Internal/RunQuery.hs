@@ -327,20 +327,25 @@ jsonFieldParser, jsonbFieldParser :: FieldParser String
 jsonFieldParser  = jsonFieldTypeParser (String.fromString "json")
 jsonbFieldParser = jsonFieldTypeParser (String.fromString "jsonb")
 
--- typenames, not type Oids are used in order to avoid creating
--- a dependency on 'Database.PostgreSQL.LibPQ'
---
--- Eventually we want to move this to postgresql-simple
---
---     https://github.com/tomjaguarpaw/haskell-opaleye/issues/329
 jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
-jsonFieldTypeParser jsonTypeName field mData = fmap IPT.strictDecodeUtf8 $ do
-    ti <- typeInfo field
-    if TI.typname ti == jsonTypeName
-       then convert
-       else returnError Incompatible field "types incompatible"
+jsonFieldTypeParser jsonTypeName field mData = fmap IPT.strictDecodeUtf8 $
+  fromFieldJSONByteString field mData
   where
-    convert = case mData of
+    -- fromFieldJSONByteString is in postgresql-simple 0.6.3, released
+    -- 2020-11-15.  We can move to that implementation when had long
+    -- enough to percolate, perhaps 2022.  (The version in
+    -- postgresql-simple doesn't check the types separately, but
+    -- that's fine.)
+    fromFieldJSONByteString :: PGS.Field
+                            -> Maybe SBS.ByteString
+                            -> PGS.Conversion SBS.ByteString
+    fromFieldJSONByteString field_ mData_ = do
+      ti <- typeInfo field
+      if TI.typname ti == jsonTypeName
+        then convert mData_
+        else returnError Incompatible field_ "types incompatible"
+
+    convert mData_ = case mData_ of
         Just bs -> pure bs
         _       -> returnError UnexpectedNull field ""
 
