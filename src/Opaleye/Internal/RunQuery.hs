@@ -334,14 +334,14 @@ jsonbFieldParser = jsonFieldTypeParser (String.fromString "jsonb")
 --
 --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/329
 jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
-jsonFieldTypeParser jsonTypeName field mData = do
+jsonFieldTypeParser jsonTypeName field mData = fmap IPT.strictDecodeUtf8 $ do
     ti <- typeInfo field
     if TI.typname ti == jsonTypeName
        then convert
        else returnError Incompatible field "types incompatible"
   where
     convert = case mData of
-        Just bs -> pure $ IPT.strictDecodeUtf8 bs
+        Just bs -> pure bs
         _       -> returnError UnexpectedNull field ""
 
 -- }
