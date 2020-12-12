@@ -11,7 +11,7 @@ import qualified Database.PostgreSQL.Simple.Cursor  as PGSC (Cursor)
 import           Database.PostgreSQL.Simple.Internal (RowParser)
 import qualified Database.PostgreSQL.Simple.FromField as PGS
 import           Database.PostgreSQL.Simple.FromField
-  (FieldParser, fromField, pgArrayFieldParser)
+  (FieldParser, fromField, pgArrayFieldParser, fromFieldJSONByteString)
 import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
@@ -324,30 +324,12 @@ instance PP.SumProfunctor FromFields where
 -- { Allow @postgresql-simple@ conversions from JSON types to 'String'
 
 jsonFieldParser, jsonbFieldParser :: FieldParser String
-jsonFieldParser  = jsonFieldTypeParser (String.fromString "json")
-jsonbFieldParser = jsonFieldTypeParser (String.fromString "jsonb")
+jsonFieldParser  = jsonFieldTypeParser ()
+jsonbFieldParser = jsonFieldTypeParser ()
 
-jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
-jsonFieldTypeParser jsonTypeName field mData = fmap IPT.strictDecodeUtf8 $
+jsonFieldTypeParser :: a -> FieldParser String
+jsonFieldTypeParser _ field mData = fmap IPT.strictDecodeUtf8 $
   fromFieldJSONByteString field mData
-  where
-    -- fromFieldJSONByteString is in postgresql-simple 0.6.3, released
-    -- 2020-11-15.  We can move to that implementation when had long
-    -- enough to percolate, perhaps 2022.  (The version in
-    -- postgresql-simple doesn't check the types separately, but
-    -- that's fine.)
-    fromFieldJSONByteString :: PGS.Field
-                            -> Maybe SBS.ByteString
-                            -> PGS.Conversion SBS.ByteString
-    fromFieldJSONByteString field_ mData_ = do
-      ti <- typeInfo field
-      if TI.typname ti == jsonTypeName
-        then convert mData_
-        else returnError Incompatible field_ "types incompatible"
-
-    convert mData_ = case mData_ of
-        Just bs -> pure bs
-        _       -> returnError UnexpectedNull field ""
 
 -- }
 

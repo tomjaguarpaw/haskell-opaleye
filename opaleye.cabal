@@ -135,7 +135,7 @@ test-suite test
     contravariant,
     dotenv >= 0.3.1,
     multiset,
-    postgresql-simple,
+    postgresql-simple >= 0.6.3,
     profunctors,
     product-profunctors,
     QuickCheck,
