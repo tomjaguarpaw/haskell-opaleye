@@ -67,6 +67,13 @@ page](https://github.com/tomjaguarpaw/haskell-opaleye/issues/) for
 discussion of or questions about Opaleye even if they don't relate to
 a bug or issue.
 
+## PRs
+
+You are welcome to make PRs to Opaleye.  If you would like to discuss
+the design of your PR before you start work on it feel free to do so
+by [filing a new
+issue](https://github.com/tomjaguarpaw/haskell-opaleye/issues/new).
+
 # `Internal` modules
 
 Opaleye exports a number of modules named `Opaleye.Internal....`.
