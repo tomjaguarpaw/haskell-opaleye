@@ -28,16 +28,16 @@ library
     , base16-bytestring   >= 0.1.1.6 && < 0.2
     , case-insensitive    >= 1.2     && < 1.3
     , bytestring          >= 0.10    && < 0.11
-    , contravariant       >= 1.2     && < 1.5
+    , contravariant       >= 1.2     && < 1.6
     , direct-sqlite       >= 2.3.13  && < 2.4
     , pretty              >= 1.1.1.0 && < 1.2
-    , product-profunctors >= 0.6.2   && < 0.8
+    , product-profunctors >= 0.6.2   && < 0.12
     , profunctors         >= 4.0     && < 5.3
     , semigroups          >= 0.13    && < 0.19
     , sqlite-simple
     , text                >= 0.11    && < 1.3
     , transformers        >= 0.3     && < 0.6
-    , time                >= 1.4     && < 1.7
+    , time                >= 1.4     && < 1.10
     , time-locale-compat  >= 0.1     && < 0.2
     , uuid                >= 1.3     && < 1.4
     , void                >= 0.4     && < 0.8
