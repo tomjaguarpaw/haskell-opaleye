@@ -17,6 +17,7 @@ module Opaleye.SQLite.Internal.HaskellDB.Sql.Print (
                                      commaH
                                     ) where
 
+import Prelude hiding ((<>))
 import Opaleye.SQLite.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
                                SqlUpdate(..), SqlTable(..))
