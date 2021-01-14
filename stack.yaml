@@ -1,4 +1,7 @@
 resolver: lts-12.1
+packages:
+- .
+- opaleye-sqlite
 extra-deps:
 - aeson-1.2.4.0
 - multiset-0.3.4.1
