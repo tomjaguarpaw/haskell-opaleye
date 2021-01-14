@@ -5,6 +5,10 @@ synopsis:        An SQL-generating DSL targeting SQLite
 description:     An SQL-generating DSL targeting SQLite.  Allows
                  SQLite queries to be written within Haskell in a
                  typesafe and composable fashion.
+
+                 This package is old and unmaintained. It may work, or
+                 it may not. If you are interested in reviving it
+                 please file an issue on the GitHub repository.
 homepage:        https://github.com/tomjaguarpaw/haskell-opaleye
 bug-reports:     https://github.com/tomjaguarpaw/haskell-opaleye/issues
 license:         BSD3
