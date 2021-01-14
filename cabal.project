@@ -1,1 +1,3 @@
-packages: opaleye.cabal
+packages:
+  opaleye.cabal
+  opaleye-sqlite/opaleye-sqlite.cabal
