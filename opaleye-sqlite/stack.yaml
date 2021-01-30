@@ -1,0 +1,4 @@
+resolver: lts-16.29
+extra-deps:
+- direct-sqlite-2.3.26
+- sqlite-simple-0.4.18.0
