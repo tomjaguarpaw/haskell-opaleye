@@ -483,33 +483,22 @@ testDistinctOn = do
             , (4, 100, "b")
             ]
 
--- FIXME: the unsafeCoerceField is currently needed because the type
--- changes required for aggregation are not currently dealt with by
--- Opaleye.
-aggregateCoerceFIXME :: SelectArr (Field O.SqlInt4) (Field O.SqlInt8)
-aggregateCoerceFIXME = Arr.arr aggregateCoerceFIXME'
-
-aggregateCoerceFIXME' :: Field a -> Field O.SqlInt8
-aggregateCoerceFIXME' = O.unsafeCoerceField
-
 testAggregate :: Test
-testAggregate = it "" $ (Arr.second aggregateCoerceFIXME
-                        <<< O.aggregate (PP.p2 (O.groupBy, O.sum))
-                                           table1Q)
+testAggregate = it "" $ O.aggregate (PP.p2 (O.groupBy, O.sumInt4))
+                                           table1Q
                       `selectShouldReturnSorted` [ (1, 400) :: (Int, Int64)
                                                  , (2, 300) ]
 
 testAggregate0 :: Test
-testAggregate0 = it "" $ (Arr.second aggregateCoerceFIXME
-                        <<< O.aggregate (PP.p2 (O.sum, O.sum))
+testAggregate0 = it "" $    O.aggregate (PP.p2 (O.sum, O.sumInt4))
                                         (O.keepWhen (const (O.sqlBool False))
-                                         <<< table1Q))
+                                         <<< table1Q)
                          `selectShouldReturnSorted` ([] :: [(Int, Int64)])
 
 testAggregateFunction :: Test
-testAggregateFunction = it "" $ (Arr.second aggregateCoerceFIXME
-                        <<< O.aggregate (PP.p2 (O.groupBy, O.sum))
-                                        (fmap (\(x, y) -> (x + 1, y)) table1Q))
+testAggregateFunction = it "" $
+                            O.aggregate (PP.p2 (O.groupBy, O.sumInt4))
+                                        (fmap (\(x, y) -> (x + 1, y)) table1Q)
                       `selectShouldReturnSorted` [ (2, 400) :: (Int, Int64)
                                                  , (3, 300) ]
 
@@ -518,8 +507,8 @@ testAggregateProfunctor = it "" $
     q `selectShouldReturnSorted` [ (1, 1200) :: (Int, Int64), (2, 300)]
   where q = O.aggregate (PP.p2 (O.groupBy, countsum)) table1Q
         countsum = P.dimap (\x -> (x,x))
-                           (\(x, y) -> aggregateCoerceFIXME' x * y)
-                           (PP.p2 (O.sum, O.count))
+                           (\(x, y) -> x * y)
+                           (PP.p2 (O.sumInt4, O.count))
 
 testStringArrayAggregate :: Test
 testStringArrayAggregate = it "" $
@@ -679,8 +668,7 @@ testOffsetLimit = it "" $ limitOrderShouldMatch (O.offset 2 . O.limit 2) (drop 2
 testDistinctAndAggregate :: Test
 testDistinctAndAggregate = it "" $ q `selectShouldReturnSorted` expectedResult
   where q = O.distinct table1Q
-            &&& (Arr.second aggregateCoerceFIXME
-                 <<< O.aggregate (PP.p2 (O.groupBy, O.sum)) table1Q)
+            &&& O.aggregate (PP.p2 (O.groupBy, O.sumInt4)) table1Q
         expectedResult = A.liftA2 (,) (L.nub table1data)
                                       [(1 :: Int, 400 :: Int64), (2, 300)]
 
