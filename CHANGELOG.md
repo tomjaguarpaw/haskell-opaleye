@@ -1,6 +1,9 @@
 * Add `jsonAgg`, `jsonBuildObject` and `jsonBuildObjectField`.  Thanks
   to Nathan Jaremko.
 
+* Added `Opaleye.Operators.array_position` and
+  `Opaleye.Operators.sqlElem`.  Thanks to Ashesh Ambasta.
+
 ## 0.7.1.0
 
 * Added `Opaleye.Experimental.Enum` for an easy way to deal with

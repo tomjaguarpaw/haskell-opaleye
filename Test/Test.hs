@@ -1000,6 +1000,30 @@ testArrayAppend = it "appends two arrays" $
                   `O.arrayAppend` O.sqlArray O.sqlInt4 [1,2,3])
         (`shouldBe` ([[5,6,7,1,2,3]] :: [[Int]]))
 
+testArrayPosition :: Test
+testArrayPosition = do
+  it "determines array position (SqlInt4)" $
+    testH (A.pure (O.arrayPosition (O.sqlArray O.sqlInt4 [5,6,7]) 5))
+          (`shouldBe` [Just (1 :: Int)])
+  it "determines array position (NULL) (SqlInt4)" $
+    testH (A.pure (O.arrayPosition (O.sqlArray O.sqlInt4 [5,6,7]) 999))
+          (`shouldBe` [Nothing :: Maybe Int])
+  it "determines array position (SqlInt8)" $
+    testH (A.pure (O.arrayPosition (O.sqlArray O.sqlInt8 [5,6,7]) 5))
+          (`shouldBe` [Just (1 :: Int)])
+  it "determines array position (NULL) (SqlInt8)" $
+    testH (A.pure (O.arrayPosition (O.sqlArray O.sqlInt8 [5,6,7]) 999))
+          (`shouldBe` [Nothing :: Maybe Int])
+
+testSqlElem :: Test
+testSqlElem = do
+  it "checks presence of the element (SqlInt4)" $
+    testH (A.pure (O.sqlElem 5 (O.sqlArray O.sqlInt4 [5,6,7])))
+          (`shouldBe` [True])
+  it "checks absence of the element (SqlInt4)" $
+    testH (A.pure (O.sqlElem 999 (O.sqlArray O.sqlInt4 [5,6,7])))
+          (`shouldBe` [False])
+
 type JsonTest a = SpecWith (Select (Field a) -> PGS.Connection -> Expectation)
 -- Test opaleye's equivalent of c1->'c'
 testJsonGetFieldValue :: (O.SqlIsJson a, DefaultFromField a Json.Value)
@@ -1338,6 +1362,8 @@ main = do
         testArrayIndexOOB
         testSingletonArray
         testArrayAppend
+        testArrayPosition
+        testSqlElem
       describe "joins" $ do
         testLeftJoin
         testLeftJoinNullable
