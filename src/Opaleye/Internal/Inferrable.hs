@@ -81,14 +81,9 @@ instance day ~ Time.Day
   => D.Default (Inferrable FromField) T.SqlDate day where
   def = Inferrable D.def
 
--- I'm not certain what we should map timestamptz to.  The
--- postgresql-simple types it maps to are ZonedTime and UTCTime, but
--- maybe it's more accurate to map it to a *pair* of LocalTime and a
--- time zone.
-
---instance utctime ~ Time.UTCTime
---  => D.Default (Inferrable FromField) T.SqlTimestamptz utctime where
---  def = Inferrable D.def
+instance zonedtime ~ Time.ZonedTime
+  => D.Default (Inferrable FromField) T.SqlTimestamptz zonedtime where
+  def = Inferrable D.def
 
 instance localtime ~ Time.LocalTime
   => D.Default (Inferrable FromField) T.SqlTimestamp localtime where
