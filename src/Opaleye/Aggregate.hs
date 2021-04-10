@@ -48,6 +48,7 @@ import qualified Data.Profunctor.Product.Default as D
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
 import qualified Opaleye.Internal.Column as IC
+import qualified Opaleye.Lateral as Lateral
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PackMap as PM
@@ -93,7 +94,7 @@ aggregate agg q = Q.productQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
 -- | @aggregateLaterally :: Select (Aggregator () b) -> Select i b@
 aggregateLaterally :: S.SelectArr i (Aggregator () b) -> S.SelectArr i b
-aggregateLaterally q =
+aggregateLaterally = Lateral.laterally $ \q ->
   Q.productQueryArr (\a ->
                         let (agg, pq, tag) = Q.runSimpleQueryArr q a
                         in A.aggregateU agg ((), pq, tag))
