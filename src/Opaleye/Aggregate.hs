@@ -1,3 +1,8 @@
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 -- | Perform aggregation on 'S.Select's.  To aggregate a 'S.Select' you
 -- should construct an 'Aggregator' encoding how you want the
 -- aggregation to proceed, then call 'aggregate' on it.  The
@@ -9,6 +14,9 @@ module Opaleye.Aggregate
        (
        -- * Aggregation
          aggregate
+       , aggregateLaterally
+       , aggregateEasy
+       , agg
        , aggregateOrdered
        , distinctAggregator
        , Aggregator
@@ -31,9 +39,11 @@ module Opaleye.Aggregate
        , countRows
        ) where
 
-import           Control.Applicative (pure)
-import           Data.Profunctor     (lmap)
+import           Control.Applicative (pure, liftA2)
+import           Data.Profunctor     (lmap,Profunctor)
 import qualified Data.Profunctor as P
+import qualified Data.Profunctor.Product as PP
+import qualified Data.Profunctor.Product.Default as D
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
@@ -80,6 +90,41 @@ result of an aggregation.
 -- by an empty query with no group by is handled.
 aggregate :: Aggregator a b -> S.Select a -> S.Select b
 aggregate agg q = Q.productQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
+
+-- | @aggregateLaterally :: Select (Aggregator () b) -> Select i b@
+aggregateLaterally :: S.SelectArr i (Aggregator () b) -> S.SelectArr i b
+aggregateLaterally q =
+  Q.productQueryArr (\a ->
+                        let (agg, pq, tag) = Q.runSimpleQueryArr q a
+                        in A.aggregateU agg ((), pq, tag))
+
+aggregateEasy :: D.Default AggregatorLaterally a b
+              => S.SelectArr i a
+              -> S.SelectArr i b
+aggregateEasy = aggregateLaterally . fmap (runAggregatorLaterally D.def)
+
+
+agg :: Aggregator a b -> a -> Aggregator () b
+agg = flip (P.lmap . const)
+
+data AggregatorLaterally a b = AggregatorLaterally { runAggregatorLaterally :: a -> Aggregator () b }
+
+instance Functor (AggregatorLaterally a) where
+  fmap f (AggregatorLaterally g) = AggregatorLaterally ((fmap . fmap) f g)
+
+instance Applicative (AggregatorLaterally a) where
+  pure a = AggregatorLaterally (pure (pure a))
+  AggregatorLaterally f <*> AggregatorLaterally g = AggregatorLaterally (liftA2 (<*>) f g)
+
+instance Profunctor (AggregatorLaterally) where
+  dimap f g (AggregatorLaterally h) = AggregatorLaterally (P.dimap f (fmap g) h)
+
+instance PP.ProductProfunctor (AggregatorLaterally) where
+   purePP = pure
+   (****) = (<*>)
+
+instance a ~ b => D.Default AggregatorLaterally (Aggregator () b) a where
+  def = AggregatorLaterally id
 
 -- | Order the values within each aggregation in `Aggregator` using
 -- the given ordering. This is only relevant for aggregations that
