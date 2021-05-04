@@ -527,6 +527,47 @@ testStringArrayAggregate = it "" $
                                    minimum (map snd table6data))]
   where q = O.aggregate (PP.p2 (O.arrayAgg, O.min)) table6Q
 
+testStringJsonAggregate :: Test
+testStringJsonAggregate =
+  it "" $
+    testH
+      q
+      ( \((res : _) :: [Json.Value]) ->
+          Just res `shouldBe` r
+      )
+  where
+    r = Json.decode "[{\"summary\": \"xy\", \"details\": \"a\"}, {\"summary\": \"z\", \"details\": \"a\"}, {\"summary\": \"more text\", \"details\": \"a\"}]"
+    q = O.aggregate O.jsonAgg $ do
+      (firstCol, secondCol) <- O.selectTable table6
+      return
+        . O.jsonBuildObject
+        $ O.jsonBuildObjectField "summary" firstCol
+          <> O.jsonBuildObjectField "details" secondCol
+
+testStringJsonAggregateWithJoin :: Test
+testStringJsonAggregateWithJoin =
+  it "" $
+    testH
+      q
+      ( \((res : _) :: [Json.Value]) ->
+          Just res `shouldBe` r
+      )
+  where
+    r = Json.decode "[{\"id\" : 1, \"name\" : 100, \"blog_post\" : {\"summary\" : 1, \"details\" : 100}}, {\"id\" : 1, \"name\" : 100, \"blog_post\" : {\"summary\" : 1, \"details\" : 100}}, {\"id\" : 1, \"name\" : 200, \"blog_post\" : {\"summary\" : 1, \"details\" : 100}}]"
+    q = O.aggregate O.jsonAgg $ do
+      (firstCol, secondCol) <- O.selectTable table1
+      (firstCol2, secondCol2) <- O.selectTable table2
+      O.viaLateral O.restrict (firstCol .== firstCol2)
+      let blog_post =
+            O.jsonBuildObject $
+              O.jsonBuildObjectField "summary" firstCol2
+                <> O.jsonBuildObjectField "details" secondCol2
+      return
+        . O.jsonBuildObject
+        $ O.jsonBuildObjectField "id" firstCol
+          <> O.jsonBuildObjectField "name" secondCol
+          <> O.jsonBuildObjectField "blog_post" blog_post
+
 testStringAggregate :: Test
 testStringAggregate = it "" $ q `selectShouldReturnSorted` expected
   where q = O.aggregate (PP.p2 ((O.stringAgg . O.sqlString) "_", O.groupBy))
@@ -1259,6 +1300,8 @@ main = do
         testAggregateFunction
         testAggregateProfunctor
         testStringArrayAggregate
+        testStringJsonAggregate
+        testStringJsonAggregateWithJoin
         testStringAggregate
         testOverwriteAggregateOrdered
         testMultipleAggregateOrdered
