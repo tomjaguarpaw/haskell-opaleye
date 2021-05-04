@@ -73,6 +73,9 @@ module Opaleye.Operators
   , (.?)
   , (.?|)
   , (.?&)
+  , JBOF.jsonBuildObject
+  , JBOF.jsonBuildObjectField
+  , JBOF.JSONBuildObjectFields
   -- * SqlArray operators
   , emptyArray
   , arrayAppend
@@ -112,6 +115,7 @@ import qualified Opaleye.Field as F
 import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
                                           unsafeIfThenElse, unsafeGt)
 import qualified Opaleye.Internal.Column as C
+import qualified Opaleye.Internal.JSONBuildObjectFields as JBOF
 import           Opaleye.Internal.QueryArr (SelectArr(QueryArr),
                                             Query, QueryArr, runSimpleQueryArr)
 import qualified Opaleye.Internal.PrimQuery as PQ
