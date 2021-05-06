@@ -84,6 +84,7 @@ library
                    Opaleye.Internal.Helpers,
                    Opaleye.Internal.Inferrable,
                    Opaleye.Internal.Join,
+                   Opaleye.Internal.JSONBuildObjectFields,
                    Opaleye.Internal.Label,
                    Opaleye.Internal.Lateral,
                    Opaleye.Internal.Map,
@@ -146,7 +147,10 @@ test-suite test
     hspec,
     hspec-discover,
     opaleye
-  ghc-options: -Wall
+  ghc-options: 
+    -Wall
+    -fwrite-ide-info
+    -hiedir=.hie
 
 test-suite tutorial
   default-language: Haskell2010

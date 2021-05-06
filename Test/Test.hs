@@ -155,14 +155,6 @@ table3Q = O.selectTable table3
 table6Q :: Select (Field O.SqlText, Field O.SqlText)
 table6Q = O.selectTable table6
 
-table6Json :: SelectArr () (O.Column O.SqlJson)
-table6Json = do
-  (firstCol, secondCol) <- O.selectTable table6
-  return
-    . JS.jsonBuildObject
-    $ JS.jsonBuildObjectField "summary" firstCol
-      <> JS.jsonBuildObjectField "details" secondCol
-
 table7Q :: Select (Field O.SqlText, Field O.SqlText)
 table7Q = O.selectTable table7
 
@@ -547,7 +539,12 @@ testStringJsonAggregate =
       )
   where
     r = Json.decode "[{\"summary\": \"xy\", \"details\": \"a\"}, {\"summary\": \"z\", \"details\": \"a\"}, {\"summary\": \"more text\", \"details\": \"a\"}]"
-    q = O.aggregate O.jsonAgg table6Json
+    q = O.aggregate O.jsonAgg $ do
+      (firstCol, secondCol) <- O.selectTable table6
+      return
+        . JS.jsonBuildObject
+        $ JS.jsonBuildObjectField "summary" firstCol
+          <> JS.jsonBuildObjectField "details" secondCol
 
 testStringAggregate :: Test
 testStringAggregate = it "" $ q `selectShouldReturnSorted` expected

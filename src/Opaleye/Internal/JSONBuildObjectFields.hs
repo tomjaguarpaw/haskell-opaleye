@@ -2,6 +2,7 @@ module Opaleye.Internal.JSONBuildObjectFields
   ( JSONBuildObjectFields,
     jsonBuildObjectField,
     jsonBuildObject,
+    jsonCoalesce
   )
 where
 
@@ -29,3 +30,6 @@ jsonBuildObject (JSONBuildObjectFields jbofs) = Column $ FunExpr "json_build_obj
   where
     args = concatMap mapLabelsToPrimExpr jbofs
     mapLabelsToPrimExpr (label, expr) = [ConstExpr $ StringLit label, expr]
+
+jsonCoalesce :: Column a -> Column SqlJson
+jsonCoalesce (Column v) = Column $ FunExpr "COALESCE" [v, ConstExpr $ StringLit "[]"]
