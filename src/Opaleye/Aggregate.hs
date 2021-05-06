@@ -76,6 +76,8 @@ query has zero rows it has zero groups, and thus zero rows in the
 result of an aggregation.
 
 -}
+-- See 'Opaleye.Internal.Sql.aggregate' for details of how aggregating
+-- by an empty query with no group by is handled.
 aggregate :: Aggregator a b -> S.Select a -> S.Select b
 aggregate agg q = Q.productQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
 
