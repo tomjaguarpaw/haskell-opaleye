@@ -143,7 +143,7 @@ boolAnd = A.makeAggr HPQ.AggrBoolAnd
 arrayAgg :: Aggregator (C.Column a) (C.Column (T.SqlArray a))
 arrayAgg = A.makeAggr HPQ.AggrArr
 
-jsonAgg :: Aggregator (C.Column a) (C.Column T.SqlJson)
+jsonAgg :: Aggregator (C.Column a) (C.Column (C.Nullable T.SqlJson))
 jsonAgg = A.makeAggr HPQ.JsonArr
 
 stringAgg :: C.Column T.SqlText

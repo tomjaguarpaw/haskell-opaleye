@@ -6,9 +6,11 @@ module Opaleye.Internal.JSONBuildObjectFields
   )
 where
 
-import Opaleye.Internal.Column (Column (Column))
+import Opaleye.Internal.Column (Column (Column), Nullable)
 import Opaleye.Internal.HaskellDB.PrimQuery (Literal (StringLit), PrimExpr (ConstExpr, FunExpr))
-import Opaleye.Internal.PGTypesExternal (SqlJson)
+import Opaleye.Internal.PGTypesExternal (SqlJson, pgJSON)
+import Opaleye.Column (fromNullable)
+import Data.Semigroup
 
 newtype JSONBuildObjectFields
   = JSONBuildObjectFields [(String, PrimExpr)]
@@ -21,6 +23,7 @@ instance Semigroup JSONBuildObjectFields where
 
 instance Monoid JSONBuildObjectFields where
   mempty = JSONBuildObjectFields mempty
+  mappend = (<>)
 
 jsonBuildObjectField :: String -> Column a -> JSONBuildObjectFields
 jsonBuildObjectField f (Column v) = JSONBuildObjectFields [(f, v)]
@@ -31,5 +34,6 @@ jsonBuildObject (JSONBuildObjectFields jbofs) = Column $ FunExpr "json_build_obj
     args = concatMap mapLabelsToPrimExpr jbofs
     mapLabelsToPrimExpr (label, expr) = [ConstExpr $ StringLit label, expr]
 
-jsonCoalesce :: Column a -> Column SqlJson
-jsonCoalesce (Column v) = Column $ FunExpr "COALESCE" [v, ConstExpr $ StringLit "[]"]
+-- TODO maybe remove this
+jsonCoalesce :: Column (Nullable SqlJson) -> Column SqlJson
+jsonCoalesce = fromNullable $ pgJSON "[]"
