@@ -31,6 +31,7 @@ import qualified Opaleye.Internal.Aggregate       as IA
 import           Opaleye.Internal.RunQuery        (DefaultFromField)
 import           Opaleye.Internal.MaybeFields     as OM
 import           Opaleye.Internal.Locking         as OL
+import           Opaleye.Internal.JSONBuildObjectFields         as JS
 import qualified Connection
 import qualified QuickCheck
 import           System.Environment               (lookupEnv)
@@ -153,6 +154,14 @@ table3Q = O.selectTable table3
 
 table6Q :: Select (Field O.SqlText, Field O.SqlText)
 table6Q = O.selectTable table6
+
+table6Json :: SelectArr () (O.Column O.SqlJson)
+table6Json = do
+  (firstCol, secondCol) <- O.selectTable table6
+  return
+    . JS.jsonBuildObject
+    $ JS.jsonBuildObjectField "summary" firstCol
+      <> JS.jsonBuildObjectField "details" secondCol
 
 table7Q :: Select (Field O.SqlText, Field O.SqlText)
 table7Q = O.selectTable table7
@@ -526,6 +535,19 @@ testStringArrayAggregate = it "" $
     q `selectShouldReturnSorted` [(map fst table6data,
                                    minimum (map snd table6data))]
   where q = O.aggregate (PP.p2 (O.arrayAgg, O.min)) table6Q
+
+
+testStringJsonAggregate :: Test
+testStringJsonAggregate =
+  it "" $
+    testH
+      q
+      ( \((res : _) :: [Json.Value]) ->
+          Just res `shouldBe` r
+      )
+  where
+    r = Json.decode "[{\"summary\": \"xy\", \"details\": \"a\"}, {\"summary\": \"z\", \"details\": \"a\"}, {\"summary\": \"more text\", \"details\": \"a\"}]"
+    q = O.aggregate O.jsonAgg table6Json
 
 testStringAggregate :: Test
 testStringAggregate = it "" $ q `selectShouldReturnSorted` expected
@@ -1259,6 +1281,7 @@ main = do
         testAggregateFunction
         testAggregateProfunctor
         testStringArrayAggregate
+        testStringJsonAggregate
         testStringAggregate
         testOverwriteAggregateOrdered
         testMultipleAggregateOrdered
