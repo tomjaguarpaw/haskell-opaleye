@@ -99,33 +99,13 @@ aggregateLaterally = Lateral.laterally $ \q ->
                         let (agg, pq, tag) = Q.runSimpleQueryArr q a
                         in A.aggregateU agg ((), pq, tag))
 
-aggregateEasy :: D.Default AggregatorLaterally a b
-              => S.SelectArr i a
-              -> S.SelectArr i b
-aggregateEasy = aggregateLaterally . fmap (runAggregatorLaterally D.def)
-
-
-agg :: Aggregator a b -> a -> Aggregator () b
+agg :: Aggregator a b -> a -> Aggregator z b
 agg = flip (P.lmap . const)
 
-data AggregatorLaterally a b = AggregatorLaterally { runAggregatorLaterally :: a -> Aggregator () b }
-
-instance Functor (AggregatorLaterally a) where
-  fmap f (AggregatorLaterally g) = AggregatorLaterally ((fmap . fmap) f g)
-
-instance Applicative (AggregatorLaterally a) where
-  pure a = AggregatorLaterally (pure (pure a))
-  AggregatorLaterally f <*> AggregatorLaterally g = AggregatorLaterally (liftA2 (<*>) f g)
-
-instance Profunctor (AggregatorLaterally) where
-  dimap f g (AggregatorLaterally h) = AggregatorLaterally (P.dimap f (fmap g) h)
-
-instance PP.ProductProfunctor (AggregatorLaterally) where
-   purePP = pure
-   (****) = (<*>)
-
-instance a ~ b => D.Default AggregatorLaterally (Aggregator () b) a where
-  def = AggregatorLaterally id
+aggregateEasy :: D.Default A.AggregateLaterally a b
+              => S.SelectArr i a
+              -> S.SelectArr i b
+aggregateEasy = aggregateLaterally . fmap (A.runAggregateLaterally D.def)
 
 -- | Order the values within each aggregation in `Aggregator` using
 -- the given ordering. This is only relevant for aggregations that

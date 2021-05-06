@@ -1,10 +1,15 @@
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies #-}
+
 module Opaleye.Internal.Aggregate where
 
-import           Control.Applicative (Applicative, pure, (<*>))
+import           Control.Applicative (Applicative, liftA2, pure, (<*>))
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
+import qualified Data.Profunctor.Product.Default as D
 
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -129,6 +134,12 @@ extractAggregateFields tag (m, pe) = do
 
   pure (HPQ.AttrExpr souter)
 
+newtype AggregateLaterally a b =
+  AggregateLaterally { runAggregateLaterally :: a -> Aggregator () b }
+
+instance (() ~ z, a ~ b) => D.Default AggregateLaterally (Aggregator z b) a where
+  def = AggregateLaterally id
+
 -- { Boilerplate instances
 
 instance Functor (Aggregator a) where
@@ -145,7 +156,22 @@ instance PP.ProductProfunctor Aggregator where
   purePP = pure
   (****) = (<*>)
 
+-- This seems highly suspect!
 instance PP.SumProfunctor Aggregator where
   Aggregator x1 +++! Aggregator x2 = Aggregator (x1 PP.+++! x2)
+
+instance Functor (AggregateLaterally a) where
+  fmap f (AggregateLaterally g) = AggregateLaterally ((fmap . fmap) f g)
+
+instance Applicative (AggregateLaterally a) where
+  pure a = AggregateLaterally (pure (pure a))
+  AggregateLaterally f <*> AggregateLaterally g = AggregateLaterally (liftA2 (<*>) f g)
+
+instance P.Profunctor AggregateLaterally where
+  dimap f g (AggregateLaterally h) = AggregateLaterally (P.dimap f (fmap g) h)
+
+instance PP.ProductProfunctor AggregateLaterally where
+   purePP = pure
+   (****) = (<*>)
 
 -- }
