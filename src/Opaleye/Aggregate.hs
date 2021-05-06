@@ -31,7 +31,6 @@ module Opaleye.Aggregate
        , countRows
        ) where
 
-import           Control.Applicative (pure)
 import           Data.Profunctor     (lmap)
 import qualified Data.Profunctor as P
 
@@ -162,13 +161,16 @@ stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 --
 -- See https://github.com/tomjaguarpaw/haskell-opaleye/issues/162
 countRows :: S.Select a -> S.Select (C.Column T.SqlInt8)
-countRows = fmap (C.fromNullable 0)
-            . fmap snd
-            . (\q -> J.leftJoin (pure ())
-                                (aggregate count q)
-                                (const (T.sqlBool True)))
-            . fmap (const (0 :: C.Column T.SqlInt4))
-            --- ^^ The count aggregator requires an input of type
-            -- 'Column a' rather than 'a' (I'm not sure if there's a
-            -- good reason for this).  To deal with that restriction
-            -- we just map a dummy integer value over it.
+countRows =
+  fmap (C.fromNullable 0 . snd)
+    . ( \q ->
+          J.leftJoin
+            (pure ())
+            (aggregate count q)
+            (const (T.sqlBool True))
+      )
+    . fmap (const (0 :: C.Column T.SqlInt4))
+--- ^^ The count aggregator requires an input of type
+-- 'Column a' rather than 'a' (I'm not sure if there's a
+-- good reason for this).  To deal with that restriction
+-- we just map a dummy integer value over it.
