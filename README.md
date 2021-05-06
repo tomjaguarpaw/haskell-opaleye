@@ -101,13 +101,14 @@ Agile](http://www.purelyagile.com/).
 
 # Backup maintainers
 
-In the event of the main developer becoming unreachable, please
-contact the following who are authorised to make bugfixes and
-dependency version bumps:
+The only person authorised to merge to `master` or upload this package
+to Hackage is Tom Ellis.
 
-* Adam Bergmark
-* Erik Hesselink
-* Oliver Charles
+However, to ensure continuity of service to Opaleye users, if Tom
+Ellis is unavailable or unresponsive to maintenance requests for three
+months then full ownership of the project, including the GitHub
+repository, Hackage upload rights, and the right to amend this backup
+maintainers policy, passes to Oliver Charles (ollie@ocharles.org.uk).
 
 # Contributors
 
