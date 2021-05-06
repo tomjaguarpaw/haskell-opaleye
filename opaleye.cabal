@@ -147,10 +147,7 @@ test-suite test
     hspec,
     hspec-discover,
     opaleye
-  ghc-options: 
-    -Wall
-    -fwrite-ide-info
-    -hiedir=.hie
+  ghc-options: -Wall
 
 test-suite tutorial
   default-language: Haskell2010
