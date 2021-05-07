@@ -546,6 +546,30 @@ testStringJsonAggregate =
         $ JS.jsonBuildObjectField "summary" firstCol
           <> JS.jsonBuildObjectField "details" secondCol
 
+testStringJsonAggregateWithJoin :: Test
+testStringJsonAggregateWithJoin =
+  it "" $
+    testH
+      q
+      ( \((res : _) :: [Json.Value]) ->
+          Just res `shouldBe` r
+      )
+  where
+    r = Json.decode "[{\"id\" : 1, \"name\" : 100, \"blog_post\" : {\"summary\" : 1, \"details\" : 100}}, {\"id\" : 1, \"name\" : 100, \"blog_post\" : {\"summary\" : 1, \"details\" : 100}}, {\"id\" : 1, \"name\" : 200, \"blog_post\" : {\"summary\" : 1, \"details\" : 100}}]"
+    q = O.aggregate O.jsonAgg $ do
+      (firstCol, secondCol) <- O.selectTable table1
+      (firstCol2, secondCol2) <- O.selectTable table2
+      O.viaLateral O.restrict (firstCol .== firstCol2)
+      let blog_post =
+            JS.jsonBuildObject $
+              JS.jsonBuildObjectField "summary" firstCol2
+                <> JS.jsonBuildObjectField "details" secondCol2
+      return
+        . JS.jsonBuildObject
+        $ JS.jsonBuildObjectField "id" firstCol
+          <> JS.jsonBuildObjectField "name" secondCol
+          <> JS.jsonBuildObjectField "blog_post" blog_post
+
 testStringAggregate :: Test
 testStringAggregate = it "" $ q `selectShouldReturnSorted` expected
   where q = O.aggregate (PP.p2 ((O.stringAgg . O.sqlString) "_", O.groupBy))
@@ -1279,6 +1303,7 @@ main = do
         testAggregateProfunctor
         testStringArrayAggregate
         testStringJsonAggregate
+        testStringJsonAggregateWithJoin
         testStringAggregate
         testOverwriteAggregateOrdered
         testMultipleAggregateOrdered
