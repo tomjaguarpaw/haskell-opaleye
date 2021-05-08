@@ -6,8 +6,6 @@
 -- We can probably disable ConstraintKinds and TypeSynonymInstances
 -- when we move to Sql... instead of PG..
 
--- | Operators on 'Column's.
-
 module Opaleye.Operators
   (
   -- * Restriction operators
