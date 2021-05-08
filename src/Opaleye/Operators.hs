@@ -14,7 +14,7 @@ module Opaleye.Operators
   , restrictExists
   , restrictNotExists
   -- * Numerical operators
-  -- | Please note that numeric 'Column' types are instances of 'Num'
+  -- | Please note that numeric 'Column' / 'F.Field' types are instances of 'Num'
   -- and 'Fractional', so you can use the standard Haskell numerical
   -- operators (e.g.. '*', '/', '+', '-') on them.
   , (+)
