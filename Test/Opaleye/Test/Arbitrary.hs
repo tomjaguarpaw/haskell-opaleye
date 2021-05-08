@@ -421,7 +421,7 @@ arbitrarySelectArrMaybeRecurse0 :: [TQ.Gen ArbitrarySelectArrMaybe]
 arbitrarySelectArrMaybeRecurse0 =
     arbitraryG ArbitrarySelectArrMaybe
     [ fmap (\fg -> fg <*> TQ.arbitrary)
-    [ pure (Arrow.arr . fmap . unArbitraryFunction) ]
+    [ pure (Arrow.arr . fmap . (\x -> unArbitraryFunction x)) ]
     ]
 
 arbitrarySelectArrMaybeRecurse1 :: [Int -> TQ.Gen ArbitrarySelectArrMaybe]
