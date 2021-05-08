@@ -16,7 +16,8 @@ module Opaleye.Operators
   -- * Numerical operators
   -- | Numeric 'Column' / 'F.Field' types are instances of 'Num'
   -- and 'Fractional', so you can use the standard Haskell numerical
-  -- operators (e.g.. '*', '/', '+', '-') on them.
+  -- operators (e.g.. '*', '/', '+', '-') on them and you can create
+  -- them with numerical literals such as @3.14 :: 'F.Field' 'T.SqlFloat8'@.
   , (+)
   , (-)
   , (*)
