@@ -6,8 +6,7 @@
 -- We can probably disable ConstraintKinds and TypeSynonymInstances
 -- when we move to Sql... instead of PG..
 
--- | Operators on 'Column's.  Please note that numeric 'Column' types
--- are instances of 'Num', so you can use '*', '/', '+', '-' on them.
+-- | Operators on 'Column's.
 
 module Opaleye.Operators
   (
@@ -16,6 +15,18 @@ module Opaleye.Operators
   , restrict
   , restrictExists
   , restrictNotExists
+  -- * Numerical operators
+  -- | Please note that numeric 'Column' types are instances of 'Num'
+  -- and 'Fractional', so you can use the standard Haskell numerical
+  -- operators (e.g.. '*', '/', '+', '-') on them.
+  , (+)
+  , (-)
+  , (*)
+  , (/)
+  , fromInteger
+  , abs
+  , negate
+  , signum
   -- * Equality operators
   , (.==)
   , (./=)
