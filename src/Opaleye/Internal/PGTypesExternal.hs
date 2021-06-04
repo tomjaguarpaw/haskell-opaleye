@@ -238,6 +238,16 @@ data SqlNumeric
 data SqlText
 data SqlTime
 data SqlTimestamp
+-- | Be careful if you use Haskell's `Time.ZonedTime` with
+-- @SqlTimestamptz@. A Postgres @timestamptz@ does not actually
+-- contain any time zone.  It is just a UTC time that is automatically
+-- converted to or from local time on certain occasions, according to
+-- the [timezone setting of the
+-- server](https://www.postgresql.org/docs/9.1/runtime-config-client.html#GUC-TIMEZONE).
+-- Therefore, although when you roundtrip an input 'Time.ZonedTime' to
+-- obtain an output 'Time.ZonedTime' they each refer to the same
+-- instant in time, the time zone attached to the output will not
+-- necessarily the same as the time zone attached to the input.
 data SqlTimestamptz
 data SqlUuid
 data SqlCitext
