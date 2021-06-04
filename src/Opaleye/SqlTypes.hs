@@ -2,29 +2,84 @@
 -- those types.  To create fields you may find it more convenient to use
 -- "Opaleye.ToFields" instead.
 
-module Opaleye.SqlTypes (module Opaleye.SqlTypes,
-                         P.IsSqlType,
-                         P.IsRangeType,
-                         SqlBool,
-                         SqlDate,
-                         SqlFloat4,
-                         SqlFloat8,
-                         SqlInt8,
-                         SqlInt4,
-                         SqlInt2,
-                         SqlNumeric,
-                         SqlText,
-                         SqlTime,
-                         SqlTimestamp,
-                         SqlTimestamptz,
-                         SqlUuid,
-                         SqlCitext,
-                         SqlArray,
-                         SqlBytea,
-                         SqlJson,
-                         SqlJsonb,
-                         SqlRange,
-                        ) where
+module Opaleye.SqlTypes (
+  -- * Numeric
+  -- ** Creating values
+  sqlInt4,
+  sqlDouble,
+  sqlInt8,
+  sqlNumeric,
+  -- ** Types
+  SqlInt4,
+  SqlFloat8,
+  SqlNumeric,
+  SqlInt8,
+  SqlInt2,
+  SqlFloat4,
+  -- * Date and time
+  -- ** Creating values
+  sqlDay,
+  sqlUTCTime,
+  sqlLocalTime,
+  sqlZonedTime,
+  sqlTimeOfDay,
+  -- ** Types
+  SqlDate,
+  SqlTime,
+  SqlTimestamp,
+  SqlTimestamptz,
+  -- * JSON
+  -- ** Creating values
+  sqlJSON,
+  sqlStrictJSON,
+  sqlLazyJSON,
+  sqlValueJSON,
+  -- ** Types
+  SqlJson,
+  -- * JSONB
+  -- ** Creating values
+  sqlJSONB,
+  sqlStrictJSONB,
+  sqlLazyJSONB,
+  sqlValueJSONB,
+  -- ** Types
+  SqlJsonb,
+  -- * Text
+  -- ** Creating values
+  sqlString,
+  sqlStrictText,
+  sqlLazyText,
+  sqlCiStrictText,
+  sqlCiLazyText,
+  -- ** Types
+  SqlText,
+  SqlCitext,
+  -- * Array
+  -- ** Creating values
+  sqlArray,
+  -- ** Types
+  SqlArray,
+  -- * Range
+  -- ** Creating values
+  sqlRange,
+  -- ** Types
+  SqlRange,
+  P.IsRangeType,
+  -- * Other
+  -- ** Creating values
+  sqlBool,
+  sqlUUID,
+  sqlLazyByteString,
+  sqlStrictByteString,
+  -- ** Types
+  SqlBool,
+  SqlUuid,
+  SqlBytea,
+  -- * @IsSqlType@
+  P.IsSqlType,
+  -- * Entire module
+  module Opaleye.SqlTypes,
+  ) where
 
 import qualified Opaleye.Field   as F
 import qualified Opaleye.Internal.PGTypesExternal as P
