@@ -97,6 +97,7 @@ module Opaleye.Operators
   -- * Other operators
   , timestamptzAtTimeZone
   , dateOfTimestamp
+  , now
   -- * Deprecated
   , exists
   , notExists
@@ -477,3 +478,6 @@ keepWhen :: (a -> F.Field T.SqlBool) -> S.SelectArr a a
 keepWhen p = proc a -> do
   restrict  -< p a
   A.returnA -< a
+
+now :: Column T.SqlTimestamptz
+now = Column $ HPQ.FunExpr "now" []
