@@ -166,10 +166,7 @@ ppFor Nothing       = empty
 ppFor (Just Sql.Update) = text "FOR UPDATE"
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = HPrint.ppAs (Just "V") (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
-
-ppValuesRow :: [HSql.SqlExpr] -> Doc
-ppValuesRow = parens . HPrint.commaH HPrint.ppSqlExpr
+ppValues v = HPrint.ppAs (Just "V") (parens (text "VALUES" $$ HPrint.commaV HPrint.ppValuesRow v))
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of

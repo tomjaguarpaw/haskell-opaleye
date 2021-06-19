@@ -9,6 +9,7 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
                                      ppUpdate,
                                      ppDelete,
                                      ppInsert,
+                                     ppValuesRow,
                                      ppSqlExpr,
                                      ppWhere,
                                      ppGroupBy,
@@ -106,9 +107,12 @@ ppInsert :: SqlInsert -> Doc
 ppInsert (SqlInsert table names values onConflict)
     = text "INSERT INTO" <+> ppTable table
       <+> parens (commaV ppColumn names)
-      $$ text "VALUES" <+> commaV (parens . commaH ppSqlExpr)
+      $$ text "VALUES" <+> commaV ppValuesRow
                                   (NEL.toList values)
       <+> ppConflictStatement onConflict
+
+ppValuesRow :: [SqlExpr] -> Doc
+ppValuesRow = parens . commaH ppSqlExpr
 
 -- If we wanted to make the SQL slightly more readable this would be
 -- one easy place to do it.  Currently we wrap all column references
