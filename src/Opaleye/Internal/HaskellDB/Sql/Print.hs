@@ -107,7 +107,7 @@ ppInsert :: SqlInsert -> Doc
 ppInsert (SqlInsert table names values onConflict)
     = text "INSERT INTO" <+> ppTable table
       <+> parens (commaV ppColumn names)
-      $$ text "VALUES" <+> commaV ppValuesRow
+      $$ text "VALUES" $$ commaV ppValuesRow
                                   (NEL.toList values)
       <+> ppConflictStatement onConflict
 
