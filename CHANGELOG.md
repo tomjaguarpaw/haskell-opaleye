@@ -1,6 +1,12 @@
 * Added `jsonAgg`, `jsonBuildObject` and `jsonBuildObjectField`.  Thanks
   to Nathan Jaremko.
 
+* Added `now` function. Thanks to Nathan Jaremko.
+
+* Added `Opaleye.Exists.exists`. Thanks to @duairc.
+
+* Added `Opaleye.Experimental.Enum`
+
 * Added `Opaleye.Operators.array_position` and
   `Opaleye.Operators.sqlElem`.  Thanks to Ashesh Ambasta.
 
