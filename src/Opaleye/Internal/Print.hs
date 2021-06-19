@@ -120,7 +120,7 @@ ppAttrs (Sql.SelectAttrsStar xs) =
 
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
-nameAs (expr, name) = HPrint.ppAs (fmap unColumn name) (HPrint.ppSqlExpr expr)
+nameAs (expr, name) = flip HPrint.ppAs (fmap unColumn name) (HPrint.ppSqlExpr expr)
   where unColumn (HSql.SqlColumn s) = s
 
 ppTables :: [(Sql.Lateral, Select)] -> Doc
@@ -138,7 +138,7 @@ tableAlias i select = ("T" ++ show i, select)
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
-ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
+ppTable (alias, select) = flip HPrint.ppAs (Just alias) $ case select of
   Table table           -> HPrint.ppTable table
   RelExpr expr          -> HPrint.ppSqlExpr expr
   SelectFrom selectFrom -> parens (ppSelectFrom selectFrom)
@@ -166,7 +166,7 @@ ppFor Nothing       = empty
 ppFor (Just Sql.Update) = text "FOR UPDATE"
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = HPrint.ppAs (Just "V") (parens (ppValues_ v))
+ppValues v = flip HPrint.ppAs (Just "V") (parens (HPrint.ppValues_ v))
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of
