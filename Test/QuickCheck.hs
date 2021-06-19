@@ -590,13 +590,10 @@ run conn = do
 nub :: Ord a => [a] -> [a]
 nub = Set.toList . Set.fromList
 
--- Replace this with `isSuccess` when the following issue is fixed
---
---     https://github.com/nick8325/quickcheck/issues/220
 errorIfNotSuccess :: TQ.Result -> IO ()
-errorIfNotSuccess r = case r of
-  TQ.Success {} -> return ()
-  _             -> error "Failed"
+errorIfNotSuccess r = if TQ.isSuccess r
+                      then return ()
+                      else error "Failed"
 
 restrictFirstBoolDenotation :: SelectArrDenotation Haskells Haskells
 restrictFirstBoolDenotation = proc hs -> do
