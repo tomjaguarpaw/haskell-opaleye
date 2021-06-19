@@ -156,13 +156,13 @@ restrict = O.restrict
 {-| Add a @WHERE EXISTS@ clause to the current query. -}
 restrictExists :: S.SelectArr a b -> S.SelectArr a ()
 restrictExists criteria = QueryArr f where
-  f (a, primQ, t0) = ((), PQ.Semijoin PQ.Semi primQ existsQ, t1) where
+  f (a, t0) = ((), \primQ -> PQ.Semijoin PQ.Semi primQ existsQ, t1) where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
 {-| Add a @WHERE NOT EXISTS@ clause to the current query. -}
 restrictNotExists :: S.SelectArr a b -> S.SelectArr a ()
 restrictNotExists criteria = QueryArr f where
-  f (a, primQ, t0) = ((), PQ.Semijoin PQ.Anti primQ existsQ, t1) where
+  f (a, t0) = ((), \primQ -> PQ.Semijoin PQ.Anti primQ existsQ, t1) where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
 infix 4 .==

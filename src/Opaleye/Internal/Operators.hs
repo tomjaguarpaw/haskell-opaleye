@@ -23,7 +23,7 @@ import qualified Data.Profunctor.Product.Default as D
 
 restrict :: S.SelectArr (F.Field T.SqlBool) ()
 restrict = QA.QueryArr f where
-  f (Column predicate, primQ, t0) = ((), PQ.restrict predicate primQ, t0)
+  f (Column predicate, t0) = ((), PQ.restrict predicate, t0)
 
 infix 4 .==
 (.==) :: forall columns. D.Default EqPP columns columns

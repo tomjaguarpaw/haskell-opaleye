@@ -70,13 +70,13 @@ leftJoinAExplicit :: U.Unpackspec a a
                   -> Q.Query a
                   -> Q.QueryArr (a -> Column T.PGBool) nullableA
 leftJoinAExplicit uA nullmaker rq =
-  Q.QueryArr $ \(p, primQueryL, t1) ->
+  Q.QueryArr $ \(p, t1) ->
     let (columnsR, primQueryR, t2) = Q.runSimpleQueryArr rq ((), t1)
         (newColumnsR, ljPEsR) = PM.run $ U.runUnpackspec uA (extractLeftJoinFields 2 t2) columnsR
         renamedNullable = toNullable nullmaker newColumnsR
         Column cond = p newColumnsR
     in ( renamedNullable
-       , PQ.Join
+       , \primQueryL -> PQ.Join
            PQ.LeftJoin
            cond
            []

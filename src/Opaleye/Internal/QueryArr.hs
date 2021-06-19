@@ -28,25 +28,25 @@ import qualified Data.Profunctor.Product as PP
 -- of type @a@.
 --
 -- @SelectArr a b@ is analogous to a Haskell function @a -> [b]@.
-newtype SelectArr a b = QueryArr ((a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag))
+newtype SelectArr a b = QueryArr ((a, Tag) -> (b, PQ.PrimQuery -> PQ.PrimQuery, Tag))
 
 type QueryArr = SelectArr
 type Query = SelectArr ()
 
 productQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
 productQueryArr f = QueryArr g
-  where g (a0, primQuery, t0) = (a1, PQ.times primQuery primQuery', t1)
+  where g (a0, t0) = (a1, \primQuery -> PQ.times primQuery primQuery', t1)
           where (a1, primQuery', t1) = f (a0, t0)
 
 {-# DEPRECATED simpleQueryArr "Use 'productQueryArr' instead. Its name indicates better what it actually does" #-}
 simpleQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
 simpleQueryArr = productQueryArr
 
-runQueryArr :: QueryArr a b -> (a, PQ.PrimQuery, Tag) -> (b, PQ.PrimQuery, Tag)
+runQueryArr :: QueryArr a b -> (a, Tag) -> (b, PQ.PrimQuery -> PQ.PrimQuery, Tag)
 runQueryArr (QueryArr f) = f
 
 runSimpleQueryArr :: QueryArr a b -> (a, Tag) -> (b, PQ.PrimQuery, Tag)
-runSimpleQueryArr f (a, t) = runQueryArr f (a, PQ.Unit, t)
+runSimpleQueryArr f = (\(b, pqf, t) -> (b, pqf PQ.Unit, t)) . runQueryArr f
 
 runSimpleQueryArrStart :: QueryArr a b -> a -> (b, PQ.PrimQuery, Tag)
 runSimpleQueryArrStart q a = runSimpleQueryArr q (a, Tag.start)
@@ -77,10 +77,10 @@ type Select = SelectArr ()
 lateral :: (i -> Select a) -> SelectArr i a
 lateral f = QueryArr qa
   where
-    qa (i, primQueryL, tag) = (a, primQueryJoin, tag')
+    qa (i, tag) = (a, primQueryJoin, tag')
       where
         (a, primQueryR, tag') = runSimpleQueryArr (f i) ((), tag)
-        primQueryJoin = PQ.Product ((PQ.NonLateral, primQueryL)
+        primQueryJoin primQueryL = PQ.Product ((PQ.NonLateral, primQueryL)
                                     :| [(PQ.Lateral, primQueryR)])
                                    []
 
@@ -99,20 +99,22 @@ arrowApply :: SelectArr (SelectArr i a, i) a
 arrowApply = lateral (\(f, i) -> viaLateral f i)
 
 instance C.Category QueryArr where
-  id = QueryArr id
-  QueryArr f . QueryArr g = QueryArr (f . g)
+  id = QueryArr (\(a, t) -> (a, id, t))
+  QueryArr f . QueryArr g = QueryArr (\(a, t) ->
+                                        let (b, pqf, t') = g (a, t)
+                                            (c, pqf', t'') = f (b, t')
+                                        in (c, pqf' . pqf, t''))
 
 instance Arr.Arrow QueryArr where
-  arr f   = QueryArr (first3 f)
-  first f = QueryArr g
-    where g ((b, d), primQ, t0) = ((c, d), primQ', t1)
-            where (c, primQ', t1) = runQueryArr f (b, primQ, t0)
+  arr f   = QueryArr (\(a, t) -> (f a, id, t))
+  first (QueryArr f) = QueryArr g
+    where g ((b, d), t0) = first3 (\c -> (c, d)) (f (b, t0))
 
 instance Arr.ArrowChoice QueryArr where
-  left f = QueryArr g
-    where g (e, primQ, t0) = case e of
-            Left a -> first3 Left (runQueryArr f (a, primQ, t0))
-            Right b -> (Right b, primQ, t0)
+  left (QueryArr f) = QueryArr g
+    where g (e, t0) = case e of
+            Left a -> first3 Left (f (a, t0))
+            Right b -> (Right b, id, t0)
 
 instance Arr.ArrowApply QueryArr where
   app = arrowApply

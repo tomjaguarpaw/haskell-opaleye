@@ -131,7 +131,7 @@ optional = Opaleye.Internal.Lateral.laterally optionalSelect
     optionalSelect :: Select a -> Select (MaybeFields a)
     optionalSelect = IQ.QueryArr . go
 
-    go query ((), left, tag) = (MaybeFields present a, join, Tag.next tag')
+    go query ((), tag) = (MaybeFields present a, join, Tag.next tag')
       where
         (MaybeFields t a, right, tag') =
           IQ.runSimpleQueryArr (justFields <$> query) ((), tag)
@@ -140,7 +140,7 @@ optional = Opaleye.Internal.Lateral.laterally optionalSelect
 
         (t', bindings) =
           PM.run (U.runUnpackspec U.unpackspecField (PM.extractAttr "maybe" tag') t)
-        join = PQ.Join PQ.LeftJoin true [] bindings left right
+        join left = PQ.Join PQ.LeftJoin true [] bindings left right
     true = HPQ.ConstExpr (HPQ.BoolLit True)
     isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
 

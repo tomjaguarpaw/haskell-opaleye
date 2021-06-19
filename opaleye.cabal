@@ -85,7 +85,6 @@ library
                    Opaleye.Internal.Inferrable,
                    Opaleye.Internal.Join,
                    Opaleye.Internal.JSONBuildObjectFields,
-                   Opaleye.Internal.Label,
                    Opaleye.Internal.Lateral,
                    Opaleye.Internal.Map,
                    Opaleye.Internal.Manipulation,
