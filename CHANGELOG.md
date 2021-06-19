@@ -1,4 +1,4 @@
-* Add `jsonAgg`, `jsonBuildObject` and `jsonBuildObjectField`.  Thanks
+* Added `jsonAgg`, `jsonBuildObject` and `jsonBuildObjectField`.  Thanks
   to Nathan Jaremko.
 
 * Added `Opaleye.Operators.array_position` and
