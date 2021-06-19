@@ -20,6 +20,7 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
+import           Opaleye.Internal.HaskellDB.Sql.Print (ppAs)
 import qualified Opaleye.Internal.Optimize as Op
 import qualified Opaleye.Internal.Tag as T
 
@@ -120,7 +121,7 @@ ppAttrs (Sql.SelectAttrsStar xs) =
 
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
-nameAs (expr, name) = flip HPrint.ppAs (fmap unColumn name) (HPrint.ppSqlExpr expr)
+nameAs (expr, name) = HPrint.ppSqlExpr expr `ppAs` fmap unColumn name
   where unColumn (HSql.SqlColumn s) = s
 
 ppTables :: [(Sql.Lateral, Select)] -> Doc
@@ -138,7 +139,7 @@ tableAlias i select = ("T" ++ show i, select)
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
-ppTable (alias, select) = flip HPrint.ppAs (Just alias) $ case select of
+ppTable (alias, select) = case select of
   Table table           -> HPrint.ppTable table
   RelExpr expr          -> HPrint.ppSqlExpr expr
   SelectFrom selectFrom -> parens (ppSelectFrom selectFrom)
@@ -148,6 +149,8 @@ ppTable (alias, select) = flip HPrint.ppAs (Just alias) $ case select of
   SelectBinary slb      -> parens (ppSelectBinary slb)
   SelectLabel sll       -> parens (ppSelectLabel sll)
   SelectExists saj      -> parens (ppSelectExists saj)
+  `ppAs`
+  Just alias
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
@@ -166,7 +169,7 @@ ppFor Nothing       = empty
 ppFor (Just Sql.Update) = text "FOR UPDATE"
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = flip HPrint.ppAs (Just "V") (parens (HPrint.ppValues_ v))
+ppValues v = parens (HPrint.ppValues_ v) `ppAs` Just "V"
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of
