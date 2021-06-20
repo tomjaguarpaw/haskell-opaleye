@@ -28,11 +28,17 @@ import qualified Data.Profunctor.Product.Default as D
 -- and more composable:
 --
 -- - Inner joins: use 'Opaleye.Operators.restrict' directly (along
---   with 'Control.Applicative.<*>' or arrow notation)
+--   with @do@ notatation, 'Control.Applicative.<*>', or arrow notation)
 --
--- - Left/right joins: use 'optionalRestrict'
+-- - Left/right joins: use 'optional'
 --
--- - Lateral left/right joins: use 'optional'
+-- We suspect the following do not have real world use cases.  If you
+-- have one then we'd love to hear about it. Please [open a new issue
+-- on the Opaleye
+-- project](http://github.com/tomjaguarpaw/haskell-opaleye/issues/new)
+-- and tell us about it.)
+--
+-- - Left/right joins which really must not use @LATERAL@: use 'optionalRestrict'
 --
 -- - Full outer joins: use 'Opaleye.FunctionalJoin.fullJoinF' (If you
 --   have a real-world use case for full outer joins then we'd love to
