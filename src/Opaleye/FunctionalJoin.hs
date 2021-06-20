@@ -6,10 +6,19 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Opaleye.FunctionalJoin (
+  -- * Full outer join
+  fullJoinF,
+  -- * Other joins
+  -- ** Inner join
+  -- | It is recommended that instead of @joinF@ you use
+  -- 'Opaleye.Operators.restrict' directly (along with @do@
+  -- notatation, 'Control.Applicative.<*>', or arrow notation).
   joinF,
+  -- ** Left/right joins
+  -- | It is recommended that instead of @leftJoinF@ and @rightJoinF@
+  -- you use 'Opaleye.Join.optional'.
   leftJoinF,
   rightJoinF,
-  fullJoinF,
   ) where
 
 import           Control.Applicative             ((<$>), (<*>))
