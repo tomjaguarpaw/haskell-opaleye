@@ -322,6 +322,9 @@ arbitrarySelectRecurse2 =
     ,
     map (\fg size1 size2 -> fg <*> arbitrarySelect size1 <*> arbitrarySelect size2)
     genSelectMapper2
+    ,
+    map (\fg size1 size2 -> fg <*> arbitrarySelect size1 <*> arbitraryKleisli size2)
+    [ pure (>>=) ]
     ]
 
 arbitrarySelectArrRecurse0 :: [TQ.Gen ArbitrarySelectArr]
