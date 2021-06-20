@@ -17,16 +17,20 @@
 
 module Opaleye.Field (
   Field_,
-  Nullability(..),
-  FieldNullable,
   Field,
+  FieldNullable,
+  Nullability(..),
+  -- * Coercing fields
+  unsafeCoerceField,
+  -- * Working with @NULL@
+  -- | Instead of working with @NULL@ you are recommended to use
+  -- "Opaleye.MaybeFields" instead.
   Opaleye.Field.null,
   isNull,
   matchNullable,
   fromNullable,
   toNullable,
   maybeToNullable,
-  unsafeCoerceField
   ) where
 
 import qualified Opaleye.Column   as C
