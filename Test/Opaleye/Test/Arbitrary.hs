@@ -379,6 +379,9 @@ arbitraryKleisliRecurse1 =
   [
   map (\fg size -> fg <*> arbitrarySelectArr size)
   [ pure O.viaLateral ]
+  ,
+  map (\fg size -> fg <*> arbitraryKleisli size)
+     (map (fmap (.)) genSelectMapper)
   ]
 
 arbitraryKleisliRecurse2 :: [Int -> Int -> TQ.Gen ArbitraryKleisli]
