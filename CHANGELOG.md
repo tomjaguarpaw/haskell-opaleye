@@ -1,3 +1,5 @@
+## 0.7.2.0
+
 * Added `jsonAgg`, `jsonBuildObject` and `jsonBuildObjectField`.  Thanks
   to Nathan Jaremko.
 
