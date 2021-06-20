@@ -40,41 +40,6 @@ import qualified Data.Profunctor.Product.Default as D
 --   project](http://github.com/tomjaguarpaw/haskell-opaleye/issues/new)
 --   and tell us about it.)
 
--- | Convenient access to left/right join functionality.  Performs a
--- @LEFT JOIN@ under the hood and has behaviour equivalent to the
--- following Haskell function:
---
--- @
--- optionalRestrict :: [a] -> (a -> Bool) -> [Maybe a]
--- optionalRestrict xs p =
---    case filter p xs of []  -> [Nothing]
---                        xs' -> map Just xs'
--- @
---
--- For example,
---
--- @
--- > let l = [1, 10, 100, 1000] :: [Field SqlInt4]
--- > 'Opaleye.RunSelect.runSelect' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 100000)) :: IO [Maybe Int]
--- [Nothing]
---
--- > 'Opaleye.RunSelect.runSelect' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 15)) :: IO [Maybe Int]
--- [Just 100,Just 1000]
--- @
---
--- See the documentation of 'leftJoin' for how to use
--- 'optionalRestrict' to replace 'leftJoin' (and by symmetry,
--- 'rightJoin').
-optionalRestrict :: D.Default U.Unpackspec a a
-                 => S.Select a
-                 -- ^ Input query
-                 -> S.SelectArr (a -> F.Field T.SqlBool) (M.MaybeFields a)
-                 -- ^ If any rows of the input query satisfy the
-                 -- condition then return them (wrapped in \"Just\").
-                 -- If none of them satisfy the condition then return a
-                 -- single row of \"Nothing\"
-optionalRestrict = J.optionalRestrict
-
 -- | NB Opaleye exports @Opaleye.Table.'Opaleye.Table.optional'@ from
 -- the top level.  If you want this @optional@ you will have to import
 -- it from this module.
@@ -124,6 +89,41 @@ optional :: D.Default U.Unpackspec a a
          -- the input query has no rows in which case a single row of
          -- \"Nothing\"
 optional = M.optional
+
+-- | Convenient access to left/right join functionality.  Performs a
+-- @LEFT JOIN@ under the hood and has behaviour equivalent to the
+-- following Haskell function:
+--
+-- @
+-- optionalRestrict :: [a] -> (a -> Bool) -> [Maybe a]
+-- optionalRestrict xs p =
+--    case filter p xs of []  -> [Nothing]
+--                        xs' -> map Just xs'
+-- @
+--
+-- For example,
+--
+-- @
+-- > let l = [1, 10, 100, 1000] :: [Field SqlInt4]
+-- > 'Opaleye.RunSelect.runSelect' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 100000)) :: IO [Maybe Int]
+-- [Nothing]
+--
+-- > 'Opaleye.RunSelect.runSelect' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 15)) :: IO [Maybe Int]
+-- [Just 100,Just 1000]
+-- @
+--
+-- See the documentation of 'leftJoin' for how to use
+-- 'optionalRestrict' to replace 'leftJoin' (and by symmetry,
+-- 'rightJoin').
+optionalRestrict :: D.Default U.Unpackspec a a
+                 => S.Select a
+                 -- ^ Input query
+                 -> S.SelectArr (a -> F.Field T.SqlBool) (M.MaybeFields a)
+                 -- ^ If any rows of the input query satisfy the
+                 -- condition then return them (wrapped in \"Just\").
+                 -- If none of them satisfy the condition then return a
+                 -- single row of \"Nothing\"
+optionalRestrict = J.optionalRestrict
 
 -- * Direct access to joins (not recommended)
 
