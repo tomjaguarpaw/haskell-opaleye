@@ -380,6 +380,9 @@ arbitraryKleisliRecurse1 =
   map (\fg size -> fg <*> arbitrarySelectArr size)
   [ pure O.viaLateral ]
   ,
+  -- Ideally we would move this into arbitraryKleisliRecurse2 and
+  -- generate the select mapper, but we don'th ave
+  -- arbitrarySelectMapper yet.
   map (\fg size -> fg <*> arbitraryKleisli size)
      (map (fmap (.)) genSelectMapper)
   ]
