@@ -500,5 +500,5 @@ keepWhen p = proc a -> do
   restrict  -< p a
   A.returnA -< a
 
-now :: Column T.SqlTimestamptz
+now :: F.Field T.SqlTimestamptz
 now = Column $ HPQ.FunExpr "now" []
