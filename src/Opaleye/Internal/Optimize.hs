@@ -19,18 +19,18 @@ optimize = mergeProduct . removeUnit
 removeUnit :: PQ.PrimQuery' a -> PQ.PrimQuery' a
 removeUnit = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
   where product pqs = PQ.Product pqs'
-          where pqs' = case NEL.nonEmpty (NEL.filter (not . PQ.isUnit . snd) pqs) of
-                         Nothing -> return (pure PQ.Unit)
+          where pqs' = case NEL.nonEmpty (NEL.filter (not . PQ.isUnit) pqs) of
+                         Nothing -> return PQ.Unit
                          Just xs -> xs
 
 mergeProduct :: PQ.PrimQuery' a -> PQ.PrimQuery' a
 mergeProduct = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
   where product pqs pes = PQ.Product pqs' (pes ++ pes')
           where pqs' = pqs >>= queries
-                queries (lat, PQ.Product qs _) = fmap (first (lat <>)) qs
+                queries (PQ.Product qs _) = qs
                 queries q = return q
                 pes' = NEL.toList pqs >>= conds
-                conds (_lat, PQ.Product _ cs) = cs
+                conds (PQ.Product _ cs) = cs
                 conds _ = []
 
 removeEmpty :: PQ.PrimQuery' a -> Maybe (PQ.PrimQuery' b)
@@ -40,9 +40,8 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
   , PQ.baseTable = return .: PQ.BaseTable
   , PQ.product   = let sequenceOf l = traverseOf l id
                        traverseOf = id
-                       _2 = traverse
                    in
-                   \x y -> PQ.Product <$> sequenceOf (traverse._2) x
+                   \x y -> PQ.Product <$> sequenceOf (traverse) x
                                       <*> pure y
   , PQ.aggregate = fmap . PQ.Aggregate
   , PQ.distinctOnOrderBy = \mDistinctOns -> fmap . PQ.DistinctOnOrderBy mDistinctOns

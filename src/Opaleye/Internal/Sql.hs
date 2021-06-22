@@ -40,7 +40,7 @@ data SelectAttrs =
 
 data From = From {
   attrs      :: SelectAttrs,
-  tables     :: [(Lateral, Select)],
+  tables     :: [Select],
   criteria   :: [HSql.SqlExpr],
   groupBy    :: Maybe (NEL.NonEmpty HSql.SqlExpr),
   orderBy    :: [(HSql.SqlExpr, HSql.SqlOrder)],
@@ -78,7 +78,6 @@ data Binary = Binary {
 data JoinType = LeftJoin | RightJoin | FullJoin deriving Show
 data SemijoinType = Semi | Anti deriving Show
 data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
-data Lateral = Lateral | NonLateral deriving Show
 data LockStrength = Update deriving Show
 
 data Label = Label {
@@ -129,21 +128,18 @@ unit = SelectFrom newSelect { attrs  = SelectAttrs (ensureColumns []) }
 empty :: V.Void -> select
 empty = V.absurd
 
-oneTable :: t -> [(Lateral, t)]
-oneTable t = [(NonLateral, t)]
+oneTable :: t -> [t]
+oneTable t = [t]
 
 baseTable :: PQ.TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> Select
 baseTable ti columns = SelectFrom $
     newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
               , tables = oneTable (Table (HSql.SqlTable (PQ.tiSchemaName ti) (PQ.tiTableName ti))) }
 
-product :: NEL.NonEmpty (PQ.Lateral, Select) -> [HPQ.PrimExpr] -> Select
+product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
 product ss pes = SelectFrom $
-    newSelect { tables = NEL.toList ss'
+    newSelect { tables = NEL.toList ss
               , criteria = map sqlExpr pes }
-  where ss' = flip fmap ss $ Arr.first $ \case
-          PQ.Lateral    -> Lateral
-          PQ.NonLateral -> NonLateral
 
 aggregate :: [(Symbol,
                (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
@@ -326,6 +322,6 @@ rebind star pes select = SelectFrom newSelect
 
 forUpdate :: Select -> Select
 forUpdate s = SelectFrom newSelect {
-    tables = [(NonLateral, s)]
+    tables = [s]
   , for = Just Update
   }

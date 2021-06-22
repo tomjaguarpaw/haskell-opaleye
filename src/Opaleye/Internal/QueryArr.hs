@@ -75,14 +75,7 @@ type Select = SelectArr ()
 -- 'Opaleye.Binary.union', 'Opaleye.Binary.intersect' and
 -- 'Opaleye.Binary.except' to two 'SelectArr's).
 lateral :: (i -> Select a) -> SelectArr i a
-lateral f = QueryArr qa
-  where
-    qa (i, primQueryL, tag) = (a, primQueryJoin, tag')
-      where
-        (a, primQueryR, tag') = runSimpleQueryArr (f i) ((), tag)
-        primQueryJoin = PQ.Product ((PQ.NonLateral, primQueryL)
-                                    :| [(PQ.Lateral, primQueryR)])
-                                   []
+lateral f = QueryArr $ \(i, q, t) -> case f i of QueryArr g -> g ((), q, t)
 
 -- | Convert an arrow argument into a function argument so that it can
 -- be applied inside @do@-notation rather than arrow notation.
