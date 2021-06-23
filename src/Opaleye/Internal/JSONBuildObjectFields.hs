@@ -32,7 +32,7 @@ jsonBuildObjectField :: String
                      -> JSONBuildObjectFields
 jsonBuildObjectField f (Column v) = JSONBuildObjectFields [(f, v)]
 
--- | Create an 'SqlJson' object from a collection of fields. 
+-- | Create an 'SqlJson' object from a collection of fields.
 --
 --   Note: This is implemented as a variadic function in postgres, and as such, is limited to 50 arguments, or 25 key-value pairs.
 jsonBuildObject :: JSONBuildObjectFields -> Column SqlJson

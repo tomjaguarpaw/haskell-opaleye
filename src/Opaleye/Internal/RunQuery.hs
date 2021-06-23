@@ -361,11 +361,11 @@ jsonFieldLazyTextParser, jsonbFieldLazyTextParser :: FieldParser LT.Text
 jsonFieldLazyTextParser  = jsonFieldTypeLazyTextParser (String.fromString "json")
 jsonbFieldLazyTextParser = jsonFieldTypeLazyTextParser (String.fromString "jsonb")
 
-jsonFieldByteParser, jsonbFieldByteParser :: FieldParser SBS.ByteString 
+jsonFieldByteParser, jsonbFieldByteParser :: FieldParser SBS.ByteString
 jsonFieldByteParser  = jsonFieldTypeByteParser (String.fromString "json")
 jsonbFieldByteParser = jsonFieldTypeByteParser (String.fromString "jsonb")
 
-jsonFieldLazyByteParser, jsonbFieldLazyByteParser :: FieldParser LBS.ByteString 
+jsonFieldLazyByteParser, jsonbFieldLazyByteParser :: FieldParser LBS.ByteString
 jsonFieldLazyByteParser  = jsonFieldTypeLazyByteParser (String.fromString "json")
 jsonbFieldLazyByteParser = jsonFieldTypeLazyByteParser (String.fromString "jsonb")
 

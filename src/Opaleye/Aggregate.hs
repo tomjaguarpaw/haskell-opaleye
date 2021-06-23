@@ -146,7 +146,7 @@ boolAnd = A.makeAggr HPQ.AggrBoolAnd
 arrayAgg :: Aggregator (C.Column a) (C.Column (T.SqlArray a))
 arrayAgg = A.makeAggr HPQ.AggrArr
 
-{-| 
+{-|
 Aggregates values, including nulls, as a JSON array
 
 An example usage:
