@@ -376,13 +376,13 @@ jsonbFieldLazyByteParser = jsonFieldTypeLazyByteParser (String.fromString "jsonb
 --
 --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/329
 jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
-jsonFieldTypeParser x = (fmap . fmap . fmap) IPT.strictDecodeUtf8 (jsonFieldTypeByteParser x)
+jsonFieldTypeParser = (fmap . fmap . fmap . fmap) IPT.strictDecodeUtf8 jsonFieldTypeByteParser
 
 jsonFieldTypeTextParser :: SBS.ByteString -> FieldParser ST.Text
-jsonFieldTypeTextParser x = (fmap . fmap . fmap) STE.decodeUtf8 (jsonFieldTypeByteParser x)
+jsonFieldTypeTextParser = (fmap . fmap . fmap . fmap) STE.decodeUtf8 jsonFieldTypeByteParser
 
 jsonFieldTypeLazyTextParser :: SBS.ByteString -> FieldParser LT.Text
-jsonFieldTypeLazyTextParser x = (fmap . fmap . fmap) (LTE.decodeUtf8 . LBS.fromStrict) (jsonFieldTypeByteParser x)
+jsonFieldTypeLazyTextParser = (fmap . fmap . fmap . fmap) (LTE.decodeUtf8 . LBS.fromStrict) jsonFieldTypeByteParser
 
 jsonFieldTypeByteParser :: SBS.ByteString -> FieldParser SBS.ByteString
 jsonFieldTypeByteParser jsonTypeName field mData = do
@@ -396,7 +396,7 @@ jsonFieldTypeByteParser jsonTypeName field mData = do
         _       -> returnError UnexpectedNull field ""
 
 jsonFieldTypeLazyByteParser :: SBS.ByteString -> FieldParser LBS.ByteString
-jsonFieldTypeLazyByteParser x = (fmap . fmap . fmap) LBS.fromStrict (jsonFieldTypeByteParser x)
+jsonFieldTypeLazyByteParser = (fmap . fmap . fmap . fmap) LBS.fromStrict jsonFieldTypeByteParser
 
 -- }
 
