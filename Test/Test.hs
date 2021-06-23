@@ -19,6 +19,7 @@ import qualified Data.Profunctor                  as P
 import qualified Data.Profunctor.Product          as PP
 import qualified Data.Profunctor.Product.Default  as D
 import qualified Data.String                      as String
+import qualified Data.ByteString                  as SBS
 import qualified Data.Text                        as T
 import qualified Data.Time                        as Time
 import qualified Database.PostgreSQL.Simple       as PGS
@@ -516,8 +517,8 @@ testStringArrayAggregate = it "" $
                                    minimum (map snd table6data))]
   where q = O.aggregate (PP.p2 (O.arrayAgg, O.min)) table6Q
 
-testStringJsonAggregate :: Test
-testStringJsonAggregate =
+testValueJsonAggregate :: Test
+testValueJsonAggregate =
   it "" $
     testH
       q
@@ -526,6 +527,23 @@ testStringJsonAggregate =
       )
   where
     r = Json.decode "[{\"summary\": \"xy\", \"details\": \"a\"}, {\"summary\": \"z\", \"details\": \"a\"}, {\"summary\": \"more text\", \"details\": \"a\"}]"
+    q = O.aggregate O.jsonAgg $ do
+      (firstCol, secondCol) <- O.selectTable table6
+      return
+        . O.jsonBuildObject
+        $ O.jsonBuildObjectField "summary" firstCol
+          <> O.jsonBuildObjectField "details" secondCol
+
+testByteStringJsonAggregate :: Test
+testByteStringJsonAggregate =
+  it "" $
+    testH
+      q
+      ( \((res : _) :: [SBS.ByteString]) ->
+          Just res `shouldBe` r
+      )
+  where
+    r :: Maybe SBS.ByteString = Just "[{\"summary\" : \"xy\", \"details\" : \"a\"}, {\"summary\" : \"z\", \"details\" : \"a\"}, {\"summary\" : \"more text\", \"details\" : \"a\"}]"
     q = O.aggregate O.jsonAgg $ do
       (firstCol, secondCol) <- O.selectTable table6
       return
@@ -1312,7 +1330,8 @@ main = do
         testAggregateFunction
         testAggregateProfunctor
         testStringArrayAggregate
-        testStringJsonAggregate
+        testValueJsonAggregate
+        testByteStringJsonAggregate
         testStringJsonAggregateWithJoin
         testStringAggregate
         testOverwriteAggregateOrdered

@@ -24,6 +24,7 @@ instance Monoid JSONBuildObjectFields where
   mempty = JSONBuildObjectFields mempty
   mappend = (<>)
 
+-- | Given a label and a column, generates a pair for use with @jsonBuildObject@
 jsonBuildObjectField :: String
                      -- ^ Field name
                      -> Column a
@@ -31,7 +32,9 @@ jsonBuildObjectField :: String
                      -> JSONBuildObjectFields
 jsonBuildObjectField f (Column v) = JSONBuildObjectFields [(f, v)]
 
--- | Create an 'SqlJson' object from a collection of fields
+-- | Create an 'SqlJson' object from a collection of fields. 
+--
+--   Note: This is implemented as a variadic function in postgres, and as such, is limited to 50 arguments, or 25 key-value pairs.
 jsonBuildObject :: JSONBuildObjectFields -> Column SqlJson
 jsonBuildObject (JSONBuildObjectFields jbofs) = Column $ FunExpr "json_build_object" args
   where
