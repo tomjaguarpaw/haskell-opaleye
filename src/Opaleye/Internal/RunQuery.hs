@@ -376,37 +376,13 @@ jsonbFieldLazyByteParser = jsonFieldTypeLazyByteParser (String.fromString "jsonb
 --
 --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/329
 jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
-jsonFieldTypeParser jsonTypeName field mData = do
-    ti <- typeInfo field
-    if TI.typname ti == jsonTypeName
-       then convert
-       else returnError Incompatible field "types incompatible"
-  where
-    convert = case mData of
-        Just bs -> pure $ IPT.strictDecodeUtf8 bs
-        _       -> returnError UnexpectedNull field ""
+jsonFieldTypeParser x = (fmap . fmap . fmap) IPT.strictDecodeUtf8 (jsonFieldTypeByteParser x)
 
 jsonFieldTypeTextParser :: SBS.ByteString -> FieldParser ST.Text
-jsonFieldTypeTextParser jsonTypeName field mData = do
-    ti <- typeInfo field
-    if TI.typname ti == jsonTypeName
-       then convert
-       else returnError Incompatible field "types incompatible"
-  where
-    convert = case mData of
-        Just bs -> pure $ STE.decodeUtf8 bs
-        _       -> returnError UnexpectedNull field ""
+jsonFieldTypeTextParser x = (fmap . fmap . fmap) STE.decodeUtf8 (jsonFieldTypeByteParser x)
 
 jsonFieldTypeLazyTextParser :: SBS.ByteString -> FieldParser LT.Text
-jsonFieldTypeLazyTextParser jsonTypeName field mData = do
-    ti <- typeInfo field
-    if TI.typname ti == jsonTypeName
-       then convert
-       else returnError Incompatible field "types incompatible"
-  where
-    convert = case mData of
-        Just bs -> pure . LTE.decodeUtf8 $ LBS.fromStrict bs
-        _       -> returnError UnexpectedNull field ""
+jsonFieldTypeLazyTextParser x = (fmap . fmap . fmap) (LTE.decodeUtf8 . LBS.fromStrict) (jsonFieldTypeByteParser x)
 
 jsonFieldTypeByteParser :: SBS.ByteString -> FieldParser SBS.ByteString
 jsonFieldTypeByteParser jsonTypeName field mData = do
@@ -420,15 +396,7 @@ jsonFieldTypeByteParser jsonTypeName field mData = do
         _       -> returnError UnexpectedNull field ""
 
 jsonFieldTypeLazyByteParser :: SBS.ByteString -> FieldParser LBS.ByteString
-jsonFieldTypeLazyByteParser jsonTypeName field mData = do
-    ti <- typeInfo field
-    if TI.typname ti == jsonTypeName
-       then convert
-       else returnError Incompatible field "types incompatible"
-  where
-    convert = case mData of
-        Just bs -> pure $ LBS.fromStrict bs
-        _       -> returnError UnexpectedNull field ""
+jsonFieldTypeLazyByteParser x = (fmap . fmap . fmap) LBS.fromStrict (jsonFieldTypeByteParser x)
 
 -- }
 
