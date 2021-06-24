@@ -229,9 +229,9 @@ join j cond pes1 pes2 s1 s2 =
   SelectJoin Join { jJoinType = joinType j
                   , jTables   = (selectFrom pes1 s1, selectFrom pes2 s2)
                   , jCond     = sqlExpr cond }
-  where selectFrom pes s = SelectFrom $ newSelect {
+  where selectFrom pes select = SelectFrom $ newSelect {
             attrs  = SelectAttrsStar (ensureColumns (map sqlBinding pes))
-          , tables = oneTable s
+          , tables = oneTable select
           }
 
 semijoin :: PQ.SemijoinType -> Select -> Select -> Select
