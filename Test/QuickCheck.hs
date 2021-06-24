@@ -337,8 +337,9 @@ compose :: ArbitrarySelectArr
         -> ArbitraryArgument
         -> Connection
         -> IO TQ.Property
-compose (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
-  compareDenotation (q1 . q2) (denotationArr q1 . denotationArr q2)
+compose (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) arg conn = do
+  mapM_ putStrLn (O.showSqlExplicit unpackFields (q1 . q2 . pure (Choices [])))
+  compareDenotation (q1 . q2) (denotationArr q1 . denotationArr q2) arg conn
 
 -- We need to test this separately otherwise traverseMaybeFields won't
 -- be properly tested.  We need that [traverseMaybeFields q <<< q'] is

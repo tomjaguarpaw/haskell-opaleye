@@ -108,6 +108,7 @@ lateral f = QueryArr qa
         (a, primQueryR, tag') = runQueryArr (f i) ((), tag)
         primQueryJoin _ = primQueryR PQ.Lateral
 
+
 -- | Convert an arrow argument into a function argument so that it can
 -- be applied inside @do@-notation rather than arrow notation.
 viaLateral :: SelectArr i a -> i -> Select a
