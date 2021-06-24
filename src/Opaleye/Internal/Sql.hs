@@ -220,16 +220,13 @@ limit_ lo s = SelectFrom $ newSelect { tables = oneTable s
 
 join :: PQ.JoinType
      -> HPQ.PrimExpr
-     -> PQ.Bindings HPQ.PrimExpr
-     -> PQ.Bindings HPQ.PrimExpr
      -> Select
      -> Select
      -> Select
-join j cond pes1 pes2 s1 s2 =
+join j cond s1 s2 =
   SelectJoin Join { jJoinType = joinType j
-                  , jTables   = (selectFrom pes1 s1, selectFrom pes2 s2)
+                  , jTables   = (s1, s2)
                   , jCond     = sqlExpr cond }
-  where selectFrom = rebind True
 
 semijoin :: PQ.SemijoinType -> Select -> Select -> Select
 semijoin t q1 q2 = SelectSemijoin (Semijoin (semijoinType t) q1 q2)

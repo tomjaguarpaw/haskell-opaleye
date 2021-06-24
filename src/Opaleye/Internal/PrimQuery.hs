@@ -76,8 +76,6 @@ data PrimQuery' a = Unit
                   | Limit     LimitOp (PrimQuery' a)
                   | Join      JoinType
                               HPQ.PrimExpr
-                              (Bindings HPQ.PrimExpr)
-                              (Bindings HPQ.PrimExpr)
                               (PrimQuery' a)
                               (PrimQuery' a)
                   | Semijoin  SemijoinType (PrimQuery' a) (PrimQuery' a)
@@ -117,8 +115,6 @@ data PrimQueryFold' a p = PrimQueryFold
   , limit             :: LimitOp -> p -> p
   , join              :: JoinType
                       -> HPQ.PrimExpr
-                      -> Bindings HPQ.PrimExpr
-                      -> Bindings HPQ.PrimExpr
                       -> p
                       -> p
                       -> p
@@ -166,7 +162,7 @@ foldPrimQuery f = fix fold
           Aggregate aggrs q           -> aggregate         f aggrs (self q)
           DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs (self q)
           Limit op q                  -> limit             f op (self q)
-          Join j cond pe1 pe2 q1 q2   -> join              f j cond pe1 pe2 (self q1) (self q2)
+          Join j cond q1 q2           -> join              f j cond (self q1) (self q2)
           Semijoin j q1 q2            -> semijoin          f j (self q1) (self q2)
           Values ss pes               -> values            f ss pes
           Binary binop (q1, q2)       -> binary            f binop (self q1, self q2)
