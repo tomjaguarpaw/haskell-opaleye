@@ -63,7 +63,9 @@ joinExplicit uA uB returnColumnsA returnColumnsB joinType
           nullableColumnsB = returnColumnsB newColumnsB
 
           Column cond' = cond (columnsA, columnsB)
-          primQueryR = PQ.Join joinType cond' (PQ.Rebind True ljPEsA primQueryA) (PQ.Rebind True ljPEsB primQueryB)
+          primQueryR = PQ.Join joinType cond'
+                               (PQ.NonLateral, (PQ.Rebind True ljPEsA primQueryA))
+                               (PQ.NonLateral, (PQ.Rebind True ljPEsB primQueryB))
 
 leftJoinAExplicit :: U.Unpackspec a a
                   -> NullMaker a nullableA
@@ -79,7 +81,7 @@ leftJoinAExplicit uA nullmaker rq =
        , \primQueryL -> PQ.Join
            PQ.LeftJoin
            cond
-           primQueryL
+           (PQ.NonLateral, primQueryL)
            --- ^ I am reasonably confident that we don't need to rebind any
            --- column names here.  Columns that can become NULL need
            --- to be written here so that we can wrap them.  If we
@@ -90,7 +92,7 @@ leftJoinAExplicit uA nullmaker rq =
            --- Report about the "avoiding NULL" bug:
            ---
            ---     https://github.com/tomjaguarpaw/haskell-opaleye/issues/223
-           (PQ.Rebind True ljPEsR primQueryR)
+           (PQ.NonLateral, (PQ.Rebind True ljPEsR primQueryR))
        , T.next t2)
 
 optionalRestrict :: D.Default U.Unpackspec a a

@@ -53,7 +53,7 @@ data From = From {
 
 data Join = Join {
   jJoinType   :: JoinType,
-  jTables     :: (Select, Select),
+  jTables     :: ((Lateral, Select), (Lateral, Select)),
   jCond       :: HSql.SqlExpr
   }
                 deriving Show
@@ -220,13 +220,16 @@ limit_ lo s = SelectFrom $ newSelect { tables = oneTable s
 
 join :: PQ.JoinType
      -> HPQ.PrimExpr
-     -> Select
-     -> Select
+     -> (PQ.Lateral, Select)
+     -> (PQ.Lateral, Select)
      -> Select
 join j cond s1 s2 =
   SelectJoin Join { jJoinType = joinType j
-                  , jTables   = (s1, s2)
+                  , jTables   = (Arr.first lat s1, Arr.first lat s2)
                   , jCond     = sqlExpr cond }
+  where lat = \case
+          PQ.Lateral -> Lateral
+          PQ.NonLateral -> NonLateral
 
 semijoin :: PQ.SemijoinType -> Select -> Select -> Select
 semijoin t q1 q2 = SelectSemijoin (Semijoin (semijoinType t) q1 q2)
