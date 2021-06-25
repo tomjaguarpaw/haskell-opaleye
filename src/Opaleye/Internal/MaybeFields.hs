@@ -124,25 +124,27 @@ traverseMaybeFields query = proc mfInput -> do
   where a `implies` b = Opaleye.Internal.Operators.not a .|| b
 
 optional :: SelectArr i a -> SelectArr i (MaybeFields a)
-optional = Opaleye.Internal.Lateral.laterally optionalSelect
+optional = Opaleye.Internal.Lateral.laterally (optionalInternal (MaybeFields . isNotNull))
+  where isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
+
+optionalInternal :: (Field (Opaleye.Column.Nullable SqlBool) -> a -> r) -> Select a -> Select r
+optionalInternal f = optionalSelect
   where
     -- This is basically a left join on TRUE, but Shane (@duairc)
     -- wrote it to ensure that we don't need an Unpackspec a a.
-    optionalSelect :: Select a -> Select (MaybeFields a)
     optionalSelect = IQ.QueryArr . go
 
-    go query ((), tag) = (MaybeFields present a, join, Tag.next tag')
+    go query ((), tag) = (f nullIfAbsent a, join, Tag.next tag')
       where
         (a, right, tag') =
           IQ.runSimpleQueryArr query ((), tag)
 
-        present = isNotNull (IC.unsafeCoerceColumn t')
+        nullIfAbsent = IC.unsafeCoerceColumn t'
 
         (t', bindings) =
           PM.run (U.runUnpackspec U.unpackspecField (PM.extractAttr "maybe" tag') (Opaleye.SqlTypes.sqlBool True))
         join lat left = PQ.Join PQ.LeftJoin true (PQ.NonLateral, left) (lat, (PQ.Rebind True bindings right))
     true = HPQ.ConstExpr (HPQ.BoolLit True)
-    isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
 
 
 -- | An example to demonstrate how the functionality of (lateral)
