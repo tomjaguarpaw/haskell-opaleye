@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Arrows #-}
@@ -133,8 +134,8 @@ optional = Opaleye.Internal.Lateral.laterally optionalSelect
 
     go query ((), tag) = (MaybeFields present a, join, Tag.next tag')
       where
-        (MaybeFields t a, right, tag') =
-          IQ.runSimpleQueryArr (justFields <$> query) ((), tag)
+        (justFields->MaybeFields t a, right, tag') =
+          IQ.runSimpleQueryArr query ((), tag)
 
         present = isNotNull (IC.unsafeCoerceColumn t')
 
