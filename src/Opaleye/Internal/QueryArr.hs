@@ -62,6 +62,10 @@ productQueryArr f = QueryArr g
 simpleQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
 simpleQueryArr = productQueryArr
 
+mapPrimQuery :: (PQ.PrimQuery -> PQ.PrimQuery) -> SelectArr a b -> SelectArr a b
+mapPrimQuery f sa =
+  QueryArr ((\(b, pqf, t) -> (b, \lat -> f . pqf lat, t)) . runQueryArr sa)
+
 runQueryArr :: QueryArr a b -> (a, Tag) -> (b, PQ.Lateral -> PQ.PrimQuery -> PQ.PrimQuery, Tag)
 runQueryArr (QueryArr f) = f
 
