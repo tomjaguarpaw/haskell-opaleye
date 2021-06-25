@@ -78,7 +78,7 @@ leftJoinAExplicit uA nullmaker rq =
         renamedNullable = toNullable nullmaker newColumnsR
         Column cond = p newColumnsR
     in ( renamedNullable
-       , \primQueryL -> PQ.Join
+       , \lat primQueryL -> PQ.Join
            PQ.LeftJoin
            cond
            (PQ.NonLateral, primQueryL)
@@ -92,7 +92,7 @@ leftJoinAExplicit uA nullmaker rq =
            --- Report about the "avoiding NULL" bug:
            ---
            ---     https://github.com/tomjaguarpaw/haskell-opaleye/issues/223
-           (PQ.NonLateral, (PQ.Rebind True ljPEsR primQueryR))
+           (lat, (PQ.Rebind True ljPEsR primQueryR))
        , T.next t2)
 
 optionalRestrict :: D.Default U.Unpackspec a a

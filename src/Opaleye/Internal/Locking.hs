@@ -22,5 +22,5 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 -- easy to create queries that fail at run time using this operation.
 forUpdate :: Q.Select a -> Q.Select a
 forUpdate s =
-  Q.QueryArr ((\(a, pqf, t') -> (a, PQ.ForUpdate . pqf, t'))
+  Q.QueryArr ((\(a, pqf, t') -> (a, \lat -> PQ.ForUpdate . pqf lat, t'))
               . Q.runQueryArr s)

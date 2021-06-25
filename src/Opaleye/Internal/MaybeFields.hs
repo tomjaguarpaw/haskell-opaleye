@@ -140,7 +140,7 @@ optional = Opaleye.Internal.Lateral.laterally optionalSelect
 
         (t', bindings) =
           PM.run (U.runUnpackspec U.unpackspecField (PM.extractAttr "maybe" tag') t)
-        join left = PQ.Join PQ.LeftJoin true (PQ.NonLateral, left) (PQ.NonLateral, (PQ.Rebind True bindings right))
+        join lat left = PQ.Join PQ.LeftJoin true (PQ.NonLateral, left) (lat, (PQ.Rebind True bindings right))
     true = HPQ.ConstExpr (HPQ.BoolLit True)
     isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
 

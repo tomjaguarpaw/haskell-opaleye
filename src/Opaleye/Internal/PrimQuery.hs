@@ -173,8 +173,8 @@ foldPrimQuery f = fix fold
           ForUpdate q                 -> forUpdate         f (self q)
         fix g = let x = g x in x
 
-times :: PrimQuery -> PrimQuery -> PrimQuery
-times q q' = Product (pure q NEL.:| [pure q']) []
+times :: Lateral -> PrimQuery -> PrimQuery -> PrimQuery
+times lat q q' = Product (pure q NEL.:| [(lat, q')]) []
 
 restrict :: HPQ.PrimExpr -> PrimQuery -> PrimQuery
 restrict cond primQ = Product (return (pure primQ)) [cond]

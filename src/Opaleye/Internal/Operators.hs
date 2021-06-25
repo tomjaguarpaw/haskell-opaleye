@@ -23,7 +23,9 @@ import qualified Data.Profunctor.Product.Default as D
 
 restrict :: S.SelectArr (F.Field T.SqlBool) ()
 restrict = QA.QueryArr f where
-  f (Column predicate, t0) = ((), PQ.restrict predicate, t0)
+  -- A where clause can always refer to columns defined by the query
+  -- it references so needs no special treatment on LATERAL.
+  f (Column predicate, t0) = ((), \_ -> PQ.restrict predicate, t0)
 
 infix 4 .==
 (.==) :: forall columns. D.Default EqPP columns columns
