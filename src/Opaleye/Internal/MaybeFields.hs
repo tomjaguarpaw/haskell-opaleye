@@ -129,12 +129,10 @@ optional = Opaleye.Internal.Lateral.laterally (optionalInternal (MaybeFields . i
   where isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
 
 optionalInternal :: (Field (Opaleye.Column.Nullable SqlBool) -> a -> r) -> Select a -> Select r
-optionalInternal f = optionalSelect
+optionalInternal f = IQ.QueryArr . go
   where
     -- This is basically a left join on TRUE, but Shane (@duairc)
     -- wrote it to ensure that we don't need an Unpackspec a a.
-    optionalSelect = IQ.QueryArr . go
-
     go query arg = (r, join, Tag.next tag')
       where
         (r, right, tag') = flip IQ.runSimpleQueryArr arg $ proc () -> do
