@@ -137,7 +137,7 @@ according to the update function.
 >   , uReturning  = rCount
 >   }
 
-SET "id" = DEFAULT,
+SET "id" = "id",
     "x" = ("x") + ("y"),
     "y" = ("x") - ("y"),
     "s" = "s"
