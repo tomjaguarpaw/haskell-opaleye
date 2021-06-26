@@ -22,6 +22,7 @@ import           Opaleye.Internal.Inferrable (Inferrable(Inferrable),
                                               runInferrable)
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.QueryArr as IQ
+import qualified Opaleye.Internal.Rebind as Rebind
 import qualified Opaleye.Internal.RunQuery as RQ
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
@@ -134,16 +135,14 @@ optionalInternal f = optionalSelect
     -- wrote it to ensure that we don't need an Unpackspec a a.
     optionalSelect = IQ.QueryArr . go
 
-    go query arg = (f nullIfAbsent a, join, Tag.next tag')
+    go query arg = (r, join, Tag.next tag')
       where
-        (a, right, tag') =
-          flip IQ.runSimpleQueryArr arg query
+        (r, right, tag') = flip IQ.runSimpleQueryArr arg $ proc () -> do
+          a <- query -< ()
+          true_ <- Rebind.rebind -< Opaleye.Column.toNullable (IC.Column true)
+          returnA -< f true_ a
 
-        nullIfAbsent = IC.unsafeCoerceColumn t'
-
-        (t', bindings) =
-          PM.run (U.runUnpackspec U.unpackspecField (PM.extractAttr "maybe" tag') (Opaleye.SqlTypes.sqlBool True))
-        join lat left = PQ.Join PQ.LeftJoin true (PQ.NonLateral, left) (lat, (PQ.Rebind True bindings right))
+        join lat left = PQ.Join PQ.LeftJoin true (PQ.NonLateral, left) (lat, right)
     true = HPQ.ConstExpr (HPQ.BoolLit True)
 
 
