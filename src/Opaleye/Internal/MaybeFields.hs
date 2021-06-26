@@ -134,10 +134,10 @@ optionalInternal f = optionalSelect
     -- wrote it to ensure that we don't need an Unpackspec a a.
     optionalSelect = IQ.QueryArr . go
 
-    go query ((), tag) = (f nullIfAbsent a, join, Tag.next tag')
+    go query arg = (f nullIfAbsent a, join, Tag.next tag')
       where
         (a, right, tag') =
-          IQ.runSimpleQueryArr query ((), tag)
+          IQ.runSimpleQueryArr query arg
 
         nullIfAbsent = IC.unsafeCoerceColumn t'
 
