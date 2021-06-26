@@ -137,7 +137,7 @@ optionalInternal f = optionalSelect
     go query arg = (f nullIfAbsent a, join, Tag.next tag')
       where
         (a, right, tag') =
-          IQ.runSimpleQueryArr query arg
+          flip IQ.runSimpleQueryArr arg query
 
         nullIfAbsent = IC.unsafeCoerceColumn t'
 
