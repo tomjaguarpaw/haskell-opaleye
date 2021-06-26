@@ -98,6 +98,7 @@ library
                    Opaleye.Internal.PrimQuery,
                    Opaleye.Internal.Print,
                    Opaleye.Internal.QueryArr,
+                   Opaleye.Internal.Rebind,
                    Opaleye.Internal.RunQuery,
                    Opaleye.Internal.RunQueryExternal,
                    Opaleye.Internal.Sql,
