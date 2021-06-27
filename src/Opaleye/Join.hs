@@ -36,7 +36,7 @@ import qualified Data.Profunctor.Product.Default as D
 -- have one then we'd love to hear about it. Please [open a new issue
 -- on the Opaleye
 -- project](http://github.com/tomjaguarpaw/haskell-opaleye/issues/new)
--- and tell us about it.)
+-- and tell us about it.
 --
 -- - Left/right joins which really must not use @LATERAL@: use 'optionalRestrict'
 --
