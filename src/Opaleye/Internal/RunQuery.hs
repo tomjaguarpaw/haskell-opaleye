@@ -34,7 +34,9 @@ import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Aeson as Ae
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as ST
+import qualified Data.Text.Encoding as STE
 import qualified Data.Text.Lazy as LT
+import qualified Data.Text.Lazy.Encoding as LTE
 import qualified Data.ByteString as SBS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Time as Time
@@ -254,11 +256,35 @@ instance DefaultFromField T.SqlCitext (CI.CI LT.Text) where
 instance DefaultFromField T.SqlJson String where
   defaultFromField = fieldParserQueryRunnerColumn jsonFieldParser
 
+instance DefaultFromField T.SqlJson ST.Text where
+  defaultFromField = fieldParserQueryRunnerColumn jsonFieldTextParser
+
+instance DefaultFromField T.SqlJson LT.Text where
+  defaultFromField = fieldParserQueryRunnerColumn jsonFieldLazyTextParser
+
+instance DefaultFromField T.SqlJson SBS.ByteString where
+  defaultFromField = fieldParserQueryRunnerColumn jsonFieldByteParser
+
+instance DefaultFromField T.SqlJson LBS.ByteString where
+  defaultFromField = fieldParserQueryRunnerColumn jsonFieldLazyByteParser
+
 instance DefaultFromField T.SqlJson Ae.Value where
   defaultFromField = fromPGSFromField
 
 instance DefaultFromField T.SqlJsonb String where
   defaultFromField = fieldParserQueryRunnerColumn jsonbFieldParser
+
+instance DefaultFromField T.SqlJsonb ST.Text where
+  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldTextParser
+
+instance DefaultFromField T.SqlJsonb LT.Text where
+  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldLazyTextParser
+
+instance DefaultFromField T.SqlJsonb SBS.ByteString where
+  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldByteParser
+
+instance DefaultFromField T.SqlJsonb LBS.ByteString where
+  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldLazyByteParser
 
 instance DefaultFromField T.SqlJsonb Ae.Value where
   defaultFromField = fromPGSFromField
@@ -327,6 +353,22 @@ jsonFieldParser, jsonbFieldParser :: FieldParser String
 jsonFieldParser  = jsonFieldTypeParser (String.fromString "json")
 jsonbFieldParser = jsonFieldTypeParser (String.fromString "jsonb")
 
+jsonFieldTextParser, jsonbFieldTextParser :: FieldParser ST.Text
+jsonFieldTextParser  = jsonFieldTypeTextParser (String.fromString "json")
+jsonbFieldTextParser = jsonFieldTypeTextParser (String.fromString "jsonb")
+
+jsonFieldLazyTextParser, jsonbFieldLazyTextParser :: FieldParser LT.Text
+jsonFieldLazyTextParser  = jsonFieldTypeLazyTextParser (String.fromString "json")
+jsonbFieldLazyTextParser = jsonFieldTypeLazyTextParser (String.fromString "jsonb")
+
+jsonFieldByteParser, jsonbFieldByteParser :: FieldParser SBS.ByteString
+jsonFieldByteParser  = jsonFieldTypeByteParser (String.fromString "json")
+jsonbFieldByteParser = jsonFieldTypeByteParser (String.fromString "jsonb")
+
+jsonFieldLazyByteParser, jsonbFieldLazyByteParser :: FieldParser LBS.ByteString
+jsonFieldLazyByteParser  = jsonFieldTypeLazyByteParser (String.fromString "json")
+jsonbFieldLazyByteParser = jsonFieldTypeLazyByteParser (String.fromString "jsonb")
+
 -- typenames, not type Oids are used in order to avoid creating
 -- a dependency on 'Database.PostgreSQL.LibPQ'
 --
@@ -334,15 +376,27 @@ jsonbFieldParser = jsonFieldTypeParser (String.fromString "jsonb")
 --
 --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/329
 jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
-jsonFieldTypeParser jsonTypeName field mData = do
+jsonFieldTypeParser = (fmap . fmap . fmap . fmap) IPT.strictDecodeUtf8 jsonFieldTypeByteParser
+
+jsonFieldTypeTextParser :: SBS.ByteString -> FieldParser ST.Text
+jsonFieldTypeTextParser = (fmap . fmap . fmap . fmap) STE.decodeUtf8 jsonFieldTypeByteParser
+
+jsonFieldTypeLazyTextParser :: SBS.ByteString -> FieldParser LT.Text
+jsonFieldTypeLazyTextParser = (fmap . fmap . fmap . fmap) (LTE.decodeUtf8 . LBS.fromStrict) jsonFieldTypeByteParser
+
+jsonFieldTypeByteParser :: SBS.ByteString -> FieldParser SBS.ByteString
+jsonFieldTypeByteParser jsonTypeName field mData = do
     ti <- typeInfo field
     if TI.typname ti == jsonTypeName
        then convert
        else returnError Incompatible field "types incompatible"
   where
     convert = case mData of
-        Just bs -> pure $ IPT.strictDecodeUtf8 bs
+        Just bs -> pure bs
         _       -> returnError UnexpectedNull field ""
+
+jsonFieldTypeLazyByteParser :: SBS.ByteString -> FieldParser LBS.ByteString
+jsonFieldTypeLazyByteParser = (fmap . fmap . fmap . fmap) LBS.fromStrict jsonFieldTypeByteParser
 
 -- }
 

@@ -1,3 +1,6 @@
+* Added DefaultFromField SqlJson(b) instances for Strict/Lazy
+  Text/ByteString. Thanks to Nathan Jaremko.
+
 ## 0.7.2.0
 
 * Added `jsonAgg`, `jsonBuildObject` and `jsonBuildObjectField`.  Thanks

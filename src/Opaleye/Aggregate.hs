@@ -146,6 +146,26 @@ boolAnd = A.makeAggr HPQ.AggrBoolAnd
 arrayAgg :: Aggregator (C.Column a) (C.Column (T.SqlArray a))
 arrayAgg = A.makeAggr HPQ.AggrArr
 
+{-|
+Aggregates values, including nulls, as a JSON array
+
+An example usage:
+
+@
+import qualified Opaleye as O
+
+O.aggregate O.jsonAgg $ do
+    (firstCol, secondCol) <- O.selectTable table6
+    return
+      . O.jsonBuildObject
+      $ O.jsonBuildObjectField "summary" firstCol
+        <> O.jsonBuildObjectField "details" secondCol
+@
+
+The above query, when executed, will return JSON of the following form from postgres:
+
+@"[{\\"summary\\" : \\"xy\\", \\"details\\" : \\"a\\"}, {\\"summary\\" : \\"z\\", \\"details\\" : \\"a\\"}, {\\"summary\\" : \\"more text\\", \\"details\\" : \\"a\\"}]"@
+-}
 jsonAgg :: Aggregator (C.Column a) (C.Column T.SqlJson)
 jsonAgg = A.makeAggr HPQ.JsonArr
 

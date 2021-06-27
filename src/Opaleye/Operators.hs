@@ -500,5 +500,6 @@ keepWhen p = proc a -> do
   restrict  -< p a
   A.returnA -< a
 
+-- | Current date and time (start of current transaction)
 now :: F.Field T.SqlTimestamptz
 now = Column $ HPQ.FunExpr "now" []
