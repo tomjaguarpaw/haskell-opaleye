@@ -1,3 +1,5 @@
+## 0.7.3.0
+
 * Added DefaultFromField SqlJson(b) instances for Strict/Lazy
   Text/ByteString. Thanks to Nathan Jaremko.
 
