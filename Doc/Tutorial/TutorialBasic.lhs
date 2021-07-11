@@ -835,7 +835,7 @@ We could run the select `selectTable goodWarehouseTable` like this.
 > type GoodWarehouse = Warehouse' WarehouseId String Int
 >
 > runWarehouseSelect :: PGS.Connection
->                   -> Select GoodWarehouseField
+>                   -> Select GoodWarehouse
 >                   -> IO [GoodWarehouse]
 > runWarehouseSelect = runSelect
 
