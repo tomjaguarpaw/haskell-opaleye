@@ -21,7 +21,8 @@ import qualified Data.Profunctor.Product.Default  as D
 import qualified Data.String                      as String
 import qualified Data.ByteString                  as SBS
 import qualified Data.Text                        as T
-import qualified Data.Time                        as Time
+import qualified Data.Time.Compat                 as Time
+import qualified Data.Time.Clock.POSIX.Compat     as Time
 import qualified Database.PostgreSQL.Simple       as PGS
 import qualified Database.PostgreSQL.Simple.Range as R
 import           GHC.Int                          (Int64)
@@ -1242,6 +1243,8 @@ testLiterals = do
     testH (pure (O.sqlZonedTime value))
           (\r -> map Time.zonedTimeToUTC r `shouldBe` [Time.zonedTimeToUTC value])
 
+  it "sqlInterval" $ testLiteral O.sqlInterval (Time.calendarTimeTime 1)
+
 -- Check that MaybeFields's "Nothings" are not distinct, even if we
 -- fmap different values over their inner fields.
 testMaybeFieldsDistinct :: Test
@@ -1261,6 +1264,107 @@ testForUpdate = do
   it "Returns same rows from a table" $
       testH (OL.forUpdate table1Q) (`shouldBe` table1data)
 
+testAddIntervalFromDateToTimestamptz :: Test
+testAddIntervalFromDateToTimestamptz = do
+  it "date + interval = timestamptz" $ testH query (`shouldBe` [expectation])
+  where query :: Select (Field O.SqlTimestamp)
+        query = pure $ (O.toFields d :: Field O.SqlDate)
+                       `O.addInterval`
+                       (O.toFields c :: Field O.SqlInterval)
+
+        d :: Time.Day
+        d = Time.ModifiedJulianDay 0 -- = 1858-11-17
+
+        -- 1 second
+        c :: Time.CalendarDiffTime
+        c = Time.calendarTimeTime 1
+
+        expectation :: Time.LocalTime
+        expectation = Time.ctTime c `Time.addLocalTime`
+                        Time.LocalTime
+                        { Time.localDay = d
+                        , Time.localTimeOfDay = Time.TimeOfDay 0 0 0
+                        }
+
+testAddIntervalFromIntervalToInterval :: Test
+testAddIntervalFromIntervalToInterval = do
+  it "interval + interval = interval" $ testH query (`shouldBe` [expectation])
+  where query :: Select (Field O.SqlInterval)
+        query = pure $ (O.toFields c1 :: Field O.SqlInterval)
+                       `O.addInterval`
+                       (O.toFields c2 :: Field O.SqlInterval)
+
+        -- 1 second
+        c1 :: Time.CalendarDiffTime
+        c1 = Time.calendarTimeTime 1
+
+        -- 2 second
+        c2 :: Time.CalendarDiffTime
+        c2 = Time.calendarTimeTime 2
+
+        expectation :: Time.CalendarDiffTime
+        expectation = Time.calendarTimeTime $ Time.ctTime c1 + Time.ctTime c2
+
+testAddIntervalFromTimestampToTimestamp :: Test
+testAddIntervalFromTimestampToTimestamp = do
+  it "timestamp + interval = timestamp" $ testH query (`shouldBe` [expectation])
+  where query :: Select (Field O.SqlTimestamp)
+        query = pure $ (O.toFields t :: Field O.SqlTimestamp)
+                       `O.addInterval`
+                       (O.toFields c :: Field O.SqlInterval)
+
+        t :: Time.LocalTime
+        t = Time.LocalTime
+            { Time.localDay = Time.ModifiedJulianDay 0 -- = 1858-11-17
+            , Time.localTimeOfDay = Time.TimeOfDay 0 0 0 -- midnight
+            }
+
+        -- 1 second
+        c :: Time.CalendarDiffTime
+        c = Time.calendarTimeTime 1
+
+        expectation :: Time.LocalTime
+        expectation = Time.ctTime c `Time.addLocalTime` t
+
+testAddIntervalFromTimestamptzToTimestamptz :: Test
+testAddIntervalFromTimestamptzToTimestamptz = do
+  it "timestamptz + interval = timestamptz" $ testH query (`shouldBe` [expectation])
+  where query :: Select (Field O.SqlTimestamptz)
+        query = pure $ (O.toFields t :: Field O.SqlTimestamptz)
+                       `O.addInterval`
+                       (O.toFields c :: Field O.SqlInterval)
+
+        -- UNIX epoch
+        t :: Time.UTCTime
+        t = Time.posixSecondsToUTCTime 0
+
+        -- 1 second
+        c :: Time.CalendarDiffTime
+        c = Time.calendarTimeTime 1
+
+        expectation :: Time.UTCTime
+        expectation = Time.ctTime c `Time.addUTCTime` t
+
+testAddIntervalFromTimeToTime :: Test
+testAddIntervalFromTimeToTime = do
+  it "time + interval = time" $ testH query (`shouldBe` [expectation])
+  where query :: Select (Field O.SqlTime)
+        query = pure $ (O.toFields t :: Field O.SqlTime)
+                       `O.addInterval`
+                       (O.toFields c :: Field O.SqlInterval)
+
+        -- midnight
+        t :: Time.TimeOfDay
+        t = Time.TimeOfDay 0 0 0
+
+        -- 1 second
+        c :: Time.CalendarDiffTime
+        c = Time.calendarTimeTime 1
+
+        expectation :: Time.TimeOfDay
+        expectation = Time.timeToTimeOfDay $
+                        (realToFrac (Time.ctTime c :: Time.NominalDiffTime) :: Time.DiffTime)
+                          + Time.timeOfDayToTime t
 
 main :: IO ()
 main = do
@@ -1310,6 +1414,9 @@ main = do
   Connection.close conn2
 
   conn3 <- PGS.connectPostgreSQL connectString
+  -- intervals can only be decoded to CalendarDiffTimes
+  -- when the interval rendering style is set to ISO-8601.
+  _nrOfAffectedRows <- PGS.execute_ conn3 "SET intervalstyle TO iso_8601;"
   hspec $ do
     before (return conn3) $ do
       describe "core dsl?" $ do
@@ -1415,3 +1522,9 @@ main = do
         testMaybeFieldsDistinct
       describe "Locking" $ do
         testForUpdate
+      describe "Interval" $ do
+        testAddIntervalFromDateToTimestamptz
+        testAddIntervalFromIntervalToInterval
+        testAddIntervalFromTimestampToTimestamp
+        testAddIntervalFromTimestamptzToTimestamptz
+        testAddIntervalFromTimeToTime

@@ -14,7 +14,7 @@ import qualified Data.Text.Lazy                  as LT
 import qualified Data.ByteString                 as SBS
 import qualified Data.ByteString.Lazy            as LBS
 import qualified Data.Scientific                 as Sci
-import qualified Data.Time                       as Time
+import qualified Data.Time.Compat                as Time
 import qualified Data.UUID                       as UUID
 
 import qualified Data.Profunctor.Product         as PP
@@ -103,6 +103,9 @@ instance D.Default ToFields Time.ZonedTime (Column T.SqlTimestamptz) where
 
 instance D.Default ToFields Time.TimeOfDay (Column T.SqlTime) where
   def = toToFields T.sqlTimeOfDay
+
+instance D.Default ToFields Time.CalendarDiffTime (Column T.SqlInterval) where
+  def = toToFields T.sqlInterval
 
 instance D.Default ToFields (CI.CI ST.Text) (Column T.SqlCitext) where
   def = toToFields T.sqlCiStrictText
