@@ -432,44 +432,46 @@ testDistinct =
 
 testDistinctOn :: Test
 testDistinctOn = do
-    it "distinct on ()" $ \conn -> do
+    let distinctOn p q = \conn -> do
+          let expected = L.nubBy (F.on (==) p) $ L.sortOn p table1data
+          testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
+
+        distinctOnBy proj ord q = \conn -> do
+          let expected = L.nubBy ((==) `F.on` proj) $ L.sortOn (proj &&& ord) triples
+          testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
+
+    it "distinct on ()" $
         let p = const ()
             q = O.distinctOnCorrect p table1Q
-            expected = L.nubBy (F.on (==) p) $ L.sortOn p table1data
-        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
-    it "distinct on (col1)" $ \conn -> do
+        in distinctOn p q
+    it "distinct on (col1)" $
         let p = fst
             q = O.distinctOn p table1Q
-            expected = L.nubBy (F.on (==) p) $ L.sortOn p table1data
-        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
-    it "distinct on (col1, col2)" $ \conn -> do
+        in distinctOn p q
+    it "distinct on (col1, col2)" $
         let p = fst &&& snd
             q = O.distinctOn p table1Q
-            expected = L.nubBy (F.on (==) p) $ L.sortOn p table1data
-        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
+        in distinctOn p q
 
     let f1 (x,_,_) = x
         f2 (_,y,_) = y
         f3 (_,_,z) = z
 
-    it "distinct on () order by col1" $ \conn -> do
+    it "distinct on () order by col1" $
         let proj = const ()
             ord  = f1
             q = O.distinctOnByCorrect proj (O.asc ord) $ O.values pgTriples
-            expected = L.nubBy ((==) `F.on` proj) $ L.sortOn (proj &&& ord) triples
-        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
-    it "distinct on (col1) order by col2" $ \conn -> do
+        in distinctOnBy proj ord q
+    it "distinct on (col1) order by col2" $
         let proj = f1
             ord  = f2
             q = O.distinctOnBy proj (O.asc ord) $ O.values pgTriples
-            expected = L.nubBy ((==) `F.on` proj) $ L.sortOn (proj &&& ord) triples
-        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
-    it "distinct on (col1, col2) order by col3" $ \conn -> do
+        in distinctOnBy proj ord q
+    it "distinct on (col1, col2) order by col3" $
         let proj = f1 &&& f2
             ord  = f3
             q = O.distinctOnBy proj (O.asc ord) $ O.values pgTriples
-            expected = L.nubBy ((==) `F.on` proj) $ L.sortOn (proj &&& ord) triples
-        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
+        in distinctOnBy proj ord q
     it "distinct on (col3) order by col2 desc" $ \conn -> do
         let proj = f3
             ord  = f2
