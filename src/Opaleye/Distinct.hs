@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Opaleye.Distinct (distinct,
+                         distinctOnCorrect,
+                         distinctOnByCorrect,
                          Distinctspec,
                          -- * Explicit versions
                          distinctExplicit,
@@ -12,6 +14,7 @@ module Opaleye.Distinct (distinct,
 
 import           Opaleye.Select (Select)
 import           Opaleye.Internal.Distinct
+import           Opaleye.Order
 
 import qualified Data.Profunctor.Product.Default as D
 
