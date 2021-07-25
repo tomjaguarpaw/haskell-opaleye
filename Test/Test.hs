@@ -432,6 +432,11 @@ testDistinct =
 
 testDistinctOn :: Test
 testDistinctOn = do
+    it "distinct on ()" $ \conn -> do
+        let p = const ()
+            q = O.distinctOnCorrect p table1Q
+            expected = L.nubBy (F.on (==) p) $ L.sortOn p table1data
+        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
     it "distinct on (col1)" $ \conn -> do
         let p = fst
             q = O.distinctOn p table1Q
@@ -447,6 +452,12 @@ testDistinctOn = do
         f2 (_,y,_) = y
         f3 (_,_,z) = z
 
+    it "distinct on () order by col1" $ \conn -> do
+        let proj = const ()
+            ord  = f1
+            q = O.distinctOnByCorrect proj (O.asc ord) $ O.values pgTriples
+            expected = L.nubBy ((==) `F.on` proj) $ L.sortOn (proj &&& ord) triples
+        testH q (\r -> L.sort r `shouldBe` L.sort expected) conn
     it "distinct on (col1) order by col2" $ \conn -> do
         let proj = f1
             ord  = f2

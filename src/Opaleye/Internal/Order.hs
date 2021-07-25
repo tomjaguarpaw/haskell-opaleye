@@ -67,7 +67,11 @@ offset' n (x, q, t) = (x, PQ.Limit (PQ.OffsetOp n) q, t)
 
 distinctOn :: U.Unpackspec b b -> (a -> b)
            -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
-distinctOn ups proj = distinctOnBy ups proj mempty
+distinctOn ups proj = distinctOnBy ups proj M.mempty
+
+distinctOnCorrect :: U.Unpackspec b b -> (a -> b)
+                  -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
+distinctOnCorrect ups proj = distinctOnByCorrect ups proj M.mempty
 
 distinctOnBy :: U.Unpackspec b b -> (a -> b) -> Order a
              -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)

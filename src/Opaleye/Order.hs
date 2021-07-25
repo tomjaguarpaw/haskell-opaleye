@@ -16,13 +16,16 @@ module Opaleye.Order ( -- * Order by
                      , limit
                      , offset
                      -- * Distinct on
-                     , distinctOn
-                     , distinctOnBy
+                     , distinctOnCorrect
+                     , distinctOnByCorrect
                      -- * Exact ordering
                      , O.exact
                      -- * Other
                      , PGOrd
                      , SqlOrd
+                     -- * Deprecated
+                     , distinctOn
+                     , distinctOnBy
                      ) where
 
 import qualified Data.Profunctor.Product.Default as D
@@ -127,17 +130,23 @@ offset n a = Q.productQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 --   ordering is guaranteed. Multiple fields may be distinguished by projecting out
 --   tuples of 'Opaleye.Field.Field_'s. Use 'distinctOnBy' to control how the rows
 --   are chosen.
-distinctOn :: D.Default U.Unpackspec b b => (a -> b) -> S.Select a -> S.Select a
-distinctOn proj q = Q.productQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
+distinctOnCorrect :: D.Default U.Unpackspec b b
+                  => (a -> b)
+                  -> S.Select a
+                  -> S.Select a
+distinctOnCorrect proj q = Q.productQueryArr (O.distinctOnCorrect D.def proj . Q.runSimpleQueryArr q)
 
 
 -- | Keep the row from each set where the given function returns the same result. The
 --   row is chosen according to which comes first by the supplied ordering. However, no
 --   output ordering is guaranteed. Mutliple fields may be distinguished by projecting
 --   out tuples of 'Opaleye.Field.Field_'s.
-distinctOnBy :: D.Default U.Unpackspec b b => (a -> b) -> O.Order a
-             -> S.Select a -> S.Select a
-distinctOnBy proj ord q = Q.productQueryArr (O.distinctOnBy D.def proj ord . Q.runSimpleQueryArr q)
+distinctOnByCorrect :: D.Default U.Unpackspec b b
+                    => (a -> b)
+                    -> O.Order a
+                    -> S.Select a
+                    -> S.Select a
+distinctOnByCorrect proj ord q = Q.productQueryArr (O.distinctOnByCorrect D.def proj ord . Q.runSimpleQueryArr q)
 
 
 -- * Other
@@ -163,3 +172,18 @@ instance SqlOrd T.SqlTimestamp
 instance SqlOrd T.SqlCitext
 instance SqlOrd T.SqlUuid
 instance SqlOrd a => SqlOrd (C.Nullable a)
+
+-- | Use 'distinctOnCorrect' instead.  This version has a bug whereby
+-- it returns the whole query if zero columns are chosen to be
+-- distinct (it should just return the first row).  Will be deprecated
+-- in version 0.8.
+distinctOn :: D.Default U.Unpackspec b b => (a -> b) -> S.Select a -> S.Select a
+distinctOn proj q = Q.productQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
+
+-- | Use 'distinctOnByCorrect' instead.  This version has a bug
+-- whereby it returns the whole query if zero columns are chosen to be
+-- distinct (it should just return the first row).  Will be deprecated
+-- in version 0.8.
+distinctOnBy :: D.Default U.Unpackspec b b => (a -> b) -> O.Order a
+             -> S.Select a -> S.Select a
+distinctOnBy proj ord q = Q.productQueryArr (O.distinctOnBy D.def proj ord . Q.runSimpleQueryArr q)

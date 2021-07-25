@@ -1,3 +1,6 @@
+* Added `distinctOnCorrect` and `distinctOnByCorrect` which will
+  replace `distinctOn` and `distinctOnBy` in a future version.
+
 ## 0.7.3.0
 
 * Added DefaultFromField SqlJson(b) instances for Strict/Lazy
