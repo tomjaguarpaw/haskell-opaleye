@@ -107,8 +107,8 @@ pgTimeOfDay = IPT.unsafePgFormatTime "time" "'%T%Q'"
 -- "We recommend not using the type time with time zone"
 -- http://www.postgresql.org/docs/8.3/static/datatype-datetime.html
 
-pgInterval :: Time.CalendarDiffTime -> Column PGInterval
-pgInterval = IPT.castToType "interval" . quote . Time.Format.ISO8601.iso8601Show
+sqlInterval :: Time.CalendarDiffTime -> Column PGInterval
+sqlInterval = IPT.castToType "interval" . quote . Time.Format.ISO8601.iso8601Show
     where
       quote s = "'" ++ s ++ "'"
 

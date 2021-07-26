@@ -3,6 +3,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 -- We can probably disable ConstraintKinds and TypeSynonymInstances
 -- when we move to Sql... instead of PG..
@@ -480,7 +481,7 @@ dateOfTimestamp (Column e) = Column (HPQ.FunExpr "date" [e])
 -- The instances should correspond to the interval + and - operations listed in:
 --
 -- https://www.postgresql.org/docs/current/functions-datetime.html#OPERATORS-DATETIME-TABLE
-class IntervalNum from to
+class IntervalNum from to | from -> to
 
 instance IntervalNum T.SqlDate        T.SqlTimestamp
 instance IntervalNum T.SqlInterval    T.SqlInterval
