@@ -13,7 +13,7 @@ import qualified Data.Text.Lazy as LText
 import qualified Data.Text.Lazy.Encoding as LTextEncoding
 import qualified Data.ByteString as SByteString
 import qualified Data.ByteString.Lazy as LByteString
-import qualified Data.Time as Time
+import qualified Data.Time.Compat as Time
 import qualified Data.Time.Locale.Compat as Locale
 
 unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c

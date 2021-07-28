@@ -39,7 +39,7 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Encoding as LTE
 import qualified Data.ByteString as SBS
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.Time as Time
+import qualified Data.Time.Compat as Time
 import qualified Data.Scientific as Sci
 import qualified Data.String as String
 import           Data.UUID (UUID)
@@ -242,6 +242,9 @@ instance DefaultFromField T.SqlTimestamp Time.LocalTime where
   defaultFromField = fromPGSFromField
 
 instance DefaultFromField T.SqlTimestamptz Time.ZonedTime where
+  defaultFromField = fromPGSFromField
+
+instance DefaultFromField T.SqlInterval Time.CalendarDiffTime where
   defaultFromField = fromPGSFromField
 
 instance DefaultFromField T.SqlTime Time.TimeOfDay where

@@ -2,6 +2,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 -- We can probably disable ConstraintKinds and TypeSynonymInstances
 -- when we move to Sql... instead of PG..
@@ -100,6 +102,9 @@ module Opaleye.Operators
   , timestamptzAtTimeZone
   , dateOfTimestamp
   , now
+  , IntervalNum
+  , addInterval
+  , minusInterval
   -- * Deprecated
   , exists
   , notExists
@@ -468,6 +473,27 @@ timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
 
 dateOfTimestamp :: F.Field T.SqlTimestamp -> F.Field T.SqlDate
 dateOfTimestamp (Column e) = Column (HPQ.FunExpr "date" [e])
+
+-- | @IntervalNum from to@ determines from which date or time types an interval
+-- can be added ('addInterval') or subtracted ('minusInterval`) and which is the
+-- resulting type.
+--
+-- The instances should correspond to the interval + and - operations listed in:
+--
+-- https://www.postgresql.org/docs/current/functions-datetime.html#OPERATORS-DATETIME-TABLE
+class IntervalNum from to | from -> to
+
+instance IntervalNum T.SqlDate        T.SqlTimestamp
+instance IntervalNum T.SqlInterval    T.SqlInterval
+instance IntervalNum T.SqlTimestamp   T.SqlTimestamp
+instance IntervalNum T.SqlTimestamptz T.SqlTimestamptz
+instance IntervalNum T.SqlTime        T.SqlTime
+
+addInterval :: IntervalNum from to => F.Field from -> F.Field T.SqlInterval -> F.Field to
+addInterval = C.binOp (HPQ.:+)
+
+minusInterval :: IntervalNum from to => F.Field from -> F.Field T.SqlInterval -> F.Field to
+minusInterval = C.binOp (HPQ.:-)
 
 {-# DEPRECATED exists "Identical to 'restrictExists'.  Will be removed in version 0.8." #-}
 exists :: QueryArr a b -> QueryArr a ()
