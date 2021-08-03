@@ -1,3 +1,5 @@
+## 0.7.4.0
+
 * Added `distinctOnCorrect` and `distinctOnByCorrect` which will
   replace `distinctOn` and `distinctOnBy` in a future version.
 
