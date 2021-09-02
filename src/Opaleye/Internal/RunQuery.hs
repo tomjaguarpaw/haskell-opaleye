@@ -17,6 +17,7 @@ import           Database.PostgreSQL.Simple.FromField
   (FieldParser, fromField, pgArrayFieldParser, optionalField)
 import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
+import           Database.PostgreSQL.Simple.Newtypes ( Aeson )
 
 import           Opaleye.Internal.Column (Field_, Field, FieldNullable,
                                           Nullability(Nullable, NonNullable))
@@ -276,6 +277,9 @@ instance DefaultFromField T.SqlJson LBS.ByteString where
 instance DefaultFromField T.SqlJson Ae.Value where
   defaultFromField = fromPGSFromField
 
+instance (Ae.FromJSON a, Typeable a) => DefaultFromField T.SqlJson (Aeson a) where
+  defaultFromField = fromPGSFromField
+
 instance DefaultFromField T.SqlJsonb String where
   defaultFromField = fromPGSFieldParser jsonbFieldParser
 
@@ -292,6 +296,9 @@ instance DefaultFromField T.SqlJsonb LBS.ByteString where
   defaultFromField = fromPGSFieldParser jsonbFieldLazyByteParser
 
 instance DefaultFromField T.SqlJsonb Ae.Value where
+  defaultFromField = fromPGSFromField
+
+instance (Ae.FromJSON a, Typeable a) => DefaultFromField T.SqlJsonb (Aeson a) where
   defaultFromField = fromPGSFromField
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
