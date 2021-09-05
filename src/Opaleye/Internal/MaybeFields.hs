@@ -32,7 +32,7 @@ import           Opaleye.Internal.Operators ((.&&), (.||), (.==), restrict, not,
                                              ifExplict, IfPP, EqPP(EqPP))
 import qualified Opaleye.Internal.Lateral
 import qualified Opaleye.SqlTypes
-import           Opaleye.SqlTypes (SqlBool, IsSqlType)
+import           Opaleye.SqlTypes (SqlBool, IsSqlType, SqlInt4)
 
 import           Control.Monad (replicateM_)
 
@@ -88,6 +88,18 @@ justFields = pure
 -- | The Opaleye analogue of 'Data.Maybe.maybe'
 maybeFields :: PP.Default IfPP b b => b -> (a -> b) -> MaybeFields a -> b
 maybeFields = maybeFieldsExplicit PP.def
+
+-- | Use a Haskell @\\case@ expression to pattern match on a
+-- 'MaybeFields'.
+--
+-- @
+-- example :: MaybeFields (Field SqlInt4) -> Field SqlInt4
+-- example mf = matchMaybe mf $ \\case
+--   Nothing -> 0
+--   Just x  -> x * 100
+-- @
+matchMaybe :: PP.Default IfPP b b => MaybeFields a -> (Maybe a -> b) -> b
+matchMaybe mf f = maybeFields (f Nothing) (f . Just) mf
 
 -- | The Opaleye analogue of 'Data.Maybe.fromMaybe'
 fromMaybeFields :: PP.Default IfPP b b => b -> MaybeFields b -> b

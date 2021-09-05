@@ -10,6 +10,7 @@ module Opaleye.MaybeFields (
   MaybeFields,
   nothingFields,
   justFields,
+  matchMaybe,
   fromMaybeFields,
   maybeFields,
   maybeFieldsToSelect,
