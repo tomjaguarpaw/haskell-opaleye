@@ -1,3 +1,4 @@
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Arrows #-}
@@ -95,9 +96,22 @@ maybeFields = maybeFieldsExplicit PP.def
 matchMaybe :: PP.Default IfPP b b => MaybeFields a -> (Maybe a -> b) -> b
 matchMaybe mf f = maybeFields (f Nothing) (f . Just) mf
 
-example :: MaybeFields (Field SqlInt4)
-        -> Field SqlInt4
-example mf = matchMaybe mf $ \case
+class Matchable a b | a -> b, b -> a where
+  (.&) :: PP.Default IfPP r r => a -> (b -> r) -> r
+
+instance Matchable (MaybeFields a) (Maybe a) where
+  (.&) = matchMaybe
+
+(&) :: a -> (a -> c) -> c
+(&) = flip ($)
+
+example :: MaybeFields (Field SqlInt4) -> Field SqlInt4
+example mf = mf .& \case
+  Nothing -> 0
+  Just x  -> x * 100
+
+exampleMaybe :: Maybe Int -> Int
+exampleMaybe mf = mf & \case
   Nothing -> 0
   Just x  -> x * 100
 
