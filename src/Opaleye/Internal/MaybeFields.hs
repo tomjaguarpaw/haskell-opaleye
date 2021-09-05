@@ -1,3 +1,4 @@
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Arrows #-}
@@ -35,7 +36,7 @@ import           Opaleye.Internal.Operators ((.&&), (.||), (.==), restrict, not,
                                              ifExplict, IfPP, EqPP(EqPP))
 import qualified Opaleye.Internal.Lateral
 import qualified Opaleye.SqlTypes
-import           Opaleye.SqlTypes (SqlBool, IsSqlType)
+import           Opaleye.SqlTypes (SqlBool, IsSqlType, SqlInt4)
 
 import           Control.Monad (replicateM_)
 
@@ -91,6 +92,28 @@ justFields = pure
 -- | The Opaleye analogue of 'Data.Maybe.maybe'
 maybeFields :: PP.Default IfPP b b => b -> (a -> b) -> MaybeFields a -> b
 maybeFields = maybeFieldsExplicit PP.def
+
+matchMaybe :: PP.Default IfPP b b => MaybeFields a -> (Maybe a -> b) -> b
+matchMaybe mf f = maybeFields (f Nothing) (f . Just) mf
+
+class Matchable a b | a -> b, b -> a where
+  (.&) :: PP.Default IfPP r r => a -> (b -> r) -> r
+
+instance Matchable (MaybeFields a) (Maybe a) where
+  (.&) = matchMaybe
+
+(&) :: a -> (a -> c) -> c
+(&) = flip ($)
+
+example :: MaybeFields (Field SqlInt4) -> Field SqlInt4
+example mf = mf .& \case
+  Nothing -> 0
+  Just x  -> x * 100
+
+exampleMaybe :: Maybe Int -> Int
+exampleMaybe mf = mf & \case
+  Nothing -> 0
+  Just x  -> x * 100
 
 -- | The Opaleye analogue of 'Data.Maybe.fromMaybe'
 fromMaybeFields :: PP.Default IfPP b b => b -> MaybeFields b -> b
