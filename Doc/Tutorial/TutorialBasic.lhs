@@ -9,11 +9,11 @@
 >
 > import           Opaleye (Field, FieldNullable, matchNullable, isNull,
 >                          Table, table, tableField, selectTable,
->                          Select, restrict, (.==), (.<=), (.&&), (.<),
+>                          Select, (.==), (.<=), (.&&), (.<),
 >                          (.===),
 >                          (.++), ifThenElse, sqlString, aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runSelect,
->                          showSql, viaLateral, Unpackspec,
+>                          showSql, where_, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8, SqlBool)
 >
 > import           Data.Profunctor.Product (p2, p3)
@@ -253,7 +253,7 @@ years old.
 > youngPeople :: Select (Field SqlText, Field SqlInt4, Field SqlText)
 > youngPeople = do
 >   row@(_, age, _) <- personSelect
->   viaLateral restrict (age .<= 18)
+>   where_ (age .<= 18)
 >
 >   pure row
 
@@ -284,8 +284,8 @@ conditions.
 > twentiesAtAddress = do
 >   row@(_, age, address) <- personSelect
 >
->   viaLateral restrict $ (20 .<= age) .&& (age .< 30)
->   viaLateral restrict $ address .== sqlString "1 My Street, My Town"
+>   where_ $ (20 .<= age) .&& (age .< 30)
+>   where_ $ address .== sqlString "1 My Street, My Town"
 >
 >   pure row
 
@@ -326,7 +326,7 @@ such.
 >   (name, age, address) <- personSelect
 >   birthday             <- birthdaySelect
 >
->   viaLateral restrict $ name .== bdName birthday
+>   where_ $ name .== bdName birthday
 >
 >   pure (name, age, address, bdDay birthday)
 
@@ -470,11 +470,11 @@ that does not read any fields.)
 
 > restrictIsTwenties :: Field SqlInt4 -> Select ()
 > restrictIsTwenties age = do
->   viaLateral restrict $ (20 .<= age) .&& (age .< 30)
+>   where_ $ (20 .<= age) .&& (age .< 30)
 >
 > restrictAddressIs1MyStreet :: Field SqlText -> Select ()
 > restrictAddressIs1MyStreet address = do
->   viaLateral restrict $ address .== sqlString "1 My Street, My Town"
+>   where_ $ address .== sqlString "1 My Street, My Town"
 
 We can't generate "the SQL of" these combinators.  They are not
 `Select`s so they don't have any SQL!  (This corresponds to the
@@ -517,7 +517,7 @@ to their date of birth by looking up in `birthdaySelect`.
 > birthdayOfPerson name = do
 >   birthday <- birthdaySelect
 >
->   viaLateral restrict $ name .== bdName birthday
+>   where_ $ name .== bdName birthday
 >
 >   pure (bdDay birthday)
 
