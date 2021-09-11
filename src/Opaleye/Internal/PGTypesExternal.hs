@@ -51,6 +51,9 @@ instance C.SqlIntegral SqlInt8
 instance C.SqlString SqlText where
   sqlFromString = pgString
 
+instance C.SqlString SqlVarcharN where
+  sqlFromString = pgStringVarcharN
+
 instance C.SqlString SqlCitext where
   sqlFromString = pgCiLazyText . CI.mk . LText.pack
 
@@ -70,6 +73,15 @@ pgStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack
 
 pgLazyText :: LText.Text -> Column PGText
 pgLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack
+
+pgStringVarcharN :: String -> Column PGVarcharN
+pgStringVarcharN = IPT.literalColumn . HPQ.StringLit
+
+pgStrictTextVarcharN :: SText.Text -> Column PGVarcharN
+pgStrictTextVarcharN = IPT.literalColumn . HPQ.StringLit . SText.unpack
+
+pgLazyTextVarcharN :: LText.Text -> Column PGVarcharN
+pgLazyTextVarcharN = IPT.literalColumn . HPQ.StringLit . LText.unpack
 
 pgNumeric :: Sci.Scientific -> Column PGNumeric
 pgNumeric = IPT.literalColumn . HPQ.NumericLit
@@ -190,6 +202,8 @@ instance IsSqlType SqlNumeric where
   showSqlType _ = "numeric"
 instance IsSqlType SqlText where
   showSqlType _ = "text"
+instance IsSqlType SqlVarcharN where
+  showSqlType _ = "varchar"
 instance IsSqlType SqlTime where
   showSqlType _ = "time"
 instance IsSqlType SqlTimestamp where
@@ -249,6 +263,7 @@ data SqlInt2
 data SqlInterval
 data SqlNumeric
 data SqlText
+data SqlVarcharN
 data SqlTime
 data SqlTimestamp
 -- | Be careful if you use Haskell's `Time.ZonedTime` with
@@ -280,6 +295,7 @@ type PGInt2 = SqlInt2
 type PGInterval = SqlInterval
 type PGNumeric = SqlNumeric
 type PGText = SqlText
+type PGVarcharN = SqlVarcharN
 type PGTime = SqlTime
 type PGTimestamp = SqlTimestamp
 type PGTimestamptz = SqlTimestamptz

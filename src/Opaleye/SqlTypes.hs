@@ -55,6 +55,7 @@ module Opaleye.SqlTypes (
   sqlCiLazyText,
   -- ** Types
   SqlText,
+  SqlVarcharN,
   SqlCitext,
   -- * Array
   -- ** Creating values
@@ -95,6 +96,7 @@ import           Opaleye.Internal.PGTypesExternal (SqlBool,
                                                    SqlInt2,
                                                    SqlNumeric,
                                                    SqlText,
+                                                   SqlVarcharN,
                                                    SqlTime,
                                                    SqlTimestamp,
                                                    SqlTimestamptz,
@@ -136,6 +138,15 @@ sqlStrictText = P.pgStrictText
 
 sqlLazyText :: LText.Text -> F.Field SqlText
 sqlLazyText = P.pgLazyText
+
+sqlStringVarcharN :: String -> F.Field SqlVarcharN
+sqlStringVarcharN = P.pgStringVarcharN
+
+sqlStrictTextVarcharN :: SText.Text -> F.Field SqlVarcharN
+sqlStrictTextVarcharN = P.pgStrictTextVarcharN
+
+sqlLazyTextVarcharN :: LText.Text -> F.Field SqlVarcharN
+sqlLazyTextVarcharN = P.pgLazyTextVarcharN
 
 sqlNumeric :: Sci.Scientific -> F.Field SqlNumeric
 sqlNumeric = P.pgNumeric

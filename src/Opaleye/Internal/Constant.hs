@@ -68,6 +68,15 @@ instance D.Default ToFields ST.Text (Column T.SqlText) where
 instance D.Default ToFields LT.Text (Column T.SqlText) where
   def = toToFields T.sqlLazyText
 
+instance D.Default ToFields String (Column T.SqlVarcharN) where
+  def = toToFields T.sqlStringVarcharN
+
+instance D.Default ToFields ST.Text (Column T.SqlVarcharN) where
+  def = toToFields T.sqlStrictTextVarcharN
+
+instance D.Default ToFields LT.Text (Column T.SqlVarcharN) where
+  def = toToFields T.sqlLazyTextVarcharN
+
 instance D.Default ToFields Sci.Scientific (Column T.SqlNumeric) where
   def = toToFields T.sqlNumeric
 

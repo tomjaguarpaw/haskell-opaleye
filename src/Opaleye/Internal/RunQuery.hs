@@ -232,6 +232,15 @@ instance DefaultFromField T.SqlText ST.Text where
 instance DefaultFromField T.SqlText LT.Text where
   defaultFromField = fromPGSFromField
 
+instance DefaultFromField T.SqlVarcharN String where
+  defaultFromField = fromPGSFromField
+
+instance DefaultFromField T.SqlVarcharN ST.Text where
+  defaultFromField = fromPGSFromField
+
+instance DefaultFromField T.SqlVarcharN LT.Text where
+  defaultFromField = fromPGSFromField
+
 instance DefaultFromField T.SqlDate Time.Day where
   defaultFromField = fromPGSFromField
 
