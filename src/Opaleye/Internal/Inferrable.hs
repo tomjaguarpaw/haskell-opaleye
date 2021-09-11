@@ -56,6 +56,9 @@ instance int64 ~ Int64 => D.Default (Inferrable FromField) T.SqlInt8 int64 where
 instance text ~ ST.Text => D.Default (Inferrable FromField) T.SqlText text where
   def = Inferrable D.def
 
+instance varchar ~ ST.Text => D.Default (Inferrable FromField) T.SqlVarcharN varchar where
+  def = Inferrable D.def
+
 instance (Typeable h, D.Default (Inferrable FromField) f h, hs ~ [h])
   => D.Default (Inferrable FromField) (T.SqlArray f) hs where
   def = Inferrable (RQ.fromFieldArray (runInferrable D.def))

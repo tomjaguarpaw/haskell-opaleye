@@ -166,6 +166,7 @@ instance SqlOrd T.SqlInt4
 instance SqlOrd T.SqlInt2
 instance SqlOrd T.SqlNumeric
 instance SqlOrd T.SqlText
+instance SqlOrd T.SqlVarcharN
 instance SqlOrd T.SqlTime
 instance SqlOrd T.SqlTimestamptz
 instance SqlOrd T.SqlTimestamp

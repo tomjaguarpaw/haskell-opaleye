@@ -51,10 +51,14 @@ module Opaleye.SqlTypes (
   sqlString,
   sqlStrictText,
   sqlLazyText,
+  P.sqlStringVarcharN,
+  P.sqlStrictTextVarcharN,
+  P.sqlLazyTextVarcharN,
   sqlCiStrictText,
   sqlCiLazyText,
   -- ** Types
   SqlText,
+  SqlVarcharN,
   SqlCitext,
   -- * Array
   -- ** Creating values
@@ -95,6 +99,7 @@ import           Opaleye.Internal.PGTypesExternal (SqlBool,
                                                    SqlInt2,
                                                    SqlNumeric,
                                                    SqlText,
+                                                   SqlVarcharN,
                                                    SqlTime,
                                                    SqlTimestamp,
                                                    SqlTimestamptz,

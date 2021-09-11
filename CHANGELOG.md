@@ -1,3 +1,5 @@
+* Added `SqlVarcharN` and supporting functions
+
 ## 0.7.5.0
 
 * Added `enumMapperWithSchema`.  Thanks to Steve Mao.

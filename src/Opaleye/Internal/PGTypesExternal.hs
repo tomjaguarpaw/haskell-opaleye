@@ -51,6 +51,9 @@ instance C.SqlIntegral SqlInt8
 instance C.SqlString SqlText where
   sqlFromString = pgString
 
+instance C.SqlString SqlVarcharN where
+  sqlFromString = sqlStringVarcharN
+
 instance C.SqlString SqlCitext where
   sqlFromString = pgCiLazyText . CI.mk . LText.pack
 
@@ -70,6 +73,15 @@ pgStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack
 
 pgLazyText :: LText.Text -> Column PGText
 pgLazyText = IPT.literalColumn . HPQ.StringLit . LText.unpack
+
+sqlStringVarcharN :: String -> Column SqlVarcharN
+sqlStringVarcharN = IPT.literalColumn . HPQ.StringLit
+
+sqlStrictTextVarcharN :: SText.Text -> Column SqlVarcharN
+sqlStrictTextVarcharN = IPT.literalColumn . HPQ.StringLit . SText.unpack
+
+sqlLazyTextVarcharN :: LText.Text -> Column SqlVarcharN
+sqlLazyTextVarcharN = IPT.literalColumn . HPQ.StringLit . LText.unpack
 
 pgNumeric :: Sci.Scientific -> Column PGNumeric
 pgNumeric = IPT.literalColumn . HPQ.NumericLit
@@ -190,6 +202,8 @@ instance IsSqlType SqlNumeric where
   showSqlType _ = "numeric"
 instance IsSqlType SqlText where
   showSqlType _ = "text"
+instance IsSqlType SqlVarcharN where
+  showSqlType _ = "varchar"
 instance IsSqlType SqlTime where
   showSqlType _ = "time"
 instance IsSqlType SqlTimestamp where
@@ -249,6 +263,9 @@ data SqlInt2
 data SqlInterval
 data SqlNumeric
 data SqlText
+-- | @VARCHAR(n)@ for any @n@.  Opaleye does not do anything to check
+-- that the @n@ you choose is correctly adhered to!
+data SqlVarcharN
 data SqlTime
 data SqlTimestamp
 -- | Be careful if you use Haskell's `Time.ZonedTime` with
