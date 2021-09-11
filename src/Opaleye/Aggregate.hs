@@ -27,7 +27,6 @@ module Opaleye.Aggregate
        , arrayAgg
        , jsonAgg
        , stringAgg
-       , stringAggVarcharN
        -- * Counting rows
        , countRows
        ) where
@@ -170,13 +169,9 @@ The above query, when executed, will return JSON of the following form from post
 jsonAgg :: Aggregator (C.Column a) (C.Column T.SqlJson)
 jsonAgg = A.makeAggr HPQ.JsonArr
 
-stringAgg :: C.Column T.SqlText
-          -> Aggregator (C.Column T.SqlText) (C.Column T.SqlText)
+stringAgg :: IC.SqlString a => C.Column a
+          -> Aggregator (C.Column a) (C.Column a)
 stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
-
-stringAggVarcharN :: C.Column T.SqlVarcharN
-          -> Aggregator (C.Column T.SqlVarcharN) (C.Column T.SqlVarcharN)
-stringAggVarcharN = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 
 -- | Count the number of rows in a query.  This is different from
 -- 'aggregate' 'count' because it always returns exactly one row, even
