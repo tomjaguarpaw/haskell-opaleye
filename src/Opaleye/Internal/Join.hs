@@ -13,6 +13,7 @@ import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Operators as Op
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PGTypesExternal as T
+import qualified Opaleye.Internal.Rebind as Rebind
 import qualified Opaleye.SqlTypes as T
 import qualified Opaleye.Column as C
 import           Opaleye.Field   (Field)
@@ -73,8 +74,9 @@ leftJoinAExplicit :: U.Unpackspec a a
                   -> Q.QueryArr (a -> Column T.PGBool) nullableA
 leftJoinAExplicit uA nullmaker rq =
   Q.QueryArr $ \(p, t1) ->
-    let (columnsR, primQueryR, t2) = Q.runSimpleQueryArr rq ((), t1)
-        (newColumnsR, ljPEsR) = PM.run $ U.runUnpackspec uA (extractLeftJoinFields 2 t2) columnsR
+    let (newColumnsR, right, tag') = flip Q.runSimpleQueryArr ((), t1) $ proc () -> do
+          a <- rq -< ()
+          Rebind.rebindExplicit uA -< a
         renamedNullable = toNullable nullmaker newColumnsR
         Column cond = p newColumnsR
     in ( renamedNullable
@@ -92,8 +94,8 @@ leftJoinAExplicit uA nullmaker rq =
            --- Report about the "avoiding NULL" bug:
            ---
            ---     https://github.com/tomjaguarpaw/haskell-opaleye/issues/223
-           (lat, (PQ.Rebind True ljPEsR primQueryR))
-       , T.next t2)
+           (lat, right)
+       , tag')
 
 optionalRestrict :: D.Default U.Unpackspec a a
                  => S.Select a
