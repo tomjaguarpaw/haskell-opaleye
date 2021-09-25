@@ -16,7 +16,6 @@ import           Control.Arrow (returnA, (<<<), (>>>))
 import qualified Opaleye.Internal.Binary as B
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.ToFields as Constant
-import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Opaleye.Internal.Inferrable (Inferrable(Inferrable),
                                               runInferrable)
