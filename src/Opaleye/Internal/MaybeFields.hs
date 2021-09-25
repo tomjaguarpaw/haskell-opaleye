@@ -19,7 +19,6 @@ import qualified Opaleye.ToFields as Constant
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Opaleye.Internal.Inferrable (Inferrable(Inferrable),
                                               runInferrable)
-import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.QueryArr as IQ
 import qualified Opaleye.Internal.Rebind as Rebind
 import qualified Opaleye.Internal.RunQuery as RQ
@@ -128,19 +127,15 @@ optional = Opaleye.Internal.Lateral.laterally (optionalInternal (MaybeFields . i
   where isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
 
 optionalInternal :: (Field (Opaleye.Column.Nullable SqlBool) -> a -> r) -> Select a -> Select r
-optionalInternal f = IQ.QueryArr . go
-  where
+optionalInternal f query = IQ.leftJoinQueryArr $ \arg ->
     -- This is basically a left join on TRUE, but Shane (@duairc)
     -- wrote it to ensure that we don't need an Unpackspec a a.
-    go query arg = (r, join, Tag.next tag')
-      where
-        (r, right, tag') = flip IQ.runSimpleQueryArr arg $ proc () -> do
+    let (r, right, tag') = flip IQ.runSimpleQueryArr arg $ proc () -> do
           a <- query -< ()
           true_ <- Rebind.rebind -< Opaleye.Column.toNullable (IC.Column true)
           returnA -< f true_ a
-
-        join lat left = PQ.Join PQ.LeftJoin true (PQ.NonLateral, left) (lat, right)
-    true = HPQ.ConstExpr (HPQ.BoolLit True)
+        true = HPQ.ConstExpr (HPQ.BoolLit True)
+    in (r, true, right, Tag.next tag')
 
 
 -- | An example to demonstrate how the functionality of (lateral)

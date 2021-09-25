@@ -73,28 +73,15 @@ leftJoinAExplicit :: U.Unpackspec a a
                   -> Q.Query a
                   -> Q.QueryArr (a -> Column T.PGBool) nullableA
 leftJoinAExplicit uA nullmaker rq =
-  Q.QueryArr $ \(p, t1) ->
+  Q.leftJoinQueryArr $ \(p, t1) ->
     let (newColumnsR, right, tag') = flip Q.runSimpleQueryArr ((), t1) $ proc () -> do
           a <- rq -< ()
           Rebind.rebindExplicit uA -< a
         renamedNullable = toNullable nullmaker newColumnsR
         Column cond = p newColumnsR
     in ( renamedNullable
-       , \lat primQueryL -> PQ.Join
-           PQ.LeftJoin
-           cond
-           (PQ.NonLateral, primQueryL)
-           --- ^ I am reasonably confident that we don't need to rebind any
-           --- column names here.  Columns that can become NULL need
-           --- to be written here so that we can wrap them.  If we
-           --- don't constant columns can avoid becoming NULL.
-           --- However, these are the left columns and cannot become
-           --- NULL in a left join, so we are fine.
-           ---
-           --- Report about the "avoiding NULL" bug:
-           ---
-           ---     https://github.com/tomjaguarpaw/haskell-opaleye/issues/223
-           (lat, right)
+       , cond
+       , right
        , tag')
 
 optionalRestrict :: D.Default U.Unpackspec a a
