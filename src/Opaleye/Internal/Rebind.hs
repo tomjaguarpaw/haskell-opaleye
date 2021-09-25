@@ -10,6 +10,9 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Tag as Tag
 
 rebind :: Default Unpackspec a a => SelectArr a a
-rebind = QueryArr (\(a, tag) ->
-                     let (b, bindings) = PM.run (runUnpackspec def (PM.extractAttr "rebind" tag) a)
+rebind = rebindExplicit def
+
+rebindExplicit :: Unpackspec a b -> SelectArr a b
+rebindExplicit u = QueryArr (\(a, tag) ->
+                     let (b, bindings) = PM.run (runUnpackspec u (PM.extractAttr "rebind" tag) a)
                      in (b, \_ -> PQ.Rebind True bindings, Tag.next tag))
