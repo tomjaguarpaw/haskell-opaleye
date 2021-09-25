@@ -22,7 +22,6 @@ import           Opaleye.Internal.Inferrable (Inferrable(Inferrable),
 import qualified Opaleye.Internal.QueryArr as IQ
 import qualified Opaleye.Internal.Rebind as Rebind
 import qualified Opaleye.Internal.RunQuery as RQ
-import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Values as V
 import           Opaleye.Select (Select, SelectArr)
@@ -135,7 +134,7 @@ optionalInternal f query = IQ.leftJoinQueryArr $ \arg ->
           true_ <- Rebind.rebind -< Opaleye.Column.toNullable (IC.Column true)
           returnA -< f true_ a
         true = HPQ.ConstExpr (HPQ.BoolLit True)
-    in (r, true, right, Tag.next tag')
+    in (r, true, right, tag')
 
 
 -- | An example to demonstrate how the functionality of (lateral)
