@@ -100,17 +100,8 @@ enumMapper :: String
            -- ^ The @sqlEnum@ type variable is phantom. To protect
            -- yourself against type mismatches you should set it to
            -- the Haskell type that you use to represent the @ENUM@.
-enumMapper type_ from to_ = EnumMapper {
-    enumFromField = fromFieldEnum
-  , enumToFields = toFieldsEnum
-  }
-   where
-     toFieldsEnum = O.toToFields (O.unsafeCast (render (doubleQuotes (text type_))) . O.sqlString . to_)
-     fromFieldEnum = flip fmap RQ.unsafeFromFieldRaw $ \(_, mdata) -> case mdata of
-       Nothing -> error "Unexpected NULL"
-       Just s -> case from (unpack s) of
-         Just r -> r
-         Nothing -> error ("Unexpected: " ++ unpack s)
+enumMapper type_ = enumMapper' (render (doubleQuotes (text type_)))
+
 enumMapperWithSchema :: String
            -- ^ The schema of the @ENUM@ type
            -> String
@@ -125,12 +116,26 @@ enumMapperWithSchema :: String
            -- ^ The @sqlEnum@ type variable is phantom. To protect
            -- yourself against type mismatches you should set it to
            -- the Haskell type that you use to represent the @ENUM@.
-enumMapperWithSchema schema type_ from to_ = EnumMapper {
+enumMapperWithSchema schema type_ = enumMapper' (render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_)))
+
+enumMapper' :: String
+           -- ^ The name of the @ENUM@ type
+           -> (String -> Maybe haskellSum)
+           -- ^ A function which converts from the string
+           -- representation of the ENUM field
+           -> (haskellSum -> String)
+           -- ^ A function which converts to the string representation
+           -- of the ENUM field
+           -> EnumMapper sqlEnum haskellSum
+           -- ^ The @sqlEnum@ type variable is phantom. To protect
+           -- yourself against type mismatches you should set it to
+           -- the Haskell type that you use to represent the @ENUM@.
+enumMapper' type_ from to_ = EnumMapper {
     enumFromField = fromFieldEnum
   , enumToFields = toFieldsEnum
   }
    where
-     toFieldsEnum = O.toToFields (O.unsafeCast (render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_))) . O.sqlString . to_)
+     toFieldsEnum = O.toToFields (O.unsafeCast type_ . O.sqlString . to_)
      fromFieldEnum = flip fmap RQ.unsafeFromFieldRaw $ \(_, mdata) -> case mdata of
        Nothing -> error "Unexpected NULL"
        Just s -> case from (unpack s) of
