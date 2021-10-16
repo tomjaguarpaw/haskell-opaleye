@@ -94,15 +94,21 @@ data EnumMapper sqlEnum haskellSum = EnumMapper {
 -- If you need to construct Column SqlRating
 --
 -- @
--- toSqlRating :: Rating -> Column SqlRating
--- toSqlRating = sqlEnum "mpaa_rating" toSqlRatingString
+-- sqlRating :: Rating -> Column SqlRating
+-- sqlRating = sqlEnum "mpaa_rating" toSqlRatingString
 -- @
 --
 -- Then you can filter on the enum field
 --
 -- @
--- where_ $ sqlRatingType row .== toSqlRating PG
+-- where_ $ sqlRatingType row .== sqlRating PG
 -- @
+
+dbQuotes :: String -> String
+dbQuotes type_ = render (doubleQuotes (text type_))
+
+dbQuotesWithSchema :: String -> String -> String
+dbQuotesWithSchema schema type_ = render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_))
 
 enumMapper :: String
            -- ^ The name of the @ENUM@ type
@@ -116,7 +122,7 @@ enumMapper :: String
            -- ^ The @sqlEnum@ type variable is phantom. To protect
            -- yourself against type mismatches you should set it to
            -- the Haskell type that you use to represent the @ENUM@.
-enumMapper type_ = enumMapper' (render (doubleQuotes (text type_)))
+enumMapper type_ = enumMapper' (dbQuotes type_)
 
 enumMapperWithSchema :: String
            -- ^ The schema of the @ENUM@ type
@@ -132,7 +138,7 @@ enumMapperWithSchema :: String
            -- ^ The @sqlEnum@ type variable is phantom. To protect
            -- yourself against type mismatches you should set it to
            -- the Haskell type that you use to represent the @ENUM@.
-enumMapperWithSchema schema type_ = enumMapper' (render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_)))
+enumMapperWithSchema schema type_ = enumMapper' (dbQuotesWithSchema schema type_)
 
 enumMapper' :: String
            -- ^ The name of the @ENUM@ type
@@ -165,7 +171,7 @@ sqlEnum :: String
         -- of the ENUM field
         -> haskellSum
         -> Column b
-sqlEnum type_ = sqlEnum' (render (doubleQuotes (text type_)))
+sqlEnum type_ = sqlEnum' (dbQuotes type_)
 
 sqlEnumWithSchema :: String
         -- ^ The schema of the @ENUM@ type
@@ -176,7 +182,7 @@ sqlEnumWithSchema :: String
         -- of the ENUM field
         -> haskellSum
         -> Column b
-sqlEnumWithSchema schema type_ = sqlEnum' (render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_)))
+sqlEnumWithSchema schema type_ = sqlEnum' (dbQuotesWithSchema schema type_)
 
 sqlEnum' :: String
         -- ^ The name of the @ENUM@ type
