@@ -8,6 +8,8 @@ module Opaleye.Experimental.Enum
     enumMapperWithSchema,
     enumFromField,
     enumToFields,
+    sqlEnum,
+    sqlEnumWithSchema,
     fromFieldToFieldsEnum,
   ) where
 
@@ -88,6 +90,20 @@ data EnumMapper sqlEnum haskellSum = EnumMapper {
 -- instance D.Default O.ToFields Rating (O.Column SqlRating) where
 --   def = enumToFields sqlRatingMapper
 -- @
+--
+-- If you need to construct Column SqlRating
+--
+-- @
+-- toSqlRating :: Rating -> Column SqlRating
+-- toSqlRating = sqlEnum "mpaa_rating" toSqlRatingString
+-- @
+--
+-- Then you can filter on the enum field
+--
+-- @
+-- where_ $ sqlRatingType row .== toSqlRating PG
+-- @
+
 enumMapper :: String
            -- ^ The name of the @ENUM@ type
            -> (String -> Maybe haskellSum)
@@ -135,12 +151,41 @@ enumMapper' type_ from to_ = EnumMapper {
   , enumToFields = toFieldsEnum
   }
    where
-     toFieldsEnum = O.toToFields (O.unsafeCast type_ . O.sqlString . to_)
+     toFieldsEnum = O.toToFields (sqlEnum' type_ to_)
      fromFieldEnum = flip fmap RQ.unsafeFromFieldRaw $ \(_, mdata) -> case mdata of
        Nothing -> error "Unexpected NULL"
        Just s -> case from (unpack s) of
          Just r -> r
          Nothing -> error ("Unexpected: " ++ unpack s)
+
+sqlEnum :: String
+        -- ^ The name of the @ENUM@ type
+        -> (haskellSum -> String)
+        -- ^ A function which converts to the string representation
+        -- of the ENUM field
+        -> haskellSum
+        -> Column b
+sqlEnum type_ = sqlEnum' (render (doubleQuotes (text type_)))
+
+sqlEnumWithSchema :: String
+        -- ^ The schema of the @ENUM@ type
+        -> String
+        -- ^ The name of the @ENUM@ type
+        -> (haskellSum -> String)
+        -- ^ A function which converts to the string representation
+        -- of the ENUM field
+        -> haskellSum
+        -> Column b
+sqlEnumWithSchema schema type_ = sqlEnum' (render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_)))
+
+sqlEnum' :: String
+        -- ^ The name of the @ENUM@ type
+        -> (haskellSum -> String)
+        -- ^ A function which converts to the string representation
+        -- of the ENUM field
+        -> haskellSum
+        -> Column b
+sqlEnum' type_ to_ = O.unsafeCast type_ . O.sqlString . to_
 
 -- | Use 'enumMapper' instead.  Will be deprecated in 0.8.
 fromFieldToFieldsEnum :: String
