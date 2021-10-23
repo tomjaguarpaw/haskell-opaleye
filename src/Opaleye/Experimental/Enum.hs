@@ -5,6 +5,7 @@ module Opaleye.Experimental.Enum
   (
     enumMapper,
     EnumMapper,
+    enumMapperWithSchema,
     enumFromField,
     enumToFields,
     fromFieldToFieldsEnum,
@@ -17,6 +18,8 @@ import qualified Opaleye.Internal.RunQuery as RQ
 
 import           Data.ByteString.Char8 (unpack)
 import qualified Data.Profunctor.Product.Default as D
+import Text.PrettyPrint.HughesPJ ((<>), doubleQuotes, render, text)
+import Prelude hiding ((<>))
 
 data EnumMapper sqlEnum haskellSum = EnumMapper {
     enumFromField :: RQ.FromField sqlEnum haskellSum
@@ -97,7 +100,37 @@ enumMapper :: String
            -- ^ The @sqlEnum@ type variable is phantom. To protect
            -- yourself against type mismatches you should set it to
            -- the Haskell type that you use to represent the @ENUM@.
-enumMapper type_ from to_ = EnumMapper {
+enumMapper type_ = enumMapper' (render (doubleQuotes (text type_)))
+
+enumMapperWithSchema :: String
+           -- ^ The schema of the @ENUM@ type
+           -> String
+           -- ^ The name of the @ENUM@ type
+           -> (String -> Maybe haskellSum)
+           -- ^ A function which converts from the string
+           -- representation of the ENUM field
+           -> (haskellSum -> String)
+           -- ^ A function which converts to the string representation
+           -- of the ENUM field
+           -> EnumMapper sqlEnum haskellSum
+           -- ^ The @sqlEnum@ type variable is phantom. To protect
+           -- yourself against type mismatches you should set it to
+           -- the Haskell type that you use to represent the @ENUM@.
+enumMapperWithSchema schema type_ = enumMapper' (render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_)))
+
+enumMapper' :: String
+           -- ^ The name of the @ENUM@ type
+           -> (String -> Maybe haskellSum)
+           -- ^ A function which converts from the string
+           -- representation of the ENUM field
+           -> (haskellSum -> String)
+           -- ^ A function which converts to the string representation
+           -- of the ENUM field
+           -> EnumMapper sqlEnum haskellSum
+           -- ^ The @sqlEnum@ type variable is phantom. To protect
+           -- yourself against type mismatches you should set it to
+           -- the Haskell type that you use to represent the @ENUM@.
+enumMapper' type_ from to_ = EnumMapper {
     enumFromField = fromFieldEnum
   , enumToFields = toFieldsEnum
   }

@@ -1,3 +1,11 @@
+## 0.7.5.0
+
+* Added `enumMapperWithSchema`.  Thanks to Steve Mao.
+
+* Added `SqlInterval`.  Thanks to Bas van Dijk.
+
+## 0.7.4.0
+
 * Added `distinctOnCorrect` and `distinctOnByCorrect` which will
   replace `distinctOn` and `distinctOnBy` in a future version.
 
