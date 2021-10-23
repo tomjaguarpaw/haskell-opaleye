@@ -262,23 +262,23 @@ ors :: F.Foldable f => f (F.Field T.SqlBool) -> F.Field T.SqlBool
 ors = F.foldl' (.||) (T.sqlBool False)
 
 -- | Concatenate 'F.Field' 'T.SqlText'
-(.++) :: C.PGString a => F.Field a -> F.Field a -> F.Field a
+(.++) :: F.Field T.SqlText -> F.Field T.SqlText -> F.Field T.SqlText
 (.++) = C.binOp (HPQ.:||)
 
 -- | To lowercase
-lower :: C.PGString a => F.Field a -> F.Field a
+lower :: F.Field T.SqlText -> F.Field T.SqlText
 lower = C.unOp HPQ.OpLower
 
 -- | To uppercase
-upper :: C.PGString a => F.Field a -> F.Field a
+upper :: F.Field T.SqlText -> F.Field T.SqlText
 upper = C.unOp HPQ.OpUpper
 
 -- | Postgres @LIKE@ operator
-like :: C.PGString a => F.Field a -> F.Field a -> F.Field T.SqlBool
+like :: F.Field T.SqlText -> F.Field T.SqlText -> F.Field T.SqlBool
 like = C.binOp HPQ.OpLike
 
 -- | Postgres @ILIKE@ operator
-ilike :: C.PGString a => F.Field a -> F.Field a -> F.Field T.SqlBool
+ilike :: F.Field T.SqlText -> F.Field T.SqlText -> F.Field T.SqlBool
 ilike = C.binOp HPQ.OpILike
 
 -- {-# DEPRECATED charLength "You probably want to use 'sqlLength' instead" #-}
@@ -466,8 +466,8 @@ infix 4 .-|-
 (.-|-) :: Column (T.SqlRange a) -> Column (T.SqlRange a) -> F.Field T.SqlBool
 (.-|-) = C.binOp (HPQ.:-|-)
 
-timestamptzAtTimeZone :: C.PGString a => F.Field T.SqlTimestamptz
-                      -> F.Field a
+timestamptzAtTimeZone :: F.Field T.SqlTimestamptz
+                      -> F.Field T.SqlText
                       -> F.Field T.SqlTimestamp
 timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
 
