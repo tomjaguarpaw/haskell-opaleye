@@ -1,3 +1,5 @@
+## 0.7.6.0
+
 * Added `matchMaybe`
 
 * Added `SqlVarcharN` and supporting functions
