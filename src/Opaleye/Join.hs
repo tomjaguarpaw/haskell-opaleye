@@ -65,11 +65,11 @@ import qualified Data.Profunctor.Product.Default as D
 --
 -- @
 -- > let l1 = ["one", "two", "three"] :: [Field SqlText]
--- > 'Opaleye.RunSelect.runSelect' conn ('optional' ('Opaleye.Values.valuesSafe' l1)) :: IO [Maybe String]
+-- > 'Opaleye.RunSelect.runSelectI' conn ('optional' ('Opaleye.Values.valuesSafe' l1))
 -- [Just "one", Just "two", Just "three"]
 --
 -- > let l2 = [] :: [Field SqlText]
--- > 'Opaleye.RunSelect.runSelect' conn ('optional' ('Opaleye.Values.valuesSafe' l2)) :: IO [Maybe String]
+-- > 'Opaleye.RunSelect.runSelectI' conn ('optional' ('Opaleye.Values.valuesSafe' l2))
 -- [Nothing]
 -- @
 --
@@ -108,10 +108,10 @@ optional = M.optional
 --
 -- @
 -- > let l = [1, 10, 100, 1000] :: [Field SqlInt4]
--- > 'Opaleye.RunSelect.runSelect' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 100000)) :: IO [Maybe Int]
+-- > 'Opaleye.RunSelect.runSelectI' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 100000))
 -- [Nothing]
 --
--- > 'Opaleye.RunSelect.runSelect' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 15)) :: IO [Maybe Int]
+-- > 'Opaleye.RunSelect.runSelectI' conn (proc () -> optionalRestrict ('Opaleye.Values.valuesSafe' l) -\< (.> 15))
 -- [Just 100,Just 1000]
 -- @
 --
