@@ -40,11 +40,7 @@ import qualified Data.Profunctor.Product.Default as D
 --
 -- - Left/right joins which really must not use @LATERAL@: use 'optionalRestrict'
 --
--- - Full outer joins: use 'Opaleye.FunctionalJoin.fullJoinF' (If you
---   have a real-world use case for full outer joins then we'd love to
---   hear about it. Please [open a new issue on the Opaleye
---   project](http://github.com/tomjaguarpaw/haskell-opaleye/issues/new)
---   and tell us about it.)
+-- - Full outer joins: use 'Opaleye.FunctionalJoin.fullJoinF'
 
 -- | NB Opaleye exports @Opaleye.Table.'Opaleye.Table.optional'@ from
 -- the top level.  If you want this @optional@ you will have to import
