@@ -27,8 +27,9 @@ import qualified Data.Profunctor.Product.Default as D
 -- which provide APIs that are more familiar to a Haskell programmer
 -- and more composable:
 --
--- - Inner joins: use 'Opaleye.Operators.restrict' directly (along
---   with @do@ notatation, 'Control.Applicative.<*>', or arrow notation)
+-- - Inner joins: use 'Opaleye.Operators.where_' directly, along with
+--   @do@ notatation (or use 'Opaleye.Operators.restrict' directly,
+--   along with arrow notation)
 --
 -- - Left/right joins: use 'optional'
 --
