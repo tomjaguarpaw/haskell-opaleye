@@ -3,10 +3,10 @@
 module Opaleye.Distinct (distinct,
                          distinctOn,
                          distinctOnBy,
-                         Distinctspec,
                          -- * Explicit versions
                          distinctExplicit,
                          -- * Adaptors
+                         Distinctspec,
                          distinctspecField,
                          distinctspecMaybeFields,
                          -- * Deprecated
