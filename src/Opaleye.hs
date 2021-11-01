@@ -54,12 +54,10 @@ import Opaleye.Field
           maybeToNullable)
 import Opaleye.FunctionalJoin
 import Opaleye.Join
-  hiding (optional)
 import Opaleye.Label
 import Opaleye.Lateral
 import Opaleye.Manipulation
 import Opaleye.MaybeFields
-  hiding (optional)
 import Opaleye.Operators
 import Opaleye.Order
 import Opaleye.Internal.PGTypesExternal

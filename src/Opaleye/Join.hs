@@ -42,11 +42,7 @@ import qualified Data.Profunctor.Product.Default as D
 --
 -- - Full outer joins: use 'Opaleye.FunctionalJoin.fullJoinF'
 
--- | NB Opaleye exports @Opaleye.Table.'Opaleye.Table.optional'@ from
--- the top level.  If you want this @optional@ you will have to import
--- it from this module.
---
--- Convenient access to lateral left/right join
+-- | Convenient access to lateral left/right join
 -- functionality. Performs a @LATERAL LEFT JOIN@ under the hood and
 -- has behaviour equivalent to the following Haskell function:
 --

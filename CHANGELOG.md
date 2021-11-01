@@ -19,6 +19,8 @@
   * `PGIsJson`, `PGOrd`, `PG<typename>`
   * `showSqlForPostgres`, `showSqlForPostgresUnopt`
 
+* `Opaleye.Join.optional` exported from top-level
+
 ## 0.7.6.2
 
 Fix ISO 8601 date fomatting.  Thanks to Michal @kozak.
