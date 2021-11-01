@@ -56,7 +56,7 @@ collectPEs unpackspec = fst . runUnpackspec unpackspec f
   where f pe = ([pe], pe)
 
 instance D.Default Unpackspec (C.Column a) (C.Column a) where
-  def = unpackspecColumn
+  def = unpackspecField
 
 -- {
 
