@@ -101,10 +101,10 @@ runUpdate_ conn i = case i of
   Update table_ updateWith_ where_ returning_ ->
     let update = case returning_ of
           MI.Count ->
-            \c -> PGS.execute_ c . fromString .:. MI.arrangeUpdateSql
+            PGS.execute_ conn (fromString (MI.arrangeUpdateSql table_ updateWith_ where_))
           MI.ReturningExplicit qr f ->
-            \c t u w -> runUpdateReturningExplicit qr c t u w f
-    in update conn table_ updateWith_ where_
+            runUpdateReturningExplicit qr conn table_ updateWith_ where_ f
+    in update
 
 -- | Run the 'Delete'.  To create an 'Delete' use the 'Delete'
 -- constructor.
