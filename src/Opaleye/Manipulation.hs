@@ -38,6 +38,7 @@ module Opaleye.Manipulation (-- * Insert
                              rReturning,
                              rReturningI,
                              rReturningExplicit,
+                             -- * On conflict
                              -- | Currently 'HSql.DoNothing' is the
                              -- only conflict action supported by
                              -- Opaleye.
