@@ -98,13 +98,11 @@ runUpdate_ :: PGS.Connection
            -- ^ Returns a type that depends on the 'MI.Returning' that
            -- you provided when creating the 'Update'.
 runUpdate_ conn i = case i of
-  Update table_ updateWith_ where_ returning_ ->
-    let update = case returning_ of
+  Update table_ updateWith_ where_ returning_ -> case returning_ of
           MI.Count ->
             PGS.execute_ conn (fromString (MI.arrangeUpdateSql table_ updateWith_ where_))
           MI.ReturningExplicit qr f ->
             runUpdateReturningExplicit qr conn table_ updateWith_ where_ f
-    in update
 
 -- | Run the 'Delete'.  To create an 'Delete' use the 'Delete'
 -- constructor.
