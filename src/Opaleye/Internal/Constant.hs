@@ -141,7 +141,7 @@ instance D.Default ToFields Ae.Value (Column T.SqlJsonb) where
   def = toToFields T.sqlValueJSONB
 
 instance D.Default ToFields haskell (Column sql) => D.Default ToFields (Maybe haskell) (Maybe (Column sql)) where
-  def = toToFields (constant <$>)
+  def = toToFields (toFields <$>)
 
 instance (D.Default ToFields a (Column b), T.IsSqlType b)
          => D.Default ToFields [a] (Column (T.SqlArray b)) where
