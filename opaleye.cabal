@@ -157,7 +157,6 @@ test-suite tutorial
                  TutorialBasic,
                  TutorialManipulation,
                  TutorialBasicMonomorphic,
-                 TutorialBasicTypeFamilies,
                  DefaultExplanation
   hs-source-dirs: Doc/Tutorial
   build-depends:
