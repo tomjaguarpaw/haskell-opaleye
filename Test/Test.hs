@@ -443,7 +443,7 @@ testDistinctOn = do
 
     it "distinct on ()" $
         let p = const ()
-            q = O.distinctOnCorrect p table1Q
+            q = O.distinctOn p table1Q
         in distinctOn p q
     it "distinct on (col1)" $
         let p = fst
@@ -461,7 +461,7 @@ testDistinctOn = do
     it "distinct on () order by col1" $
         let proj = const ()
             ord  = f1
-            q = O.distinctOnByCorrect proj (O.asc ord) $ O.values pgTriples
+            q = O.distinctOnBy proj (O.asc ord) $ O.values pgTriples
         in distinctOnBy proj ord q
     it "distinct on (col1) order by col2" $
         let proj = f1

@@ -16,15 +16,15 @@ module Opaleye.Order ( -- * Order by
                      , limit
                      , offset
                      -- * Distinct on
-                     , distinctOnCorrect
-                     , distinctOnByCorrect
+                     , distinctOn
+                     , distinctOnBy
                      -- * Exact ordering
                      , O.exact
                      -- * Other
                      , SqlOrd
                      -- * Deprecated
-                     , distinctOn
-                     , distinctOnBy
+                     , distinctOnCorrect
+                     , distinctOnByCorrect
                      ) where
 
 import qualified Data.Profunctor.Product.Default as D
@@ -125,21 +125,14 @@ offset n a = Q.productQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 
 -- * Distinct on
 
--- | Keep a row from each set where the given function returns the same result. No
---   ordering is guaranteed. Multiple fields may be distinguished by projecting out
---   tuples of 'Opaleye.Field.Field_'s. Use 'distinctOnBy' to control how the rows
---   are chosen.
+-- | Use 'distinctOn' instead.  Will be deprecated in 0.9.
 distinctOnCorrect :: D.Default U.Unpackspec b b
                   => (a -> b)
                   -> S.Select a
                   -> S.Select a
 distinctOnCorrect proj q = Q.productQueryArr (O.distinctOnCorrect D.def proj . Q.runSimpleQueryArr q)
 
-
--- | Keep the row from each set where the given function returns the same result. The
---   row is chosen according to which comes first by the supplied ordering. However, no
---   output ordering is guaranteed. Mutliple fields may be distinguished by projecting
---   out tuples of 'Opaleye.Field.Field_'s.
+-- | Use 'distinctOnBy' instead.  Will be deprecated in 0.9.
 distinctOnByCorrect :: D.Default U.Unpackspec b b
                     => (a -> b)
                     -> O.Order a
@@ -170,17 +163,17 @@ instance SqlOrd T.SqlCitext
 instance SqlOrd T.SqlUuid
 instance SqlOrd a => SqlOrd (C.Nullable a)
 
--- | Use 'distinctOnCorrect' instead.  This version has a bug whereby
--- it returns the whole query if zero columns are chosen to be
--- distinct (it should just return the first row).  Will be deprecated
--- in version 0.8.
+-- | Keep a row from each set where the given function returns the same result. No
+--   ordering is guaranteed. Multiple fields may be distinguished by projecting out
+--   tuples of 'Opaleye.Field.Field_'s. Use 'distinctOnBy' to control how the rows
+--   are chosen.
 distinctOn :: D.Default U.Unpackspec b b => (a -> b) -> S.Select a -> S.Select a
-distinctOn proj q = Q.productQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
+distinctOn = distinctOnCorrect
 
--- | Use 'distinctOnByCorrect' instead.  This version has a bug
--- whereby it returns the whole query if zero columns are chosen to be
--- distinct (it should just return the first row).  Will be deprecated
--- in version 0.8.
+-- | Keep the row from each set where the given function returns the same result. The
+--   row is chosen according to which comes first by the supplied ordering. However, no
+--   output ordering is guaranteed. Mutliple fields may be distinguished by projecting
+--   out tuples of 'Opaleye.Field.Field_'s.
 distinctOnBy :: D.Default U.Unpackspec b b => (a -> b) -> O.Order a
              -> S.Select a -> S.Select a
-distinctOnBy proj ord q = Q.productQueryArr (O.distinctOnBy D.def proj ord . Q.runSimpleQueryArr q)
+distinctOnBy = distinctOnByCorrect

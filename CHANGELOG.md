@@ -21,6 +21,9 @@
 
 * `Opaleye.Join.optional` exported from top-level
 
+* Bug fix: `distinctOn` and `distinctOnBy` now return a single row if
+  zero columns are chosen to be distinct.
+
 ## 0.7.6.2
 
 Fix ISO 8601 date fomatting.  Thanks to Michal @kozak.
