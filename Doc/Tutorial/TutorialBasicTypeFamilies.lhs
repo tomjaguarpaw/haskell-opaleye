@@ -21,7 +21,7 @@
 >                          showSql, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
-> import qualified Opaleye              as O
+> import qualified Opaleye.Join         as OJ
 > import qualified Opaleye.Map          as M
 > import           Opaleye.TypeFamilies (O, H, NN, Req, Nulls, W,
 >                                        TableRecordField, IMap, F,
@@ -350,13 +350,11 @@ Idealized SQL:
 Types of joins are inferrable in new versions of Opaleye.  Here is a
 (rather silly) example.
 
-> typeInferred =
->     O.fullJoinInferrable (O.fullJoinInferrable
->                     birthdaySelect
->                     (selectTable widgetTable)
->                     (const (O.sqlBool True)))
->                birthdaySelect
->                (const (O.sqlBool True))
+> typeInferred = do
+>     bd  <- birthdaySelect
+>     w   <- OJ.optional (selectTable widgetTable)
+>     bd' <- OJ.optional birthdaySelect
+>     pure (bd, w, bd')
 
 Running queries on Postgres
 ===========================
