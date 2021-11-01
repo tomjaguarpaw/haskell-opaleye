@@ -6,7 +6,6 @@ module Opaleye.RunSelect
   (-- * Running 'S.Select's
    runSelect,
    runSelectI,
-   runSelectTF,
    runSelectFold,
    -- * Cursor interface
    declareCursor,
@@ -25,7 +24,10 @@ module Opaleye.RunSelect
    IRQ.DefaultFromField(defaultFromField),
    -- * Helper functions
    IRQ.fromPGSFromField,
-   IRQ.fromPGSFieldParser) where
+   IRQ.fromPGSFieldParser,
+   -- * Deprecated
+   runSelectTF,
+   ) where
 
 import qualified Data.Profunctor            as P
 import qualified Database.PostgreSQL.Simple as PGS
@@ -66,8 +68,7 @@ runSelect :: D.Default FromFields fields haskells
           -> IO [haskells]
 runSelect = RQ.runQuery
 
--- | 'runSelectTF' has better type inference than 'runSelect' but only
--- works with "higher-kinded data" types.
+-- | Will be deprecated in 0.8.  Use 'runSelectI' instead.
 runSelectTF :: D.Default FromFields (rec TF.O) (rec TF.H)
             => PGS.Connection
             -- ^

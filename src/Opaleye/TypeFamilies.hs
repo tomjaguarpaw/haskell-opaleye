@@ -1,3 +1,5 @@
+-- | Will be deprecated in 0.8.
+
 module Opaleye.TypeFamilies
   ( TF.TableRecordField
   , TF.RecordField
