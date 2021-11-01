@@ -17,6 +17,7 @@ import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
+import           Data.Void (Void, absurd)
 
 import           Control.Applicative (Applicative, pure, (<*>))
 
@@ -130,16 +131,11 @@ nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
                               (HPQ.ConstExpr HPQ.NullLit)
 
 -- Implementing this in terms of Valuesspec for convenience
-newtype Nullspec fields fields' = Nullspec (Valuesspec fields fields')
+newtype Nullspec fields fields' = Nullspec (Valuesspec Void fields')
 
 nullspecField :: Opaleye.SqlTypes.IsSqlType b
               => Nullspec a (Column b)
-nullspecField = Nullspec (lmap e valuesspecField)
-  where e = error (concat [ "We looked at the argument of a Nullspec when we "
-                          , "expected that we never would!  This is a bug in "
-                          , "Opaleye.  Please report it, if you can reproduce "
-                          , "it."
-                          ])
+nullspecField = Nullspec (lmap absurd valuesspecField)
 
 nullspecList :: Nullspec a [b]
 nullspecList = pure []
@@ -203,7 +199,7 @@ instance Applicative (Nullspec a) where
   Nullspec f <*> Nullspec x = Nullspec (f <*> x)
 
 instance Profunctor Nullspec where
-  dimap f g (Nullspec q) = Nullspec (dimap f g q)
+  dimap _ g (Nullspec q) = Nullspec (fmap g q)
 
 instance ProductProfunctor Nullspec where
   purePP = pure
