@@ -35,10 +35,6 @@ newtype Unpackspec columns columns' =
   -- 'Profunctor', 'ProductProfunctor' and 'SumProfunctor' operations.
   Unpackspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
 
-{-# DEPRECATED unpackspecColumn "Use 'unpackspecField' instead.  Will be removed in version 0.8." #-}
-unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
-unpackspecColumn = Unpackspec (PM.iso IC.unColumn IC.Column)
-
 -- | Target the single 'HPQ.PrimExpr' inside a 'C.Column'
 unpackspecField :: Unpackspec (C.Column a) (C.Column a)
 unpackspecField = Unpackspec (PM.iso IC.unColumn IC.Column)

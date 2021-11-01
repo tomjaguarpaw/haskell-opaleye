@@ -27,14 +27,12 @@ import qualified Data.Profunctor.Product.Default as D
 
 -- * Running 'S.Select's
 
-{-# DEPRECATED runQuery "Use 'Opaleye.RunSelect.runSelect' instead.  @runQuery@ will be removed in 0.8." #-}
 runQuery :: D.Default IRQ.FromFields fields haskells
          => PGS.Connection
          -> S.Select fields
          -> IO [haskells]
 runQuery = runQueryExplicit D.def
 
-{-# DEPRECATED runQueryFold "Use 'Opaleye.RunSelect.runSelectFold' instead.  @runQueryFold@ will be removed in 0.8." #-}
 runQueryFold
   :: D.Default IRQ.FromFields fields haskells
   => PGS.Connection
@@ -46,7 +44,6 @@ runQueryFold = runQueryFoldExplicit D.def
 
 -- * Creating new 'QueryRunnerColumn's
 
-{-# DEPRECATED queryRunnerColumn "Use 'Opaleye.RunSelect.unsafeFromField' instead. @queryRunnerColumn@ will be removed in 0.8." #-}
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
                   -> IRQ.FromField a b -> IRQ.FromField a' b'
 queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
@@ -56,7 +53,6 @@ queryRunnerColumn colF haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
 
 -- * Explicit versions
 
-{-# DEPRECATED runQueryExplicit "Use 'Opaleye.RunSelect.runSelectExplict' instead.  Will be removed in 0.8." #-}
 runQueryExplicit :: IRQ.FromFields fields haskells
                  -> PGS.Connection
                  -> S.Select fields
@@ -64,7 +60,6 @@ runQueryExplicit :: IRQ.FromFields fields haskells
 runQueryExplicit qr conn q = maybe (return []) (PGS.queryWith_ parser conn) sql
   where (sql, parser) = IRQ.prepareQuery qr q
 
-{-# DEPRECATED runQueryFoldExplicit "Use 'Opaleye.RunSelect.runSelectFoldExplict' instead.  Will be deprecated in 0.8." #-}
 runQueryFoldExplicit
   :: IRQ.FromFields fields haskells
   -> PGS.Connection
@@ -79,7 +74,6 @@ runQueryFoldExplicit qr conn q z f = case sql of
 
 -- * Cursor interface
 
-{-# DEPRECATED declareCursor "Use 'Opaleye.RunSelect.declareCursor' instead.  Will be removed in 0.8." #-}
 declareCursor
     :: D.Default IRQ.FromFields fields haskells
     => PGS.Connection
@@ -87,7 +81,6 @@ declareCursor
     -> IO (IRQ.Cursor haskells)
 declareCursor = declareCursorExplicit D.def
 
-{-# DEPRECATED declareCursorExplicit "Use 'Opaleye.RunSelect.declareCursorExplicit' instead.  Will be removed in 0.8." #-}
 declareCursorExplicit
     :: IRQ.FromFields fields haskells
     -> PGS.Connection
@@ -100,12 +93,10 @@ declareCursorExplicit qr conn q =
   where
     (mbQuery, rowParser) = prepareQuery qr q
 
-{-# DEPRECATED closeCursor "Use 'Opaleye.RunSelect.closeCursor' instead.  Will be removed in 0.8." #-}
 closeCursor :: IRQ.Cursor fields -> IO ()
 closeCursor IRQ.EmptyCursor       = pure ()
 closeCursor (IRQ.Cursor _ cursor) = PGSC.closeCursor cursor
 
-{-# DEPRECATED foldForward "Use 'Opaleye.RunSelect.foldForward' instead.  Will be removed in 0.8." #-}
 foldForward
     :: IRQ.Cursor haskells
     -> Int

@@ -71,25 +71,14 @@ module Opaleye.Table (-- * Defining tables
                       -- * Selecting from tables
                       selectTable,
                       -- * Data types
-                      T.TableColumns,
                       TableFields,
                       -- * Explicit versions
                       selectTableExplicit,
-                      -- * Deprecated
-                      T.optional,
-                      T.readOnly,
-                      T.required,
-                      T.tableColumn,
-                      View,
-                      Writer,
-                      T.Table(T.Table, T.TableWithSchema),
-                      queryTable,
-                      queryTableExplicit) where
+                     ) where
 
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
-import           Opaleye.Internal.Table (View, Table, Writer,
-                                         TableFields)
+import           Opaleye.Internal.Table (Table, TableFields)
 
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
@@ -144,15 +133,3 @@ selectTableExplicit :: U.Unpackspec tablefields fields
 selectTableExplicit cm table' = Q.productQueryArr f where
   f ((), t0) = (retwires, primQ, Tag.next t0) where
     (retwires, primQ) = T.queryTable cm table' t0
-
--- * Deprecated versions
-
-{-# DEPRECATED queryTable "Use 'selectTable' instead.  Will be removed in version 0.8." #-}
-queryTable :: D.Default U.Unpackspec fields fields =>
-              Table a fields -> S.Select fields
-queryTable = selectTable
-
-{-# DEPRECATED queryTableExplicit "Use 'selectTableExplicit' instead.  Will be removed in version 0.8." #-}
-queryTableExplicit :: U.Unpackspec tablefields fields ->
-                     Table a tablefields -> S.Select fields
-queryTableExplicit = selectTableExplicit

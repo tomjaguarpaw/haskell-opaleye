@@ -56,14 +56,12 @@ module Opaleye.Operators
   , upper
   , like
   , ilike
-  , charLength
   , sqlLength
   -- * Containment operators
   , in_
   , inSelect
   -- * JSON operators
   , SqlIsJson
-  , PGIsJson
   , SqlJsonIndex
   , PGJsonIndex
   , (.->)
@@ -106,9 +104,6 @@ module Opaleye.Operators
   , addInterval
   , minusInterval
   -- * Deprecated
-  , exists
-  , notExists
-  , inQuery
   , keepWhen
   )
 
@@ -281,12 +276,6 @@ like = C.binOp HPQ.OpLike
 ilike :: F.Field T.SqlText -> F.Field T.SqlText -> F.Field T.SqlBool
 ilike = C.binOp HPQ.OpILike
 
--- {-# DEPRECATED charLength "You probably want to use 'sqlLength' instead" #-}
--- | Do not use.  Will be deprecated in 0.8.  You probably want to use
--- 'sqlLength' instead.
-charLength :: C.PGString a => Column a -> Column Int
-charLength (Column e) = Column (HPQ.FunExpr "char_length" [e])
-
 sqlLength :: C.PGString a => F.Field a -> F.Field T.SqlInt4
 sqlLength  (Column e) = Column (HPQ.FunExpr "length" [e])
 
@@ -313,9 +302,6 @@ inSelect c q = E.exists (keepWhen (c .===) A.<<< q)
 --
 -- Warning: making additional instances of this class can lead to broken code!
 class SqlIsJson a
-
-{-# DEPRECATED PGIsJson "Use SqlIsJson instead" #-}
-type PGIsJson = SqlIsJson
 
 instance SqlIsJson T.SqlJson
 instance SqlIsJson T.SqlJsonb
@@ -494,19 +480,6 @@ addInterval = C.binOp (HPQ.:+)
 
 minusInterval :: IntervalNum from to => F.Field from -> F.Field T.SqlInterval -> F.Field to
 minusInterval = C.binOp (HPQ.:-)
-
-{-# DEPRECATED exists "Identical to 'restrictExists'.  Will be removed in version 0.8." #-}
-exists :: QueryArr a b -> QueryArr a ()
-exists = restrictExists
-
-{-# DEPRECATED notExists "Identical to 'restrictNotExists'.  Will be removed in version 0.8." #-}
-notExists :: QueryArr a b -> QueryArr a ()
-notExists = restrictNotExists
-
-{-# DEPRECATED inQuery "Identical to 'inSelect'.  Will be removed in version 0.8." #-}
-inQuery :: D.Default O.EqPP fields fields
-        => fields -> Query fields -> S.Select (F.Field T.SqlBool)
-inQuery = inSelect
 
 {-| This function is probably not useful and is likely to be deprecated
   in the future.

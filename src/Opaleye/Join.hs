@@ -12,7 +12,6 @@ import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Join as J
 import qualified Opaleye.Internal.MaybeFields as M
 import qualified Opaleye.Internal.PrimQuery as PQ
-import qualified Opaleye.Internal.Map as Map
 import qualified Opaleye.Select   as S
 import qualified Opaleye.SqlTypes as T
 
@@ -253,53 +252,3 @@ optionalExplicit :: U.Unpackspec a a
                  -> S.SelectArr i a
                  -> S.SelectArr i (M.MaybeFields a)
 optionalExplicit _ = M.optional
-
--- * Inferrable versions (deprecated)
-
-{-# DEPRECATED leftJoinInferrable "Use 'optionalRestrict' instead." #-}
-leftJoinInferrable :: (D.Default U.Unpackspec fieldsL fieldsL,
-                       D.Default U.Unpackspec fieldsR fieldsR,
-                       D.Default J.NullMaker fieldsR nullableFieldsR,
-                       Map.Map J.Nulled fieldsR ~ nullableFieldsR)
-                   => S.Select fieldsL
-                   -- ^ Left query
-                   -> S.Select fieldsR
-                   -- ^ Right query
-                   -> ((fieldsL, fieldsR) -> F.Field T.SqlBool)
-                   -- ^ Condition on which to join
-                   -> S.Select (fieldsL, nullableFieldsR)
-                   -- ^ Left join
-leftJoinInferrable = leftJoin
-
-{-# DEPRECATED rightJoinInferrable "Use 'optionalRestrict' instead." #-}
-rightJoinInferrable :: (D.Default U.Unpackspec fieldsL fieldsL,
-                        D.Default U.Unpackspec fieldsR fieldsR,
-                        D.Default J.NullMaker fieldsL nullableFieldsL,
-                        Map.Map J.Nulled fieldsL ~ nullableFieldsL)
-                    => S.Select fieldsL
-                    -- ^ Left query
-                    -> S.Select fieldsR
-                    -- ^ Right query
-                    -> ((fieldsL, fieldsR) -> F.Field T.SqlBool)
-                    -- ^ Condition on which to join
-                    -> S.Select (nullableFieldsL, fieldsR)
-                    -- ^ Right join
-rightJoinInferrable = rightJoin
-
-
-{-# DEPRECATED fullJoinInferrable "Use 'Opaleye.FunctionalJoin.rightJoinF' instead." #-}
-fullJoinInferrable  :: (D.Default U.Unpackspec fieldsL fieldsL,
-                        D.Default U.Unpackspec fieldsR fieldsR,
-                        D.Default J.NullMaker fieldsL nullableFieldsL,
-                        D.Default J.NullMaker fieldsR nullableFieldsR,
-                        Map.Map J.Nulled fieldsL ~ nullableFieldsL,
-                        Map.Map J.Nulled fieldsR ~ nullableFieldsR)
-                    => S.Select fieldsL
-                    -- ^ Left query
-                    -> S.Select fieldsR
-                    -- ^ Right query
-                    -> ((fieldsL, fieldsR) -> F.Field T.SqlBool)
-                    -- ^ Condition on which to join
-                    -> S.Select (nullableFieldsL, nullableFieldsR)
-                    -- ^ Full outer join
-fullJoinInferrable = fullJoin

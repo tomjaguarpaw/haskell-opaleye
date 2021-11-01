@@ -75,9 +75,6 @@ type instance A ('H NullsT) ('TC '(t, b)) = A ('H NullsT) ('C t)
 type RecordField f a b c = A f ('C '(a, b, c))
 type TableRecordField f a b c d = A f ('TC '( '(a, b, c), d))
 
-{-# DEPRECATED TableField "Use 'TableRecordField' instead.  Will be remoed in version 0.8." #-}
-type TableField f a b c d = TableRecordField f a b c d
-
 -- | Type families parameter for Haskell types ('String', 'Int', etc.)
 type H = 'H HT
 -- | Type families parameter for Opaleye types ('Opaleye.Field.Field'

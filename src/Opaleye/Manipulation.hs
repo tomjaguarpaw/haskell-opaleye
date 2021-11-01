@@ -22,7 +22,19 @@
 --    (SELECT num FROM thetable ORDER BY num DESC LIMIT 1) + 1;
 -- @
 
-module Opaleye.Manipulation (module Opaleye.Manipulation,
+module Opaleye.Manipulation (-- * Run a manipulation
+                             runInsert_,
+                             runUpdate_,
+                             runDelete_,
+                             Insert(..),
+                             Update(..),
+                             updateEasy,
+                             Delete(..),
+                             -- * Returning
+                             rCount,
+                             rReturning,
+                             rReturningI,
+                             rReturningExplicit,
                              -- | Currently 'HSql.DoNothing' is the
                              -- only conflict action supported by
                              -- Opaleye.
@@ -191,7 +203,6 @@ rReturningExplicit = MI.ReturningExplicit
 -- * Deprecated versions
 
 -- | Insert rows into a table with @ON CONFLICT DO NOTHING@
-{-# DEPRECATED runInsertManyOnConflictDoNothing "Use 'runInsert_'.  Will be removed in version 0.8." #-}
 runInsertManyOnConflictDoNothing :: PGS.Connection
                                  -- ^
                                  -> T.Table columns columns'
@@ -207,30 +218,6 @@ runInsertManyOnConflictDoNothing conn table_ columns =
     Just columns' -> (PGS.execute_ conn . fromString .:. MI.arrangeInsertManySql)
                          table_ columns' (Just HSql.DoNothing)
 
--- | Insert rows into a table with @ON CONFLICT DO NOTHING@ and
--- return a function of the inserted rows
---
--- @runInsertManyReturningOnConflictDoNothing@'s use of the
--- 'D.Default' typeclass means that the compiler will have trouble
--- inferring types.  It is strongly recommended that you provide full
--- type signatures when using it.
-{-# DEPRECATED runInsertManyReturningOnConflictDoNothing "Use 'runInsert_'. Will be removed in version 0.8." #-}
-runInsertManyReturningOnConflictDoNothing
-  :: (D.Default RS.FromFields columnsReturned haskells)
-  => PGS.Connection
-  -- ^
-  -> T.Table columnsW columnsR
-  -- ^ Table to insert into
-  -> [columnsW]
-  -- ^ Rows to insert
-  -> (columnsR -> columnsReturned)
-  -- ^ Function @f@ to apply to the inserted rows
-  -> IO [haskells]
-  -- ^ Returned rows after @f@ has been applied
-runInsertManyReturningOnConflictDoNothing =
-  runInsertManyReturningOnConflictDoNothingExplicit D.def
-
-{-# DEPRECATED runInsertMany "Use 'runInsert_' instead.   Will be removed in version 0.8." #-}
 runInsertMany :: PGS.Connection
               -- ^
               -> T.Table columns columns'
@@ -244,66 +231,6 @@ runInsertMany conn t columns = case NEL.nonEmpty columns of
   Nothing       -> return 0
   Just columns' -> (PGS.execute_ conn . fromString .: MI.arrangeInsertManySqlI) t columns'
 
-{-# DEPRECATED runInsertManyReturning "Use 'runInsert_' instead.   Will be removed in version 0.8." #-}
-runInsertManyReturning :: (D.Default RS.FromFields columnsReturned haskells)
-                       => PGS.Connection
-                       -- ^
-                       -> T.Table columnsW columnsR
-                       -- ^ Table to insert into
-                       -> [columnsW]
-                       -- ^ Rows to insert
-                       -> (columnsR -> columnsReturned)
-                       -- ^ Function @f@ to apply to the inserted rows
-                       -> IO [haskells]
-                       -- ^ Returned rows after @f@ has been applied
-runInsertManyReturning = runInsertManyReturningExplicit D.def
-
-{-# DEPRECATED runInsertReturningExplicit "Use 'runInsert_' instead. Will be removed in version 0.8." #-}
-runInsertReturningExplicit :: RS.FromFields columnsReturned haskells
-                           -> PGS.Connection
-                           -> T.Table columnsW columnsR
-                           -> columnsW
-                           -> (columnsR -> columnsReturned)
-                           -> IO [haskells]
-runInsertReturningExplicit = MI.runInsertReturningExplicit
-
-{-# DEPRECATED runInsertManyReturningExplicit "Use 'runInsert_' instead.  Will be removed in version 0.8." #-}
-runInsertManyReturningExplicit :: RS.FromFields columnsReturned haskells
-                               -> PGS.Connection
-                               -> T.Table columnsW columnsR
-                               -> [columnsW]
-                               -> (columnsR -> columnsReturned)
-                               -> IO [haskells]
-runInsertManyReturningExplicit = MI.runInsertManyReturningExplicitI
-
-{-# DEPRECATED runInsertManyReturningOnConflictDoNothingExplicit "Use 'runInsert_' instead.  Will be removed in version 0.8." #-}
-runInsertManyReturningOnConflictDoNothingExplicit
-  :: RS.FromFields columnsReturned haskells
-  -> PGS.Connection
-  -> T.Table columnsW columnsR
-  -> [columnsW]
-  -> (columnsR -> columnsReturned)
-  -> IO [haskells]
-runInsertManyReturningOnConflictDoNothingExplicit qr conn t columns f =
-  MI.runInsertManyReturningExplicit qr conn t columns f (Just HSql.DoNothing)
-
-{-# DEPRECATED runUpdateEasy "Use 'runUpdate_' instead.  Will be removed in version 0.8." #-}
-runUpdateEasy :: D.Default Updater columnsR columnsW
-              => PGS.Connection
-              -> T.Table columnsW columnsR
-              -- ^ Table to update
-              -> (columnsR -> columnsR)
-              -- ^ Update function to apply to chosen rows
-              -> (columnsR -> Column SqlBool)
-              -- ^ Predicate function @f@ to choose which rows to update.
-              -- 'runUpdate' will update rows for which @f@ returns @TRUE@
-              -- and leave unchanged rows for which @f@ returns @FALSE@.
-              -> IO Int64
-              -- ^ The number of rows updated
-runUpdateEasy conn table_ u = runUpdate conn table_ (u' . u)
-  where Updater u' = D.def
-
-{-# DEPRECATED runUpdate "Use 'runUpdate_' instead.  Will be removed in version 0.8." #-}
 runUpdate :: PGS.Connection
           -> T.Table columnsW columnsR
           -- ^ Table to update
@@ -317,26 +244,6 @@ runUpdate :: PGS.Connection
           -- ^ The number of rows updated
 runUpdate conn = PGS.execute_ conn . fromString .:. MI.arrangeUpdateSql
 
-{-# DEPRECATED runUpdateReturning "Use 'runUpdate_' instead.  Will be removed in version 0.8." #-}
-runUpdateReturning :: (D.Default RS.FromFields columnsReturned haskells)
-                   => PGS.Connection
-                   -- ^
-                   -> T.Table columnsW columnsR
-                   -- ^ Table to update
-                   -> (columnsR -> columnsW)
-                   -- ^ Update function to apply to chosen rows
-                   -> (columnsR -> Column SqlBool)
-                   -- ^ Predicate function @f@ to choose which rows to
-                   -- update.  'runUpdate' will update rows for which
-                   -- @f@ returns @TRUE@ and leave unchanged rows for
-                   -- which @f@ returns @FALSE@.
-                   -> (columnsR -> columnsReturned)
-                   -- ^ Functon @g@ to apply to the updated rows
-                   -> IO [haskells]
-                   -- ^ Returned rows after @g@ has been applied
-runUpdateReturning = runUpdateReturningExplicit D.def
-
-{-# DEPRECATED runUpdateReturningExplicit "Use 'runUpdate_' instead.  Will be removed in version 0.8." #-}
 runUpdateReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
                            -> T.Table columnsW columnsR
@@ -351,7 +258,6 @@ runUpdateReturningExplicit qr conn t update cond r =
         parser = IRQ.prepareRowParser qr (r v)
         TI.View v = TI.tableColumnsView (TI.tableColumns t)
 
-{-# DEPRECATED runDelete "Use 'runDelete_' instead.  Will be removed in version 0.8." #-}
 runDelete :: PGS.Connection
           -- ^
           -> T.Table a columnsR

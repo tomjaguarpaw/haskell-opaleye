@@ -29,8 +29,6 @@ module Opaleye ( module Opaleye.Adaptors
                , module Opaleye.Operators
                , module Opaleye.Order
                , module Opaleye.Internal.PGTypesExternal
-               , module Opaleye.QueryArr
-               , module Opaleye.RunQuery
                , module Opaleye.RunSelect
                , module Opaleye.Sql
                , module Opaleye.Select
@@ -65,8 +63,6 @@ import Opaleye.MaybeFields
 import Opaleye.Operators
 import Opaleye.Order
 import Opaleye.Internal.PGTypesExternal
-import Opaleye.QueryArr
-import Opaleye.RunQuery
 import Opaleye.RunSelect
   hiding (foldForward,
           closeCursor,

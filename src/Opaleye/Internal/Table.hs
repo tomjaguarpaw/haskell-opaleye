@@ -48,17 +48,9 @@ import qualified Control.Arrow as Arr
 --                                      , quantity = tableField \"quantity\"
 --                                      , radius   = tableField \"radius\" })
 -- @
---
--- The constructors of Table are internal only and will be
--- removed in version 0.8.
 data Table writeFields viewFields
   = Table String (TableFields writeFields viewFields)
-    -- ^ For unqualified table names. Do not use the constructor.  It
-    -- is considered deprecated and will be removed in version 0.8.
   | TableWithSchema String String (TableFields writeFields viewFields)
-    -- ^ Schema name, table name, table properties.  Do not use the
-    -- constructor.  It is considered deprecated and will be removed
-    -- in version 0.8.
 
 tableIdentifier :: Table writeColumns viewColumns -> PQ.TableIdentifier
 tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
@@ -76,12 +68,6 @@ data TableFields writeColumns viewColumns = TableFields
    { tablePropertiesWriter :: Writer writeColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
 
-{-# DEPRECATED TableColumns "Use 'TableFields' instead. 'TableColumns' will be removed in  version 0.8." #-}
-type TableColumns = TableFields
-
-{-# DEPRECATED TableProperties "Use 'TableFields' instead. 'TableProperties' will be removed in  version 0.8." #-}
-type TableProperties = TableFields
-
 tableColumnsWriter :: TableFields writeColumns viewColumns
                    -> Writer writeColumns viewColumns
 tableColumnsWriter = tablePropertiesWriter
@@ -90,10 +76,7 @@ tableColumnsView :: TableFields writeColumns viewColumns
                  -> View viewColumns
 tableColumnsView = tablePropertiesView
 
-{-# DEPRECATED View "Internal only.  Do not use.  'View' will be removed in version 0.8." #-}
 newtype View columns = View columns
-
-{-# DEPRECATED Writer "Internal only.  Do not use.  'Writer' will be removed in 0.8." #-}
 
 -- There's no reason the second parameter should exist except that we
 -- use ProductProfunctors more than ProductContravariants so it makes
@@ -128,23 +111,7 @@ optionalTableField columnName = TableFields
 readOnlyTableField :: String -> TableFields () (Column a)
 readOnlyTableField = lmap (const Nothing) . optionalTableField
 
-{-# DEPRECATED required  "Use 'requiredTableField' instead.  Will be removed in version 0.8." #-}
-required :: String -> TableFields (Column a) (Column a)
-required = requiredTableField
-
-{-# DEPRECATED optional "Use 'optionalTableField' instead.  Will be removed in version 0.8." #-}
-optional :: String -> TableFields (Maybe (Column a)) (Column a)
-optional = optionalTableField
-
-{-# DEPRECATED readOnly "Use 'readOnlyTableField' instead.  Will be removed in version 0.8." #-}
-readOnly :: String -> TableFields () (Column a)
-readOnly = readOnlyTableField
-
-{-# DEPRECATED tableColumn "Use 'tableField' instead.  Will be removed in 0.8." #-}
-
 class TableColumn writeType sqlType | writeType -> sqlType where
-    tableColumn :: String -> TableFields writeType (Column sqlType)
-    tableColumn = tableField
     -- | Infer either a required ('requiredTableField') or optional
     -- ('optionalTableField') field depending on
     -- the write type.  It's generally more convenient to use this

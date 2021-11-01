@@ -1,3 +1,24 @@
+## 0.8.0.0
+
+* Removed the following deprecated functions, types and modules
+
+  * `Opaleye.Query`, `Query`, `QueryArr`, `queryRunnerColumnDefault`
+  * `Opaleye.RunQuery`, `runQuery`, `runQueryFold`,
+    `queryRunnerColumn`
+  * `Opaleye.Constant`, `constant`
+  * The `Table` and `TableWithSchema` constructors
+  * `View`, `Writer`, `required`, `optional`, `readOnly`,
+    `tableColumn`, `queryTable`
+  * `Nulled`, `leftJoinInferrable`, `rightJoinInferrable`, `fullJoinInferrable`
+  * `unpackspecColumn`
+  * `TableField`
+  * `runInsertManyReturningOnConflictDoNothing`,
+    `runInsertManyReturning`, `runUpdateEasy`, `runUpdateReturning`,
+    `runDelete`
+  * `charLength`, `exists`, `notExists`, `inQuery`
+  * `PGIsJson`, `PGOrd`, `PG<typename>`
+  * `showSqlForPostgres`, `showSqlForPostgresUnopt`
+
 ## 0.7.6.2
 
 Fix ISO 8601 date fomatting.  Thanks to Michal @kozak.

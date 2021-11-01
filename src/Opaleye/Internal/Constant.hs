@@ -31,16 +31,8 @@ toFields :: D.Default ToFields haskells fields
          => haskells -> fields
 toFields = constantExplicit D.def
 
-{-# DEPRECATED constant "Use 'toFields' instead.  Will be removed in version 0.8." #-}
-constant :: D.Default ToFields haskells fields
-         => haskells -> fields
-constant = constantExplicit D.def
-
 newtype ToFields haskells fields =
   ToFields { constantExplicit :: haskells -> fields }
-
-{-# DEPRECATED Constant "Use 'ToFields' instead.  Will be removed in version 0.8." #-}
-type Constant = ToFields
 
 instance D.Default ToFields haskell (Column sql)
          => D.Default ToFields (Maybe haskell) (Column (C.Nullable sql)) where

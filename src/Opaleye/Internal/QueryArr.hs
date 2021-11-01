@@ -63,11 +63,6 @@ leftJoinQueryArr f = QueryArr g
   where g (a0, t0) = (a1, \lat primQueryL ->
                             PQ.Join PQ.LeftJoin cond (PQ.NonLateral, primQueryL) (lat, primQuery'), t1)
           where (a1, cond, primQuery', t1) = f (a0, t0)
-
-{-# DEPRECATED simpleQueryArr "Use 'productQueryArr' instead. Its name indicates better what it actually does" #-}
-simpleQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
-simpleQueryArr = productQueryArr
-
 mapPrimQuery :: (PQ.PrimQuery -> PQ.PrimQuery) -> SelectArr a b -> SelectArr a b
 mapPrimQuery f sa =
   QueryArr ((\(b, pqf, t) -> (b, \lat -> f . pqf lat, t)) . runQueryArr sa)
