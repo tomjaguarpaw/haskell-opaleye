@@ -118,10 +118,10 @@ runDelete_ conn i = case i of
   Delete table_ where_ returning_ ->
     let delete = case returning_ of
           MI.Count ->
-            \c -> PGS.execute_ c . fromString .: MI.arrangeDeleteSql
+            PGS.execute_ conn (fromString (MI.arrangeDeleteSql table_ where_))
           MI.ReturningExplicit qr f ->
-            \c t w -> MI.runDeleteReturningExplicit qr c t w f
-    in delete conn table_ where_
+            MI.runDeleteReturningExplicit qr conn table_ where_ f
+    in delete
 
 -- * Create a manipulation
 
