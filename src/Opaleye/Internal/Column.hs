@@ -10,7 +10,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 -- @SqlInt4@ is an @int4@ column and a 'Column' @SqlText@ is a @text@
 -- column.
 --
--- The name @Column@ will be replaced by @Field@ in version 0.8.
+-- The name @Column@ will be replaced by @Field@ in version 0.9.
 -- There already exists a @Field@ type family to help smooth the
 -- transition.  We recommend that you use @Field_@, @Field@ or
 -- @FieldNullable@ instead of @Column@ everywhere that it is
