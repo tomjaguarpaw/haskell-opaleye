@@ -118,7 +118,7 @@ runDelete_ conn i = case i of
   Delete table_ where_ returning_ ->
     let delete = case returning_ of
           MI.Count ->
-            runDelete
+            \c -> PGS.execute_ c . fromString .: MI.arrangeDeleteSql
           MI.ReturningExplicit qr f ->
             \c t w -> MI.runDeleteReturningExplicit qr c t w f
     in delete conn table_ where_
@@ -261,15 +261,3 @@ runUpdateReturningExplicit qr conn t update cond r =
   where IRQ.QueryRunner u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
         TI.View v = TI.tableColumnsView (TI.tableColumns t)
-
-runDelete :: PGS.Connection
-          -- ^
-          -> T.Table a columnsR
-          -- ^ Table to delete rows from
-          -> (columnsR -> Column SqlBool)
-          -- ^ Predicate function @f@ to choose which rows to delete.
-          -- 'runDelete' will delete rows for which @f@ returns @TRUE@
-          -- and leave unchanged rows for which @f@ returns @FALSE@.
-          -> IO Int64
-          -- ^ The number of rows deleted
-runDelete conn = PGS.execute_ conn . fromString .: MI.arrangeDeleteSql
