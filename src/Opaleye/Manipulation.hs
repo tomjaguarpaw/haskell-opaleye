@@ -23,14 +23,14 @@
 -- @
 
 module Opaleye.Manipulation (-- * Insert
-                             runInsert_,
+                             runInsert,
                              Insert(..),
                              -- * Update
-                             runUpdate_,
+                             runUpdate,
                              Update(..),
                              updateEasy,
                              -- * Delete
-                             runDelete_,
+                             runDelete,
                              Delete(..),
                              -- * Returning
                              MI.Returning,
@@ -42,7 +42,12 @@ module Opaleye.Manipulation (-- * Insert
                              -- | Currently 'HSql.DoNothing' is the
                              -- only conflict action supported by
                              -- Opaleye.
-                             HSql.OnConflict(..)) where
+                             HSql.OnConflict(..),
+                             -- * Deprecated
+                             runInsert_,
+                             runUpdate_,
+                             runDelete_,
+                             ) where
 
 import qualified Opaleye.Field        as F
 import qualified Opaleye.RunSelect as RS
@@ -70,14 +75,14 @@ import qualified Data.List.NonEmpty as NEL
 
 -- | Run the 'Insert'.  To create an 'Insert' use the 'Insert'
 -- constructor.
-runInsert_ :: PGS.Connection
+runInsert  :: PGS.Connection
            -- ^
            -> Insert haskells
            -- ^
            -> IO haskells
            -- ^ Returns a type that depends on the 'MI.Returning' that
            -- you provided when creating the 'Insert'.
-runInsert_ conn i = case i of
+runInsert conn i = case i of
   Insert table_ rows_ returning_ onConflict_ ->
     let insert = case (returning_, onConflict_) of
           (MI.Count, Nothing) ->
@@ -88,36 +93,54 @@ runInsert_ conn i = case i of
             \c t r -> MI.runInsertManyReturningExplicit qr c t r f oc
     in insert conn table_ rows_
 
+-- | Use 'runInsert' instead.  Will be deprecated in 0.9.
+runInsert_ :: PGS.Connection
+           -> Insert haskells
+           -> IO haskells
+runInsert_ = runInsert
+
 -- | Run the 'Update'.  To create an 'Update' use the 'Update'
 -- constructor.
-runUpdate_ :: PGS.Connection
+runUpdate  :: PGS.Connection
            -- ^
            -> Update haskells
            -- ^
            -> IO haskells
            -- ^ Returns a type that depends on the 'MI.Returning' that
            -- you provided when creating the 'Update'.
-runUpdate_ conn i = case i of
+runUpdate  conn i = case i of
   Update table_ updateWith_ where_ returning_ -> case returning_ of
           MI.Count ->
             PGS.execute_ conn (fromString (MI.arrangeUpdateSql table_ updateWith_ where_))
           MI.ReturningExplicit qr f ->
             runUpdateReturningExplicit qr conn table_ updateWith_ where_ f
 
+-- | Use 'runUpdate' instead.  Will be deprecated in 0.9.
+runUpdate_ :: PGS.Connection
+           -> Update haskells
+           -> IO haskells
+runUpdate_ = runUpdate
+
 -- | Run the 'Delete'.  To create an 'Delete' use the 'Delete'
 -- constructor.
-runDelete_ :: PGS.Connection
+runDelete  :: PGS.Connection
            -- ^
            -> Delete haskells
            -> IO haskells
            -- ^ Returns a type that depends on the 'MI.Returning' that
            -- you provided when creating the 'Delete'.
-runDelete_ conn i = case i of
+runDelete conn i = case i of
   Delete table_ where_ returning_ -> case returning_ of
           MI.Count ->
             PGS.execute_ conn (fromString (MI.arrangeDeleteSql table_ where_))
           MI.ReturningExplicit qr f ->
             MI.runDeleteReturningExplicit qr conn table_ where_ f
+
+-- | Use 'runDelete' instead.  Will be deprecated in 0.9.
+runDelete_ :: PGS.Connection
+           -> Delete haskells
+           -> IO haskells
+runDelete_ = runDelete
 
 -- * Create a manipulation
 
