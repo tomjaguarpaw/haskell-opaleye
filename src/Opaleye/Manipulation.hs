@@ -42,11 +42,17 @@ module Opaleye.Manipulation (-- * Insert
                              -- | Currently 'HSql.DoNothing' is the
                              -- only conflict action supported by
                              -- Opaleye.
-                             HSql.OnConflict(..),
+                             HSql.OnConflict,
+                             doNothing,
                              -- * Deprecated
                              runInsert_,
                              runUpdate_,
                              runDelete_,
+                             -- ** @DoNothing@
+                             -- | Use 'doNothing' instead.
+                             -- @DoNothing@ will be deprecated in
+                             -- version 0.9.
+                             HSql.OnConflict(HSql.DoNothing),
                              ) where
 
 import qualified Opaleye.Field        as F
@@ -267,3 +273,6 @@ runUpdateReturningExplicit qr conn t update cond r =
   where IRQ.QueryRunner u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
         TI.View v = TI.tableColumnsView (TI.tableColumns t)
+
+doNothing :: HSql.OnConflict
+doNothing = HSql.DoNothing

@@ -895,11 +895,11 @@ testInsertConflict = it "inserts with conflicts" $ \conn -> do
   extras <- O.runInsert_ conn O.Insert { O.iTable = table10
                                        , O.iRows = conflictsT
                                        , O.iReturning = O.rReturning id
-                                       , O.iOnConflict = Just O.DoNothing }
+                                       , O.iOnConflict = Just O.doNothing }
   moreExtras <- O.runInsert_ conn O.Insert { O.iTable = table10
                                            , O.iRows = moreConflictsT
                                            , O.iReturning = O.rCount
-                                           , O.iOnConflict = Just O.DoNothing }
+                                           , O.iOnConflict = Just O.doNothing }
 
   returned `shouldBe` afterInsert
   extras `shouldBe` afterConflicts
