@@ -1,3 +1,7 @@
+## 0.7.6.1
+
+No user-visible changes
+
 ## 0.7.6.0
 
 * Added `matchMaybe`
