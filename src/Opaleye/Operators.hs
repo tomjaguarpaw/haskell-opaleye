@@ -120,7 +120,7 @@ import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.JSONBuildObjectFields as JBOF
 import           Opaleye.Internal.QueryArr (SelectArr(QueryArr),
-                                            Query, QueryArr, runSimpleQueryArr)
+                                            runSimpleQueryArr)
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Operators as O
 import           Opaleye.Internal.Helpers   ((.:))

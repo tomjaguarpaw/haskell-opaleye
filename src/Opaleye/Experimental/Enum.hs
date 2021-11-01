@@ -13,11 +13,9 @@ module Opaleye.Experimental.Enum
 
 import           Opaleye.Column (Column)
 import qualified Opaleye as O
-import qualified Opaleye.Internal.Inferrable as I
 import qualified Opaleye.Internal.RunQuery as RQ
 
 import           Data.ByteString.Char8 (unpack)
-import qualified Data.Profunctor.Product.Default as D
 import Text.PrettyPrint.HughesPJ ((<>), doubleQuotes, render, text)
 import Prelude hiding ((<>))
 
