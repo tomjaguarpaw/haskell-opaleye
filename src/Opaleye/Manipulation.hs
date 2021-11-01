@@ -22,13 +22,15 @@
 --    (SELECT num FROM thetable ORDER BY num DESC LIMIT 1) + 1;
 -- @
 
-module Opaleye.Manipulation (-- * Run a manipulation
+module Opaleye.Manipulation (-- * Insert
                              runInsert_,
-                             runUpdate_,
-                             runDelete_,
                              Insert(..),
+                             -- * Update
+                             runUpdate_,
                              Update(..),
                              updateEasy,
+                             -- * Delete
+                             runDelete_,
                              Delete(..),
                              -- * Returning
                              MI.Returning,
