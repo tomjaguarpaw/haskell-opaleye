@@ -62,10 +62,6 @@ import Opaleye.Operators
 import Opaleye.Order
 import Opaleye.Internal.PGTypesExternal
 import Opaleye.RunSelect
-  hiding (foldForward,
-          closeCursor,
-          declareCursor,
-          declareCursorExplicit)
 import Opaleye.Select
 import Opaleye.Sql
 import Opaleye.SqlTypes
