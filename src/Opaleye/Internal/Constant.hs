@@ -31,6 +31,8 @@ toFields :: D.Default ToFields haskells fields
          => haskells -> fields
 toFields = constantExplicit D.def
 
+-- | A way of turning Haskell values of type @haskells@ into SQL
+-- fields.  Use it with 'Opaleye.ToFields.toFields'.
 newtype ToFields haskells fields =
   ToFields { constantExplicit :: haskells -> fields }
 
