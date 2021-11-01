@@ -83,8 +83,6 @@ module Opaleye.SqlTypes (
   SqlBytea,
   -- * @IsSqlType@
   P.IsSqlType,
-  -- * Entire module
-  module Opaleye.SqlTypes,
   ) where
 
 import qualified Opaleye.Field   as F
