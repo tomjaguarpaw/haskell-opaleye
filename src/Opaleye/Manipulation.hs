@@ -101,7 +101,7 @@ runUpdate_ conn i = case i of
   Update table_ updateWith_ where_ returning_ ->
     let update = case returning_ of
           MI.Count ->
-            runUpdate
+            \c -> PGS.execute_ c . fromString .:. MI.arrangeUpdateSql
           MI.ReturningExplicit qr f ->
             \c t u w -> runUpdateReturningExplicit qr c t u w f
     in update conn table_ updateWith_ where_
@@ -232,19 +232,6 @@ runInsertMany conn t columns = case NEL.nonEmpty columns of
   -- Inserting the empty list is just the same as returning 0
   Nothing       -> return 0
   Just columns' -> (PGS.execute_ conn . fromString .: MI.arrangeInsertManySqlI) t columns'
-
-runUpdate :: PGS.Connection
-          -> T.Table columnsW columnsR
-          -- ^ Table to update
-          -> (columnsR -> columnsW)
-          -- ^ Update function to apply to chosen rows
-          -> (columnsR -> Column SqlBool)
-          -- ^ Predicate function @f@ to choose which rows to update.
-          -- 'runUpdate' will update rows for which @f@ returns @TRUE@
-          -- and leave unchanged rows for which @f@ returns @FALSE@.
-          -> IO Int64
-          -- ^ The number of rows updated
-runUpdate conn = PGS.execute_ conn . fromString .:. MI.arrangeUpdateSql
 
 runUpdateReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
