@@ -115,13 +115,11 @@ runDelete_ :: PGS.Connection
            -- ^ Returns a type that depends on the 'MI.Returning' that
            -- you provided when creating the 'Delete'.
 runDelete_ conn i = case i of
-  Delete table_ where_ returning_ ->
-    let delete = case returning_ of
+  Delete table_ where_ returning_ -> case returning_ of
           MI.Count ->
             PGS.execute_ conn (fromString (MI.arrangeDeleteSql table_ where_))
           MI.ReturningExplicit qr f ->
             MI.runDeleteReturningExplicit qr conn table_ where_ f
-    in delete
 
 -- * Create a manipulation
 
