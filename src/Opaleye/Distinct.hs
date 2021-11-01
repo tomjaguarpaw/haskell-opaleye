@@ -1,14 +1,17 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Opaleye.Distinct (distinct,
-                         distinctOnCorrect,
-                         distinctOnByCorrect,
+                         distinctOn,
+                         distinctOnBy,
                          Distinctspec,
                          -- * Explicit versions
                          distinctExplicit,
                          -- * Adaptors
                          distinctspecField,
                          distinctspecMaybeFields,
+                         -- * Deprecated
+                         distinctOnCorrect,
+                         distinctOnByCorrect,
                         )
        where
 
