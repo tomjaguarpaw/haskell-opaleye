@@ -1,6 +1,4 @@
--- | Will be deprecated in 0.8.
-
-module Opaleye.TypeFamilies
+module Opaleye.TypeFamilies {-# DEPRECATED "No longer supported" #-}
   ( TF.TableRecordField
   , TF.RecordField
   , (TF.:<*>)

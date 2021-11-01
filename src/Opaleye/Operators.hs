@@ -481,19 +481,7 @@ addInterval = C.binOp (HPQ.:+)
 minusInterval :: IntervalNum from to => F.Field from -> F.Field T.SqlInterval -> F.Field to
 minusInterval = C.binOp (HPQ.:-)
 
-{-| This function is probably not useful and is likely to be deprecated
-  in the future.
-
-Keep only the rows of a query satisfying a given condition, using
-an SQL @WHERE@ clause.
-
-You would typically use 'keepWhen' if you want to write
-your query using a "point free" style.  If you want to use 'A.Arrow'
-notation then 'restrict' will suit you better.
-
-This is the 'S.SelectArr' equivalent of 'Prelude.filter' from the
-'Prelude'.
--}
+{-# DEPRECATED keepWhen "Use 'where_' or 'restrict' instead.  Will be removed in version 0.9." #-}
 keepWhen :: (a -> F.Field T.SqlBool) -> S.SelectArr a a
 keepWhen p = proc a -> do
   restrict  -< p a

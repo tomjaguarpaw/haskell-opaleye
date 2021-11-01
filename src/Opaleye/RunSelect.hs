@@ -68,7 +68,7 @@ runSelect :: D.Default FromFields fields haskells
           -> IO [haskells]
 runSelect = RQ.runQuery
 
--- | Will be deprecated in 0.8.  Use 'runSelectI' instead.
+{-# DEPRECATED runSelectTF "Use 'runSelectI' instead." #-}
 runSelectTF :: D.Default FromFields (rec TF.O) (rec TF.H)
             => PGS.Connection
             -- ^

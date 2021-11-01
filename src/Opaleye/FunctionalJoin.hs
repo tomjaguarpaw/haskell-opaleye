@@ -30,8 +30,7 @@ import qualified Opaleye.Select                  as S
 import qualified Opaleye.SqlTypes                as T
 import qualified Opaleye.Operators               as O
 
--- | Use 'Opaleye.Operators.where_' and @do@ notation instead.  Will
--- be deprecated in 0.8.
+{-# DEPRECATED joinF "Use 'Opaleye.Operators.where_' and @do@ notation instead.  Will be removed in 0.9." #-}
 joinF :: (fieldsL -> fieldsR -> fieldsResult)
       -- ^ Calculate result fields from input fields
       -> (fieldsL -> fieldsR -> F.Field T.SqlBool)
@@ -44,7 +43,7 @@ joinF :: (fieldsL -> fieldsR -> fieldsResult)
 joinF f cond l r =
   fmap (uncurry f) (O.keepWhen (uncurry cond) <<< ((,) <$> l <*> r))
 
--- | Use 'Opaleye.Join.optional' instead.  Will be deprecated in 0.8.
+{-# DEPRECATED leftJoinF "Use 'Opaleye.Join.optional' instead.  Will be removed in 0.9." #-}
 leftJoinF :: (D.Default IO.IfPP fieldsResult fieldsResult,
               D.Default IU.Unpackspec fieldsL fieldsL,
               D.Default IU.Unpackspec fieldsR fieldsR)
@@ -76,7 +75,7 @@ leftJoinF f fL cond l r = fmap ret j
                                       (F.FieldNullable T.SqlBool)
         nullmakerBool = D.def
 
--- | Use 'Opaleye.Join.optional' instead.  Will be deprecated in 0.8.
+{-# DEPRECATED rightJoinF "Use 'Opaleye.Join.optional' instead.  Will be removed in 0.9." #-}
 rightJoinF :: (D.Default IO.IfPP fieldsResult fieldsResult,
                D.Default IU.Unpackspec fieldsL fieldsL,
                D.Default IU.Unpackspec fieldsR fieldsR)
