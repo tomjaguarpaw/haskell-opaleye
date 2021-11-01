@@ -32,9 +32,8 @@ import           Data.String                     (fromString)
 
 import qualified Database.PostgreSQL.Simple as PGS
 
--- | Don't use this internal datatype.  Instead you probably want
--- 'Opaleye.Manipulation.rCount' or 'Opaleye.Manipulation.rReturning'.
-data Returning a b where
+-- | Represents a @RETURNING@ statement for a manipulation query.
+data Returning fields haskells where
   Count
     :: Returning a Int64
   ReturningExplicit

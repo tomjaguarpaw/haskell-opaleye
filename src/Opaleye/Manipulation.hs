@@ -31,6 +31,7 @@ module Opaleye.Manipulation (-- * Run a manipulation
                              updateEasy,
                              Delete(..),
                              -- * Returning
+                             MI.Returning,
                              rCount,
                              rReturning,
                              rReturningI,
