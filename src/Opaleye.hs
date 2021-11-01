@@ -17,7 +17,6 @@ module Opaleye ( module Opaleye.Adaptors
                , module Opaleye.Aggregate
                , module Opaleye.Binary
                , module Opaleye.Column
-               , module Opaleye.Internal.Constant
                , module Opaleye.Distinct
                , module Opaleye.Field
                , module Opaleye.FunctionalJoin
@@ -28,7 +27,6 @@ module Opaleye ( module Opaleye.Adaptors
                , module Opaleye.MaybeFields
                , module Opaleye.Operators
                , module Opaleye.Order
-               , module Opaleye.Internal.PGTypesExternal
                , module Opaleye.RunSelect
                , module Opaleye.Sql
                , module Opaleye.Select
@@ -42,8 +40,6 @@ import Opaleye.Adaptors
 import Opaleye.Aggregate
 import Opaleye.Binary
 import Opaleye.Column
-import Opaleye.Internal.Constant
-  hiding (toFields)
 import Opaleye.Distinct
 import Opaleye.Field
   hiding (null,
@@ -60,7 +56,6 @@ import Opaleye.Manipulation
 import Opaleye.MaybeFields
 import Opaleye.Operators
 import Opaleye.Order
-import Opaleye.Internal.PGTypesExternal
 import Opaleye.RunSelect
 import Opaleye.Select
 import Opaleye.Sql
