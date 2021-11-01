@@ -11,14 +11,14 @@
 -- generate SQL of the form
 --
 -- @
--- INSERT INTO thetable ('John', 1);
+-- INSERT INTO thetable (\'John\', 1);
 -- @
 --
 -- but not
 --
 -- @
 -- INSERT INTO thetable
---    SELECT 'John',
+--    SELECT \'John\',
 --    (SELECT num FROM thetable ORDER BY num DESC LIMIT 1) + 1;
 -- @
 
