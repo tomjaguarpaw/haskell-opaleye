@@ -1,32 +1,31 @@
-{-# LANGUAGE EmptyDataDecls       #-}
-{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module Opaleye.Internal.PGTypesExternal
   (module Opaleye.Internal.PGTypesExternal, IsSqlType(..)) where
 
-import           Opaleye.Internal.Column                (Column)
-import qualified Opaleye.Internal.Column                as C
-import           Opaleye.Internal.PGTypes               (IsSqlType (..))
-import qualified Opaleye.Internal.PGTypes               as IPT
+import           Opaleye.Internal.Column (Column)
+import qualified Opaleye.Internal.Column as C
+import qualified Opaleye.Internal.PGTypes as IPT
+import           Opaleye.Internal.PGTypes (IsSqlType(..))
 
-import qualified Opaleye.Internal.HaskellDB.PrimQuery   as HPQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Sql.Default as HSD
 
-import qualified Data.Aeson                             as Ae
-import qualified Data.ByteString                        as SByteString
-import qualified Data.ByteString.Lazy                   as LByteString
-import qualified Data.CaseInsensitive                   as CI
-import           Data.Scientific                        as Sci
-import qualified Data.Text                              as SText
-import qualified Data.Text.Lazy                         as LText
-import qualified Data.Time.Compat                       as Time
-import qualified Data.Time.Format.ISO8601.Compat        as Time.Format.ISO8601
-import qualified Data.UUID                              as UUID
+import qualified Data.CaseInsensitive as CI
+import qualified Data.Aeson as Ae
+import qualified Data.Text as SText
+import qualified Data.Text.Lazy as LText
+import qualified Data.ByteString as SByteString
+import qualified Data.ByteString.Lazy as LByteString
+import           Data.Scientific as Sci
+import qualified Data.Time.Compat as Time
+import qualified Data.UUID as UUID
 
-import           Data.Int                               (Int64)
+import           Data.Int (Int64)
 
-import qualified Database.PostgreSQL.Simple.Range       as R
+import qualified Database.PostgreSQL.Simple.Range as R
 
 instance C.SqlNum SqlFloat8 where
   sqlFromInteger = pgDouble . fromInteger

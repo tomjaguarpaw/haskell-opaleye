@@ -2,24 +2,22 @@
 
 module Opaleye.Internal.PGTypes where
 
-import           Opaleye.Internal.Column              (Column (Column))
-import qualified Opaleye.Internal.Column              as C
+import           Opaleye.Internal.Column (Column(Column))
+import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-import qualified Data.ByteString                      as SByteString
-import qualified Data.ByteString.Lazy                 as LByteString
-import           Data.Proxy                           (Proxy (..))
-import qualified Data.Text                            as SText
-import qualified Data.Text.Encoding                   as STextEncoding
-import qualified Data.Text.Lazy                       as LText
-import qualified Data.Text.Lazy.Encoding              as LTextEncoding
-import qualified Data.Time.Format.ISO8601             as Time
+import           Data.Proxy (Proxy(..))
+import qualified Data.Text as SText
+import qualified Data.Text.Encoding as STextEncoding
+import qualified Data.Text.Lazy as LText
+import qualified Data.Text.Lazy.Encoding as LTextEncoding
+import qualified Data.ByteString as SByteString
+import qualified Data.ByteString.Lazy as LByteString
+import qualified Data.Time.Format.ISO8601 as Time
 
 unsafePgFormatTime :: Time.ISO8601 t => HPQ.Name -> t -> Column c
 unsafePgFormatTime typeName = castToType typeName . format
-    where
-      format  = quote . Time.iso8601Show
-      quote s = "'" ++ s ++ "'"
+  where format s = "'" ++ Time.iso8601Show s ++ "'"
 
 literalColumn :: forall a. IsSqlType a => HPQ.Literal -> Column a
 literalColumn = Column . HPQ.CastExpr (showSqlType (Proxy :: Proxy a)) . HPQ.ConstExpr

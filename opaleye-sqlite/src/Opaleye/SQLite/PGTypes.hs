@@ -2,22 +2,22 @@
 
 module Opaleye.SQLite.PGTypes (module Opaleye.SQLite.PGTypes) where
 
-import           Opaleye.SQLite.Internal.Column                (Column)
-import qualified Opaleye.SQLite.Internal.Column                as C
-import qualified Opaleye.SQLite.Internal.PGTypes               as IPT
+import           Opaleye.SQLite.Internal.Column (Column)
+import qualified Opaleye.SQLite.Internal.Column as C
+import qualified Opaleye.SQLite.Internal.PGTypes as IPT
 
-import qualified Opaleye.SQLite.Internal.HaskellDB.PrimQuery   as HPQ
+import qualified Opaleye.SQLite.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.SQLite.Internal.HaskellDB.Sql.Default as HSD (quote)
 
-import qualified Data.ByteString                               as SByteString
-import qualified Data.ByteString.Lazy                          as LByteString
-import qualified Data.CaseInsensitive                          as CI
-import qualified Data.Text                                     as SText
-import qualified Data.Text.Lazy                                as LText
-import qualified Data.Time                                     as Time
-import qualified Data.UUID                                     as UUID
+import qualified Data.CaseInsensitive as CI
+import qualified Data.Text as SText
+import qualified Data.Text.Lazy as LText
+import qualified Data.ByteString as SByteString
+import qualified Data.ByteString.Lazy as LByteString
+import qualified Data.Time as Time
+import qualified Data.UUID as UUID
 
-import           Data.Int                                      (Int64)
+import           Data.Int (Int64)
 
 data PGBool
 data PGDate
