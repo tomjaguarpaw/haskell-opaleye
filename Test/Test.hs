@@ -1249,7 +1249,7 @@ testLiterals = do
   it "sqlDouble" $ testLiteral O.sqlDouble 3.14
   it "sqlBool" $ testLiteral O.sqlBool True
   it "sqlUUID" $ testLiteral O.sqlUUID (read "c2cc10e1-57d6-4b6f-9899-38d972112d8c")
-  it "sqlDay" $ testLiteral O.sqlDay (Time.fromGregorian 2018 11 29)
+  it "sqlDay" $ testLiteral O.sqlDay exampleDate
   it "sqlUTCTime" $ testLiteral O.sqlUTCTime exampleUTCTime
   it "sqlLocalTime" $ testLiteral O.sqlLocalTime (Time.LocalTime exampleDate exampleTime)
 
