@@ -102,19 +102,19 @@ pgUUID :: UUID.UUID -> Column PGUuid
 pgUUID = IPT.literalColumn . HPQ.StringLit . UUID.toString
 
 pgDay :: Time.Day -> Column PGDate
-pgDay = IPT.unsafePgFormatTime "date" "'%0Y-%m-%d'"
+pgDay = IPT.unsafePgFormatTime "date"
 
 pgUTCTime :: Time.UTCTime -> Column PGTimestamptz
-pgUTCTime = IPT.unsafePgFormatTime "timestamptz" "'%0Y-%m-%dT%T%QZ'"
+pgUTCTime = IPT.unsafePgFormatTime "timestamptz"
 
 pgLocalTime :: Time.LocalTime -> Column PGTimestamp
-pgLocalTime = IPT.unsafePgFormatTime "timestamp" "'%0Y-%m-%dT%T%Q'"
+pgLocalTime = IPT.unsafePgFormatTime "timestamp"
 
 pgZonedTime :: Time.ZonedTime -> Column PGTimestamptz
-pgZonedTime = IPT.unsafePgFormatTime "timestamptz" "'%0Y-%m-%dT%T%Q%z'"
+pgZonedTime = IPT.unsafePgFormatTime "timestamptz"
 
 pgTimeOfDay :: Time.TimeOfDay -> Column PGTime
-pgTimeOfDay = IPT.unsafePgFormatTime "time" "'%T%Q'"
+pgTimeOfDay = IPT.unsafePgFormatTime "time"
 
 -- "We recommend not using the type time with time zone"
 -- http://www.postgresql.org/docs/8.3/static/datatype-datetime.html
