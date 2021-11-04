@@ -6,13 +6,11 @@
 module Main where
 
 import qualified Configuration.Dotenv             as Dotenv
-import qualified Connection
 import           Control.Applicative              ((<$>), (<*>), (<|>))
 import qualified Control.Applicative              as A
 import           Control.Arrow                    ((&&&), (***), (<<<), (>>>))
 import qualified Control.Arrow                    as Arr
 import qualified Data.Aeson                       as Json
-import qualified Data.ByteString                  as SBS
 import qualified Data.Function                    as F
 import qualified Data.List                        as L
 import           Data.Monoid                      ((<>))
@@ -21,9 +19,10 @@ import qualified Data.Profunctor                  as P
 import qualified Data.Profunctor.Product          as PP
 import qualified Data.Profunctor.Product.Default  as D
 import qualified Data.String                      as String
+import qualified Data.ByteString                  as SBS
 import qualified Data.Text                        as T
-import qualified Data.Time.Clock.POSIX.Compat     as Time
 import qualified Data.Time.Compat                 as Time
+import qualified Data.Time.Clock.POSIX.Compat     as Time
 import qualified Database.PostgreSQL.Simple       as PGS
 import qualified Database.PostgreSQL.Simple.Range as R
 import           GHC.Int                          (Int64)
@@ -31,15 +30,16 @@ import           Opaleye                          (Field, Nullable, Select,
                                                    SelectArr, (.==), (.>))
 import qualified Opaleye                          as O
 import qualified Opaleye.Internal.Aggregate       as IA
-import           Opaleye.Internal.Locking         as OL
-import           Opaleye.Internal.MaybeFields     as OM
 import           Opaleye.Internal.RunQuery        (DefaultFromField)
+import           Opaleye.Internal.MaybeFields     as OM
+import           Opaleye.Internal.Locking         as OL
+import qualified Connection
 import qualified QuickCheck
 import           System.Environment               (lookupEnv)
 import           Test.Hspec
 import qualified TypeFamilies                     ()
 
-import           Opaleye.Manipulation             (Delete (Delete))
+import Opaleye.Manipulation (Delete (Delete))
 
 {-
 
