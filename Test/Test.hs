@@ -1238,6 +1238,9 @@ jsonTests t = do
 testLiterals :: Test
 testLiterals = do
   let testLiteral fn value = testH (pure (fn value)) (`shouldBe` [value])
+      exampleDate = Time.fromGregorian 2018 11 29
+      exampleTime = Time.TimeOfDay 11 22 33
+      exampleUTCTime = Time.UTCTime exampleDate (Time.sinceMidnight exampleTime)
   it "sqlString" $ testLiteral O.sqlString "Hello"
   it "sqlLazyByteString" $ testLiteral O.sqlLazyByteString "Hello"
   it "sqlNumeric" $ testLiteral O.sqlNumeric 3.14159
@@ -1246,13 +1249,13 @@ testLiterals = do
   it "sqlDouble" $ testLiteral O.sqlDouble 3.14
   it "sqlBool" $ testLiteral O.sqlBool True
   it "sqlUUID" $ testLiteral O.sqlUUID (read "c2cc10e1-57d6-4b6f-9899-38d972112d8c")
-  it "sqlDay" $ testLiteral O.sqlDay (read "2018-11-29")
-  it "sqlUTCTime" $ testLiteral O.sqlUTCTime (read "2018-11-29 11:22:33 UTC")
-  it "sqlLocalTime" $ testLiteral O.sqlLocalTime (read "2018-11-29 11:22:33")
+  it "sqlDay" $ testLiteral O.sqlDay (Time.fromGregorian 2018 11 29)
+  it "sqlUTCTime" $ testLiteral O.sqlUTCTime exampleUTCTime
+  it "sqlLocalTime" $ testLiteral O.sqlLocalTime (Time.LocalTime exampleDate exampleTime)
 
   -- ZonedTime has no Eq instance, so we compare on the result of 'zonedTimeToUTC'
   it "sqlZonedTime" $
-    let value = read "2018-11-29 11:22:33 UTC" :: Time.ZonedTime in
+    let value = Time.utcToZonedTime Time.utc exampleUTCTime in
     testH (pure (O.sqlZonedTime value))
           (\r -> map Time.zonedTimeToUTC r `shouldBe` [Time.zonedTimeToUTC value])
 
