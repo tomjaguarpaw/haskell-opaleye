@@ -102,27 +102,25 @@ pgUUID :: UUID.UUID -> Column PGUuid
 pgUUID = IPT.literalColumn . HPQ.StringLit . UUID.toString
 
 pgDay :: Time.Day -> Column PGDate
-pgDay = IPT.unsafePgFormatTime "date" "'%F'"
+pgDay = IPT.unsafePgFormatTime "date"
 
 pgUTCTime :: Time.UTCTime -> Column PGTimestamptz
-pgUTCTime = IPT.unsafePgFormatTime "timestamptz" "'%FT%T%QZ'"
+pgUTCTime = IPT.unsafePgFormatTime "timestamptz"
 
 pgLocalTime :: Time.LocalTime -> Column PGTimestamp
-pgLocalTime = IPT.unsafePgFormatTime "timestamp" "'%FT%T%Q'"
+pgLocalTime = IPT.unsafePgFormatTime "timestamp"
 
 pgZonedTime :: Time.ZonedTime -> Column PGTimestamptz
-pgZonedTime = IPT.unsafePgFormatTime "timestamptz" "'%FT%T%Q%z'"
+pgZonedTime = IPT.unsafePgFormatTime "timestamptz"
 
 pgTimeOfDay :: Time.TimeOfDay -> Column PGTime
-pgTimeOfDay = IPT.unsafePgFormatTime "time" "'%T%Q'"
+pgTimeOfDay = IPT.unsafePgFormatTime "time"
 
 -- "We recommend not using the type time with time zone"
 -- http://www.postgresql.org/docs/8.3/static/datatype-datetime.html
 
 sqlInterval :: Time.CalendarDiffTime -> Column PGInterval
-sqlInterval = IPT.castToType "interval" . quote . Time.Format.ISO8601.iso8601Show
-    where
-      quote s = "'" ++ s ++ "'"
+sqlInterval = IPT.unsafePgFormatTime "interval"
 
 pgCiStrictText :: CI.CI SText.Text -> Column PGCitext
 pgCiStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack . CI.original

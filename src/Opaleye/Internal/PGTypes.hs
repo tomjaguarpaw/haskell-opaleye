@@ -13,12 +13,13 @@ import qualified Data.Text.Lazy as LText
 import qualified Data.Text.Lazy.Encoding as LTextEncoding
 import qualified Data.ByteString as SByteString
 import qualified Data.ByteString.Lazy as LByteString
-import qualified Data.Time.Compat as Time
-import qualified Data.Time.Locale.Compat as Locale
+import qualified Data.Time.Format.ISO8601.Compat as Time
 
-unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
-unsafePgFormatTime typeName formatString = castToType typeName . format
-  where format = Time.formatTime Locale.defaultTimeLocale formatString
+unsafePgFormatTime :: Time.ISO8601 t => HPQ.Name -> t -> Column c
+unsafePgFormatTime typeName = castToType typeName . format
+    where
+      format  = quote . Time.iso8601Show
+      quote s = "'" ++ s ++ "'"
 
 literalColumn :: forall a. IsSqlType a => HPQ.Literal -> Column a
 literalColumn = Column . HPQ.CastExpr (showSqlType (Proxy :: Proxy a)) . HPQ.ConstExpr

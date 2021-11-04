@@ -1,3 +1,5 @@
+Fix ISO 8601 date fomatting.  Thanks to Michal @kozak.
+
 ## 0.7.6.1
 
 No user-visible changes

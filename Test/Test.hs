@@ -1241,6 +1241,8 @@ testLiterals = do
       exampleDate = Time.fromGregorian 2018 11 29
       exampleTime = Time.TimeOfDay 11 22 33
       exampleUTCTime = Time.UTCTime exampleDate (Time.sinceMidnight exampleTime)
+      exampleDatePadded = Time.fromGregorian 18 11 29
+      exampleUTCTimePadded = Time.UTCTime exampleDatePadded (Time.sinceMidnight exampleTime)
   it "sqlString" $ testLiteral O.sqlString "Hello"
   it "sqlLazyByteString" $ testLiteral O.sqlLazyByteString "Hello"
   it "sqlNumeric" $ testLiteral O.sqlNumeric 3.14159
@@ -1250,12 +1252,20 @@ testLiterals = do
   it "sqlBool" $ testLiteral O.sqlBool True
   it "sqlUUID" $ testLiteral O.sqlUUID (read "c2cc10e1-57d6-4b6f-9899-38d972112d8c")
   it "sqlDay" $ testLiteral O.sqlDay exampleDate
+  it "sqlDayPadded" $ testLiteral O.sqlDay exampleDatePadded
   it "sqlUTCTime" $ testLiteral O.sqlUTCTime exampleUTCTime
+  it "sqlUTCTimePadded" $ testLiteral O.sqlUTCTime exampleUTCTimePadded
   it "sqlLocalTime" $ testLiteral O.sqlLocalTime (Time.LocalTime exampleDate exampleTime)
+  it "sqlLocalTimePadded" $ testLiteral O.sqlLocalTime (Time.LocalTime exampleDatePadded exampleTime)
 
   -- ZonedTime has no Eq instance, so we compare on the result of 'zonedTimeToUTC'
   it "sqlZonedTime" $
     let value = Time.utcToZonedTime Time.utc exampleUTCTime in
+    testH (pure (O.sqlZonedTime value))
+          (\r -> map Time.zonedTimeToUTC r `shouldBe` [Time.zonedTimeToUTC value])
+
+  it "sqlZonedTimePadded" $
+    let value = Time.utcToZonedTime Time.utc exampleUTCTimePadded in
     testH (pure (O.sqlZonedTime value))
           (\r -> map Time.zonedTimeToUTC r `shouldBe` [Time.zonedTimeToUTC value])
 
