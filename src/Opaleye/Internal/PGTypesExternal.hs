@@ -120,9 +120,7 @@ pgTimeOfDay = IPT.unsafePgFormatTime "time"
 -- http://www.postgresql.org/docs/8.3/static/datatype-datetime.html
 
 sqlInterval :: Time.CalendarDiffTime -> Column PGInterval
-sqlInterval = IPT.castToType "interval" . quote . Time.Format.ISO8601.iso8601Show
-    where
-      quote s = "'" ++ s ++ "'"
+sqlInterval = IPT.unsafePgFormatTime "interval"
 
 pgCiStrictText :: CI.CI SText.Text -> Column PGCitext
 pgCiStrictText = IPT.literalColumn . HPQ.StringLit . SText.unpack . CI.original
