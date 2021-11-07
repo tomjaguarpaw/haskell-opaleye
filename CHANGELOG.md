@@ -1,3 +1,5 @@
+## 0.7.6.2
+
 Fix ISO 8601 date fomatting.  Thanks to Michal @kozak.
 
 ## 0.7.6.1
