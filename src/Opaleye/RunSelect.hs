@@ -141,8 +141,7 @@ foldForward = RQ.foldForward
 unsafeFromField :: (b -> b')
                 -> IRQ.FromField sqlType b
                 -> IRQ.FromField sqlType' b'
-unsafeFromField haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
-                                                     ((fmap . fmap . fmap) haskellF fp)
+unsafeFromField haskellF qrc = fmap haskellF (IRQ.QueryRunnerColumn (P.lmap colF u) fp)
   where IRQ.QueryRunnerColumn u fp = qrc
         colF = C.unsafeCoerceColumn
 
