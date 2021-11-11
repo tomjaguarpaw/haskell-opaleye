@@ -399,17 +399,21 @@ jsonFieldTypeByteParser jsonTypeName field mData = do
         Just bs -> pure bs
         _       -> returnError UnexpectedNull field ""
 
+withJsonByteStringParser :: (SBS.ByteString -> b)
+                         -> SBS.ByteString -> FieldParser b
+withJsonByteStringParser f = (fmap . fmap . fmap . fmap) f jsonFieldTypeByteParser
+
 jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
-jsonFieldTypeParser = (fmap . fmap . fmap . fmap) IPT.strictDecodeUtf8 jsonFieldTypeByteParser
+jsonFieldTypeParser = withJsonByteStringParser IPT.strictDecodeUtf8
 
 jsonFieldTypeTextParser :: SBS.ByteString -> FieldParser ST.Text
-jsonFieldTypeTextParser = (fmap . fmap . fmap . fmap) STE.decodeUtf8 jsonFieldTypeByteParser
+jsonFieldTypeTextParser = withJsonByteStringParser STE.decodeUtf8
 
 jsonFieldTypeLazyTextParser :: SBS.ByteString -> FieldParser LT.Text
-jsonFieldTypeLazyTextParser = (fmap . fmap . fmap . fmap) (LTE.decodeUtf8 . LBS.fromStrict) jsonFieldTypeByteParser
+jsonFieldTypeLazyTextParser = withJsonByteStringParser (LTE.decodeUtf8 . LBS.fromStrict)
 
 jsonFieldTypeLazyByteParser :: SBS.ByteString -> FieldParser LBS.ByteString
-jsonFieldTypeLazyByteParser = (fmap . fmap . fmap . fmap) LBS.fromStrict jsonFieldTypeByteParser
+jsonFieldTypeLazyByteParser = withJsonByteStringParser LBS.fromStrict
 
 -- }
 
