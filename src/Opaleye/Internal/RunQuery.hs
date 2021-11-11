@@ -388,15 +388,6 @@ jsonbFieldLazyByteParser = jsonFieldTypeLazyByteParser (String.fromString "jsonb
 -- Eventually we want to move this to postgresql-simple
 --
 --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/329
-jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
-jsonFieldTypeParser = (fmap . fmap . fmap . fmap) IPT.strictDecodeUtf8 jsonFieldTypeByteParser
-
-jsonFieldTypeTextParser :: SBS.ByteString -> FieldParser ST.Text
-jsonFieldTypeTextParser = (fmap . fmap . fmap . fmap) STE.decodeUtf8 jsonFieldTypeByteParser
-
-jsonFieldTypeLazyTextParser :: SBS.ByteString -> FieldParser LT.Text
-jsonFieldTypeLazyTextParser = (fmap . fmap . fmap . fmap) (LTE.decodeUtf8 . LBS.fromStrict) jsonFieldTypeByteParser
-
 jsonFieldTypeByteParser :: SBS.ByteString -> FieldParser SBS.ByteString
 jsonFieldTypeByteParser jsonTypeName field mData = do
     ti <- typeInfo field
@@ -407,6 +398,15 @@ jsonFieldTypeByteParser jsonTypeName field mData = do
     convert = case mData of
         Just bs -> pure bs
         _       -> returnError UnexpectedNull field ""
+
+jsonFieldTypeParser :: SBS.ByteString -> FieldParser String
+jsonFieldTypeParser = (fmap . fmap . fmap . fmap) IPT.strictDecodeUtf8 jsonFieldTypeByteParser
+
+jsonFieldTypeTextParser :: SBS.ByteString -> FieldParser ST.Text
+jsonFieldTypeTextParser = (fmap . fmap . fmap . fmap) STE.decodeUtf8 jsonFieldTypeByteParser
+
+jsonFieldTypeLazyTextParser :: SBS.ByteString -> FieldParser LT.Text
+jsonFieldTypeLazyTextParser = (fmap . fmap . fmap . fmap) (LTE.decodeUtf8 . LBS.fromStrict) jsonFieldTypeByteParser
 
 jsonFieldTypeLazyByteParser :: SBS.ByteString -> FieldParser LBS.ByteString
 jsonFieldTypeLazyByteParser = (fmap . fmap . fmap . fmap) LBS.fromStrict jsonFieldTypeByteParser
