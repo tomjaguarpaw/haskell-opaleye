@@ -141,9 +141,9 @@ foldForward = RQ.foldForward
 unsafeFromField :: (b -> b')
                 -> IRQ.FromField sqlType b
                 -> IRQ.FromField sqlType' b'
-unsafeFromField haskellF qrc = fmap haskellF (IRQ.QueryRunnerColumn (P.lmap colF u) fp)
-  where IRQ.QueryRunnerColumn u fp = qrc
-        colF = C.unsafeCoerceColumn
+unsafeFromField haskellF (IRQ.QueryRunnerColumn u fp) =
+  fmap haskellF (IRQ.QueryRunnerColumn (P.lmap colF u) fp)
+  where colF = C.unsafeCoerceColumn
 
 runSelectExplicit :: FromFields fields haskells
                   -> PGS.Connection
