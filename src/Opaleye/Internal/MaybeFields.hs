@@ -175,7 +175,7 @@ optionalRestrictOptional q = optional $ proc cond -> do
 
 fromFieldsMaybeFields :: RQ.FromFields fields haskells
                       -> RQ.FromFields (MaybeFields fields) (Maybe haskells)
-fromFieldsMaybeFields (RQ.QueryRunner u p c) = RQ.QueryRunner u' p' c'
+fromFieldsMaybeFields (RQ.FromFields u p c) = RQ.FromFields u' p' c'
   where u' = () <$ productProfunctorMaybeFields U.unpackspecField u
 
         p' = \mf -> do

@@ -92,7 +92,7 @@ instance Functor (FromField u) where
 -- 'FromFields' @columns@ @haskells@\" corresponds to
 -- postgresql-simple's \"@FromRow@ @haskells@\".
 data FromFields columns haskells =
-  QueryRunner (U.Unpackspec columns ())
+   FromFields (U.Unpackspec columns ())
               (columns -> RowParser haskells)
               -- We never actually look at the columns except to see
               -- its "type" in the case of a sum profunctor
@@ -123,7 +123,7 @@ fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
 fromPGSFieldParser = FromField (P.rmap (const ()) U.unpackspecField)
 
 queryRunner :: FromField a b -> FromFields (Column a) b
-queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const 1)
+queryRunner qrc = FromFields u (const (fieldWith fp)) (const 1)
     where FromField u fp = qrc
 
 queryRunnerColumnNullable :: FromField a b
@@ -322,30 +322,30 @@ fromFieldRange off =
 -- Boilerplate instances
 
 instance Functor (FromFields c) where
-  fmap f (QueryRunner u r b) = QueryRunner u ((fmap . fmap) f r) b
+  fmap f (FromFields u r b) = FromFields u ((fmap . fmap) f r) b
 
 -- TODO: Seems like this one should be simpler!
 instance Applicative (FromFields c) where
-  pure = flip (QueryRunner (P.lmap (const ()) PP.empty)) (const 0)
+  pure = flip (FromFields (P.lmap (const ()) PP.empty)) (const 0)
          . pure
          . pure
-  QueryRunner uf rf bf <*> QueryRunner ux rx bx =
-    QueryRunner (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) ((<*>) <$> rf <*> rx) (liftA2 (+) bf bx)
+  FromFields uf rf bf <*> FromFields ux rx bx =
+    FromFields (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) ((<*>) <$> rf <*> rx) (liftA2 (+) bf bx)
 
 instance P.Profunctor FromFields where
-  dimap f g (QueryRunner u r b) =
-    QueryRunner (P.lmap f u) (P.dimap f (fmap g) r) (P.lmap f b)
+  dimap f g (FromFields u r b) =
+    FromFields (P.lmap f u) (P.dimap f (fmap g) r) (P.lmap f b)
 
 instance PP.ProductProfunctor FromFields where
   purePP = pure
   (****) = (<*>)
 
 instance PP.SumProfunctor FromFields where
-  f +++! g = QueryRunner (P.rmap (const ()) (fu PP.+++! gu))
+  f +++! g = FromFields (P.rmap (const ()) (fu PP.+++! gu))
                          (PackMap.eitherFunction fr gr)
                          (either fb gb)
-    where QueryRunner fu fr fb = f
-          QueryRunner gu gr gb = g
+    where FromFields fu fr fb = f
+          FromFields gu gr gb = g
 
 -- }
 
@@ -403,7 +403,7 @@ jsonFieldTypeLazyByteParser = (fmap . fmap . fmap . fmap) LBS.fromStrict jsonFie
 -- }
 
 prepareRowParser :: FromFields columns haskells -> columns -> RowParser haskells
-prepareRowParser (QueryRunner _ rowParser numColumns) cols =
+prepareRowParser (FromFields _ rowParser numColumns) cols =
   if numColumns cols > 0
   then rowParser cols
   else (fromRow :: RowParser (Only Int)) *> rowParser cols
@@ -417,7 +417,7 @@ prepareRowParser (QueryRunner _ rowParser numColumns) cols =
 data Cursor haskells = EmptyCursor | Cursor (RowParser haskells) PGSC.Cursor
 
 prepareQuery :: FromFields fields haskells -> S.Select fields -> (Maybe PGS.Query, RowParser haskells)
-prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
+prepareQuery qr@(FromFields u _ _) q = (sql, parser)
   where sql :: Maybe PGS.Query
         sql = fmap String.fromString (S.showSqlExplicit u q)
         -- FIXME: We're doing work twice here

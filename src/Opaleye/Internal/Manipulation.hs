@@ -96,7 +96,7 @@ runInsertManyReturningExplicit
                        (fromString
                         (arrangeInsertManyReturningSql u t columns' r
                                                        onConflict))
-  where IRQ.QueryRunner u _ _ = qr
+  where IRQ.FromFields u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
         TI.View v = TI.tableColumnsView (TI.tableColumns t)
         -- This method of getting hold of the return type feels a bit
@@ -174,7 +174,7 @@ runDeleteReturningExplicit :: RS.FromFields columnsReturned haskells
 runDeleteReturningExplicit qr conn t cond r =
   PGS.queryWith_ parser conn
                  (fromString (arrangeDeleteReturningSql u t cond r))
-  where IRQ.QueryRunner u _ _ = qr
+  where IRQ.FromFields u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
         TI.View v = TI.tableColumnsView (TI.tableColumns t)
 

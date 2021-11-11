@@ -23,7 +23,7 @@
 
   * `QueryRunnerColumnDefault` -> `DefaultFromField`
   * `QueryRunnerColumn` -> `FromField` (type alias and constructor)
-  * `QueryRunner` -> `FromFields` (type alias)
+  * `QueryRunner` -> `FromFields` (type alias and constructor)
 
 * `Opaleye.Join.optional` exported from top-level
 

@@ -23,9 +23,9 @@ equal according to the first `Order` in the @mappend@, the second is
 used, and so on.
 -}
 
--- Like the (columns -> RowParser haskells) field of QueryRunner this
+-- Like the (columns -> RowParser haskells) field of FromFields this
 -- type is "too big".  We never actually look at the 'a' (in the
--- QueryRunner case the 'colums') except to check the "structure".
+-- FromFields case the 'colums') except to check the "structure".
 -- This is so we can support a SumProfunctor instance.
 newtype Order a = Order (a -> [(HPQ.OrderOp, HPQ.PrimExpr)])
 

@@ -270,7 +270,7 @@ runUpdateReturningExplicit :: RS.FromFields columnsReturned haskells
 runUpdateReturningExplicit qr conn t update cond r =
   PGS.queryWith_ parser conn
                  (fromString (MI.arrangeUpdateReturningSql u t update cond r))
-  where IRQ.QueryRunner u _ _ = qr
+  where IRQ.FromFields u _ _ = qr
         parser = IRQ.prepareRowParser qr (r v)
         TI.View v = TI.tableColumnsView (TI.tableColumns t)
 
