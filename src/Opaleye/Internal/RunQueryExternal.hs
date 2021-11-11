@@ -39,15 +39,6 @@ runQueryFold
   -> IO b
 runQueryFold = runQueryFoldExplicit D.def
 
--- * Creating new 'FromField's
-
-queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
-                  -> IRQ.FromField a b -> IRQ.FromField a' b'
-queryRunnerColumn colF haskellF qrc = IRQ.FromField (P.lmap colF u)
-                                                    (fmapFP haskellF fp)
-  where IRQ.FromField u fp = qrc
-        fmapFP = fmap . fmap . fmap
-
 -- * Explicit versions
 
 runQueryExplicit :: IRQ.FromFields fields haskells
