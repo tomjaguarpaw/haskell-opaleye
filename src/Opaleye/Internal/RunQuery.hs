@@ -115,8 +115,9 @@ fieldQueryRunnerColumn :: PGS.FromField haskell => FromField pgType haskell
 fieldQueryRunnerColumn = fromPGSFromField
 
 fromPGSFromField :: PGS.FromField haskell => FromField pgType haskell
-fromPGSFromField = fieldParserQueryRunnerColumn fromField
+fromPGSFromField = fromPGSFieldParser fromField
 
+{-# DEPRECATED fieldParserQueryRunnerColumn " Will be removed in version 0.9.  Use fromPGSFieldParser instead." #-}
 fieldParserQueryRunnerColumn :: FieldParser haskell -> FromField pgType haskell
 fieldParserQueryRunnerColumn = fromPGSFieldParser
 
@@ -137,7 +138,7 @@ queryRunnerColumnNullable qr =
         fromField' fp' f bs = fmap Just (fp' f bs)
 
 unsafeFromFieldRaw :: FromField a (PGS.Field, Maybe SBS.ByteString)
-unsafeFromFieldRaw = fieldParserQueryRunnerColumn (\f mdata -> pure (f, mdata))
+unsafeFromFieldRaw = fromPGSFieldParser (\f mdata -> pure (f, mdata))
 
 -- { Instances for automatic derivation
 
@@ -257,37 +258,37 @@ instance DefaultFromField T.SqlCitext (CI.CI LT.Text) where
   defaultFromField = fromPGSFromField
 
 instance DefaultFromField T.SqlJson String where
-  defaultFromField = fieldParserQueryRunnerColumn jsonFieldParser
+  defaultFromField = fromPGSFieldParser jsonFieldParser
 
 instance DefaultFromField T.SqlJson ST.Text where
-  defaultFromField = fieldParserQueryRunnerColumn jsonFieldTextParser
+  defaultFromField = fromPGSFieldParser jsonFieldTextParser
 
 instance DefaultFromField T.SqlJson LT.Text where
-  defaultFromField = fieldParserQueryRunnerColumn jsonFieldLazyTextParser
+  defaultFromField = fromPGSFieldParser jsonFieldLazyTextParser
 
 instance DefaultFromField T.SqlJson SBS.ByteString where
-  defaultFromField = fieldParserQueryRunnerColumn jsonFieldByteParser
+  defaultFromField = fromPGSFieldParser jsonFieldByteParser
 
 instance DefaultFromField T.SqlJson LBS.ByteString where
-  defaultFromField = fieldParserQueryRunnerColumn jsonFieldLazyByteParser
+  defaultFromField = fromPGSFieldParser jsonFieldLazyByteParser
 
 instance DefaultFromField T.SqlJson Ae.Value where
   defaultFromField = fromPGSFromField
 
 instance DefaultFromField T.SqlJsonb String where
-  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldParser
+  defaultFromField = fromPGSFieldParser jsonbFieldParser
 
 instance DefaultFromField T.SqlJsonb ST.Text where
-  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldTextParser
+  defaultFromField = fromPGSFieldParser jsonbFieldTextParser
 
 instance DefaultFromField T.SqlJsonb LT.Text where
-  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldLazyTextParser
+  defaultFromField = fromPGSFieldParser jsonbFieldLazyTextParser
 
 instance DefaultFromField T.SqlJsonb SBS.ByteString where
-  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldByteParser
+  defaultFromField = fromPGSFieldParser jsonbFieldByteParser
 
 instance DefaultFromField T.SqlJsonb LBS.ByteString where
-  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldLazyByteParser
+  defaultFromField = fromPGSFieldParser jsonbFieldLazyByteParser
 
 instance DefaultFromField T.SqlJsonb Ae.Value where
   defaultFromField = fromPGSFromField

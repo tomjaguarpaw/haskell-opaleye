@@ -113,13 +113,13 @@ instance cttext ~ CI.CI ST.Text
 
 {-
 instance DefaultFromField T.PGJson String where
-  defaultFromField = fieldParserQueryRunnerColumn jsonFieldParser
+  defaultFromField = fromPGSFieldParser jsonFieldParser
 
 instance DefaultFromField T.PGJson Ae.Value where
   defaultFromField = fromPGSFromField
 
 instance DefaultFromField T.PGJsonb String where
-  defaultFromField = fieldParserQueryRunnerColumn jsonbFieldParser
+  defaultFromField = fromPGSFieldParser jsonbFieldParser
 
 instance DefaultFromField T.PGJsonb Ae.Value where
   defaultFromField = fromPGSFromField
