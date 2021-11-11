@@ -7,7 +7,6 @@ module Opaleye.Internal.RunQueryExternal
                          IRQ.FromFields,
                          IRQ.FromField,
                          QueryRunner,
-                         IRQ.QueryRunnerColumn,
                          -- * Creating new 'QueryRunnerColumn's
                          IRQ.fieldQueryRunnerColumn,
                          IRQ.fieldParserQueryRunnerColumn) where

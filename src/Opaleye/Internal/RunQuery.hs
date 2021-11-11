@@ -81,8 +81,6 @@ data FromField pgType haskellType =
 instance Functor (FromField u) where
   fmap f ~(QueryRunnerColumn u fp) = QueryRunnerColumn u ((fmap . fmap . fmap) f fp)
 
-type QueryRunnerColumn = FromField
-
 -- | A 'FromFields'
 --   specifies how to convert Postgres values (@fields@)
 --   into Haskell values (@haskells@).  Most likely you will never need
