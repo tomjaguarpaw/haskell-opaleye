@@ -6,8 +6,7 @@ module Opaleye.Internal.RunQueryExternal
                          IRQ.Cursor,
                          IRQ.FromFields,
                          IRQ.FromField,
-                         QueryRunner,
-                         -- * Creating new 'QueryRunnerColumn's
+                         -- * Creating new 'FromField's
                          IRQ.fieldQueryRunnerColumn,
                          IRQ.fieldParserQueryRunnerColumn) where
 
@@ -17,7 +16,7 @@ import qualified Database.PostgreSQL.Simple.Cursor  as PGSC
 
 import           Opaleye.Column (Column)
 import qualified Opaleye.Select as S
-import           Opaleye.Internal.RunQuery (QueryRunner, prepareQuery)
+import           Opaleye.Internal.RunQuery (prepareQuery)
 import qualified Opaleye.Internal.RunQuery as IRQ
 
 import qualified Data.Profunctor as P
@@ -40,7 +39,7 @@ runQueryFold
   -> IO b
 runQueryFold = runQueryFoldExplicit D.def
 
--- * Creating new 'QueryRunnerColumn's
+-- * Creating new 'FromField's
 
 queryRunnerColumn :: (Column a' -> Column a) -> (b -> b')
                   -> IRQ.FromField a b -> IRQ.FromField a' b'

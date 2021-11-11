@@ -110,8 +110,6 @@ data FromFields columns haskells =
               -- SqlInt4)' has no columns when it is Nothing and one
               -- column when it is Just.
 
-type QueryRunner = FromFields
-
 fieldQueryRunnerColumn :: PGS.FromField haskell => FromField pgType haskell
 fieldQueryRunnerColumn = fromPGSFromField
 
