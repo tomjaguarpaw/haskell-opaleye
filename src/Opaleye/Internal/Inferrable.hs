@@ -134,7 +134,7 @@ instance DefaultFromField T.PGTimestamptz Time.ZonedTime where
 -- ToFields
 
 {- The instance for arrays would clash with String.  String is going to
-   be use far more, so to get arrays you'll have to explicitly use
+   be used far more, so to get arrays you'll have to explicitly use
    `sqlArray`.
 
 instance (D.Default (Inferrable ToFields) a (C.Column b),
