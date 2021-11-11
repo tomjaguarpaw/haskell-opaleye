@@ -110,6 +110,7 @@ data FromFields columns haskells =
               -- SqlInt4)' has no columns when it is Nothing and one
               -- column when it is Just.
 
+{-# DEPRECATED fieldQueryRunnerColumn "Will be removed in version 0.9.  Use fromPGSFromField instead." #-}
 fieldQueryRunnerColumn :: PGS.FromField haskell => FromField pgType haskell
 fieldQueryRunnerColumn = fromPGSFromField
 
