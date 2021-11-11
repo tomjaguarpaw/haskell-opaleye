@@ -130,9 +130,10 @@ foldForward = RQ.foldForward
 --
 -- @
 -- newtype Foo = Foo Int
+-- data SqlFoo
 --
--- instance DefaultFromField Foo Foo where
---    defaultFromField = unsafeFromField Foo defaultFromField
+-- instance 'IRQ.DefaultFromField' SqlFoo Foo where
+--    'IRQ.defaultFromField' = unsafeFromField Foo defaultFromField
 -- @
 --
 -- It is \"unsafe\" because it does not check that the @sqlType@
