@@ -25,7 +25,7 @@ used, and so on.
 
 -- Like the (columns -> RowParser haskells) field of FromFields this
 -- type is "too big".  We never actually look at the 'a' (in the
--- FromFields case the 'colums') except to check the "structure".
+-- FromFields case the 'columns') except to check the "structure".
 -- This is so we can support a SumProfunctor instance.
 newtype Order a = Order (a -> [(HPQ.OrderOp, HPQ.PrimExpr)])
 
