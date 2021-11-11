@@ -112,22 +112,22 @@ instance cttext ~ CI.CI ST.Text
 -- It's not clear what to map JSON types to
 
 {-
-instance QueryRunnerColumnDefault T.PGJson String where
+instance DefaultFromField T.PGJson String where
   defaultFromField = fieldParserQueryRunnerColumn jsonFieldParser
 
-instance QueryRunnerColumnDefault T.PGJson Ae.Value where
+instance DefaultFromField T.PGJson Ae.Value where
   defaultFromField = fromPGSFromField
 
-instance QueryRunnerColumnDefault T.PGJsonb String where
+instance DefaultFromField T.PGJsonb String where
   defaultFromField = fieldParserQueryRunnerColumn jsonbFieldParser
 
-instance QueryRunnerColumnDefault T.PGJsonb Ae.Value where
+instance DefaultFromField T.PGJsonb Ae.Value where
   defaultFromField = fromPGSFromField
 
-instance QueryRunnerColumnDefault T.PGTimestamptz Time.UTCTime where
+instance DefaultFromField T.PGTimestamptz Time.UTCTime where
   defaultFromField = fromPGSFromField
 
-instance QueryRunnerColumnDefault T.PGTimestamptz Time.ZonedTime where
+instance DefaultFromField T.PGTimestamptz Time.ZonedTime where
   defaultFromField = fromPGSFromField
 -}
 

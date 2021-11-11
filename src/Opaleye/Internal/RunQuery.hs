@@ -186,8 +186,6 @@ instance DefaultFromField a b =>
 class DefaultFromField sqlType haskellType where
   defaultFromField         :: FromField sqlType haskellType
 
-type QueryRunnerColumnDefault = DefaultFromField
-
 instance DefaultFromField sqlType haskellType
     => D.Default FromField sqlType haskellType where
   def = defaultFromField

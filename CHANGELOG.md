@@ -19,6 +19,10 @@
   * `PGIsJson`, `PGOrd`, `PG<typename>`
   * `showSqlForPostgres`, `showSqlForPostgresUnopt`
 
+* Replaced the following old internal names
+
+  * `QueryRunnerColumnDefault` -> `DefaultFromField`
+
 * `Opaleye.Join.optional` exported from top-level
 
 * Bug fix: `distinctOn` and `distinctOnBy` now return a single row if
