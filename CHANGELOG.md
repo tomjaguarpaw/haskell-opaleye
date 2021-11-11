@@ -22,7 +22,7 @@
 * Replaced the following old internal names
 
   * `QueryRunnerColumnDefault` -> `DefaultFromField`
-  * `QueryRunnerColumn` -> `FromField` (type alias)
+  * `QueryRunnerColumn` -> `FromField` (type alias and constructor)
 
 * `Opaleye.Join.optional` exported from top-level
 

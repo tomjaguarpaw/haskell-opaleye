@@ -76,10 +76,10 @@ import           Data.Typeable (Typeable)
 
 -- Why isn't this a newtype?
 data FromField pgType haskellType =
-  QueryRunnerColumn (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
+  FromField (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
 
 instance Functor (FromField u) where
-  fmap f ~(QueryRunnerColumn u fp) = QueryRunnerColumn u ((fmap . fmap . fmap) f fp)
+  fmap f ~(FromField u fp) = FromField u ((fmap . fmap . fmap) f fp)
 
 -- | A 'FromFields'
 --   specifies how to convert Postgres values (@fields@)
@@ -122,17 +122,17 @@ fieldParserQueryRunnerColumn :: FieldParser haskell -> FromField pgType haskell
 fieldParserQueryRunnerColumn = fromPGSFieldParser
 
 fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
-fromPGSFieldParser = QueryRunnerColumn (P.rmap (const ()) U.unpackspecField)
+fromPGSFieldParser = FromField (P.rmap (const ()) U.unpackspecField)
 
 queryRunner :: FromField a b -> FromFields (Column a) b
 queryRunner qrc = QueryRunner u (const (fieldWith fp)) (const 1)
-    where QueryRunnerColumn u fp = qrc
+    where FromField u fp = qrc
 
 queryRunnerColumnNullable :: FromField a b
                           -> FromField (Nullable a) (Maybe b)
 queryRunnerColumnNullable qr =
-  QueryRunnerColumn (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
-  where QueryRunnerColumn u fp = qr
+  FromField (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
+  where FromField u fp = qr
         fromField' :: FieldParser a -> FieldParser (Maybe a)
         fromField' _ _ Nothing = pure Nothing
         fromField' fp' f bs = fmap Just (fp' f bs)
@@ -304,9 +304,9 @@ instance (Typeable b, DefaultFromField a b) =>
 
 fromFieldArray :: Typeable h => FromField f h -> FromField (T.SqlArray f) [h]
 fromFieldArray q =
-  QueryRunnerColumn (P.lmap arrayColumn c)
-                    ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
-  where QueryRunnerColumn c f = q
+  FromField (P.lmap arrayColumn c)
+            ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
+  where FromField c f = q
 
 -- }
 
@@ -318,8 +318,8 @@ fromFieldRange :: Typeable b
                => FromField a b
                -> FromField (T.PGRange a) (PGSR.PGRange b)
 fromFieldRange off =
-  QueryRunnerColumn (P.lmap C.unsafeCoerceColumn c) (PGSR.fromFieldRange pff)
-  where QueryRunnerColumn c pff = off
+  FromField (P.lmap C.unsafeCoerceColumn c) (PGSR.fromFieldRange pff)
+  where FromField c pff = off
 
 -- Boilerplate instances
 
