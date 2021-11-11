@@ -38,12 +38,12 @@ newtype Inferrable p a b = Inferrable { runInferrable :: p a b }
 instance {-# OVERLAPPABLE #-}
   D.Default (Inferrable FromField) a b
   => D.Default (Inferrable FromFields) (C.Column a) b where
-  def = Inferrable (RQ.queryRunner (runInferrable D.def))
+  def = Inferrable (RQ.fromFields (runInferrable D.def))
 
 instance
      (D.Default (Inferrable FromField) a b, Maybe b ~ maybe_b)
   => D.Default (Inferrable FromFields) (C.Column (C.Nullable a)) maybe_b where
-  def = Inferrable (RQ.queryRunner (RQ.queryRunnerColumnNullable (runInferrable D.def)))
+  def = Inferrable (RQ.fromFields (RQ.queryRunnerColumnNullable (runInferrable D.def)))
 
 -- FromField
 

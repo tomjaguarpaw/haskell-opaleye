@@ -124,9 +124,13 @@ fieldParserQueryRunnerColumn = fromPGSFieldParser
 fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
 fromPGSFieldParser = FromField (P.rmap (const ()) U.unpackspecField)
 
-queryRunner :: FromField a b -> FromFields (Column a) b
-queryRunner qrc = FromFields u (const (fieldWith fp)) (const 1)
+fromFields :: FromField a b -> FromFields (Column a) b
+fromFields qrc = FromFields u (const (fieldWith fp)) (const 1)
     where FromField u fp = qrc
+
+{-# DEPRECATED queryRunner "Use fromFields instead.  Will be removed in version 0.9." #-}
+queryRunner :: FromField a b -> FromFields (Column a) b
+queryRunner = fromFields
 
 queryRunnerColumnNullable :: FromField a b
                           -> FromField (Nullable a) (Maybe b)
@@ -148,7 +152,7 @@ instance DefaultFromField a b =>
 
 instance DefaultFromField a b =>
          D.Default FromFields (Column a) b where
-  def = queryRunner defaultFromField
+  def = fromFields defaultFromField
 
 -- }
 
