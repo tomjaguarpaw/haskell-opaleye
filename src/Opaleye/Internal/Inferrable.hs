@@ -43,7 +43,7 @@ instance {-# OVERLAPPABLE #-}
 instance
      (D.Default (Inferrable FromField) a b, Maybe b ~ maybe_b)
   => D.Default (Inferrable FromFields) (C.Column (C.Nullable a)) maybe_b where
-  def = Inferrable (RQ.fromFields (RQ.queryRunnerColumnNullable (runInferrable D.def)))
+  def = Inferrable (RQ.fromFields (RQ.fromFieldNullable (runInferrable D.def)))
 
 -- FromField
 

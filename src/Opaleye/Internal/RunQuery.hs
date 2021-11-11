@@ -132,14 +132,19 @@ fromFields qrc = FromFields u (const (fieldWith fp)) (const 1)
 queryRunner :: FromField a b -> FromFields (Column a) b
 queryRunner = fromFields
 
-queryRunnerColumnNullable :: FromField a b
-                          -> FromField (Nullable a) (Maybe b)
-queryRunnerColumnNullable qr =
+fromFieldNullable :: FromField a b
+                  -> FromField (Nullable a) (Maybe b)
+fromFieldNullable qr =
   FromField (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
   where FromField u fp = qr
         fromField' :: FieldParser a -> FieldParser (Maybe a)
         fromField' _ _ Nothing = pure Nothing
         fromField' fp' f bs = fmap Just (fp' f bs)
+
+{-# DEPRECATED queryRunnerColumnNullable "Use fromFieldNullable instead.  Will be deprecated in 0.9." #-}
+queryRunnerColumnNullable :: FromField a b
+                          -> FromField (Nullable a) (Maybe b)
+queryRunnerColumnNullable = fromFieldNullable
 
 unsafeFromFieldRaw :: FromField a (PGS.Field, Maybe SBS.ByteString)
 unsafeFromFieldRaw = fromPGSFieldParser (\f mdata -> pure (f, mdata))
@@ -148,7 +153,7 @@ unsafeFromFieldRaw = fromPGSFieldParser (\f mdata -> pure (f, mdata))
 
 instance DefaultFromField a b =>
          DefaultFromField (Nullable a) (Maybe b) where
-  defaultFromField = queryRunnerColumnNullable defaultFromField
+  defaultFromField = fromFieldNullable defaultFromField
 
 instance DefaultFromField a b =>
          D.Default FromFields (Column a) b where
