@@ -142,9 +142,8 @@ unsafeFromField :: (b -> b')
                 -> IRQ.FromField sqlType b
                 -> IRQ.FromField sqlType' b'
 unsafeFromField haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
-                                                     (fmapFP haskellF fp)
+                                                     ((fmap . fmap . fmap) haskellF fp)
   where IRQ.QueryRunnerColumn u fp = qrc
-        fmapFP = fmap . fmap . fmap
         colF = C.unsafeCoerceColumn
 
 runSelectExplicit :: FromFields fields haskells
