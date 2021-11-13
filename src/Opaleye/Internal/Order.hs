@@ -65,13 +65,13 @@ limit' n (x, q, t) = (x, PQ.Limit (PQ.LimitOp n) q, t)
 offset' :: Int -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 offset' n (x, q, t) = (x, PQ.Limit (PQ.OffsetOp n) q, t)
 
-distinctOnCorrect :: U.Unpackspec b b -> (a -> b)
-                  -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
-distinctOnCorrect ups proj = distinctOnByCorrect ups proj M.mempty
+distinctOn :: U.Unpackspec b b -> (a -> b)
+           -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
+distinctOn ups proj = distinctOnBy ups proj M.mempty
 
-distinctOnByCorrect :: U.Unpackspec b b -> (a -> b) -> Order a
+distinctOnBy :: U.Unpackspec b b -> (a -> b) -> Order a
              -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
-distinctOnByCorrect ups proj ord (cols, pq, t) = (cols, pqOut, t)
+distinctOnBy ups proj ord (cols, pq, t) = (cols, pqOut, t)
     where pqOut = case NL.nonEmpty (U.collectPEs ups (proj cols)) of
             Just xs -> PQ.DistinctOnOrderBy (Just xs) oexprs pq
             Nothing -> PQ.Limit (PQ.LimitOp 1) (PQ.DistinctOnOrderBy Nothing oexprs pq)

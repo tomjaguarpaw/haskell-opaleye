@@ -130,7 +130,7 @@ distinctOnCorrect :: D.Default U.Unpackspec b b
                   => (a -> b)
                   -> S.Select a
                   -> S.Select a
-distinctOnCorrect proj q = Q.productQueryArr (O.distinctOnCorrect D.def proj . Q.runSimpleQueryArr q)
+distinctOnCorrect proj q = Q.productQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
 
 -- | Use 'distinctOnBy' instead.  Will be deprecated in 0.9.
 distinctOnByCorrect :: D.Default U.Unpackspec b b
@@ -138,7 +138,7 @@ distinctOnByCorrect :: D.Default U.Unpackspec b b
                     -> O.Order a
                     -> S.Select a
                     -> S.Select a
-distinctOnByCorrect proj ord q = Q.productQueryArr (O.distinctOnByCorrect D.def proj ord . Q.runSimpleQueryArr q)
+distinctOnByCorrect proj ord q = Q.productQueryArr (O.distinctOnBy D.def proj ord . Q.runSimpleQueryArr q)
 
 
 -- * Other
