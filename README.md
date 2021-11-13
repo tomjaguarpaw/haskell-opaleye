@@ -12,7 +12,7 @@ Patterson, [Position Development](http://positiondev.com/)
 
 > "We use it for most of our DB code. It's very flexible and almost
   always as performant as manually written queries" &ndash; [Adam
-  Bergmark](http://ircbrowse.net/browse/haskell?id=22634197&timestamp=1460980502#t1460980502),
+  Bergmark](https://github.com/bergmark),
   [Silk.co](http://www.silk.co/)
 
 > "Opaleye is absolutely fantastic. It has been solid in production
