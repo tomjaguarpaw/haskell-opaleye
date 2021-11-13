@@ -9,8 +9,7 @@ homepage:        https://github.com/tomjaguarpaw/haskell-opaleye
 bug-reports:     https://github.com/tomjaguarpaw/haskell-opaleye/issues
 license:         BSD3
 license-file:    LICENSE
-author:          Purely Agile
-maintainer:      Purely Agile
+maintainer:      Tom Ellis
 category:        Database
 build-type:      Simple
 cabal-version:   1.18
