@@ -39,7 +39,7 @@ module Opaleye.Manipulation (-- * Insert
                              rReturningI,
                              rReturningExplicit,
                              -- * On conflict
-                             -- | Currently 'HSql.DoNothing' is the
+                             -- | Currently 'doNothing' is the
                              -- only conflict action supported by
                              -- Opaleye.
                              HSql.OnConflict,
