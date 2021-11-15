@@ -341,7 +341,7 @@ instance Applicative (FromFields c) where
          . pure
          . pure
   FromFields uf rf bf <*> FromFields ux rx bx =
-    FromFields (P.dimap (\x -> (x,x)) (const ()) (uf PP.***! ux)) ((<*>) <$> rf <*> rx) (liftA2 (+) bf bx)
+    FromFields (uf *> ux) ((<*>) <$> rf <*> rx) (liftA2 (+) bf bx)
 
 instance P.Profunctor FromFields where
   dimap f g (FromFields u r b) =
