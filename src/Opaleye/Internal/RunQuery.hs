@@ -337,7 +337,7 @@ instance Functor (FromFields c) where
 
 -- TODO: Seems like this one should be simpler!
 instance Applicative (FromFields c) where
-  pure = flip (FromFields (P.lmap (const ()) PP.empty)) (const 0)
+  pure = flip (FromFields (pure ())) (const 0)
          . pure
          . pure
   FromFields uf rf bf <*> FromFields ux rx bx =
