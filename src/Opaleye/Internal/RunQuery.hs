@@ -335,7 +335,6 @@ fromFieldRange off =
 instance Functor (FromFields c) where
   fmap f (FromFields u r b) = FromFields u ((fmap . fmap) f r) b
 
--- TODO: Seems like this one should be simpler!
 instance Applicative (FromFields c) where
   pure = flip (FromFields (pure ())) (const 0)
          . pure
