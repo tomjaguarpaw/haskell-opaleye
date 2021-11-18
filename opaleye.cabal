@@ -37,7 +37,7 @@ library
     , product-profunctors >= 0.8.0.0 && < 0.12
     , profunctors         >= 4.0     && < 5.7
     , scientific          >= 0.3     && < 0.4
-    , semigroups          >= 0.13    && < 0.20
+    , semigroups          >= 0.13    && < 0.21
     , text                >= 0.11    && < 1.3
     , transformers        >= 0.3     && < 0.6
     , time-compat         >= 1.9.5   && < 1.12
