@@ -1,3 +1,7 @@
+## 0.8.0.1
+
+* Support GHC 9.2
+
 ## 0.8.0.0
 
 * Removed the following deprecated functions, types and modules
