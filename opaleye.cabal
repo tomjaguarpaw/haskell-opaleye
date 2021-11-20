@@ -16,7 +16,7 @@ cabal-version:   1.18
 extra-doc-files: README.md
                  CHANGELOG.md
                  *.md
-tested-with:     GHC==9.0, GHC==8.10, GHC==8.8, GHC==8.6, GHC==8.4, GHC==8.2, GHC==8.0
+tested-with:     GHC==9.2, GHC==9.0, GHC==8.10, GHC==8.8, GHC==8.6, GHC==8.4, GHC==8.2, GHC==8.0
 
 source-repository head
   type:     git
@@ -34,7 +34,7 @@ library
     , contravariant       >= 1.2     && < 1.6
     , postgresql-simple   >= 0.6     && < 0.7
     , pretty              >= 1.1.1.0 && < 1.2
-    , product-profunctors >= 0.8.0.0 && < 0.12
+    , product-profunctors >= 0.11.0.3 && < 0.12
     , profunctors         >= 4.0     && < 5.7
     , scientific          >= 0.3     && < 0.4
     , semigroups          >= 0.13    && < 0.21
