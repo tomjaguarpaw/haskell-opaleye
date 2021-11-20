@@ -122,7 +122,7 @@ test-suite test
                  Wrapped
   hs-source-dirs: Test
   build-depends:
-    aeson >= 0.6 && < 1.6,
+    aeson,
     base >= 4 && < 5,
     bytestring,
     containers,
