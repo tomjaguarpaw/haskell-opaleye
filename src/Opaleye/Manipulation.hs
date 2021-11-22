@@ -168,7 +168,7 @@ data Update haskells = forall fieldsW fieldsR. Update
    { uTable      :: T.Table fieldsW fieldsR
    , uUpdateWith :: fieldsR -> fieldsW
    -- ^ Be careful: providing 'Nothing' to a field created by
-   -- 'Opaleye.Table.optional' updates the field to its default
+   -- 'Opaleye.Table.optionalTableFields' updates the field to its default
    -- value.  Many users have been confused by this because they
    -- assume it means that the field is to be left unchanged.  For an
    -- easier time wrap your update function in 'updateEasy'.
