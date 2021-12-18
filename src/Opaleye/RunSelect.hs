@@ -142,7 +142,7 @@ unsafeFromField :: (b -> b')
                 -> IRQ.FromField sqlType b
                 -> IRQ.FromField sqlType' b'
 unsafeFromField haskellF (IRQ.FromField u fp) =
-  fmap haskellF (IRQ.FromField (P.lmap (C.unsafeCoerceColumn) u) fp)
+  fmap haskellF (IRQ.FromField (P.lmap C.unsafeCoerceColumn u) fp)
 
 runSelectExplicit :: FromFields fields haskells
                   -> PGS.Connection
