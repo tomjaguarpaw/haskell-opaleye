@@ -115,6 +115,7 @@ import qualified Data.List.NonEmpty as NEL
 import           Prelude hiding (not)
 import qualified Opaleye.Exists as E
 import qualified Opaleye.Field as F
+import           Opaleye.Field (Field, FieldNullable)
 import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
                                           unsafeIfThenElse, unsafeGt)
 import qualified Opaleye.Internal.Column as C
@@ -338,7 +339,7 @@ infixl 8 .->>
 infixl 8 .#>
 (.#>) :: (SqlIsJson json)
       => F.FieldNullable json -- ^
-      -> Column (T.SqlArray T.SqlText) -- ^ path
+      -> Field (T.SqlArray T.SqlText) -- ^ path
       -> F.FieldNullable json
 (.#>) = C.binOp (HPQ.:#>)
 
@@ -346,7 +347,7 @@ infixl 8 .#>
 infixl 8 .#>>
 (.#>>) :: (SqlIsJson json)
        => F.FieldNullable json -- ^
-       -> Column (T.SqlArray T.SqlText) -- ^ path
+       -> Field (T.SqlArray T.SqlText) -- ^ path
        -> F.FieldNullable T.SqlText
 (.#>>) = C.binOp (HPQ.:#>>)
 
@@ -368,14 +369,14 @@ infix 4 .?
 -- | Do any of these key/element strings exist?
 infix 4 .?|
 (.?|) :: F.Field T.SqlJsonb
-      -> Column (T.SqlArray T.SqlText)
+      -> Field (T.SqlArray T.SqlText)
       -> F.Field T.SqlBool
 (.?|) = C.binOp (HPQ.:?|)
 
 -- | Do all of these key/element strings exist?
 infix 4 .?&
 (.?&) :: F.Field T.SqlJsonb
-      -> Column (T.SqlArray T.SqlText)
+      -> Field (T.SqlArray T.SqlText)
       -> F.Field T.SqlBool
 (.?&) = C.binOp (HPQ.:?&)
 
@@ -419,38 +420,38 @@ sqlElem :: F.Field a -- ^ Needle
         -> F.Field T.SqlBool
 sqlElem f fs = (O.not . F.isNull . arrayPosition fs) f
 
-overlap :: Column (T.SqlRange a) -> Column (T.SqlRange a) -> F.Field T.SqlBool
+overlap :: Field (T.SqlRange a) -> Field (T.SqlRange a) -> F.Field T.SqlBool
 overlap = C.binOp (HPQ.:&&)
 
-liesWithin :: T.IsRangeType a => Column a -> Column (T.SqlRange a) -> F.Field T.SqlBool
+liesWithin :: T.IsRangeType a => Field a -> Field (T.SqlRange a) -> F.Field T.SqlBool
 liesWithin = C.binOp (HPQ.:<@)
 
 -- | Access the upper bound of a range. For discrete range types it is the exclusive bound.
-upperBound :: T.IsRangeType a => Column (T.SqlRange a) -> Column (C.Nullable a)
+upperBound :: T.IsRangeType a => Field (T.SqlRange a) -> FieldNullable a
 upperBound (Column range) = Column $ HPQ.FunExpr "upper" [range]
 
 -- | Access the lower bound of a range. For discrete range types it is the inclusive bound.
-lowerBound :: T.IsRangeType a => Column (T.SqlRange a) -> Column (C.Nullable a)
+lowerBound :: T.IsRangeType a => Field (T.SqlRange a) -> FieldNullable a
 lowerBound (Column range) = Column $ HPQ.FunExpr "lower" [range]
 
 infix 4 .<<
-(.<<) :: Column (T.SqlRange a) -> Column (T.SqlRange a) -> F.Field T.SqlBool
+(.<<) :: Field (T.SqlRange a) -> Field (T.SqlRange a) -> F.Field T.SqlBool
 (.<<) = C.binOp (HPQ.:<<)
 
 infix 4 .>>
-(.>>) :: Column (T.SqlRange a) -> Column (T.SqlRange a) -> F.Field T.SqlBool
+(.>>) :: Field (T.SqlRange a) -> Field (T.SqlRange a) -> F.Field T.SqlBool
 (.>>) = C.binOp (HPQ.:>>)
 
 infix 4 .&<
-(.&<) :: Column (T.SqlRange a) -> Column (T.SqlRange a) -> F.Field T.SqlBool
+(.&<) :: Field (T.SqlRange a) -> Field (T.SqlRange a) -> F.Field T.SqlBool
 (.&<) = C.binOp (HPQ.:&<)
 
 infix 4 .&>
-(.&>) :: Column (T.SqlRange a) -> Column (T.SqlRange a) -> F.Field T.SqlBool
+(.&>) :: Field (T.SqlRange a) -> Field (T.SqlRange a) -> F.Field T.SqlBool
 (.&>) = C.binOp (HPQ.:&>)
 
 infix 4 .-|-
-(.-|-) :: Column (T.SqlRange a) -> Column (T.SqlRange a) -> F.Field T.SqlBool
+(.-|-) :: Field (T.SqlRange a) -> Field (T.SqlRange a) -> F.Field T.SqlBool
 (.-|-) = C.binOp (HPQ.:-|-)
 
 timestamptzAtTimeZone :: F.Field T.SqlTimestamptz
