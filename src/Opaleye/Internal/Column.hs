@@ -50,7 +50,7 @@ binOp op (Column e) (Column e') = Column (HPQ.BinExpr op e e')
 unOp :: HPQ.UnOp -> Column a -> Column b
 unOp op (Column e) = Column (HPQ.UnExpr op e)
 
--- For import order reasons we can't make the return type SqlBool
+-- For import order reasons we can't make the argument type SqlBool
 unsafeCase_ :: [(Column pgBool, Column a)] -> Column a -> Column a
 unsafeCase_ alts (Column otherwise_) = Column (HPQ.CaseExpr (unColumns alts) otherwise_)
   where unColumns = map (\(Column e, Column e') -> (e, e'))
