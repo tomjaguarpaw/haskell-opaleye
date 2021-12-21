@@ -136,13 +136,13 @@ optional :: SelectArr i a -> SelectArr i (MaybeFields a)
 optional = Opaleye.Internal.Lateral.laterally (optionalInternal (MaybeFields . isNotNull))
   where isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
 
-optionalInternal :: (Field (Opaleye.Column.Nullable SqlBool) -> a -> r) -> Select a -> Select r
+optionalInternal :: (Opaleye.Field.FieldNullable SqlBool -> a -> r) -> Select a -> Select r
 optionalInternal f query = IQ.leftJoinQueryArr $ \arg ->
     -- This is basically a left join on TRUE, but Shane (@duairc)
     -- wrote it to ensure that we don't need an Unpackspec a a.
     let (r, right, tag') = flip IQ.runSimpleQueryArr arg $ proc () -> do
           a <- query -< ()
-          true_ <- Rebind.rebind -< Opaleye.Column.toNullable (IC.Column true)
+          true_ <- Rebind.rebind -< Opaleye.Field.toNullable (IC.Column true)
           returnA -< f true_ a
         true = HPQ.ConstExpr (HPQ.BoolLit True)
     in (r, true, right, tag')
