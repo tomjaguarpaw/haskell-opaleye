@@ -111,6 +111,7 @@ optionalTableField columnName = TableFields
 readOnlyTableField :: String -> TableFields () (Column a)
 readOnlyTableField = lmap (const Nothing) . optionalTableField
 
+-- TODO: Rename this TableField
 class TableColumn writeType sqlType | writeType -> sqlType where
     -- | Infer either a required ('requiredTableField') or optional
     -- ('optionalTableField') field depending on
