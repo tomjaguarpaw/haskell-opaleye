@@ -244,7 +244,7 @@ unWithNulls b (WithNulls d) =
 newtype WithNulls p a b =
   WithNulls (p (MaybeFields a) b)
 
--- | This is only safe if d is OK with having nulls passed through it
+-- | This is only safe if b is OK with having nulls passed through it
 -- when they claim to be non-null.
 mapMaybeFieldsWithNulls :: PP.ProductProfunctor p
                         => p (Field SqlBool) (Field SqlBool)
@@ -254,7 +254,7 @@ mapMaybeFieldsWithNulls b d =
   MaybeFields <$> P.lmap mfPresent (withNullsField b)
               <*> P.lmap mfFields d
 
--- | This is only safe if d is OK with having nulls passed through it
+-- | This is only safe if col is OK with having nulls passed through it
 -- when they claim to be non-null.
 withNullsField :: (IsSqlType a, P.Profunctor p)
                => p (IC.Column a) (IC.Column a)
