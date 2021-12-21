@@ -26,7 +26,7 @@ import qualified Data.Time.Clock.POSIX.Compat     as Time
 import qualified Database.PostgreSQL.Simple       as PGS
 import qualified Database.PostgreSQL.Simple.Range as R
 import           GHC.Int                          (Int64)
-import           Opaleye                          (Field, Nullable, Select,
+import           Opaleye                          (Field, FieldNullable, Select,
                                                    SelectArr, (.==), (.>))
 import qualified Opaleye                          as O
 import qualified Opaleye.Internal.Aggregate       as IA
@@ -724,7 +724,7 @@ testDoubleAggregate = it "" $ testDoubleH (O.aggregate O.count) [1 :: Int64]
 testDoubleLeftJoin :: Test
 testDoubleLeftJoin = it "" $ testDoubleH lj [(1 :: Int, Just (1 :: Int))]
   where lj :: Select (Field O.SqlInt4)
-          -> Select (Field O.SqlInt4, Field (Nullable O.SqlInt4))
+          -> Select (Field O.SqlInt4, FieldNullable O.SqlInt4)
         lj q = O.leftJoin q q (uncurry (.==))
 
 testDoubleValues :: Test
@@ -737,7 +737,7 @@ testDoubleUnionAll = it "" $ testDoubleH u [1 :: Int, 1]
   where u q = q `O.unionAll` q
 
 aLeftJoin :: Select ((Field O.SqlInt4, Field O.SqlInt4),
-                    (Field (Nullable O.SqlInt4), Field (Nullable O.SqlInt4)))
+                    (FieldNullable O.SqlInt4, FieldNullable O.SqlInt4))
 aLeftJoin = O.leftJoin table1Q table3Q (\(l, r) -> fst l .== fst r)
 
 testLeftJoin :: Test
@@ -751,9 +751,9 @@ testLeftJoin = it "" $ testH aLeftJoin (`shouldBe` expected)
 testLeftJoinNullable :: Test
 testLeftJoinNullable = it "" $ testH q (`shouldBe` expected)
   where q :: Select ((Field O.SqlInt4, Field O.SqlInt4),
-                    ((Field (Nullable O.SqlInt4), Field (Nullable O.SqlInt4)),
-                     (Field (Nullable O.SqlInt4),
-                      Field (Nullable O.SqlInt4))))
+                    ((FieldNullable O.SqlInt4, FieldNullable O.SqlInt4),
+                     (FieldNullable O.SqlInt4,
+                      FieldNullable O.SqlInt4)))
         q = O.leftJoin table3Q aLeftJoin cond
 
         cond (x, y) = fst x .== fst (fst y)
