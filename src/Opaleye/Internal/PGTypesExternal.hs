@@ -1,6 +1,5 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 
 module Opaleye.Internal.PGTypesExternal
   (module Opaleye.Internal.PGTypesExternal, IsSqlType(..)) where
