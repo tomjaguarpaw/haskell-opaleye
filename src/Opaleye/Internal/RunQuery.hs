@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
 
 module Opaleye.Internal.RunQuery where
 
@@ -11,12 +12,12 @@ import qualified Database.PostgreSQL.Simple.Cursor  as PGSC (Cursor)
 import           Database.PostgreSQL.Simple.Internal (RowParser)
 import qualified Database.PostgreSQL.Simple.FromField as PGS
 import           Database.PostgreSQL.Simple.FromField
-  (FieldParser, fromField, pgArrayFieldParser)
+  (FieldParser, fromField, pgArrayFieldParser, optionalField)
 import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
-import           Opaleye.Column (Column)
-import           Opaleye.Internal.Column (Nullable)
+import           Opaleye.Internal.Column (Field_, Field, FieldNullable,
+                                          Nullability(Nullable, NonNullable))
 import qualified Opaleye.Internal.PackMap as PackMap
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
@@ -76,7 +77,7 @@ import           Data.Typeable (Typeable)
 
 -- Why isn't this a newtype?
 data FromField sqlType haskellType =
-  FromField (U.Unpackspec (Column sqlType) ()) (FieldParser haskellType)
+  FromField (U.Unpackspec (Field_ NonNullable sqlType) ()) (FieldParser haskellType)
 
 instance Functor (FromField u) where
   fmap f ~(FromField u fp) = FromField u ((fmap . fmap . fmap) f fp)
@@ -124,27 +125,23 @@ fieldParserQueryRunnerColumn = fromPGSFieldParser
 fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
 fromPGSFieldParser = FromField (P.rmap (const ()) U.unpackspecField)
 
-fromFields :: FromField a b -> FromFields (Column a) b
+fromFields :: FromField a b -> FromFields (Field a) b
 fromFields qrc = FromFields u (const (fieldWith fp)) (const 1)
     where FromField u fp = qrc
 
 {-# DEPRECATED queryRunner "Use fromFields instead.  Will be removed in version 0.9." #-}
-queryRunner :: FromField a b -> FromFields (Column a) b
+queryRunner :: FromField a b -> FromFields (Field a) b
 queryRunner = fromFields
 
-fromFieldNullable :: FromField a b
-                  -> FromField (Nullable a) (Maybe b)
-fromFieldNullable qr =
-  FromField (P.lmap C.unsafeCoerceColumn u) (fromField' fp)
+fromFieldsNullable :: FromField a b -> FromFields (FieldNullable a) (Maybe b)
+fromFieldsNullable qr = FromFields u' (const (fieldWith fp'')) (const 1)
   where FromField u fp = qr
         fromField' :: FieldParser a -> FieldParser (Maybe a)
         fromField' _ _ Nothing = pure Nothing
         fromField' fp' f bs = fmap Just (fp' f bs)
 
-{-# DEPRECATED queryRunnerColumnNullable "Use fromFieldNullable instead.  Will be deprecated in 0.9." #-}
-queryRunnerColumnNullable :: FromField a b
-                          -> FromField (Nullable a) (Maybe b)
-queryRunnerColumnNullable = fromFieldNullable
+        u' = P.lmap C.unsafeCoerceColumn u
+        fp'' = fromField' fp
 
 unsafeFromFieldRaw :: FromField a (PGS.Field, Maybe SBS.ByteString)
 unsafeFromFieldRaw = fromPGSFieldParser (\f mdata -> pure (f, mdata))
@@ -155,12 +152,13 @@ unsafeAdjustFromField (FromField u f) = FromField (P.lmap C.unsafeCoerceColumn u
 -- { Instances for automatic derivation
 
 instance DefaultFromField a b =>
-         DefaultFromField (Nullable a) (Maybe b) where
-  defaultFromField = fromFieldNullable defaultFromField
+         D.Default FromFields (Field a) b where
+  def = fromFields defaultFromField
 
 instance DefaultFromField a b =>
-         D.Default FromFields (Column a) b where
-  def = fromFields defaultFromField
+         D.Default FromFields (FieldNullable a) (Maybe b)
+  where def = fromFieldsNullable defaultFromField
+
 
 -- }
 
@@ -308,23 +306,28 @@ instance DefaultFromField T.SqlJsonb Ae.Value where
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
 instance (Typeable b, DefaultFromField a b) =>
-         DefaultFromField (T.SqlArray a) [b] where
+         DefaultFromField (T.SqlArray_ NonNullable a) [b] where
   defaultFromField = fromFieldArray defaultFromField
 
-fromFieldArray :: Typeable h => FromField f h -> FromField (T.SqlArray f) [h]
+fromFieldArray :: Typeable h => FromField f h -> FromField (T.SqlArray_ NonNullable f) [h]
 fromFieldArray q =
   fmap fromPGArray (unsafeAdjustFromField (FromField c (pgArrayFieldParser f)))
+  where FromField c f = q
+
+fromFieldArrayNullable :: Typeable h => FromField f h -> FromField (T.SqlArray_ 'Nullable f) [Maybe h]
+fromFieldArrayNullable q =
+  fmap fromPGArray (unsafeAdjustFromField (FromField c (pgArrayFieldParser (optionalField f))))
   where FromField c f = q
 
 -- }
 
 instance (Typeable b, DefaultFromField a b) =>
-         DefaultFromField (T.PGRange a) (PGSR.PGRange b) where
+         DefaultFromField (T.SqlRange a) (PGSR.PGRange b) where
   defaultFromField = fromFieldRange defaultFromField
 
 fromFieldRange :: Typeable b
                => FromField a b
-               -> FromField (T.PGRange a) (PGSR.PGRange b)
+               -> FromField (T.SqlRange a) (PGSR.PGRange b)
 fromFieldRange off =
   FromField (P.lmap C.unsafeCoerceColumn c) (PGSR.fromFieldRange pff)
   where FromField c pff = off

@@ -40,14 +40,10 @@ import Opaleye.Adaptors
 import Opaleye.Aggregate
 import Opaleye.Binary
 import Opaleye.Column
+  hiding (null,
+          isNull)
 import Opaleye.Distinct
 import Opaleye.Field
-  hiding (null,
-          isNull,
-          matchNullable,
-          fromNullable,
-          toNullable,
-          maybeToNullable)
 import Opaleye.FunctionalJoin
 import Opaleye.Join
 import Opaleye.Label

@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+
 -- | Perform aggregation on 'S.Select's.  To aggregate a 'S.Select' you
 -- should construct an 'Aggregator' encoding how you want the
 -- aggregation to proceed, then call 'aggregate' on it.  The
@@ -42,7 +44,7 @@ import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PackMap as PM
 
-import qualified Opaleye.Column    as C
+import qualified Opaleye.Field     as F
 import qualified Opaleye.Order     as Ord
 import qualified Opaleye.Select    as S
 import qualified Opaleye.SqlTypes   as T
@@ -99,7 +101,7 @@ distinctAggregator (A.Aggregator (PM.PackMap pm)) =
   A.Aggregator (PM.PackMap (\f c -> pm (f . P.first' (fmap (\(a,b,_) -> (a,b,HPQ.AggrDistinct)))) c))
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
-groupBy :: Aggregator (C.Column a) (C.Column a)
+groupBy :: Aggregator (F.Field_ n a) (F.Field_ n a)
 groupBy = A.makeAggr' Nothing
 
 -- | Sum all rows in a group.
@@ -107,46 +109,48 @@ groupBy = A.makeAggr' Nothing
 -- WARNING! The type of this operation is wrong and will crash at
 -- runtime when the argument is 'T.SqlInt4' or 'T.SqlInt8'.  For those
 -- use 'sumInt4' or 'sumInt8' instead.
-sum :: Aggregator (C.Column a) (C.Column a)
+sum :: Aggregator (F.Field a) (F.Field a)
 sum = A.makeAggr HPQ.AggrSum
 
-sumInt4 :: Aggregator (C.Column T.SqlInt4) (C.Column T.SqlInt8)
-sumInt4 = fmap C.unsafeCoerceColumn Opaleye.Aggregate.sum
+sumInt4 :: Aggregator (F.Field T.SqlInt4) (F.Field T.SqlInt8)
+sumInt4 = fmap F.unsafeCoerceField Opaleye.Aggregate.sum
 
-sumInt8 :: Aggregator (C.Column T.SqlInt8) (C.Column T.SqlNumeric)
-sumInt8 = fmap C.unsafeCoerceColumn Opaleye.Aggregate.sum
+sumInt8 :: Aggregator (F.Field T.SqlInt8) (F.Field T.SqlNumeric)
+sumInt8 = fmap F.unsafeCoerceField Opaleye.Aggregate.sum
 
 -- | Count the number of non-null rows in a group.
-count :: Aggregator (C.Column a) (C.Column T.SqlInt8)
+count :: Aggregator (F.Field a) (F.Field T.SqlInt8)
 count = A.makeAggr HPQ.AggrCount
 
 -- | Count the number of rows in a group.  This 'Aggregator' is named
 -- @countStar@ after SQL's @COUNT(*)@ aggregation function.
-countStar :: Aggregator a (C.Column T.SqlInt8)
-countStar = lmap (const (0 :: C.Column T.SqlInt4)) count
+countStar :: Aggregator a (F.Field T.SqlInt8)
+countStar = lmap (const (0 :: F.Field T.SqlInt4)) count
 
 -- | Average of a group
-avg :: Aggregator (C.Column T.SqlFloat8) (C.Column T.SqlFloat8)
+avg :: Aggregator (F.Field T.SqlFloat8) (F.Field T.SqlFloat8)
 avg = A.makeAggr HPQ.AggrAvg
 
 -- | Maximum of a group
-max :: Ord.SqlOrd a => Aggregator (C.Column a) (C.Column a)
+max :: Ord.SqlOrd a => Aggregator (F.Field a) (F.Field a)
 max = A.makeAggr HPQ.AggrMax
 
 -- | Maximum of a group
-min :: Ord.SqlOrd a => Aggregator (C.Column a) (C.Column a)
+min :: Ord.SqlOrd a => Aggregator (F.Field a) (F.Field a)
 min = A.makeAggr HPQ.AggrMin
 
-boolOr :: Aggregator (C.Column T.SqlBool) (C.Column T.SqlBool)
+boolOr :: Aggregator (F.Field T.SqlBool) (F.Field T.SqlBool)
 boolOr = A.makeAggr HPQ.AggrBoolOr
 
-boolAnd :: Aggregator (C.Column T.SqlBool) (C.Column T.SqlBool)
+boolAnd :: Aggregator (F.Field T.SqlBool) (F.Field T.SqlBool)
 boolAnd = A.makeAggr HPQ.AggrBoolAnd
 
-arrayAgg :: Aggregator (C.Column a) (C.Column (T.SqlArray a))
+arrayAgg :: Aggregator (F.Field a) (F.Field (T.SqlArray a))
 arrayAgg = A.makeAggr HPQ.AggrArr
 
 {-|
+FIXME: no longer supports nulls
+
 Aggregates values, including nulls, as a JSON array
 
 An example usage:
@@ -166,11 +170,11 @@ The above query, when executed, will return JSON of the following form from post
 
 @"[{\\"summary\\" : \\"xy\\", \\"details\\" : \\"a\\"}, {\\"summary\\" : \\"z\\", \\"details\\" : \\"a\\"}, {\\"summary\\" : \\"more text\\", \\"details\\" : \\"a\\"}]"@
 -}
-jsonAgg :: Aggregator (C.Column a) (C.Column T.SqlJson)
+jsonAgg :: Aggregator (F.Field a) (F.Field T.SqlJson)
 jsonAgg = A.makeAggr HPQ.JsonArr
 
-stringAgg :: C.Column T.SqlText
-          -> Aggregator (C.Column T.SqlText) (C.Column T.SqlText)
+stringAgg :: F.Field T.SqlText
+          -> Aggregator (F.Field T.SqlText) (F.Field T.SqlText)
 stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 
 -- | Count the number of rows in a query.  This is different from
@@ -183,13 +187,13 @@ stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
 -- changing the AST though, so I'm not too keen.
 --
 -- See https://github.com/tomjaguarpaw/haskell-opaleye/issues/162
-countRows :: S.Select a -> S.Select (C.Column T.SqlInt8)
-countRows = fmap (C.fromNullable 0)
+countRows :: S.Select a -> S.Select (F.Field T.SqlInt8)
+countRows = fmap (F.fromNullable 0)
             . fmap snd
             . (\q -> J.leftJoin (pure ())
                                 (aggregate count q)
                                 (const (T.sqlBool True)))
-            . fmap (const (0 :: C.Column T.SqlInt4))
+            . fmap (const (0 :: F.Field T.SqlInt4))
             --- ^^ The count aggregator requires an input of type
             -- 'Column a' rather than 'a' (I'm not sure if there's a
             -- good reason for this).  To deal with that restriction

@@ -28,7 +28,6 @@ module Opaleye.Order ( -- * Order by
                      ) where
 
 import qualified Data.Profunctor.Product.Default as D
-import qualified Opaleye.Column as C
 import qualified Opaleye.Field as F
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Order as O
@@ -162,7 +161,6 @@ instance SqlOrd T.SqlTimestamptz
 instance SqlOrd T.SqlTimestamp
 instance SqlOrd T.SqlCitext
 instance SqlOrd T.SqlUuid
-instance SqlOrd a => SqlOrd (C.Nullable a)
 
 -- | Keep a row from each set where the given function returns the same result. No
 --   ordering is guaranteed. Multiple fields may be distinguished by projecting out

@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.Binary where
 
-import           Opaleye.Internal.Column (Column(Column), unColumn)
+import           Opaleye.Internal.Column (Field_(Column), unColumn)
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.QueryArr as Q
@@ -32,7 +32,7 @@ runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> (columns, columns) -> f columns'
 runBinaryspec (Binaryspec b) = PM.traversePM b
 
-binaryspecColumn :: Binaryspec (Column a) (Column a)
+binaryspecColumn :: Binaryspec (Field_ n a) (Field_ n a)
 binaryspecColumn = Binaryspec (PM.iso (mapBoth unColumn) Column)
   where mapBoth f (s, t) = (f s, f t)
 
@@ -52,7 +52,7 @@ sameTypeBinOpHelper binop binaryspec q1 q2 = Q.productQueryArr q where
             , PQ.Rebind False (map (fmap snd) pes) primQuery2
             )
 
-instance Default Binaryspec (Column a) (Column a) where
+instance Default Binaryspec (Field_ n a) (Field_ n a) where
   def = binaryspecColumn
 
 -- {

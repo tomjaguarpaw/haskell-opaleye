@@ -7,8 +7,7 @@ module Opaleye.Internal.Manipulation where
 
 import qualified Control.Applicative as A
 
-import           Opaleye.Internal.Column (Column(Column))
-import           Opaleye.Field (Field)
+import           Opaleye.Internal.Column (Field_(Column), Field)
 import qualified Opaleye.Internal.HaskellDB.Sql  as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Default  as SD
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
@@ -123,10 +122,10 @@ instance PP.ProductProfunctor Updater where
 
 --
 
-instance D.Default Updater (Column a) (Column a) where
+instance D.Default Updater (Field_ n a) (Field_ n a) where
   def = Updater id
 
-instance D.Default Updater (Column a) (Maybe (Column a)) where
+instance D.Default Updater (Field_ n a) (Maybe (Field_ n a)) where
   def = Updater Just
 
 arrangeDeleteReturning :: U.Unpackspec columnsReturned ignored

@@ -5,7 +5,7 @@ module Opaleye.Internal.JSONBuildObjectFields
   )
 where
 
-import Opaleye.Internal.Column (Column (Column))
+import Opaleye.Internal.Column (Field_(Column))
 import Opaleye.Field (Field)
 import Opaleye.Internal.HaskellDB.PrimQuery (Literal (StringLit), PrimExpr (ConstExpr, FunExpr))
 import Opaleye.Internal.PGTypesExternal (SqlJson)
@@ -28,7 +28,7 @@ instance Monoid JSONBuildObjectFields where
 -- | Given a label and a column, generates a pair for use with @jsonBuildObject@
 jsonBuildObjectField :: String
                      -- ^ Field name
-                     -> Column a
+                     -> Field_ n a
                      -- ^ Field value
                      -> JSONBuildObjectFields
 jsonBuildObjectField f (Column v) = JSONBuildObjectFields [(f, v)]

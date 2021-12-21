@@ -4,6 +4,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE DataKinds #-}
 
 -- We can probably disable ConstraintKinds and TypeSynonymInstances
 -- when we move to Sql... instead of PG..
@@ -110,13 +111,14 @@ module Opaleye.Operators
   where
 
 import qualified Control.Arrow as A
-import qualified Data.Foldable as F
+import qualified Data.Foldable as F hiding (null)
 import qualified Data.List.NonEmpty as NEL
 import           Prelude hiding (not)
 import qualified Opaleye.Exists as E
 import qualified Opaleye.Field as F
-import           Opaleye.Field (Field, FieldNullable)
-import           Opaleye.Internal.Column (Column(Column), unsafeCase_,
+import           Opaleye.Internal.Column (Field_(Column), Field, FieldNullable,
+                                          Nullability(Nullable),
+                                          unsafeCase_,
                                           unsafeIfThenElse, unsafeGt)
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.JSONBuildObjectFields as JBOF
@@ -171,11 +173,11 @@ restrictNotExists criteria = QueryArr f where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
 infix 4 .==
-(.==) :: Column a -> Column a -> F.Field T.SqlBool
+(.==) :: Field a -> Field a -> F.Field T.SqlBool
 (.==) = C.binOp (HPQ.:==)
 
 infix 4 ./=
-(./=) :: Column a -> Column a -> F.Field T.SqlBool
+(./=) :: Field a -> Field a -> F.Field T.SqlBool
 (./=) = C.binOp (HPQ.:<>)
 
 infix 4 .===
@@ -193,40 +195,40 @@ infix 4 ./==
 (./==) = Opaleye.Operators.not .: (O..==)
 
 infix 4 .>
-(.>) :: Ord.SqlOrd a => Column a -> Column a -> F.Field T.SqlBool
+(.>) :: Ord.SqlOrd a => Field a -> Field a -> F.Field T.SqlBool
 (.>) = unsafeGt
 
 infix 4 .<
-(.<) :: Ord.SqlOrd a => Column a -> Column a -> F.Field T.SqlBool
+(.<) :: Ord.SqlOrd a => Field a -> Field a -> F.Field T.SqlBool
 (.<) = C.binOp (HPQ.:<)
 
 infix 4 .<=
-(.<=) :: Ord.SqlOrd a => Column a -> Column a -> F.Field T.SqlBool
+(.<=) :: Ord.SqlOrd a => Field a -> Field a -> F.Field T.SqlBool
 (.<=) = C.binOp (HPQ.:<=)
 
 infix 4 .>=
-(.>=) :: Ord.SqlOrd a => Column a -> Column a -> F.Field T.SqlBool
+(.>=) :: Ord.SqlOrd a => Field a -> Field a -> F.Field T.SqlBool
 (.>=) = C.binOp (HPQ.:>=)
 
 -- | Integral division, named after 'Prelude.quot'.  It maps to the
 -- @/@ operator in Postgres.
-quot_ :: C.SqlIntegral a => Column a -> Column a -> Column a
+quot_ :: C.SqlIntegral a => Field a -> Field a -> Field a
 quot_ = C.binOp (HPQ.:/)
 
 -- | The remainder of integral division, named after 'Prelude.rem'.
 -- It maps to 'MOD' ('%') in Postgres, confusingly described as
 -- "modulo (remainder)".
-rem_ :: C.SqlIntegral a => Column a -> Column a -> Column a
+rem_ :: C.SqlIntegral a => Field a -> Field a -> Field a
 rem_ = C.binOp HPQ.OpMod
 
 -- | Select the first case for which the condition is true.
-case_ :: [(F.Field T.SqlBool, Column a)] -> Column a -> Column a
+case_ :: [(F.Field T.SqlBool, Field_ n a)] -> Field_ n a -> Field_ n a
 case_ = unsafeCase_
 
 -- | Monomorphic if\/then\/else.
 --
 -- This may be replaced by 'ifThenElseMany' in a future version.
-ifThenElse :: F.Field T.SqlBool -> Column a -> Column a -> Column a
+ifThenElse :: F.Field T.SqlBool -> Field_ n a -> Field_ n a -> Field_ n a
 ifThenElse = unsafeIfThenElse
 
 -- | Polymorphic if\/then\/else.
@@ -285,7 +287,7 @@ sqlLength  (Column e) = Column (HPQ.FunExpr "length" [e])
 -- 'in_' @validProducts@ @product@ checks whether @product@ is a valid
 -- product.  'in_' @validProducts@ is a function which checks whether
 -- a product is a valid product.
-in_ :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> F.Field T.SqlBool
+in_ :: (Functor f, F.Foldable f) => f (Field a) -> Field a -> F.Field T.SqlBool
 in_ fcas (Column a) = case NEL.nonEmpty (F.toList fcas) of
    Nothing -> T.sqlBool False
    Just xs -> Column $ HPQ.BinExpr HPQ.OpIn a (HPQ.ListExpr (fmap C.unColumn xs))
@@ -380,43 +382,43 @@ infix 4 .?&
       -> F.Field T.SqlBool
 (.?&) = C.binOp (HPQ.:?&)
 
-emptyArray :: T.IsSqlType a => Column (T.SqlArray a)
+emptyArray :: T.IsSqlType a => Field (T.SqlArray_ n a)
 emptyArray = T.sqlArray id []
 
 -- | Append two 'T.SqlArray's
-arrayAppend :: F.Field (T.SqlArray a) -> F.Field (T.SqlArray a) -> F.Field (T.SqlArray a)
+arrayAppend :: F.Field (T.SqlArray_ n a) -> F.Field (T.SqlArray_ n a) -> F.Field (T.SqlArray_ n a)
 arrayAppend = C.binOp (HPQ.:||)
 
 -- | Prepend an element to a 'T.SqlArray'
-arrayPrepend :: Column a -> Column (T.SqlArray a) -> Column (T.SqlArray a)
+arrayPrepend :: Field_ n a -> Field (T.SqlArray_ n a) -> Field (T.SqlArray_ n a)
 arrayPrepend (Column e) (Column es) = Column (HPQ.FunExpr "array_prepend" [e, es])
 
 -- | Remove all instances of an element from a 'T.SqlArray'
-arrayRemove :: Column a -> Column (T.SqlArray a) -> Column (T.SqlArray a)
+arrayRemove :: Field_ n a -> Field (T.SqlArray_ n a) -> Field (T.SqlArray_ n a)
 arrayRemove (Column e) (Column es) = Column (HPQ.FunExpr "array_remove" [es, e])
 
 -- | Remove all 'NULL' values from a 'T.SqlArray'
-arrayRemoveNulls :: Column (T.SqlArray (C.Nullable a)) -> Column (T.SqlArray a)
-arrayRemoveNulls = Column.unsafeCoerceColumn . arrayRemove Column.null
+arrayRemoveNulls :: Field (T.SqlArray_ Nullable a) -> Field (T.SqlArray a)
+arrayRemoveNulls = Column.unsafeCoerceColumn . arrayRemove F.null
 
-singletonArray :: T.IsSqlType a => Column a -> Column (T.SqlArray a)
+singletonArray :: T.IsSqlType a => Field_ n a -> Field (T.SqlArray_ n a)
 singletonArray x = arrayPrepend x emptyArray
 
-index :: (C.SqlIntegral n) => Column (T.SqlArray a) -> Column n -> Column (C.Nullable a)
+index :: (C.SqlIntegral n) => Field (T.SqlArray_ n' a) -> Field n -> FieldNullable a
 index (Column a) (Column b) = Column (HPQ.ArrayIndex a b)
 
 -- | Postgres's @array_position@
-arrayPosition :: F.Field (T.SqlArray a) -- ^ Haystack
-              -> F.Field a -- ^ Needle
-              -> F.Field (Column.Nullable T.SqlInt4)
+arrayPosition :: F.Field (T.SqlArray_ n a) -- ^ Haystack
+              -> F.Field_ n a -- ^ Needle
+              -> F.FieldNullable T.SqlInt4
 arrayPosition (Column fs) (Column f') =
   C.Column (HPQ.FunExpr "array_position" [fs , f'])
 
 -- | Whether the element (needle) exists in the array (haystack).
 -- N.B. this is implemented hackily using @array_position@.  If you
 -- need it to be implemented using @= any@ then please open an issue.
-sqlElem :: F.Field a -- ^ Needle
-        -> F.Field (T.SqlArray a) -- ^ Haystack
+sqlElem :: F.Field_ n a -- ^ Needle
+        -> F.Field (T.SqlArray_ n a) -- ^ Haystack
         -> F.Field T.SqlBool
 sqlElem f fs = (O.not . F.isNull . arrayPosition fs) f
 

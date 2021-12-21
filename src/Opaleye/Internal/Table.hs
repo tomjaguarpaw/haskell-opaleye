@@ -5,7 +5,7 @@
 
 module Opaleye.Internal.Table where
 
-import           Opaleye.Internal.Column (Column(Column), unColumn)
+import           Opaleye.Internal.Column (Field_(Column), unColumn)
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -93,7 +93,7 @@ newtype Writer columns dummy =
 
 -- | 'requiredTableField' is for fields which are not optional.  You
 -- must provide them on writes.
-requiredTableField :: String -> TableFields (Column a) (Column a)
+requiredTableField :: String -> TableFields (Field_ n a) (Field_ n a)
 requiredTableField columnName = TableFields
   (requiredW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
@@ -101,29 +101,29 @@ requiredTableField columnName = TableFields
 
 -- | 'optionalTableField' is for fields that you can omit on writes, such as
 --  fields which have defaults or which are SERIAL.
-optionalTableField :: String -> TableFields (Maybe (Column a)) (Column a)
+optionalTableField :: String -> TableFields (Maybe (Field_ n a)) (Field_ n a)
 optionalTableField columnName = TableFields
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 -- | 'readOnlyTableField' is for fields that you must omit on writes, such as
 --  SERIAL fields intended to auto-increment only.
-readOnlyTableField :: String -> TableFields () (Column a)
+readOnlyTableField :: String -> TableFields () (Field_ n a)
 readOnlyTableField = lmap (const Nothing) . optionalTableField
 
--- TODO: Rename this TableField
-class TableColumn writeType sqlType | writeType -> sqlType where
+class InferrableTableField w n r
+    | w -> n, w -> r where
     -- | Infer either a required ('requiredTableField') or optional
     -- ('optionalTableField') field depending on
     -- the write type.  It's generally more convenient to use this
     -- than 'required' or 'optional' but you do have to provide a type
     -- signature instead.
-    tableField  :: String -> TableFields writeType (Column sqlType)
+    tableField  :: String -> TableFields w (Field_ n r)
 
-instance TableColumn (Column a) a where
+instance InferrableTableField (Field_ n r) n r where
     tableField = requiredTableField
 
-instance TableColumn (Maybe (Column a)) a where
+instance InferrableTableField (Maybe (Field_ n r)) n r where
     tableField = optionalTableField
 
 queryTable :: U.Unpackspec viewColumns columns
@@ -177,11 +177,11 @@ instance Monoid (Zip a) where
     where mempty' = [] `NEL.cons` mempty'
   mappend = (<>)
 
-requiredW :: String -> Writer (Column a) (Column a)
+requiredW :: String -> Writer (Field_ n a) (Field_ n a)
 requiredW columnName =
   Writer (PM.iso (flip (,) columnName . fmap unColumn) id)
 
-optionalW :: String -> Writer (Maybe (Column a)) (Column a)
+optionalW :: String -> Writer (Maybe (Field_ n a)) (Field_ n a)
 optionalW columnName =
   Writer (PM.iso (flip (,) columnName . fmap maybeUnColumn) id)
   where maybeUnColumn = maybe HPQ.DefaultInsertExpr unColumn

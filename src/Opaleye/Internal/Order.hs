@@ -8,7 +8,7 @@ import qualified Data.Monoid                          as M
 import qualified Data.Profunctor                      as P
 import qualified Data.Semigroup                       as S
 import qualified Data.Void                            as Void
-import qualified Opaleye.Column                       as C
+import qualified Opaleye.Field                        as F
 import qualified Opaleye.Internal.Column              as IC
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PrimQuery           as PQ
@@ -48,7 +48,7 @@ instance Divisible.Decidable Order where
   lose f = C.contramap f (Order Void.absurd)
   choose f (Order o) (Order o') = C.contramap f (Order (either o o'))
 
-order :: HPQ.OrderOp -> (a -> C.Column b) -> Order a
+order :: HPQ.OrderOp -> (a -> F.Field_ n b) -> Order a
 order op f = Order (fmap (\column -> [(op, IC.unColumn column)]) f)
 
 orderByU :: Order a -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
@@ -85,7 +85,7 @@ distinctOnBy ups proj ord (cols, pq, t) = (cols, pqOut, t)
 -- return them (e.g. sorted by primary key). Exactly-ordered results always come
 -- first in a result set. Entries in the input list that are /not/ present in
 -- result of a query are ignored.
-exact :: [IC.Column b] -> (a -> IC.Column b) -> Order a
+exact :: [IC.Field_ n b] -> (a -> IC.Field_ n b) -> Order a
 exact xs k = maybe M.mempty go (NL.nonEmpty xs) where
   -- Create an equality AST node, between two columns, essentially
   -- stating "(column = value)" syntactically.

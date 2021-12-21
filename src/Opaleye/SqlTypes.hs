@@ -70,6 +70,7 @@ module Opaleye.SqlTypes (
   sqlArray,
   -- ** Types
   SqlArray,
+  SqlArray_,
   -- * Range
   -- ** Creating values
   sqlRange,
@@ -111,6 +112,7 @@ import           Opaleye.Internal.PGTypesExternal (SqlBool,
                                                    SqlUuid,
                                                    SqlCitext,
                                                    SqlArray,
+                                                   SqlArray_,
                                                    SqlBytea,
                                                    SqlJson,
                                                    SqlJsonb,
@@ -221,7 +223,7 @@ sqlLazyJSONB = P.pgLazyJSONB
 sqlValueJSONB :: Ae.ToJSON a => a -> F.Field SqlJsonb
 sqlValueJSONB = P.pgValueJSONB
 
-sqlArray :: IsSqlType b => (a -> F.Field b) -> [a] -> F.Field (SqlArray b)
+sqlArray :: IsSqlType b => (a -> F.Field_ n b) -> [a] -> F.Field (SqlArray_ n b)
 sqlArray = P.pgArray
 
 sqlRange :: IsRangeType b

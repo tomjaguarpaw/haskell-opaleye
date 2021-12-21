@@ -114,6 +114,6 @@ exceptExplicit :: B.Binaryspec fields fields'
 exceptExplicit = B.sameTypeBinOpHelper PQ.Except
 
 binaryspecField :: (B.Binaryspec
-                        (Opaleye.Internal.Column.Column a)
-                        (Opaleye.Internal.Column.Column a))
+                        (Opaleye.Internal.Column.Field_ n a)
+                        (Opaleye.Internal.Column.Field_ n a))
 binaryspecField = B.binaryspecColumn

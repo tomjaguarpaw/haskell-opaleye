@@ -4,7 +4,7 @@
 
 module Opaleye.Internal.Operators where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Field_(Column))
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
@@ -49,13 +49,13 @@ not = C.unOp HPQ.OpNot
 
 newtype EqPP a b = EqPP (a -> a -> Field T.PGBool)
 
-eqPPField :: EqPP (Column a) ignored
+eqPPField :: EqPP (Field a) ignored
 eqPPField = EqPP C.unsafeEq
 
 eqExplicit :: EqPP columns a -> columns -> columns -> Field T.PGBool
 eqExplicit (EqPP f) = f
 
-instance D.Default EqPP (Column a) (Column a) where
+instance D.Default EqPP (Field a) (Field a) where
   def = eqPPField
 
 
@@ -68,10 +68,10 @@ ifExplict :: IfPP columns columns'
           -> columns'
 ifExplict (IfPP f) = f
 
-ifPPField :: IfPP (Column a) (Column a)
+ifPPField :: IfPP (Field_ n a) (Field_ n a)
 ifPPField = D.def
 
-instance D.Default IfPP (Column a) (Column a) where
+instance D.Default IfPP (Field_ n a) (Field_ n a) where
   def = IfPP C.unsafeIfThenElse
 
 
@@ -82,10 +82,10 @@ data RelExprMaker a b =
     , relExprCM  :: U.Unpackspec c b
     }
 
-relExprColumn :: RelExprMaker String (Column a)
+relExprColumn :: RelExprMaker String (Field_ n a)
 relExprColumn = RelExprMaker TM.tableColumn U.unpackspecField
 
-instance D.Default RelExprMaker String (Column a) where
+instance D.Default RelExprMaker String (Field_ n a) where
   def = relExprColumn
 
 runRelExprMaker :: RelExprMaker strings columns

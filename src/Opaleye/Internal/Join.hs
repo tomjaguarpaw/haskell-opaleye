@@ -8,7 +8,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PackMap             as PM
 import qualified Opaleye.Internal.Tag                 as T
 import qualified Opaleye.Internal.Unpackspec          as U
-import           Opaleye.Internal.Column (Column(Column), Nullable)
+import           Opaleye.Internal.Column (Field_(Column), FieldNullable)
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Operators as Op
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -35,10 +35,10 @@ newtype NullMaker a b = NullMaker (a -> b)
 toNullable :: NullMaker a b -> a -> b
 toNullable (NullMaker f) = f
 
-instance D.Default NullMaker (Column a) (Column (Nullable a)) where
+instance D.Default NullMaker (Field a) (FieldNullable a) where
   def = NullMaker C.toNullable
 
-instance D.Default NullMaker (Column (Nullable a)) (Column (Nullable a)) where
+instance D.Default NullMaker (FieldNullable a) (FieldNullable a) where
   def = NullMaker id
 
 joinExplicit :: U.Unpackspec columnsA columnsA

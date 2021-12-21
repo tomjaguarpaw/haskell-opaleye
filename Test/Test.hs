@@ -88,7 +88,7 @@ possible to simplify the property tests though.
 
 -}
 
-required :: String -> O.TableFields (O.Column a) (O.Column a)
+required :: String -> O.TableFields (O.Field a) (O.Field a)
 required = O.requiredTableField
 
 twoIntTable :: String

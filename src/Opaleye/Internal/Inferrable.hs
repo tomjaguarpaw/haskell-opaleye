@@ -3,10 +3,11 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DataKinds #-}
 
 module Opaleye.Internal.Inferrable where
 
-import qualified Opaleye.Column as C
+import qualified Opaleye.Field as F
 import           Opaleye.Internal.RunQuery (FromField, FromFields)
 import qualified Opaleye.Internal.RunQuery as RQ
 import qualified Opaleye.SqlTypes as T
@@ -34,16 +35,15 @@ newtype Inferrable p a b = Inferrable { runInferrable :: p a b }
 
 -- FromFields
 
--- OVERLAPPABLE is pretty grim, but it will go away when we switch to Field
-instance {-# OVERLAPPABLE #-}
+instance
   D.Default (Inferrable FromField) a b
-  => D.Default (Inferrable FromFields) (C.Column a) b where
+  => D.Default (Inferrable FromFields) (F.Field a) b where
   def = Inferrable (RQ.fromFields (runInferrable D.def))
 
 instance
      (D.Default (Inferrable FromField) a b, Maybe b ~ maybe_b)
-  => D.Default (Inferrable FromFields) (C.Column (C.Nullable a)) maybe_b where
-  def = Inferrable (RQ.fromFields (RQ.fromFieldNullable (runInferrable D.def)))
+  => D.Default (Inferrable FromFields) (F.FieldNullable a) maybe_b where
+  def = Inferrable (RQ.fromFieldsNullable (runInferrable D.def))
 
 -- FromField
 
@@ -62,6 +62,10 @@ instance varchar ~ ST.Text => D.Default (Inferrable FromField) T.SqlVarcharN var
 instance (Typeable h, D.Default (Inferrable FromField) f h, hs ~ [h])
   => D.Default (Inferrable FromField) (T.SqlArray f) hs where
   def = Inferrable (RQ.fromFieldArray (runInferrable D.def))
+
+instance (Typeable h, D.Default (Inferrable FromField) f h, hs ~ [Maybe h])
+  => D.Default (Inferrable FromField) (T.SqlArray_ F.Nullable f) hs where
+  def = Inferrable (RQ.fromFieldArrayNullable (runInferrable D.def))
 
 instance double ~ Double => D.Default (Inferrable FromField) T.SqlFloat8 double where
   def = Inferrable D.def
@@ -145,107 +149,107 @@ instance (D.Default (Inferrable ToFields) a (C.Column b),
                                                (runInferrable D.def))))
 -}
 
-instance C.Column a ~ columnA
-  => D.Default (Inferrable ToFields) (C.Column a) columnA where
+instance F.Field a ~ columnA
+  => D.Default (Inferrable ToFields) (F.Field a) columnA where
   def = Inferrable D.def
 
-instance C.Column T.SqlText ~ cSqlText
+instance F.Field T.SqlText ~ cSqlText
   => D.Default (Inferrable ToFields) String cSqlText where
   def = Inferrable D.def
 
-instance C.Column T.SqlBytea ~ cSqlBytea
+instance F.Field T.SqlBytea ~ cSqlBytea
   => D.Default (Inferrable ToFields) LBS.ByteString cSqlBytea where
   def = Inferrable D.def
 
-instance C.Column T.SqlBytea ~ cSqlBytea
+instance F.Field T.SqlBytea ~ cSqlBytea
   => D.Default (Inferrable ToFields) SBS.ByteString cSqlBytea where
   def = Inferrable D.def
 
-instance C.Column T.SqlText ~ cSqlText
+instance F.Field T.SqlText ~ cSqlText
   => D.Default (Inferrable ToFields) ST.Text cSqlText where
   def = Inferrable D.def
 
-instance C.Column T.SqlText ~ cSqlText
+instance F.Field T.SqlText ~ cSqlText
   => D.Default (Inferrable ToFields) LT.Text cSqlText where
   def = Inferrable D.def
 
-instance C.Column T.SqlNumeric ~ cSqlNumeric
+instance F.Field T.SqlNumeric ~ cSqlNumeric
   => D.Default (Inferrable ToFields) Sci.Scientific cSqlNumeric where
   def = Inferrable D.def
 
-instance C.Column T.SqlInt4 ~ cSqlInt4
+instance F.Field T.SqlInt4 ~ cSqlInt4
   => D.Default (Inferrable ToFields) Int cSqlInt4 where
   def = Inferrable D.def
 
-instance C.Column T.SqlInt4 ~ cSqlInt4
+instance F.Field T.SqlInt4 ~ cSqlInt4
   => D.Default (Inferrable ToFields) Int32 cSqlInt4 where
   def = Inferrable D.def
 
-instance C.Column T.SqlInt8 ~ cSqlInt8
+instance F.Field T.SqlInt8 ~ cSqlInt8
   => D.Default (Inferrable ToFields) Int64 cSqlInt8 where
   def = Inferrable D.def
 
-instance C.Column T.SqlFloat8 ~ cSqlFloat8
+instance F.Field T.SqlFloat8 ~ cSqlFloat8
   => D.Default (Inferrable ToFields) Double cSqlFloat8 where
   def = Inferrable D.def
 
-instance C.Column T.SqlBool ~ cSqlBool
+instance F.Field T.SqlBool ~ cSqlBool
   => D.Default (Inferrable ToFields) Bool cSqlBool where
   def = Inferrable D.def
 
-instance C.Column T.SqlUuid ~ cSqlUuid
+instance F.Field T.SqlUuid ~ cSqlUuid
   => D.Default (Inferrable ToFields) UUID cSqlUuid where
   def = Inferrable D.def
 
-instance C.Column T.SqlDate ~ cSqlDate
+instance F.Field T.SqlDate ~ cSqlDate
   => D.Default (Inferrable ToFields) Time.Day cSqlDate where
   def = Inferrable D.def
 
-instance C.Column T.SqlTimestamptz ~ cSqlTimestamptz
+instance F.Field T.SqlTimestamptz ~ cSqlTimestamptz
   => D.Default (Inferrable ToFields) Time.UTCTime cSqlTimestamptz where
   def = Inferrable D.def
 
-instance C.Column T.SqlTimestamptz ~ cSqlTimestamptz
+instance F.Field T.SqlTimestamptz ~ cSqlTimestamptz
   => D.Default (Inferrable ToFields) Time.ZonedTime cSqlTimestamptz where
   def = Inferrable D.def
 
-instance C.Column T.SqlTime ~ cSqlTime
+instance F.Field T.SqlTime ~ cSqlTime
   => D.Default (Inferrable ToFields) Time.TimeOfDay cSqlTime where
   def = Inferrable D.def
 
-instance C.Column T.SqlInterval ~ cSqlInterval
+instance F.Field T.SqlInterval ~ cSqlInterval
   => D.Default (Inferrable ToFields) Time.CalendarDiffTime cSqlInterval where
   def = Inferrable D.def
 
-instance C.Column T.SqlCitext ~ cSqlCitext
+instance F.Field T.SqlCitext ~ cSqlCitext
   => D.Default (Inferrable ToFields) (CI.CI ST.Text) cSqlCitext where
   def = Inferrable D.def
 
-instance C.Column T.SqlCitext ~ cSqlCitext
+instance F.Field T.SqlCitext ~ cSqlCitext
   => D.Default (Inferrable ToFields) (CI.CI LT.Text) cSqlCitext where
   def = Inferrable D.def
 
-instance C.Column (T.SqlRange T.SqlInt4) ~ cRangeInt4
+instance F.Field (T.SqlRange T.SqlInt4) ~ cRangeInt4
   => D.Default (Inferrable ToFields) (R.PGRange Int) cRangeInt4 where
   def = Inferrable D.def
 
-instance C.Column (T.SqlRange T.SqlInt8) ~ cRangeInt8
+instance F.Field (T.SqlRange T.SqlInt8) ~ cRangeInt8
   => D.Default (Inferrable ToFields) (R.PGRange Int64) cRangeInt8 where
   def = Inferrable D.def
 
-instance C.Column (T.SqlRange T.SqlNumeric) ~ cRangeScientific
+instance F.Field (T.SqlRange T.SqlNumeric) ~ cRangeScientific
   => D.Default (Inferrable ToFields) (R.PGRange Sci.Scientific) cRangeScientific where
   def = Inferrable D.def
 
-instance C.Column (T.SqlRange T.SqlTimestamp) ~ cRangeTimestamp
+instance F.Field (T.SqlRange T.SqlTimestamp) ~ cRangeTimestamp
   => D.Default (Inferrable ToFields) (R.PGRange Time.LocalTime) cRangeTimestamp where
   def = Inferrable D.def
 
-instance C.Column (T.SqlRange T.SqlTimestamptz) ~ cRangeTimestamptz
+instance F.Field (T.SqlRange T.SqlTimestamptz) ~ cRangeTimestamptz
   => D.Default (Inferrable ToFields) (R.PGRange Time.UTCTime) cRangeTimestamptz where
   def = Inferrable D.def
 
-instance C.Column (T.SqlRange T.SqlDate) ~ cRangeDate
+instance F.Field (T.SqlRange T.SqlDate) ~ cRangeDate
   => D.Default (Inferrable ToFields) (R.PGRange Time.Day) cRangeDate where
   def = Inferrable D.def
 

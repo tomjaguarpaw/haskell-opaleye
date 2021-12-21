@@ -33,33 +33,23 @@ module Opaleye.Field (
   maybeToNullable,
   ) where
 
-import qualified Opaleye.Column   as C
+import           Prelude hiding (null)
+
+import           Opaleye.Internal.Column
+  (Field_(Column), FieldNullable, Field, Nullability(NonNullable, Nullable))
+import qualified Opaleye.Internal.Column   as C
 import qualified Opaleye.Internal.PGTypesExternal  as T
-
--- | The name @Column@ will be replaced by @Field@ in version 0.9.
--- The @Field_@, @Field@ and @FieldNullable@ types exist to help
--- smooth the transition.  We recommend that you use @Field_@, @Field@
--- or @FieldNullable@ instead of @Column@ everywhere that it is
--- sufficient.
-type family Field_ (a :: Nullability) b
-
-data Nullability = NonNullable | Nullable
-
-type instance Field_ 'NonNullable a = C.Column a
-type instance Field_ 'Nullable a = C.Column (C.Nullable a)
-
-type FieldNullable  a = Field_ 'Nullable a
-type Field a = Field_ 'NonNullable a
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 -- FIXME Put Nullspec (or sqltype?) constraint on this
 
 -- | A NULL of any type
 null :: FieldNullable a
-null = C.null
+null = Column (HPQ.ConstExpr HPQ.NullLit)
 
 -- | @TRUE@ if the value of the field is @NULL@, @FALSE@ otherwise.
 isNull :: FieldNullable a -> Field T.PGBool
-isNull = C.isNull
+isNull = C.unOp HPQ.OpIsNull
 
 -- | If the @Field 'Nullable a@ is NULL then return the @Field
 -- 'NonNullable b@ otherwise map the underlying @Field 'Nullable a@
@@ -73,7 +63,8 @@ matchNullable :: Field b
               -> FieldNullable a
               -- ^
               -> Field b
-matchNullable = C.matchNullable
+matchNullable replacement f x = C.unsafeIfThenElse (isNull x) replacement
+                                                   (f (unsafeCoerceField x))
 
 -- | If the @FieldNullable a@ is NULL then return the provided
 -- @Field a@ otherwise return the underlying @Field
@@ -86,7 +77,7 @@ fromNullable :: Field a
              -> FieldNullable a
              -- ^
              -> Field a
-fromNullable = C.fromNullable
+fromNullable = flip matchNullable id
 
 -- | Treat a field as though it were nullable.  This is always safe.
 --
@@ -98,7 +89,7 @@ toNullable = C.unsafeCoerceColumn
 -- provided value coerced to a nullable type.
 maybeToNullable :: Maybe (Field a)
                 -> FieldNullable a
-maybeToNullable = C.maybeToNullable
+maybeToNullable = maybe null toNullable
 
-unsafeCoerceField :: C.Column a -> C.Column b
+unsafeCoerceField :: Field_ n a -> Field_ n' b
 unsafeCoerceField = C.unsafeCoerceColumn

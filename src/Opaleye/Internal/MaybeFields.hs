@@ -257,14 +257,14 @@ mapMaybeFieldsWithNulls b d =
 -- | This is only safe if @col@ is OK with having nulls passed through it
 -- when they claim to be non-null.
 withNullsField :: (IsSqlType a, P.Profunctor p)
-               => p (IC.Column a) (IC.Column a)
-               -> WithNulls p (IC.Column a) (IC.Column a)
+               => p (IC.Field_ n a) (IC.Field_ n a)
+               -> WithNulls p (IC.Field_ n a) (IC.Field_ n a)
 withNullsField col = result
   where result = WithNulls (P.lmap (\(MaybeFields b c) ->
                                       ifExplict PP.def b c nullC) col)
         nullC = IC.Column (V.nullPE (columnProxy result))
 
-        columnProxy :: f (IC.Column sqlType) -> Maybe sqlType
+        columnProxy :: f (IC.Field_ n sqlType) -> Maybe sqlType
         columnProxy _ = Nothing
 
 binaryspecMaybeFields
@@ -316,8 +316,8 @@ instance PP.Default EqPP a b
   => PP.Default EqPP (MaybeFields a) (MaybeFields b) where
   def = eqPPMaybeFields PP.def
 
-instance (P.Profunctor p, IsSqlType a, PP.Default p (IC.Column a) (IC.Column a))
-  => PP.Default (WithNulls p) (IC.Column a) (IC.Column a) where
+instance (P.Profunctor p, IsSqlType a, PP.Default p (IC.Field_ n a) (IC.Field_ n a))
+  => PP.Default (WithNulls p) (IC.Field_ n a) (IC.Field_ n a) where
   def = withNullsField PP.def
 
 instance PP.Default (WithNulls B.Binaryspec) a b

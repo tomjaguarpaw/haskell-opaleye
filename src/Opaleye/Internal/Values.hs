@@ -2,7 +2,7 @@
 
 module Opaleye.Internal.Values where
 
-import           Opaleye.Internal.Column (Column(Column))
+import           Opaleye.Internal.Column (Field_(Column))
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -63,7 +63,7 @@ runValuesspec :: Applicative f => ValuesspecUnsafe columns columns'
               -> (() -> f HPQ.PrimExpr) -> f columns'
 runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 
-instance Default ValuesspecUnsafe (Column a) (Column a) where
+instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
   def = Valuesspec (PM.iso id Column)
 
 valuesUSafe :: Valuesspec columns columns'
@@ -112,18 +112,18 @@ runValuesspecSafe :: Applicative f
 runValuesspecSafe (ValuesspecSafe v _) f = PM.traversePM v f ()
 
 valuesspecField :: Opaleye.SqlTypes.IsSqlType a
-                => Valuesspec (Column a) (Column a)
+                => Valuesspec (Field_ n a) (Field_ n a)
 valuesspecField = def
 
 instance Opaleye.Internal.PGTypes.IsSqlType a
-  => Default Valuesspec (Column a) (Column a) where
+  => Default Valuesspec (Field_ n a) (Field_ n a) where
   def = def_
     where def_ = ValuesspecSafe (PM.PackMap (\f () -> fmap Column (f null_)))
                                 U.unpackspecField
           null_ = nullPE sqlType
 
           sqlType = columnProxy def_
-          columnProxy :: f (Column sqlType) -> Maybe sqlType
+          columnProxy :: f (Field_ n sqlType) -> Maybe sqlType
           columnProxy _ = Nothing
 
 nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
@@ -134,7 +134,7 @@ nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
 newtype Nullspec fields fields' = Nullspec (Valuesspec Void fields')
 
 nullspecField :: Opaleye.SqlTypes.IsSqlType b
-              => Nullspec a (Column b)
+              => Nullspec a (Field_ n b)
 nullspecField = Nullspec (lmap absurd valuesspecField)
 
 nullspecList :: Nullspec a [b]
@@ -149,7 +149,7 @@ nullspecEitherRight :: Nullspec a b'
 nullspecEitherRight = fmap Right
 
 instance Opaleye.SqlTypes.IsSqlType b
-  => Default Nullspec a (Column b) where
+  => Default Nullspec a (Field_ n b) where
   def = nullspecField
 
 -- | All fields @NULL@, even though technically the type may forbid

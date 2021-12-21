@@ -4,7 +4,7 @@ module Opaleye.Internal.Unpackspec where
 
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.Column as IC
-import qualified Opaleye.Column as C
+import qualified Opaleye.Field as F
 
 import           Control.Applicative (Applicative, pure, (<*>))
 import           Data.Profunctor (Profunctor, dimap)
@@ -35,8 +35,8 @@ newtype Unpackspec columns columns' =
   -- 'Profunctor', 'ProductProfunctor' and 'SumProfunctor' operations.
   Unpackspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
 
--- | Target the single 'HPQ.PrimExpr' inside a 'C.Column'
-unpackspecField :: Unpackspec (C.Column a) (C.Column a)
+-- | Target the single 'HPQ.PrimExpr' inside a 'F.Field n'
+unpackspecField :: Unpackspec (F.Field_ n a) (F.Field_ n a)
 unpackspecField = Unpackspec (PM.iso IC.unColumn IC.Column)
 
 -- | Modify all the targeted 'HPQ.PrimExpr's
@@ -51,7 +51,7 @@ collectPEs :: Unpackspec s t -> s -> [HPQ.PrimExpr]
 collectPEs unpackspec = fst . runUnpackspec unpackspec f
   where f pe = ([pe], pe)
 
-instance D.Default Unpackspec (C.Column a) (C.Column a) where
+instance D.Default Unpackspec (F.Field_ n a) (F.Field_ n a) where
   def = unpackspecField
 
 -- {

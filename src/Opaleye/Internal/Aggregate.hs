@@ -33,11 +33,11 @@ newtype Aggregator a b =
                          HPQ.PrimExpr
                          a b)
 
-makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
+makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr' mAggrOp = Aggregator (PM.PackMap
   (\f (C.Column e) -> fmap C.Column (f (fmap (, [], HPQ.AggrAll) mAggrOp, e))))
 
-makeAggr :: HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
+makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
 
 -- | Order the values within each aggregation in `Aggregator` using
