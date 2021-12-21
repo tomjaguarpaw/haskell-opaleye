@@ -11,7 +11,7 @@ module Opaleye.Experimental.Enum
     fromFieldToFieldsEnum,
   ) where
 
-import           Opaleye.Column (Column)
+import           Opaleye.Field (Field)
 import qualified Opaleye as O
 import qualified Opaleye.Internal.RunQuery as RQ
 
@@ -21,7 +21,7 @@ import Prelude hiding ((<>))
 
 data EnumMapper sqlEnum haskellSum = EnumMapper {
     enumFromField :: RQ.FromField sqlEnum haskellSum
-  , enumToFields :: O.ToFields haskellSum (Column sqlEnum)
+  , enumToFields :: O.ToFields haskellSum (Field sqlEnum)
   }
 
 -- | Create a mapping between a Postgres @ENUM@ type and a Haskell
@@ -145,6 +145,6 @@ fromFieldToFieldsEnum :: String
                       -> (String -> Maybe haskellSum)
                       -> (haskellSum -> String)
                       -> (RQ.FromField sqlEnum haskellSum,
-                          O.ToFields haskellSum (Column sqlEnum))
+                          O.ToFields haskellSum (Field sqlEnum))
 fromFieldToFieldsEnum type_ from to_ = (enumFromField e, enumToFields e)
   where e = enumMapper type_ from to_
