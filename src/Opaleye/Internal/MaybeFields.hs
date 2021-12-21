@@ -31,7 +31,7 @@ import           Opaleye.Internal.Operators ((.&&), (.||), (.==), restrict, not,
                                              ifExplict, IfPP, EqPP(EqPP))
 import qualified Opaleye.Internal.Lateral
 import qualified Opaleye.SqlTypes
-import           Opaleye.SqlTypes (SqlBool, IsSqlType, SqlInt4)
+import           Opaleye.SqlTypes (SqlBool, IsSqlType)
 
 import           Control.Monad (replicateM_)
 
