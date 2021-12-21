@@ -15,7 +15,7 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PGTypesExternal as T
 import qualified Opaleye.Internal.Rebind as Rebind
 import qualified Opaleye.SqlTypes as T
-import qualified Opaleye.Column as C
+import qualified Opaleye.Field as C
 import           Opaleye.Field   (Field)
 import qualified Opaleye.Internal.Map as Map
 import           Opaleye.Internal.MaybeFields (MaybeFields(MaybeFields),
@@ -47,7 +47,7 @@ joinExplicit :: U.Unpackspec columnsA columnsA
              -> (columnsB -> returnedColumnsB)
              -> PQ.JoinType
              -> Q.Query columnsA -> Q.Query columnsB
-             -> ((columnsA, columnsB) -> Column T.PGBool)
+             -> ((columnsA, columnsB) -> Field T.PGBool)
              -> Q.Query (returnedColumnsA, returnedColumnsB)
 joinExplicit uA uB returnColumnsA returnColumnsB joinType
              qA qB cond = Q.productQueryArr q where
@@ -71,7 +71,7 @@ joinExplicit uA uB returnColumnsA returnColumnsB joinType
 leftJoinAExplicit :: U.Unpackspec a a
                   -> NullMaker a nullableA
                   -> Q.Query a
-                  -> Q.QueryArr (a -> Column T.PGBool) nullableA
+                  -> Q.QueryArr (a -> Field T.PGBool) nullableA
 leftJoinAExplicit uA nullmaker rq =
   Q.leftJoinQueryArr $ \(p, t1) ->
     let (newColumnsR, right, tag') = flip Q.runSimpleQueryArr ((), t1) $ proc () -> do
@@ -94,7 +94,7 @@ optionalRestrictExplicit :: U.Unpackspec a a
                          -> S.SelectArr (a -> Field T.SqlBool) (MaybeFields a)
 optionalRestrictExplicit uA q =
   dimap (. snd) (\(nonNullIfPresent, rest) ->
-      let present = Op.not (C.isNull (C.unsafeCoerceColumn nonNullIfPresent))
+      let present = Op.not (C.isNull (C.unsafeCoerceField nonNullIfPresent))
       in MaybeFields { mfPresent = present
                      , mfFields  = rest
                      }) $
