@@ -15,6 +15,7 @@ import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.PGTypesExternal as T
 import qualified Opaleye.Field as F
+import           Opaleye.Field (Field)
 import qualified Opaleye.Select as S
 
 import           Data.Profunctor (Profunctor, dimap, lmap, rmap)
@@ -29,7 +30,7 @@ restrict = QA.QueryArr f where
 
 infix 4 .==
 (.==) :: forall columns. D.Default EqPP columns columns
-      => columns -> columns -> Column T.PGBool
+      => columns -> columns -> Field T.PGBool
 (.==) = eqExplicit (D.def :: EqPP columns columns)
 
 infixr 2 .||
@@ -40,28 +41,28 @@ infixr 2 .||
 infixr 3 .&&
 
 -- | Boolean and
-(.&&) :: Column T.PGBool -> Column T.PGBool -> Column T.PGBool
+(.&&) :: Field T.PGBool -> Field T.PGBool -> Field T.PGBool
 (.&&) = C.binOp HPQ.OpAnd
 
 not :: F.Field T.SqlBool -> F.Field T.SqlBool
 not = C.unOp HPQ.OpNot
 
-newtype EqPP a b = EqPP (a -> a -> Column T.PGBool)
+newtype EqPP a b = EqPP (a -> a -> Field T.PGBool)
 
 eqPPField :: EqPP (Column a) ignored
 eqPPField = EqPP C.unsafeEq
 
-eqExplicit :: EqPP columns a -> columns -> columns -> Column T.PGBool
+eqExplicit :: EqPP columns a -> columns -> columns -> Field T.PGBool
 eqExplicit (EqPP f) = f
 
 instance D.Default EqPP (Column a) (Column a) where
   def = eqPPField
 
 
-newtype IfPP a b = IfPP (Column T.PGBool -> a -> a -> b)
+newtype IfPP a b = IfPP (Field T.PGBool -> a -> a -> b)
 
 ifExplict :: IfPP columns columns'
-          -> Column T.PGBool
+          -> Field T.PGBool
           -> columns
           -> columns
           -> columns'
