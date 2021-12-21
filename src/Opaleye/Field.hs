@@ -66,28 +66,28 @@ isNull = C.isNull
 -- The Opaleye equivalent of 'Data.Maybe.maybe'.
 --
 -- Will be generalized to @Field_ n b@ in a later version.
-matchNullable :: Field_ 'NonNullable b
+matchNullable :: Field b
               -- ^
-              -> (Field_ 'NonNullable a -> Field_ 'NonNullable b)
+              -> (Field a -> Field b)
               -- ^
-              -> Field_ 'Nullable a
+              -> FieldNullable a
               -- ^
-              -> Field_ 'NonNullable b
+              -> Field b
 matchNullable = C.matchNullable
 
--- | If the @Field 'Nullable a@ is NULL then return the provided
--- @Field 'NonNullable a@ otherwise return the underlying @Field
--- 'NonNullable a@.
+-- | If the @FieldNullable a@ is NULL then return the provided
+-- @Field a@ otherwise return the underlying @Field
+-- a@.
 --
 -- The Opaleye equivalent of 'Data.Maybe.fromMaybe' and very similar
 -- to PostgreSQL's @COALESCE@.
 --
 -- Will be generalized to @Field_ n a@ in a later version.
-fromNullable :: Field_ 'NonNullable a
+fromNullable :: Field a
              -- ^
-             -> Field_ 'Nullable a
+             -> FieldNullable a
              -- ^
-             -> Field_ 'NonNullable a
+             -> Field a
 fromNullable = C.fromNullable
 
 -- | Treat a field as though it were nullable.  This is always safe.
@@ -95,15 +95,15 @@ fromNullable = C.fromNullable
 -- The Opaleye equivalent of 'Data.Maybe.Just'.
 --
 -- Will be generalized to @Field_ n a@ in a later version.
-toNullable :: Field_ 'NonNullable a -> Field_ 'Nullable a
+toNullable :: Field a -> FieldNullable a
 toNullable = C.unsafeCoerceColumn
 
 -- | If the argument is 'Data.Maybe.Nothing' return NULL otherwise return the
 -- provided value coerced to a nullable type.
 --
 -- Will be generalized to @Maybe (Field_ n a)@ in a later version.
-maybeToNullable :: Maybe (Field_ 'NonNullable a)
-                -> Field_ 'Nullable a
+maybeToNullable :: Maybe (Field a)
+                -> FieldNullable a
 maybeToNullable = C.maybeToNullable
 
 unsafeCoerceField :: C.Column a -> C.Column b
