@@ -66,8 +66,6 @@ isNull = C.isNull
 -- using the provided function.
 --
 -- The Opaleye equivalent of 'Data.Maybe.maybe'.
---
--- Will be generalized to @Field_ n b@ in a later version.
 matchNullable :: Field b
               -- ^
               -> (Field a -> Field b)
@@ -83,8 +81,6 @@ matchNullable = C.matchNullable
 --
 -- The Opaleye equivalent of 'Data.Maybe.fromMaybe' and very similar
 -- to PostgreSQL's @COALESCE@.
---
--- Will be generalized to @Field_ n a@ in a later version.
 fromNullable :: Field a
              -- ^
              -> FieldNullable a
@@ -95,15 +91,11 @@ fromNullable = C.fromNullable
 -- | Treat a field as though it were nullable.  This is always safe.
 --
 -- The Opaleye equivalent of 'Data.Maybe.Just'.
---
--- Will be generalized to @Field_ n a@ in a later version.
 toNullable :: Field a -> FieldNullable a
 toNullable = C.unsafeCoerceColumn
 
 -- | If the argument is 'Data.Maybe.Nothing' return NULL otherwise return the
 -- provided value coerced to a nullable type.
---
--- Will be generalized to @Maybe (Field_ n a)@ in a later version.
 maybeToNullable :: Maybe (Field a)
                 -> FieldNullable a
 maybeToNullable = C.maybeToNullable
