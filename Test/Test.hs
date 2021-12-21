@@ -29,6 +29,7 @@ import           GHC.Int                          (Int64)
 import           Opaleye                          (Field, FieldNullable, Select,
                                                    SelectArr, (.==), (.>))
 import qualified Opaleye                          as O
+import qualified Opaleye.Field                    as  F
 import qualified Opaleye.Internal.Aggregate       as IA
 import           Opaleye.Internal.RunQuery        (DefaultFromField)
 import           Opaleye.Internal.MaybeFields     as OM
@@ -1068,9 +1069,12 @@ testRestrictWithJsonOp :: (O.SqlIsJson a) => Select (Field a) -> Test
 testRestrictWithJsonOp dataSelect = it "restricts the rows returned by checking equality with a value extracted using JSON operator" $ testH select (`shouldBe` table8data)
   where select = dataSelect >>> proc col1 -> do
           t <- table8Q -< ()
-          O.restrict -< (O.toNullable col1 O..->> O.sqlStrictText "c")
-                         .== O.toNullable (O.sqlStrictText "21")
+          O.restrict -< nonNullOrFalse (O.toNullable col1 O..->> O.sqlStrictText "c") $ \x1 ->
+                        nonNullOrFalse (O.toNullable (O.sqlStrictText "21")) $ \x2 ->
+                        x1 .== x2
           Arr.returnA -< t
+
+        nonNullOrFalse = flip (F.matchNullable (O.sqlBool False))
 
 -- Test opaleye's equivalent of c1->'a'->2
 testJsonGetArrayValue :: (O.SqlIsJson a, DefaultFromField a Json.Value)
