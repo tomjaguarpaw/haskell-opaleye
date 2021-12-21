@@ -51,6 +51,8 @@ type instance Field_ 'Nullable a = C.Column (C.Nullable a)
 type FieldNullable  a = Field_ 'Nullable a
 type Field a = Field_ 'NonNullable a
 
+-- FIXME Put Nullspec (or sqltype?) constraint on this
+
 -- | A NULL of any type
 null :: FieldNullable a
 null = C.null
