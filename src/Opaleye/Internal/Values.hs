@@ -102,7 +102,7 @@ data Valuesspec columns columns' =
   ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
                  (U.Unpackspec columns columns')
 
-{-# DEPRECATED ValuesspecSafe "Use Valuesspec instead.  Will be removed in version 0.9." #-}
+{-# DEPRECATED ValuesspecSafe "Use Valuesspec instead.  Will be removed in version 0.10." #-}
 type ValuesspecSafe = Valuesspec
 
 runValuesspecSafe :: Applicative f

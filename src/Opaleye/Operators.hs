@@ -485,7 +485,7 @@ addInterval = C.binOp (HPQ.:+)
 minusInterval :: IntervalNum from to => F.Field from -> F.Field T.SqlInterval -> F.Field to
 minusInterval = C.binOp (HPQ.:-)
 
-{-# DEPRECATED keepWhen "Use 'where_' or 'restrict' instead.  Will be removed in version 0.9." #-}
+{-# DEPRECATED keepWhen "Use 'where_' or 'restrict' instead.  Will be removed in version 0.10." #-}
 keepWhen :: (a -> F.Field T.SqlBool) -> S.SelectArr a a
 keepWhen p = proc a -> do
   restrict  -< p a

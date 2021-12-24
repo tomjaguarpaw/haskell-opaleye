@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-duplicate-exports #-}
--- | Do not use.  Will be deprecated in version 0.9.  Use
+-- | Do not use.  Will be deprecated in version 0.10.  Use
 -- "Opaleye.Field" instead.
 --
 -- Functions for working directly with 'Column's.

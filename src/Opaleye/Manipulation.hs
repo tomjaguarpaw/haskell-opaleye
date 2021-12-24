@@ -51,7 +51,7 @@ module Opaleye.Manipulation (-- * Insert
                              -- ** @DoNothing@
                              -- | Use 'doNothing' instead.
                              -- @DoNothing@ will be deprecated in
-                             -- version 0.9.
+                             -- version 0.10.
                              HSql.OnConflict(HSql.DoNothing),
                              ) where
 
@@ -99,7 +99,7 @@ runInsert conn i = case i of
             \c t r -> MI.runInsertManyReturningExplicit qr c t r f oc
     in insert conn table_ rows_
 
--- | Use 'runInsert' instead.  Will be deprecated in 0.9.
+-- | Use 'runInsert' instead.  Will be deprecated in 0.10.
 runInsert_ :: PGS.Connection
            -> Insert haskells
            -> IO haskells
@@ -121,7 +121,7 @@ runUpdate  conn i = case i of
           MI.ReturningExplicit qr f ->
             runUpdateReturningExplicit qr conn table_ updateWith_ where_ f
 
--- | Use 'runUpdate' instead.  Will be deprecated in 0.9.
+-- | Use 'runUpdate' instead.  Will be deprecated in 0.10.
 runUpdate_ :: PGS.Connection
            -> Update haskells
            -> IO haskells
@@ -142,7 +142,7 @@ runDelete conn i = case i of
           MI.ReturningExplicit qr f ->
             MI.runDeleteReturningExplicit qr conn table_ where_ f
 
--- | Use 'runDelete' instead.  Will be deprecated in 0.9.
+-- | Use 'runDelete' instead.  Will be deprecated in 0.10.
 runDelete_ :: PGS.Connection
            -> Delete haskells
            -> IO haskells

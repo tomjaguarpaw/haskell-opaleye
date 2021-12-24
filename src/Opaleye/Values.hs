@@ -22,13 +22,13 @@ import qualified Opaleye.Select              as S
 
 import           Data.Profunctor.Product.Default (Default, def)
 
-{-# DEPRECATED valuesUnsafe "Use 'values' instead.  Will be removed in 0.9." #-}
+{-# DEPRECATED valuesUnsafe "Use 'values' instead.  Will be removed in 0.10." #-}
 valuesUnsafe :: (Default V.ValuesspecUnsafe fields fields,
                  Default U.Unpackspec fields fields) =>
                 [fields] -> S.Select fields
 valuesUnsafe = valuesUnsafeExplicit def def
 
-{-# DEPRECATED valuesUnsafeExplicit "Use 'values' instead.  Will be removed in 0.9." #-}
+{-# DEPRECATED valuesUnsafeExplicit "Use 'values' instead.  Will be removed in 0.10." #-}
 valuesUnsafeExplicit :: U.Unpackspec fields fields'
                      -> V.ValuesspecUnsafe fields fields'
                      -> [fields] -> S.Select fields'
@@ -59,12 +59,12 @@ valuesExplicit :: V.Valuesspec fields fields'
 valuesExplicit valuesspec fields =
   Q.productQueryArr (V.valuesUSafe valuesspec fields)
 
-{-# DEPRECATED valuesSafe "Use 'values' instead.  Will be removed in 0.9." #-}
+{-# DEPRECATED valuesSafe "Use 'values' instead.  Will be removed in 0.10." #-}
 valuesSafe :: Default V.Valuesspec fields fields
            => [fields] -> S.Select fields
 valuesSafe = values
 
-{-# DEPRECATED valuesSafeExplicit "Use 'values' instead.  Will be removed in 0.9." #-}
+{-# DEPRECATED valuesSafeExplicit "Use 'values' instead.  Will be removed in 0.10." #-}
 valuesSafeExplicit :: V.Valuesspec fields fields'
                    -> [fields] -> S.Select fields'
 valuesSafeExplicit = valuesExplicit

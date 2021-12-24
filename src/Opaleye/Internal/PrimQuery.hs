@@ -54,7 +54,7 @@ instance Monoid Lateral where
 -- convenient to allow 'Empty', but it is hard to represent 'Empty' in
 -- SQL so we remove it in 'Optimize' and set 'a = Void'.
 data PrimQuery' a = Unit
-                  -- Remove the Empty constructor in 0.9
+                  -- Remove the Empty constructor in 0.10
                   | Empty     a
                   | BaseTable TableIdentifier (Bindings HPQ.PrimExpr)
                   | Product   (NEL.NonEmpty (Lateral, PrimQuery' a)) [HPQ.PrimExpr]

@@ -111,14 +111,14 @@ data FromFields columns haskells =
               -- SqlInt4)' has no columns when it is Nothing and one
               -- column when it is Just.
 
-{-# DEPRECATED fieldQueryRunnerColumn "Will be removed in version 0.9.  Use fromPGSFromField instead." #-}
+{-# DEPRECATED fieldQueryRunnerColumn "Will be removed in version 0.10.  Use fromPGSFromField instead." #-}
 fieldQueryRunnerColumn :: PGS.FromField haskell => FromField pgType haskell
 fieldQueryRunnerColumn = fromPGSFromField
 
 fromPGSFromField :: PGS.FromField haskell => FromField pgType haskell
 fromPGSFromField = fromPGSFieldParser fromField
 
-{-# DEPRECATED fieldParserQueryRunnerColumn " Will be removed in version 0.9.  Use fromPGSFieldParser instead." #-}
+{-# DEPRECATED fieldParserQueryRunnerColumn " Will be removed in version 0.10.  Use fromPGSFieldParser instead." #-}
 fieldParserQueryRunnerColumn :: FieldParser haskell -> FromField pgType haskell
 fieldParserQueryRunnerColumn = fromPGSFieldParser
 
@@ -129,7 +129,7 @@ fromFields :: FromField a b -> FromFields (Field a) b
 fromFields qrc = FromFields u (const (fieldWith fp)) (const 1)
     where FromField u fp = qrc
 
-{-# DEPRECATED queryRunner "Use fromFields instead.  Will be removed in version 0.9." #-}
+{-# DEPRECATED queryRunner "Use fromFields instead.  Will be removed in version 0.10." #-}
 queryRunner :: FromField a b -> FromFields (Field a) b
 queryRunner = fromFields
 

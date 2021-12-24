@@ -125,14 +125,14 @@ offset n a = Q.productQueryArr (O.offset' n . Q.runSimpleQueryArr a)
 
 -- * Distinct on
 
--- | Use 'distinctOn' instead.  Will be deprecated in 0.9.
+-- | Use 'distinctOn' instead.  Will be deprecated in 0.10.
 distinctOnCorrect :: D.Default U.Unpackspec b b
                   => (a -> b)
                   -> S.Select a
                   -> S.Select a
 distinctOnCorrect proj q = Q.productQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
 
--- | Use 'distinctOnBy' instead.  Will be deprecated in 0.9.
+-- | Use 'distinctOnBy' instead.  Will be deprecated in 0.10.
 distinctOnByCorrect :: D.Default U.Unpackspec b b
                     => (a -> b)
                     -> O.Order a

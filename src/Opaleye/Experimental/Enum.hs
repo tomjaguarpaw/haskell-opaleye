@@ -140,7 +140,7 @@ enumMapper' type_ from to_ = EnumMapper {
          Just r -> r
          Nothing -> error ("Unexpected: " ++ unpack s)
 
-{-# DEPRECATED fromFieldToFieldsEnum "Use 'enumMapper' instead.  Will be removed in 0.9." #-}
+{-# DEPRECATED fromFieldToFieldsEnum "Use 'enumMapper' instead.  Will be removed in 0.10." #-}
 fromFieldToFieldsEnum :: String
                       -> (String -> Maybe haskellSum)
                       -> (haskellSum -> String)
