@@ -149,6 +149,9 @@ queryRunnerColumnNullable = fromFieldNullable
 unsafeFromFieldRaw :: FromField a (PGS.Field, Maybe SBS.ByteString)
 unsafeFromFieldRaw = fromPGSFieldParser (\f mdata -> pure (f, mdata))
 
+unsafeAdjustFromField :: FromField field a -> FromField field' a
+unsafeAdjustFromField (FromField u f) = FromField (P.lmap C.unsafeCoerceColumn u) f
+
 -- { Instances for automatic derivation
 
 instance DefaultFromField a b =>
@@ -304,17 +307,13 @@ instance DefaultFromField T.SqlJsonb Ae.Value where
 
 -- No CI String instance since postgresql-simple doesn't define FromField (CI String)
 
-arrayColumn :: Column (T.SqlArray a) -> Column a
-arrayColumn = C.unsafeCoerceColumn
-
 instance (Typeable b, DefaultFromField a b) =>
          DefaultFromField (T.SqlArray a) [b] where
   defaultFromField = fromFieldArray defaultFromField
 
 fromFieldArray :: Typeable h => FromField f h -> FromField (T.SqlArray f) [h]
 fromFieldArray q =
-  FromField (P.lmap arrayColumn c)
-            ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f))
+  unsafeAdjustFromField (FromField c ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f)))
   where FromField c f = q
 
 -- }
