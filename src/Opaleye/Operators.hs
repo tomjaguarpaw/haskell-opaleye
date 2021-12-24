@@ -276,7 +276,7 @@ like = C.binOp HPQ.OpLike
 ilike :: F.Field T.SqlText -> F.Field T.SqlText -> F.Field T.SqlBool
 ilike = C.binOp HPQ.OpILike
 
-sqlLength :: C.PGString a => F.Field a -> F.Field T.SqlInt4
+sqlLength :: C.SqlString a => F.Field a -> F.Field T.SqlInt4
 sqlLength  (Column e) = Column (HPQ.FunExpr "length" [e])
 
 -- | 'in_' is designed to be used in prefix form.
