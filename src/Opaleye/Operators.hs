@@ -285,9 +285,9 @@ sqlLength  (Column e) = Column (HPQ.FunExpr "length" [e])
 -- product.  'in_' @validProducts@ is a function which checks whether
 -- a product is a valid product.
 in_ :: (Functor f, F.Foldable f) => f (Column a) -> Column a -> F.Field T.SqlBool
-in_ fcas (Column a) = Column $ case NEL.nonEmpty (F.toList fcas) of
-   Nothing -> HPQ.ConstExpr (HPQ.BoolLit False)
-   Just xs -> HPQ.BinExpr HPQ.OpIn a (HPQ.ListExpr (fmap C.unColumn xs))
+in_ fcas (Column a) = case NEL.nonEmpty (F.toList fcas) of
+   Nothing -> T.sqlBool False
+   Just xs -> Column $ HPQ.BinExpr HPQ.OpIn a (HPQ.ListExpr (fmap C.unColumn xs))
 
 -- | True if the first argument occurs amongst the rows of the second,
 -- false otherwise.
