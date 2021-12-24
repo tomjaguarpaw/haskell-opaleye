@@ -313,7 +313,7 @@ instance (Typeable b, DefaultFromField a b) =>
 
 fromFieldArray :: Typeable h => FromField f h -> FromField (T.SqlArray f) [h]
 fromFieldArray q =
-  unsafeAdjustFromField (FromField c ((fmap . fmap . fmap) fromPGArray (pgArrayFieldParser f)))
+  fmap fromPGArray (unsafeAdjustFromField (FromField c (pgArrayFieldParser f)))
   where FromField c f = q
 
 -- }
