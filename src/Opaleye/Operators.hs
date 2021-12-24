@@ -301,7 +301,7 @@ inSelect c q = E.exists (keepWhen (c .===) A.<<< q)
 -- Used to overload functions and operators that work on both 'T.SqlJson' and 'T.SqlJsonb'.
 --
 -- Warning: making additional instances of this class can lead to broken code!
-class SqlIsJson a
+class SqlIsJson json
 
 instance SqlIsJson T.SqlJson
 instance SqlIsJson T.SqlJsonb
@@ -320,32 +320,32 @@ instance SqlJsonIndex T.SqlText
 
 -- | Get JSON object field by key.
 infixl 8 .->
-(.->) :: (SqlIsJson a, SqlJsonIndex k)
-      => F.FieldNullable a -- ^
+(.->) :: (SqlIsJson json, SqlJsonIndex k)
+      => F.FieldNullable json -- ^
       -> F.Field k -- ^ key or index
-      -> F.FieldNullable a
+      -> F.FieldNullable json
 (.->) = C.binOp (HPQ.:->)
 
 -- | Get JSON object field as text.
 infixl 8 .->>
-(.->>) :: (SqlIsJson a, SqlJsonIndex k)
-       => F.FieldNullable a -- ^
+(.->>) :: (SqlIsJson json, SqlJsonIndex k)
+       => F.FieldNullable json -- ^
        -> F.Field k -- ^ key or index
        -> F.FieldNullable T.SqlText
 (.->>) = C.binOp (HPQ.:->>)
 
 -- | Get JSON object at specified path.
 infixl 8 .#>
-(.#>) :: (SqlIsJson a)
-      => F.FieldNullable a -- ^
+(.#>) :: (SqlIsJson json)
+      => F.FieldNullable json -- ^
       -> Column (T.SqlArray T.SqlText) -- ^ path
-      -> F.FieldNullable a
+      -> F.FieldNullable json
 (.#>) = C.binOp (HPQ.:#>)
 
 -- | Get JSON object at specified path as text.
 infixl 8 .#>>
-(.#>>) :: (SqlIsJson a)
-       => F.FieldNullable a -- ^
+(.#>>) :: (SqlIsJson json)
+       => F.FieldNullable json -- ^
        -> Column (T.SqlArray T.SqlText) -- ^ path
        -> F.FieldNullable T.SqlText
 (.#>>) = C.binOp (HPQ.:#>>)
