@@ -29,6 +29,7 @@ module Opaleye.Order ( -- * Order by
 
 import qualified Data.Profunctor.Product.Default as D
 import qualified Opaleye.Column as C
+import qualified Opaleye.Field as F
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Order as O
 import qualified Opaleye.Internal.QueryArr as Q
@@ -58,26 +59,26 @@ orderBy os q =
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear last)
-asc :: SqlOrd b => (a -> C.Column b) -> O.Order a
+asc :: SqlOrd b => (a -> F.Field b) -> O.Order a
 asc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                           , HPQ.orderNulls     = HPQ.NullsLast }
 
 -- | Specify an descending ordering by the given expression.
 --   (Any NULLs appear first)
-desc :: SqlOrd b => (a -> C.Column b) -> O.Order a
+desc :: SqlOrd b => (a -> F.Field b) -> O.Order a
 desc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                            , HPQ.orderNulls     = HPQ.NullsFirst }
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear first)
-ascNullsFirst :: SqlOrd b => (a -> C.Column b) -> O.Order a
+ascNullsFirst :: SqlOrd b => (a -> F.Field b) -> O.Order a
 ascNullsFirst = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                                     , HPQ.orderNulls     = HPQ.NullsFirst }
 
 
 -- | Specify an descending ordering by the given expression.
 --   (Any NULLs appear last)
-descNullsLast :: SqlOrd b => (a -> C.Column b) -> O.Order a
+descNullsLast :: SqlOrd b => (a -> F.Field b) -> O.Order a
 descNullsLast = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                                     , HPQ.orderNulls     = HPQ.NullsLast }
 
