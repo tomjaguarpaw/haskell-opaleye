@@ -311,6 +311,7 @@ instance SqlIsJson T.SqlJsonb
 -- Warning: making additional instances of this class can lead to broken code!
 class SqlJsonIndex a
 
+-- | Use 'SqlJsonIndex' instead. Will be deprecated in a future version.
 type PGJsonIndex = SqlJsonIndex
 
 instance SqlJsonIndex T.SqlInt4
