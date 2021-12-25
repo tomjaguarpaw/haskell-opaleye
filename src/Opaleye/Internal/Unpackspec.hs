@@ -1,3 +1,5 @@
+{-# OPTIONS_HADDOCK not-home #-}
+
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 
 module Opaleye.Internal.Unpackspec where

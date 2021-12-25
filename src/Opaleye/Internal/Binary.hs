@@ -1,3 +1,5 @@
+{-# OPTIONS_HADDOCK not-home #-}
+
 {-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
 
 module Opaleye.Internal.Binary where

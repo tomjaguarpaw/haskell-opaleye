@@ -1,3 +1,5 @@
+{-# OPTIONS_HADDOCK not-home #-}
+
 module Opaleye.Internal.Order where
 
 import           Data.Function                        (on)

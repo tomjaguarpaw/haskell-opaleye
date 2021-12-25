@@ -1,3 +1,5 @@
+-- {-# OPTIONS_HADDOCK ignore-exports #-}
+
 -- | An SQL-generating DSL targeting PostgreSQL.  Allows Postgres
 --   queries to be written within Haskell in a typesafe and composable
 --   fashion.

@@ -1,3 +1,5 @@
+{-# OPTIONS_HADDOCK not-home #-}
+
 {-# LANGUAGE FlexibleContexts #-}
 
 module Opaleye.Internal.RunQueryExternal
