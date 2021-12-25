@@ -75,8 +75,8 @@ import           Data.Typeable (Typeable)
 -- just a FieldParser.
 
 -- Why isn't this a newtype?
-data FromField pgType haskellType =
-  FromField (U.Unpackspec (Column pgType) ()) (FieldParser haskellType)
+data FromField sqlType haskellType =
+  FromField (U.Unpackspec (Column sqlType) ()) (FieldParser haskellType)
 
 instance Functor (FromField u) where
   fmap f ~(FromField u fp) = FromField u ((fmap . fmap . fmap) f fp)
