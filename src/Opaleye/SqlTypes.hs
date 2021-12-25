@@ -16,6 +16,9 @@ module Opaleye.SqlTypes (
   SqlInt8,
   SqlInt2,
   SqlFloat4,
+  -- ** Type classes
+  IC.SqlNum,
+  IC.SqlIntegral,
   -- * Date and time
   -- ** Creating values
   sqlDay,
@@ -60,6 +63,8 @@ module Opaleye.SqlTypes (
   SqlText,
   SqlVarcharN,
   SqlCitext,
+  -- ** Type classes
+  IC.SqlString,
   -- * Array
   -- ** Creating values
   sqlArray,
@@ -86,6 +91,7 @@ module Opaleye.SqlTypes (
   ) where
 
 import qualified Opaleye.Field   as F
+import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.PGTypesExternal as P
 import           Opaleye.Internal.PGTypesExternal (IsSqlType, IsRangeType)
 import           Opaleye.Internal.PGTypesExternal (SqlBool,
