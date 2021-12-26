@@ -77,12 +77,10 @@ import           Data.Typeable (Typeable)
 -- FieldParser, so we have to have some type that we know contains
 -- just a FieldParser.
 
--- Why isn't this a newtype?
-data FromField sqlType haskellType =
-  FromField (U.Unpackspec (Field_ NonNullable sqlType) ()) (FieldParser haskellType)
+newtype FromField sqlType haskellType = FromField (FieldParser haskellType)
 
 instance Functor (FromField u) where
-  fmap f ~(FromField u fp) = FromField u ((fmap . fmap . fmap) f fp)
+  fmap f (FromField fp) = FromField ((fmap . fmap . fmap) f fp)
 
 -- | A 'FromFields'
 --   specifies how to convert Postgres values (@fields@)
@@ -125,31 +123,30 @@ fieldParserQueryRunnerColumn :: FieldParser haskell -> FromField pgType haskell
 fieldParserQueryRunnerColumn = fromPGSFieldParser
 
 fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
-fromPGSFieldParser = FromField (P.rmap (const ()) U.unpackspecField)
+fromPGSFieldParser = FromField
 
 fromFields :: FromField a b -> FromFields (Field a) b
-fromFields qrc = FromFields u (const (fieldWith fp)) (const 1)
-    where FromField u fp = qrc
+fromFields qrc = FromFields (P.rmap (const ()) U.unpackspecField) (const (fieldWith fp)) (const 1)
+    where FromField fp = qrc
 
 {-# DEPRECATED queryRunner "Use fromFields instead.  Will be removed in version 0.10." #-}
 queryRunner :: FromField a b -> FromFields (Field a) b
 queryRunner = fromFields
 
 fromFieldsNullable :: FromField a b -> FromFields (FieldNullable a) (Maybe b)
-fromFieldsNullable qr = FromFields u' (const (fieldWith fp'')) (const 1)
-  where FromField u fp = unsafeAdjustFromField qr
+fromFieldsNullable qr = FromFields (P.rmap (const ()) U.unpackspecField) (const (fieldWith fp'')) (const 1)
+  where FromField fp = unsafeAdjustFromField qr
         fromField' :: FieldParser a -> FieldParser (Maybe a)
         fromField' _ _ Nothing = pure Nothing
         fromField' fp' f bs = fmap Just (fp' f bs)
 
-        u' = P.lmap C.unsafeCoerceColumn u
         fp'' = fromField' fp
 
 unsafeFromFieldRaw :: FromField a (PGS.Field, Maybe SBS.ByteString)
 unsafeFromFieldRaw = fromPGSFieldParser (\f mdata -> pure (f, mdata))
 
 unsafeAdjustFromField :: FromField field a -> FromField field' a
-unsafeAdjustFromField (FromField u f) = FromField (P.lmap C.unsafeCoerceColumn u) f
+unsafeAdjustFromField (FromField f) = FromField f
 
 -- { Instances for automatic derivation
 
@@ -313,13 +310,13 @@ instance (Typeable b, DefaultFromField a b) =>
 
 fromFieldArray :: Typeable h => FromField f h -> FromField (T.SqlArray_ NonNullable f) [h]
 fromFieldArray q =
-  fmap fromPGArray (unsafeAdjustFromField (FromField c (pgArrayFieldParser f)))
-  where FromField c f = q
+  fmap fromPGArray (unsafeAdjustFromField (FromField (pgArrayFieldParser f)))
+  where FromField f = q
 
 fromFieldArrayNullable :: Typeable h => FromField f h -> FromField (T.SqlArray_ 'Nullable f) [Maybe h]
 fromFieldArrayNullable q =
-  fmap fromPGArray (unsafeAdjustFromField (FromField c (pgArrayFieldParser (optionalField f))))
-  where FromField c f = q
+  fmap fromPGArray (unsafeAdjustFromField (FromField (pgArrayFieldParser (optionalField f))))
+  where FromField f = q
 
 -- }
 
@@ -331,8 +328,8 @@ fromFieldRange :: Typeable b
                => FromField a b
                -> FromField (T.SqlRange a) (PGSR.PGRange b)
 fromFieldRange off =
-  unsafeAdjustFromField (FromField c (PGSR.fromFieldRange pff))
-  where FromField c pff = off
+  unsafeAdjustFromField (FromField (PGSR.fromFieldRange pff))
+  where FromField pff = off
 
 -- Boilerplate instances
 
