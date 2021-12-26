@@ -137,7 +137,7 @@ queryRunner = fromFields
 
 fromFieldsNullable :: FromField a b -> FromFields (FieldNullable a) (Maybe b)
 fromFieldsNullable qr = FromFields u' (const (fieldWith fp'')) (const 1)
-  where FromField u fp = qr
+  where FromField u fp = unsafeAdjustFromField qr
         fromField' :: FieldParser a -> FieldParser (Maybe a)
         fromField' _ _ Nothing = pure Nothing
         fromField' fp' f bs = fmap Just (fp' f bs)
@@ -331,7 +331,7 @@ fromFieldRange :: Typeable b
                => FromField a b
                -> FromField (T.SqlRange a) (PGSR.PGRange b)
 fromFieldRange off =
-  FromField (P.lmap C.unsafeCoerceColumn c) (PGSR.fromFieldRange pff)
+  unsafeAdjustFromField (FromField c (PGSR.fromFieldRange pff))
   where FromField c pff = off
 
 -- Boilerplate instances
