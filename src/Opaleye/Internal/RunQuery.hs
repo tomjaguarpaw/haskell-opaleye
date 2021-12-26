@@ -306,14 +306,12 @@ instance (Typeable b, DefaultFromField a b) =>
   defaultFromField = fromFieldArray defaultFromField
 
 fromFieldArray :: Typeable h => FromField f h -> FromField (T.SqlArray_ NonNullable f) [h]
-fromFieldArray q =
+fromFieldArray (FromField f) =
   fmap fromPGArray (FromField (pgArrayFieldParser f))
-  where FromField f = q
 
 fromFieldArrayNullable :: Typeable h => FromField f h -> FromField (T.SqlArray_ 'Nullable f) [Maybe h]
-fromFieldArrayNullable q =
+fromFieldArrayNullable (FromField f) =
   fmap fromPGArray (FromField (pgArrayFieldParser (optionalField f)))
-  where FromField f = q
 
 -- }
 
@@ -324,9 +322,8 @@ instance (Typeable b, DefaultFromField a b) =>
 fromFieldRange :: Typeable b
                => FromField a b
                -> FromField (T.SqlRange a) (PGSR.PGRange b)
-fromFieldRange off =
+fromFieldRange (FromField pff) =
   unsafeAdjustFromField (FromField (PGSR.fromFieldRange pff))
-  where FromField pff = off
 
 -- Boilerplate instances
 
