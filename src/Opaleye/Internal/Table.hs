@@ -111,6 +111,8 @@ optionalTableField columnName = TableFields
 readOnlyTableField :: String -> TableFields () (Field_ n a)
 readOnlyTableField = lmap (const Nothing) . optionalTableField
 
+-- | You should not define your own instances of
+-- 'InferrableTableField'.
 class InferrableTableField w n r
     | w -> n, w -> r where
     -- | Infer either a required ('requiredTableField') or optional
@@ -120,9 +122,15 @@ class InferrableTableField w n r
     -- signature instead.
     tableField  :: String -> TableFields w (Field_ n r)
 
+-- | Equivalent to defining the column with 'requiredTableField'.  If
+-- the write type is @Field_ n r@ then the read type is also @Field_ n
+-- r@.
 instance InferrableTableField (Field_ n r) n r where
     tableField = requiredTableField
 
+-- | Equivalaent to defining the column with 'optionalTableField'. If
+-- the write type is @Maybe (Field_ n r)@ (i.e. @DEFAULT@ can be
+-- written to it) then the write type is @Field_ n r@.
 instance InferrableTableField (Maybe (Field_ n r)) n r where
     tableField = optionalTableField
 
