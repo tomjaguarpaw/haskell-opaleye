@@ -175,9 +175,7 @@ aggregate aggrs' s =
         --- "GROUP BY 0" means group by the zeroth column so we
         --- instead use an expression rather than a constant.
         handleEmpty :: [HSql.SqlExpr] -> NEL.NonEmpty HSql.SqlExpr
-        handleEmpty =
-          M.fromMaybe (return (SP.deliteral (HSql.ConstSqlExpr "0")))
-          . NEL.nonEmpty
+        handleEmpty = ensureColumnsGen SP.deliteral
 
         aggrs = (map . Arr.second . Arr.second) HPQ.AttrExpr aggrs'
 
