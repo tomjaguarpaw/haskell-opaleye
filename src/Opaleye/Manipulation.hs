@@ -240,12 +240,12 @@ runInsertManyOnConflictDoNothing :: PGS.Connection
                                  -- ^ Rows to insert
                                  -> IO Int64
                                  -- ^ Number of rows inserted
-runInsertManyOnConflictDoNothing conn table_ columns =
+runInsertManyOnConflictDoNothing conn t columns =
   case NEL.nonEmpty columns of
     -- Inserting the empty list is just the same as returning 0
     Nothing       -> return 0
     Just columns' -> (PGS.execute_ conn . fromString .:. MI.arrangeInsertManySql)
-                         table_ columns' (Just HSql.DoNothing)
+                         t columns' (Just HSql.DoNothing)
 
 runInsertMany :: PGS.Connection
               -- ^
