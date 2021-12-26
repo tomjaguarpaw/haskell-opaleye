@@ -214,13 +214,10 @@ runInsertManyReturningExplicitI qr conn t columns f =
   runInsertManyReturningExplicit qr conn t columns f Nothing
 
 arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
-arrangeInsert t c = arrangeInsertManyI t (return c)
+arrangeInsert t c = arrangeInsertMany t (return c) Nothing
 
 arrangeInsertSql :: T.Table columns a -> columns -> String
 arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
-
-arrangeInsertManyI :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
-arrangeInsertManyI t columns = arrangeInsertMany t columns Nothing
 
 arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Field SqlBool)
