@@ -92,7 +92,7 @@ runInsert conn i = case i of
   Insert table_ rows_ returning_ onConflict_ ->
     let insert = case (returning_, onConflict_) of
           (MI.Count, Nothing) ->
-            runInsertMany
+            runInsertMany' Nothing
           (MI.Count, Just HSql.DoNothing) ->
             runInsertManyOnConflictDoNothing
           (MI.ReturningExplicit qr f, oc) ->
@@ -253,16 +253,6 @@ runInsertManyOnConflictDoNothing :: PGS.Connection
                                  -> IO Int64
                                  -- ^ Number of rows inserted
 runInsertManyOnConflictDoNothing = runInsertMany' (Just HSql.DoNothing)
-
-runInsertMany :: PGS.Connection
-              -- ^
-              -> T.Table columns columns'
-              -- ^ Table to insert into
-              -> [columns]
-              -- ^ Rows to insert
-              -> IO Int64
-              -- ^ Number of rows inserted
-runInsertMany = runInsertMany' Nothing
 
 runUpdateReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
