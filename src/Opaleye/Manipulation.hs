@@ -94,7 +94,7 @@ runInsert conn i = case i of
           (MI.Count, Nothing) ->
             runInsertMany' Nothing
           (MI.Count, Just HSql.DoNothing) ->
-            runInsertManyOnConflictDoNothing
+            runInsertMany' (Just HSql.DoNothing)
           (MI.ReturningExplicit qr f, oc) ->
             \c t r -> MI.runInsertManyReturningExplicit qr c t r f oc
     in insert conn table_ rows_
@@ -242,17 +242,6 @@ runInsertMany' oc conn t columns =
     Nothing       -> return 0
     Just columns' -> (PGS.execute_ conn . fromString .:. MI.arrangeInsertManySql)
                          t columns' oc
-
--- | Insert rows into a table with @ON CONFLICT DO NOTHING@
-runInsertManyOnConflictDoNothing :: PGS.Connection
-                                 -- ^
-                                 -> T.Table columns columns'
-                                 -- ^ Table to insert into
-                                 -> [columns]
-                                 -- ^ Rows to insert
-                                 -> IO Int64
-                                 -- ^ Number of rows inserted
-runInsertManyOnConflictDoNothing = runInsertMany' (Just HSql.DoNothing)
 
 runUpdateReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
