@@ -66,7 +66,6 @@ module Opaleye.Table (-- * Defining tables
                       T.Table,
                       T.tableField,
                       T.optionalTableField,
-                      T.readOnlyTableField,
                       T.requiredTableField,
                       T.InferrableTableField,
                       -- * Selecting from tables
@@ -75,6 +74,8 @@ module Opaleye.Table (-- * Defining tables
                       TableFields,
                       -- * Explicit versions
                       selectTableExplicit,
+                      -- * Deprecated versions
+                      T.readOnlyTableField,
                      ) where
 
 import qualified Opaleye.Internal.QueryArr as Q
