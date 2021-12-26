@@ -321,8 +321,7 @@ instance (Typeable b, DefaultFromField a b) =>
 fromFieldRange :: Typeable b
                => FromField a b
                -> FromField (T.SqlRange a) (PGSR.PGRange b)
-fromFieldRange (FromField pff) =
-  unsafeAdjustFromField (FromField (PGSR.fromFieldRange pff))
+fromFieldRange (FromField pff) = FromField (PGSR.fromFieldRange pff)
 
 -- Boilerplate instances
 
