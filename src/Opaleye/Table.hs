@@ -68,6 +68,7 @@ module Opaleye.Table (-- * Defining tables
                       T.optionalTableField,
                       T.readOnlyTableField,
                       T.requiredTableField,
+                      T.InferrableTableField,
                       -- * Selecting from tables
                       selectTable,
                       -- * Data types
