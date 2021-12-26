@@ -136,9 +136,8 @@ queryRunner :: FromField a b -> FromFields (Field a) b
 queryRunner = fromFields
 
 fromFieldsNullable :: FromField a b -> FromFields (FieldNullable a) (Maybe b)
-fromFieldsNullable qr = fieldParserFromFields fp''
+fromFieldsNullable qr = fieldParserFromFields (optionalField fp)
   where FromField fp = unsafeAdjustFromField qr
-        fp'' = optionalField fp
 
 unsafeFromFieldRaw :: FromField a (PGS.Field, Maybe SBS.ByteString)
 unsafeFromFieldRaw = fromPGSFieldParser (\f mdata -> pure (f, mdata))
