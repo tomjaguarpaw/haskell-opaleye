@@ -61,7 +61,7 @@ import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column)
-import           Opaleye.Internal.Helpers ((.:), (.:.))
+import           Opaleye.Internal.Helpers ((.:.))
 import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 import           Opaleye.Internal.Manipulation (Updater(Updater))
 import qualified Opaleye.Internal.Manipulation as MI
@@ -258,7 +258,7 @@ runInsertMany :: PGS.Connection
 runInsertMany conn t columns = case NEL.nonEmpty columns of
   -- Inserting the empty list is just the same as returning 0
   Nothing       -> return 0
-  Just columns' -> (PGS.execute_ conn . fromString .: MI.arrangeInsertManySqlI) t columns'
+  Just columns' -> (PGS.execute_ conn . fromString .:. MI.arrangeInsertManySql) t columns' Nothing
 
 runUpdateReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection

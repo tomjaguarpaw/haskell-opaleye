@@ -222,9 +222,6 @@ arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
 arrangeInsertManyI :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
 arrangeInsertManyI t columns = arrangeInsertMany t columns Nothing
 
-arrangeInsertManySqlI :: T.Table columns a -> NEL.NonEmpty columns -> String
-arrangeInsertManySqlI t c  = arrangeInsertManySql t c Nothing
-
 arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Field SqlBool)
               -> HSql.SqlUpdate
