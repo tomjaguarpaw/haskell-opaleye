@@ -90,11 +90,11 @@ runInsert  :: PGS.Connection
            -- you provided when creating the 'Insert'.
 runInsert conn i = case i of
   Insert table_ rows_ returning_ onConflict_ ->
-    let insert = case (returning_, onConflict_) of
-          (MI.Count, oc) ->
-            runInsertMany' oc
-          (MI.ReturningExplicit qr f, oc) ->
-            \c t r -> MI.runInsertManyReturningExplicit qr c t r f oc
+    let insert = case returning_ of
+          MI.Count ->
+            runInsertMany' onConflict_
+          MI.ReturningExplicit qr f ->
+            \c t r -> MI.runInsertManyReturningExplicit qr c t r f onConflict_
     in insert conn table_ rows_
 
 -- | Use 'runInsert' instead.  Will be deprecated in 0.10.
