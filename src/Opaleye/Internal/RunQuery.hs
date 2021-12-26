@@ -126,15 +126,18 @@ fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
 fromPGSFieldParser = FromField
 
 fromFields :: FromField a b -> FromFields (Field a) b
-fromFields qrc = FromFields (P.rmap (const ()) U.unpackspecField) (const (fieldWith fp)) (const 1)
+fromFields qrc = fieldParserFromFields fp
     where FromField fp = qrc
+
+fieldParserFromFields :: FieldParser haskells -> FromFields (Field_ n a) haskells
+fieldParserFromFields fp = FromFields (P.rmap (const ()) U.unpackspecField) (const (fieldWith fp)) (const 1)
 
 {-# DEPRECATED queryRunner "Use fromFields instead.  Will be removed in version 0.10." #-}
 queryRunner :: FromField a b -> FromFields (Field a) b
 queryRunner = fromFields
 
 fromFieldsNullable :: FromField a b -> FromFields (FieldNullable a) (Maybe b)
-fromFieldsNullable qr = FromFields (P.rmap (const ()) U.unpackspecField) (const (fieldWith fp'')) (const 1)
+fromFieldsNullable qr = fieldParserFromFields fp''
   where FromField fp = unsafeAdjustFromField qr
         fp'' = optionalField fp
 
