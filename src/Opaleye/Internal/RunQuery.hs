@@ -126,8 +126,7 @@ fromPGSFieldParser :: FieldParser haskell -> FromField pgType haskell
 fromPGSFieldParser = FromField
 
 fromFields :: FromField a b -> FromFields (Field a) b
-fromFields qrc = fieldParserFromFields fp
-    where FromField fp = qrc
+fromFields (FromField fp) = fieldParserFromFields fp
 
 fieldParserFromFields :: FieldParser haskells -> FromFields (Field_ n a) haskells
 fieldParserFromFields fp = FromFields (P.rmap (const ()) U.unpackspecField) (const (fieldWith fp)) (const 1)
