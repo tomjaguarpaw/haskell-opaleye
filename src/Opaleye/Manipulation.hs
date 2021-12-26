@@ -231,6 +231,18 @@ rReturningExplicit = MI.ReturningExplicit
 
 -- * Deprecated versions
 
+runInsertMany' :: Maybe HSql.OnConflict
+               -> PGS.Connection
+               -> TI.Table columnsW columnsR
+               -> [columnsW]
+               -> IO Int64
+runInsertMany' oc conn t columns =
+  case NEL.nonEmpty columns of
+    -- Inserting the empty list is just the same as returning 0
+    Nothing       -> return 0
+    Just columns' -> (PGS.execute_ conn . fromString .:. MI.arrangeInsertManySql)
+                         t columns' oc
+
 -- | Insert rows into a table with @ON CONFLICT DO NOTHING@
 runInsertManyOnConflictDoNothing :: PGS.Connection
                                  -- ^
@@ -240,12 +252,7 @@ runInsertManyOnConflictDoNothing :: PGS.Connection
                                  -- ^ Rows to insert
                                  -> IO Int64
                                  -- ^ Number of rows inserted
-runInsertManyOnConflictDoNothing conn t columns =
-  case NEL.nonEmpty columns of
-    -- Inserting the empty list is just the same as returning 0
-    Nothing       -> return 0
-    Just columns' -> (PGS.execute_ conn . fromString .:. MI.arrangeInsertManySql)
-                         t columns' (Just HSql.DoNothing)
+runInsertManyOnConflictDoNothing = runInsertMany' (Just HSql.DoNothing)
 
 runInsertMany :: PGS.Connection
               -- ^
@@ -255,10 +262,7 @@ runInsertMany :: PGS.Connection
               -- ^ Rows to insert
               -> IO Int64
               -- ^ Number of rows inserted
-runInsertMany conn t columns = case NEL.nonEmpty columns of
-  -- Inserting the empty list is just the same as returning 0
-  Nothing       -> return 0
-  Just columns' -> (PGS.execute_ conn . fromString .:. MI.arrangeInsertManySql) t columns' Nothing
+runInsertMany = runInsertMany' Nothing
 
 runUpdateReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
