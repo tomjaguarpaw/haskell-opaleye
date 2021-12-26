@@ -416,6 +416,8 @@ prepareRowParser (FromFields _ rowParser numColumns) cols =
      -- SELECT statement, since we can't select zero
      -- columns.  In that case we have to make sure we
      -- read a single Int.
+     --
+     -- See: Opaleye.Internal.Sql
 
 -- | Cursor within a transaction.
 data Cursor haskells = EmptyCursor | Cursor (RowParser haskells) PGSC.Cursor
