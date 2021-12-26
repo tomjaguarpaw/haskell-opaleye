@@ -141,9 +141,6 @@ fromFieldsNullable (FromField fp) = fieldParserFromFields (optionalField fp)
 unsafeFromFieldRaw :: FromField a (PGS.Field, Maybe SBS.ByteString)
 unsafeFromFieldRaw = fromPGSFieldParser (\f mdata -> pure (f, mdata))
 
-unsafeAdjustFromField :: FromField field a -> FromField field' a
-unsafeAdjustFromField (FromField f) = FromField f
-
 -- { Instances for automatic derivation
 
 instance DefaultFromField a b =>
