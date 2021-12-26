@@ -91,10 +91,8 @@ runInsert  :: PGS.Connection
 runInsert conn i = case i of
   Insert table_ rows_ returning_ onConflict_ ->
     let insert = case (returning_, onConflict_) of
-          (MI.Count, Nothing) ->
-            runInsertMany' Nothing
-          (MI.Count, Just HSql.DoNothing) ->
-            runInsertMany' (Just HSql.DoNothing)
+          (MI.Count, oc) ->
+            runInsertMany' oc
           (MI.ReturningExplicit qr f, oc) ->
             \c t r -> MI.runInsertManyReturningExplicit qr c t r f oc
     in insert conn table_ rows_
