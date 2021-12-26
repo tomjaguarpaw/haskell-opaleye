@@ -174,7 +174,10 @@ data Update haskells = forall fieldsW fieldsR. Update
    , uReturning  :: MI.Returning fieldsR haskells
    }
 
--- | A convenient wrapper for writing your update function
+-- | A convenient wrapper for writing your update function.
+-- @updateEasy@ protects you from accidentally updating an
+-- 'Opaleye.Table.optionalTableField' with @Nothing@ (i.e. SQL
+-- @DEFAULT@).  See 'uUpdateWith'.
 --
 -- @uUpdateWith = updateEasy (\\... -> ...)@
 updateEasy :: D.Default Updater fieldsR fieldsW
