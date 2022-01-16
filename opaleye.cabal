@@ -1,5 +1,5 @@
 name:            opaleye
-copyright:       Copyright (c) 2014-2018 Purely Agile Limited; 2019-2021 Tom Ellis
+copyright:       Copyright (c) 2014-2018 Purely Agile Limited; 2019-2022 Tom Ellis
 version:         0.8.0.1
 synopsis:        An SQL-generating DSL targeting PostgreSQL
 description:     An SQL-generating DSL targeting PostgreSQL.  Allows
