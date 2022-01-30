@@ -354,8 +354,8 @@ testRestrict = it "restricts the rows returned" $
           O.restrict -< fst t .== 1
           Arr.returnA -< t
 
-testExists :: Test
-testExists = it "restricts the rows returned with EXISTS" $
+testRestrictExists :: Test
+testRestrictExists = it "restricts the rows returned with EXISTS" $
     select `selectShouldReturnSorted` filter ((== 1) . fst) (L.sort table1data)
   where select = proc () -> do
           t <- table1Q -< ()
@@ -364,8 +364,8 @@ testExists = it "restricts the rows returned with EXISTS" $
                             O.restrict -< fst t' .> fst t) -< t
           Arr.returnA -< t
 
-testNotExists :: Test
-testNotExists = it "restricts the rows returned with NOT EXISTS" $
+testRestrictNotExists :: Test
+testRestrictNotExists = it "restricts the rows returned with NOT EXISTS" $
     select `selectShouldReturnSorted` filter ((== 2) . fst)  (L.sort table1data)
   where select = proc () -> do
           t <- table1Q -< ()
@@ -1453,8 +1453,8 @@ main = do
         testSelect
         testProduct
         testRestrict
-        testExists
-        testNotExists
+        testRestrictExists
+        testRestrictNotExists
         testIn
         testNum
         testDiv
