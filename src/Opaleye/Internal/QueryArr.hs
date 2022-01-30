@@ -40,6 +40,7 @@ productQueryArr f = QueryArr $ \a -> do
   put t'
   pure (b, PQ.PrimQueryArr (\lat primQuery -> PQ.times lat primQuery pq))
 
+{-# DEPRECATED leftJoinQueryArr "Use leftJoinQueryArr'.  Will be removed in version 0.10" #-}
 leftJoinQueryArr :: ((a, Tag) -> (b, HPQ.PrimExpr, PQ.PrimQuery, Tag)) -> QueryArr a b
 leftJoinQueryArr f = leftJoinQueryArr' $ \a -> do
   t <- get
