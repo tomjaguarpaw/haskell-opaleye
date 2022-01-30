@@ -106,8 +106,11 @@ optionalTableField columnName = TableFields
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
--- | 'readOnlyTableField' is for fields that you must omit on writes, such as
---  SERIAL fields intended to auto-increment only.
+-- | Don't use 'readOnlyTableField'.  It will be formally deprecated
+-- in a future version.  It is broken for updates because it always
+-- updates its field with @DEFAULT@ which is very unlikely to be what
+-- you want!  For more details see
+-- <https://github.com/tomjaguarpaw/haskell-opaleye/issues/447#issuecomment-685617841>.
 readOnlyTableField :: String -> TableFields () (Field_ n a)
 readOnlyTableField = lmap (const Nothing) . optionalTableField
 
