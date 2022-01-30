@@ -8,4 +8,6 @@ import qualified Opaleye.Select            as S
 
 -- | Add a commented label to the generated SQL.
 label :: String -> S.SelectArr a b -> S.SelectArr a b
-label l s = Q.mapPrimQuery (PQ.Label l) s
+label l s = Q.QueryArr ((\(b, pqf, t) -> (b, \lat -> f . pqf lat, t)) . Q.runQueryArr sa)
+  where f = PQ.Label l
+        sa = s
