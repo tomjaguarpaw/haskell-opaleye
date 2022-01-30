@@ -19,6 +19,7 @@ module Opaleye.SqlTypes (
   -- ** Type classes
   IC.SqlNum,
   IC.SqlIntegral,
+  IC.SqlFractional,
   -- * Date and time
   -- ** Creating values
   sqlDay,
