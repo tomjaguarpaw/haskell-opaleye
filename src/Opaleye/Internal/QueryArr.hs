@@ -19,7 +19,7 @@ import           Control.Arrow ((&&&), (***), arr, returnA)
 import qualified Control.Category as C
 import           Control.Category ((<<<), id)
 import           Control.Applicative (Applicative, pure, (<*>))
-import           Control.Monad.Trans.State.Strict (State, get, put, runState)
+import           Control.Monad.Trans.State.Strict (State, runState)
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 import           Data.Semigroup ((<>))
@@ -33,25 +33,10 @@ newtype SelectArr a b = QueryArr { unQueryArr :: a -> State Tag (b, PQ.PrimQuery
 type QueryArr = SelectArr
 type Query = SelectArr ()
 
-productQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
-productQueryArr f = productQueryArr' $ \a -> do
-  t <- get
-  let (b, pq, t') = f (a, t)
-  put t'
-  pure (b, pq)
-
 productQueryArr' :: (a -> State Tag (b, PQ.PrimQuery)) -> QueryArr a b
 productQueryArr' f = QueryArr $ \a -> do
   (b, pq) <- f a
   pure (b, PQ.PrimQueryArr (\lat primQuery -> PQ.times lat primQuery pq))
-
-{-# DEPRECATED leftJoinQueryArr "Use leftJoinQueryArr'.  Will be removed in version 0.10" #-}
-leftJoinQueryArr :: ((a, Tag) -> (b, HPQ.PrimExpr, PQ.PrimQuery, Tag)) -> QueryArr a b
-leftJoinQueryArr f = leftJoinQueryArr' $ \a -> do
-  t <- get
-  let (a1, cond, primQuery', t1) = f (a, t)
-  put t1
-  pure (a1, cond, primQuery')
 
 leftJoinQueryArr' :: (a -> State Tag (b, HPQ.PrimExpr, PQ.PrimQuery)) -> QueryArr a b
 leftJoinQueryArr' f = QueryArr $ \a -> do
