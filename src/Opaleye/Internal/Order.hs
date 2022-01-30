@@ -61,8 +61,8 @@ orderByU os (columns, primQ) = (columns, primQ')
 orderExprs :: a -> Order a -> [HPQ.OrderExpr]
 orderExprs x (Order os) = map (uncurry HPQ.OrderExpr) (os x)
 
-limit' :: Int -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
-limit' n (x, q, t) = (x, PQ.Limit (PQ.LimitOp n) q, t)
+limit' :: Int -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
+limit' n (x, q) = (x, PQ.Limit (PQ.LimitOp n) q)
 
 offset' :: Int -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
 offset' n (x, q, t) = (x, PQ.Limit (PQ.OffsetOp n) q, t)

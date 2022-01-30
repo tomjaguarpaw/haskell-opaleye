@@ -116,7 +116,9 @@ SELECT * FROM (SELECT * FROM yourTable LIMIT 10) OFFSET 50
 @
 -}
 limit :: Int -> S.Select a -> S.Select a
-limit n a = Q.productQueryArr (O.limit' n . Q.runSimpleQueryArr a)
+limit n a = Q.productQueryArr' $ \() -> do
+  a_pq <- Q.runSimpleQueryArr' a ()
+  pure (O.limit' n a_pq)
 
 {- |
 Offset the results of the given 'S.Select' by the given amount, skipping
