@@ -1,3 +1,25 @@
+## 0.9.0.0
+
+The switch from `Column` to `Field` is complete.  This is a small yet
+pervasive change.  To update your code please change all usages of
+`Column` as follows:
+
+* `Column` of a non-nullable type: to `Field`
+* `Column` of a nullable type: to `FieldNullable`
+* `Column` of a nullability-polymorphic type: to `Field_ n`
+
+For example
+
+* `Column SqlText` -> `Field SqlText`
+* `Column (Nullable SqlInt4)` -> `FieldNullable SqlInt4`
+* `Column a` -> `Field_ n a`
+
+This is the only change that has been made in this version, in order
+to ease user transition.
+
+* See also
+  <https://github.com/tomjaguarpaw/haskell-opaleye/issues/326>
+
 ## 0.8.1.0
 
 * Cosmetic and re-export changes only.
