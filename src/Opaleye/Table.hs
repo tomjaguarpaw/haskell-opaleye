@@ -87,6 +87,8 @@ import qualified Opaleye.Internal.Unpackspec as U
 
 import qualified Opaleye.Select                  as S
 
+import Control.Monad.Trans.State.Strict ( get, modify )
+
 import qualified Data.Profunctor.Product.Default as D
 
 -- | Example type specialization:
@@ -132,6 +134,8 @@ selectTableExplicit :: U.Unpackspec tablefields fields
                     -> Table a tablefields
                     -- ^
                     -> S.Select fields
-selectTableExplicit cm table' = Q.productQueryArr f where
-  f ((), t0) = (retwires, primQ, Tag.next t0) where
-    (retwires, primQ) = T.queryTable cm table' t0
+selectTableExplicit cm table' = Q.productQueryArr' $ \() -> do
+  t0 <- get
+  modify Tag.next
+  let (retwires, primQ) = T.queryTable cm table' t0
+  pure (retwires, primQ)
