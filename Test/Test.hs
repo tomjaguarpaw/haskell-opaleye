@@ -1409,12 +1409,12 @@ main = do
 
   let mconnectString = connectStringEnvVar <|> connectStringDotEnv
 
-  connectString <- maybe
-    (fail ("Set " ++ envVarName ++ " environment variable\n"
-           ++ "For example " ++ envVarName ++ "='user=tom dbname=opaleye_test "
-           ++ "host=localhost port=25433 password=tom'"))
-    (pure . String.fromString)
-    mconnectString
+  connectString <- case mconnectString of
+    Nothing ->
+      fail ("Set " ++ envVarName ++ " environment variable\n"
+            ++ "For example " ++ envVarName ++ "='user=tom dbname=opaleye_test "
+            ++ "host=localhost port=25433 password=tom'")
+    Just s -> pure (String.fromString s)
 
   conn <- PGS.connectPostgreSQL connectString
 
