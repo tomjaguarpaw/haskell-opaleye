@@ -29,10 +29,8 @@ module Opaleye.RunSelect
    runSelectTF,
    ) where
 
-import qualified Data.Profunctor            as P
 import qualified Database.PostgreSQL.Simple as PGS
 
-import qualified Opaleye.Column as C
 import qualified Opaleye.Select as S
 import qualified Opaleye.Internal.RunQueryExternal as RQ
 import qualified Opaleye.TypeFamilies as TF

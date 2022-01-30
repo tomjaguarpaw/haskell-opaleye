@@ -11,7 +11,6 @@
 
 module Opaleye.Internal.MaybeFields where
 
-import           Control.Applicative hiding (optional)
 import           Control.Arrow (returnA, (<<<), (>>>))
 
 import qualified Opaleye.Internal.Binary as B

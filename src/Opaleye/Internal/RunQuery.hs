@@ -22,7 +22,6 @@ import           Opaleye.Internal.Column (Field_, Field, FieldNullable,
                                           Nullability(Nullable, NonNullable))
 import qualified Opaleye.Internal.PackMap as PackMap
 import qualified Opaleye.Internal.QueryArr as Q
-import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.PGTypesExternal as T
 import qualified Opaleye.Internal.PGTypes as IPT (strictDecodeUtf8)

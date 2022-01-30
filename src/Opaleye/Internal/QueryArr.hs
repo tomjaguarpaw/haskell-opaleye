@@ -19,7 +19,6 @@ import           Control.Arrow ((&&&), (***), arr, returnA)
 import qualified Control.Category as C
 import           Control.Category ((<<<), id)
 import           Control.Applicative (Applicative, pure, (<*>))
-import           Data.List.NonEmpty ( NonEmpty((:|)) )
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 

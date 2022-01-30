@@ -17,11 +17,9 @@ import qualified Opaleye.Internal.Rebind as Rebind
 import qualified Opaleye.SqlTypes as T
 import qualified Opaleye.Field as C
 import           Opaleye.Field   (Field)
-import qualified Opaleye.Internal.Map as Map
 import           Opaleye.Internal.MaybeFields (MaybeFields(MaybeFields),
                                                mfPresent, mfFields)
 import qualified Opaleye.Select  as S
-import qualified Opaleye.Internal.TypeFamilies as TF
 
 import qualified Control.Applicative as A
 import qualified Control.Arrow
