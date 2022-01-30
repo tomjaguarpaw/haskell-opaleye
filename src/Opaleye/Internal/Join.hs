@@ -23,7 +23,6 @@ import qualified Opaleye.Select  as S
 
 import qualified Control.Applicative as A
 import qualified Control.Arrow
-import           Control.Monad.Trans.State.Strict (get, modify)
 
 import           Data.Profunctor (Profunctor, dimap)
 import qualified Data.Profunctor.Product as PP
@@ -53,8 +52,7 @@ joinExplicit uA uB returnColumnsA returnColumnsB joinType
   (columnsA, primQueryA) <- Q.runSimpleQueryArr' qA ()
   (columnsB, primQueryB) <- Q.runSimpleQueryArr' qB ()
 
-  endTag <- get
-  modify T.next
+  endTag <- T.fresh
 
   let (newColumnsA, ljPEsA) =
             PM.run (U.runUnpackspec uA (extractLeftJoinFields 1 endTag) columnsA)

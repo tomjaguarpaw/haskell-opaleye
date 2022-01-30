@@ -20,8 +20,6 @@ import qualified Opaleye.Field as F
 import           Opaleye.Field (Field)
 import qualified Opaleye.Select as S
 
-import           Control.Monad.Trans.State.Strict (get, modify)
-
 import           Data.Profunctor (Profunctor, dimap, lmap, rmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
@@ -106,8 +104,7 @@ relationValuedExprExplicit :: RelExprMaker strings columns
                            -> QA.QueryArr a columns
 relationValuedExprExplicit rem_ strings pe =
   QA.productQueryArr' $ \a -> do
-    tag <- get
-    modify Tag.next
+    tag <- Tag.fresh
     let (primExprs, projcols) = runRelExprMaker rem_ tag strings
         primQ :: PQ.PrimQuery
         primQ = PQ.RelExpr (pe a) projcols

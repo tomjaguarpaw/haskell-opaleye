@@ -19,7 +19,6 @@ import           Data.Profunctor.Product.Default (Default, def)
 
 import           Control.Applicative (Applicative, pure, (<*>))
 import           Control.Arrow ((***))
-import           Control.Monad.Trans.State.Strict (get, modify)
 
 extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
                     -> PM.PM [(HPQ.Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
@@ -45,8 +44,7 @@ sameTypeBinOpHelper binop binaryspec q1 q2 = Q.productQueryArr' $ \() -> do
   (columns1, primQuery1) <- Q.runSimpleQueryArr' q1 ()
   (columns2, primQuery2) <- Q.runSimpleQueryArr' q2 ()
 
-  endTag <- get
-  modify T.next
+  endTag <- T.fresh
 
   let (newColumns, pes) =
             PM.run (runBinaryspec binaryspec (extractBinaryFields endTag)
