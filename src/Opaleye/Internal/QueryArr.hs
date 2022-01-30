@@ -41,10 +41,15 @@ productQueryArr f = QueryArr $ \a -> do
   pure (b, PQ.PrimQueryArr (\lat primQuery -> PQ.times lat primQuery pq))
 
 leftJoinQueryArr :: ((a, Tag) -> (b, HPQ.PrimExpr, PQ.PrimQuery, Tag)) -> QueryArr a b
-leftJoinQueryArr f = QueryArr $ \a -> do
+leftJoinQueryArr f = leftJoinQueryArr' $ \a -> do
   t <- get
   let (a1, cond, primQuery', t1) = f (a, t)
   put t1
+  pure (a1, cond, primQuery')
+
+leftJoinQueryArr' :: (a -> State Tag (b, HPQ.PrimExpr, PQ.PrimQuery)) -> QueryArr a b
+leftJoinQueryArr' f = QueryArr $ \a -> do
+  (a1, cond, primQuery') <- f a
   pure (a1, PQ.PrimQueryArr $ \lat primQueryL ->
                             PQ.Join PQ.LeftJoin cond (PQ.NonLateral, primQueryL) (lat, primQuery'))
 
