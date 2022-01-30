@@ -123,7 +123,7 @@ import           Opaleye.Internal.Column (Field_(Column), Field, FieldNullable,
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.JSONBuildObjectFields as JBOF
 import           Opaleye.Internal.QueryArr (SelectArr(QueryArr),
-                                            runSimpleQueryArr)
+                                            runSimpleQueryArr')
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Operators as O
 import           Opaleye.Internal.Helpers   ((.:))
@@ -161,16 +161,18 @@ restrictExists :: S.SelectArr a b -> S.SelectArr a ()
 restrictExists criteria = QueryArr f where
   -- A where exists clause can always refer to columns defined by the
   -- query it references so needs no special treatment on LATERAL.
-  f (a, t0) = ((), PQ.PrimQueryArr $ \_ primQ -> PQ.Semijoin PQ.Semi primQ existsQ, t1) where
-    (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
+  f a = do
+    (_, existsQ) <- runSimpleQueryArr' criteria a
+    pure ((), PQ.PrimQueryArr $ \_ primQ -> PQ.Semijoin PQ.Semi primQ existsQ)
 
 {-| Add a @WHERE NOT EXISTS@ clause to the current query. -}
 restrictNotExists :: S.SelectArr a b -> S.SelectArr a ()
 restrictNotExists criteria = QueryArr f where
   -- A where exists clause can always refer to columns defined by the
   -- query it references so needs no special treatment on LATERAL.
-  f (a, t0) = ((), PQ.PrimQueryArr $ \_ primQ -> PQ.Semijoin PQ.Anti primQ existsQ, t1) where
-    (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
+  f a = do
+    (_, existsQ) <- runSimpleQueryArr' criteria a
+    pure ((), PQ.PrimQueryArr $ \_ primQ -> PQ.Semijoin PQ.Anti primQ existsQ)
 
 infix 4 .==
 (.==) :: Field a -> Field a -> F.Field T.SqlBool

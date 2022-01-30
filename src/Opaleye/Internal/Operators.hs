@@ -28,7 +28,7 @@ restrict :: S.SelectArr (F.Field T.SqlBool) ()
 restrict = QA.QueryArr f where
   -- A where clause can always refer to columns defined by the query
   -- it references so needs no special treatment on LATERAL.
-  f (Column predicate, t0) = ((), PQ.PrimQueryArr $ \_ -> PQ.restrict predicate, t0)
+  f (Column predicate) = pure ((), PQ.PrimQueryArr $ \_ -> PQ.restrict predicate)
 
 infix 4 .==
 (.==) :: forall columns. D.Default EqPP columns columns
