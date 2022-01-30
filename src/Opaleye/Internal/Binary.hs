@@ -19,6 +19,7 @@ import           Data.Profunctor.Product.Default (Default, def)
 
 import           Control.Applicative (Applicative, pure, (<*>))
 import           Control.Arrow ((***))
+import           Control.Monad.Trans.State.Strict (get, modify)
 
 extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
                     -> PM.PM [(HPQ.Symbol, (HPQ.PrimExpr, HPQ.PrimExpr))]
@@ -40,19 +41,24 @@ binaryspecColumn = Binaryspec (PM.iso (mapBoth unColumn) Column)
 
 sameTypeBinOpHelper :: PQ.BinOp -> Binaryspec columns columns'
                     -> Q.Query columns -> Q.Query columns -> Q.Query columns'
-sameTypeBinOpHelper binop binaryspec q1 q2 = Q.productQueryArr q where
-  q ((), startTag) = (newColumns, newPrimQuery, T.next endTag)
-    where (columns1, primQuery1, midTag) = Q.runSimpleQueryArr q1 ((), startTag)
-          (columns2, primQuery2, endTag) = Q.runSimpleQueryArr q2 ((), midTag)
+sameTypeBinOpHelper binop binaryspec q1 q2 = Q.productQueryArr' $ \() -> do
+  (columns1, primQuery1) <- Q.runSimpleQueryArr' q1 ()
+  (columns2, primQuery2) <- Q.runSimpleQueryArr' q2 ()
 
-          (newColumns, pes) =
+  endTag <- get
+  modify T.next
+
+  let (newColumns, pes) =
             PM.run (runBinaryspec binaryspec (extractBinaryFields endTag)
                                     (columns1, columns2))
 
-          newPrimQuery = PQ.Binary binop
+      newPrimQuery = PQ.Binary binop
             ( PQ.Rebind False (map (fmap fst) pes) primQuery1
             , PQ.Rebind False (map (fmap snd) pes) primQuery2
             )
+
+  pure (newColumns, newPrimQuery)
+
 
 instance Default Binaryspec (Field_ n a) (Field_ n a) where
   def = binaryspecColumn
