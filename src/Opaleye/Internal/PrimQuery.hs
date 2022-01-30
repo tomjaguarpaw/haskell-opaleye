@@ -45,6 +45,41 @@ instance Monoid Lateral where
   mappend = (<>)
   mempty = NonLateral
 
+-- The function 'Lateral -> PrimQuery -> PrimQuery' represents a
+-- select arrow in the following way:
+--
+--    Lateral
+-- -- ^ Whether to join me laterally
+-- -> PrimQuery
+-- -- ^ The query that I will be joined after.  If I refer to columns
+-- -- in here in a way that is only valid when I am joined laterally,
+-- -- then Lateral must be passed in as the argument above.
+-- -> PrimQuery
+-- -- ^ The result after joining me
+--
+-- It is *always* valid to pass Lateral as the first argument.  So why
+-- wouldn't we do that?  Because we don't want to generate lateral
+-- subqueries if they are not needed; it might have performance
+-- implications.  Even though there is good evidence that it *doesn't*
+-- have performance implications
+-- (https://github.com/tomjaguarpaw/haskell-opaleye/pull/480) we still
+-- want to be cautious.
+newtype PrimQueryArr =
+  PrimQueryArr { runPrimQueryArr :: Lateral -> PrimQuery -> PrimQuery }
+
+instance Semigroup PrimQueryArr where
+  PrimQueryArr f1 <> PrimQueryArr f2 = PrimQueryArr (\lat -> f2 lat . f1 lat)
+
+instance Monoid PrimQueryArr where
+  mappend = (<>)
+  mempty = PrimQueryArr (\_ -> id)
+
+lateral :: PrimQueryArr -> PrimQueryArr
+lateral (PrimQueryArr pq) = PrimQueryArr (\_ -> pq Lateral)
+
+toPrimQuery :: PrimQueryArr -> PrimQuery
+toPrimQuery (PrimQueryArr f) = f NonLateral Unit
+
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
 -- for emptiness explicity in the SQL generation phase.
 

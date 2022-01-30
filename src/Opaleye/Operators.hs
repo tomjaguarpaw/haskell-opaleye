@@ -161,7 +161,7 @@ restrictExists :: S.SelectArr a b -> S.SelectArr a ()
 restrictExists criteria = QueryArr f where
   -- A where exists clause can always refer to columns defined by the
   -- query it references so needs no special treatment on LATERAL.
-  f (a, t0) = ((), \_ primQ -> PQ.Semijoin PQ.Semi primQ existsQ, t1) where
+  f (a, t0) = ((), PQ.PrimQueryArr $ \_ primQ -> PQ.Semijoin PQ.Semi primQ existsQ, t1) where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
 {-| Add a @WHERE NOT EXISTS@ clause to the current query. -}
@@ -169,7 +169,7 @@ restrictNotExists :: S.SelectArr a b -> S.SelectArr a ()
 restrictNotExists criteria = QueryArr f where
   -- A where exists clause can always refer to columns defined by the
   -- query it references so needs no special treatment on LATERAL.
-  f (a, t0) = ((), \_ primQ -> PQ.Semijoin PQ.Anti primQ existsQ, t1) where
+  f (a, t0) = ((), PQ.PrimQueryArr $ \_ primQ -> PQ.Semijoin PQ.Anti primQ existsQ, t1) where
     (_, existsQ, t1) = runSimpleQueryArr criteria (a, t0)
 
 infix 4 .==

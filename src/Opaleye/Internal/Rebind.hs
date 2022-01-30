@@ -19,4 +19,4 @@ rebindExplicitPrefix :: String -> Unpackspec a b -> SelectArr a b
 rebindExplicitPrefix prefix u =
   QueryArr (\(a, tag) ->
     let (b, bindings) = PM.run (runUnpackspec u (PM.extractAttr prefix tag) a)
-    in (b, \_ -> PQ.Rebind True bindings, Tag.next tag))
+    in (b, PQ.PrimQueryArr $ \_ -> PQ.Rebind True bindings, Tag.next tag))
