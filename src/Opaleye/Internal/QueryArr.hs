@@ -34,10 +34,15 @@ type QueryArr = SelectArr
 type Query = SelectArr ()
 
 productQueryArr :: ((a, Tag) -> (b, PQ.PrimQuery, Tag)) -> QueryArr a b
-productQueryArr f = QueryArr $ \a -> do
+productQueryArr f = productQueryArr' $ \a -> do
   t <- get
   let (b, pq, t') = f (a, t)
   put t'
+  pure (b, pq)
+
+productQueryArr' :: (a -> State Tag (b, PQ.PrimQuery)) -> QueryArr a b
+productQueryArr' f = QueryArr $ \a -> do
+  (b, pq) <- f a
   pure (b, PQ.PrimQueryArr (\lat primQuery -> PQ.times lat primQuery pq))
 
 {-# DEPRECATED leftJoinQueryArr "Use leftJoinQueryArr'.  Will be removed in version 0.10" #-}
