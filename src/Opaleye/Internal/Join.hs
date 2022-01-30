@@ -23,6 +23,7 @@ import qualified Opaleye.Select  as S
 
 import qualified Control.Applicative as A
 import qualified Control.Arrow
+import           Control.Monad.Trans.State.Strict (get, modify)
 
 import           Data.Profunctor (Profunctor, dimap)
 import qualified Data.Profunctor.Product as PP
@@ -48,23 +49,28 @@ joinExplicit :: U.Unpackspec columnsA columnsA
              -> ((columnsA, columnsB) -> Field T.PGBool)
              -> Q.Query (returnedColumnsA, returnedColumnsB)
 joinExplicit uA uB returnColumnsA returnColumnsB joinType
-             qA qB cond = Q.productQueryArr q where
-  q ((), startTag) = ((nullableColumnsA, nullableColumnsB), primQueryR, T.next endTag)
-    where (columnsA, primQueryA, midTag) = Q.runSimpleQueryArr qA ((), startTag)
-          (columnsB, primQueryB, endTag) = Q.runSimpleQueryArr qB ((), midTag)
+             qA qB cond = Q.productQueryArr' $ \() -> do
+  (columnsA, primQueryA) <- Q.runSimpleQueryArr' qA ()
+  (columnsB, primQueryB) <- Q.runSimpleQueryArr' qB ()
 
-          (newColumnsA, ljPEsA) =
+  endTag <- get
+  modify T.next
+
+  let (newColumnsA, ljPEsA) =
             PM.run (U.runUnpackspec uA (extractLeftJoinFields 1 endTag) columnsA)
-          (newColumnsB, ljPEsB) =
+      (newColumnsB, ljPEsB) =
             PM.run (U.runUnpackspec uB (extractLeftJoinFields 2 endTag) columnsB)
 
-          nullableColumnsA = returnColumnsA newColumnsA
-          nullableColumnsB = returnColumnsB newColumnsB
+      nullableColumnsA = returnColumnsA newColumnsA
+      nullableColumnsB = returnColumnsB newColumnsB
 
-          Column cond' = cond (columnsA, columnsB)
-          primQueryR = PQ.Join joinType cond'
+      Column cond' = cond (columnsA, columnsB)
+      primQueryR = PQ.Join joinType cond'
                                (PQ.NonLateral, (PQ.Rebind True ljPEsA primQueryA))
                                (PQ.NonLateral, (PQ.Rebind True ljPEsB primQueryB))
+
+  pure ((nullableColumnsA, nullableColumnsB), primQueryR)
+
 
 leftJoinAExplicit :: U.Unpackspec a a
                   -> NullMaker a nullableA
