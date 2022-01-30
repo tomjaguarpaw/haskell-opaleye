@@ -45,6 +45,10 @@ instance Monoid Lateral where
   mappend = (<>)
   mempty = NonLateral
 
+aLeftJoin :: HPQ.PrimExpr -> PrimQuery -> PrimQueryArr
+aLeftJoin cond primQuery' = PrimQueryArr $ \lat primQueryL ->
+  Join LeftJoin cond (NonLateral, primQueryL) (lat, primQuery')
+
 -- The function 'Lateral -> PrimQuery -> PrimQuery' represents a
 -- select arrow in the following way:
 --

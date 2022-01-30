@@ -41,8 +41,7 @@ productQueryArr' f = QueryArr $ \a -> do
 leftJoinQueryArr' :: (a -> State Tag (b, HPQ.PrimExpr, PQ.PrimQuery)) -> QueryArr a b
 leftJoinQueryArr' f = QueryArr $ \a -> do
   (a1, cond, primQuery') <- f a
-  pure (a1, PQ.PrimQueryArr $ \lat primQueryL ->
-                            PQ.Join PQ.LeftJoin cond (PQ.NonLateral, primQueryL) (lat, primQuery'))
+  pure (a1, PQ.aLeftJoin cond primQuery')
 
 runSimpleQueryArr' :: QueryArr a b -> a -> State Tag (b, PQ.PrimQuery)
 runSimpleQueryArr' f a = do
