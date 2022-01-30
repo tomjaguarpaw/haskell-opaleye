@@ -15,7 +15,7 @@
  @
 
  The leftmost argument is the type of writes. When you insert or
- update into this column you must give it a @Field SqlInt4@ (which you
+ update into this field you must give it a @Field SqlInt4@ (which you
  can define with @sqlInt4 :: Int -> Field SqlInt4@).
 
  A required nullable @SqlInt4@ is defined with 'T.requiredTableField' and gives rise
@@ -25,7 +25,7 @@
  TableFields (FieldNullable SqlInt4) (FieldNullable SqlInt4)
  @
 
- When you insert or update into this column you must give it a
+ When you insert or update into this field you must give it a
  @FieldNullable SqlInt4@, which you can define either with @sqlInt4@ and
  @toNullable :: Field a -> FieldNullable a@, or with @null ::
  FieldNullable a@.
@@ -37,10 +37,10 @@
  TableFields (Maybe (Field SqlInt4)) (Field SqlInt4)
  @
 
- Optional columns are those that can be omitted on writes, such as
+ Optional fields are those that can be omitted on writes, such as
  those that have @DEFAULT@s or those that are @SERIAL@.
- When you insert or update into this column you must give it a @Maybe
- (Field SqlInt4)@. If you provide @Nothing@ then the column will be
+ When you insert or update into this field you must give it a @Maybe
+ (Field SqlInt4)@. If you provide @Nothing@ then the field will be
  omitted from the query and the default value will be used. Otherwise
  you have to provide a @Just@ containing a @Field SqlInt4@.
 
@@ -51,9 +51,9 @@
  TableFields (Maybe (FieldNullable SqlInt4)) (FieldNullable SqlInt4)
  @
 
- Optional columns are those that can be omitted on writes, such as
+ Optional fields are those that can be omitted on writes, such as
  those that have @DEFAULT@s or those that are @SERIAL@.
- When you insert or update into this column you must give it a @Maybe
+ When you insert or update into this field you must give it a @Maybe
  (FieldNullable SqlInt4)@. If you provide @Nothing@ then the default
  value will be used. Otherwise you have to provide a @Just@ containing
  a @FieldNullable SqlInt4@ (which can be null).

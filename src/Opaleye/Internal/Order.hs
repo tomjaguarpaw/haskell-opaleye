@@ -80,7 +80,7 @@ distinctOnBy ups proj ord (cols, pq, t) = (cols, pqOut, t)
           oexprs = orderExprs cols ord
 
 -- | Order the results of a given query exactly, as determined by the given list
--- of input columns. Note that this list does not have to contain an entry for
+-- of input fields. Note that this list does not have to contain an entry for
 -- every result in your query: you may exactly order only a subset of results,
 -- if you wish. Rows that are not ordered according to the input list are
 -- returned /after/ the ordered results, in the usual order the database would

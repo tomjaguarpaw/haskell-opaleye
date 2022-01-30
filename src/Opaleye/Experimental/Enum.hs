@@ -83,7 +83,7 @@ data EnumMapper sqlEnum haskellSum = EnumMapper {
 --   => D.Default (Inferrable O.FromField) SqlRating rating where
 --   def = Inferrable D.def
 --
--- instance D.Default O.ToFields Rating (O.Column SqlRating) where
+-- instance D.Default O.ToFields Rating (O.Field SqlRating) where
 --   def = enumToFields sqlRatingMapper
 -- @
 enumMapper :: String

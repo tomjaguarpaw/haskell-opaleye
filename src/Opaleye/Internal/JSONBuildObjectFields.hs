@@ -25,7 +25,7 @@ instance Monoid JSONBuildObjectFields where
   mempty = JSONBuildObjectFields mempty
   mappend = (<>)
 
--- | Given a label and a column, generates a pair for use with @jsonBuildObject@
+-- | Given a label and a field, generates a pair for use with @jsonBuildObject@
 jsonBuildObjectField :: String
                      -- ^ Field name
                      -> Field_ n a

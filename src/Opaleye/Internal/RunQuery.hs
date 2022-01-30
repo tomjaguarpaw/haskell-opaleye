@@ -90,14 +90,14 @@ instance Functor (FromField u) where
 --
 -- \"'FromFields' @fields@ @haskells@\" corresponds to
 -- postgresql-simple's \"'RowParser' @haskells@\".  \"'Default'
--- 'FromFields' @columns@ @haskells@\" corresponds to
+-- 'FromFields' @fields@ @haskells@\" corresponds to
 -- postgresql-simple's \"@FromRow@ @haskells@\".
-data FromFields columns haskells =
-   FromFields (U.Unpackspec columns ())
-              (columns -> RowParser haskells)
+data FromFields fields haskells =
+   FromFields (U.Unpackspec fields ())
+              (fields -> RowParser haskells)
               -- We never actually look at the columns except to see
               -- its "type" in the case of a sum profunctor
-              (columns -> Int)
+              (fields -> Int)
               -- How many columns have we requested?  If we
               -- asked for zero columns then the SQL generator will
               -- have to put a dummy 0 into the SELECT statement,

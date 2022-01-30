@@ -98,9 +98,9 @@ valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows ((), t) =
 
         primQ' = wrap (PQ.Values valuesPEs values)
 
-data Valuesspec columns columns' =
-  ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () columns')
-                 (U.Unpackspec columns columns')
+data Valuesspec fields fields' =
+  ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
+                 (U.Unpackspec fields fields')
 
 {-# DEPRECATED ValuesspecSafe "Use Valuesspec instead.  Will be removed in version 0.10." #-}
 type ValuesspecSafe = Valuesspec
