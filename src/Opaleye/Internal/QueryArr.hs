@@ -59,18 +59,15 @@ leftJoinQueryArr' f = QueryArr $ \a -> do
   pure (a1, PQ.PrimQueryArr $ \lat primQueryL ->
                             PQ.Join PQ.LeftJoin cond (PQ.NonLateral, primQueryL) (lat, primQuery'))
 
-runSimpleQueryArr :: QueryArr a b -> (a, Tag) -> (b, PQ.PrimQuery, Tag)
-runSimpleQueryArr f (a, t0) =
-  let ((b, pqa), t') = runState (runSimpleQueryArr' f a) t0
-  in (b, pqa, t')
-
 runSimpleQueryArr' :: QueryArr a b -> a -> State Tag (b, PQ.PrimQuery)
 runSimpleQueryArr' f a = do
   (b, pqf) <- unQueryArr f a
   pure (b, PQ.toPrimQuery pqf)
 
 runSimpleQueryArrStart :: QueryArr a b -> a -> (b, PQ.PrimQuery, Tag)
-runSimpleQueryArrStart q a = runSimpleQueryArr q (a, Tag.start)
+runSimpleQueryArrStart q a =
+  let ((b, pqa), t') = runState (runSimpleQueryArr' q a) Tag.start
+  in (b, pqa, t')
 
 runQueryArrUnpack :: U.Unpackspec a b
                   -> Query a -> ([HPQ.PrimExpr], PQ.PrimQuery, Tag)
