@@ -1,4 +1,8 @@
+{-# LANGUAGE Arrows #-}
+
 module Opaleye.Label (
+  label',
+  -- * Deprecated
   label
   ) where
 
@@ -6,6 +10,16 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Select            as S
 
+import           Control.Arrow (returnA)
+
 -- | Add a commented label to the generated SQL.
+label' :: String -> S.Select ()
+label' l = Q.QueryArr f where
+  f ((), t) = ((), \_ primQ -> PQ.Label l primQ, t)
+
+-- | Will be deprecated in version 0.10.  Use 'label\'' instead.
 label :: String -> S.SelectArr a b -> S.SelectArr a b
-label l s = Q.QueryArr ((\(b, pqf, t) -> (b, \lat -> PQ.Label l . pqf lat, t)) . Q.runQueryArr s)
+label l s = proc a -> do
+  b <- s -< a
+  label' l -< ()
+  returnA -< b

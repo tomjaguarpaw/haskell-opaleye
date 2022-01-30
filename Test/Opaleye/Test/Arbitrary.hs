@@ -492,6 +492,11 @@ genSelectMapper =
                             . fmap listFields)
                            (O.optionalRestrictExplicit unpackFields q)
         return q'
+    , do
+        thisLabel <- TQ.arbitrary
+        pure $ \select -> do
+          O.label' thisLabel
+          select
     ]
 
 genSelectMapper2 :: [TQ.Gen (O.Select Fields -> O.Select Fields
@@ -515,9 +520,7 @@ genSelectMapper2 =
 
 genSelectArrMapper :: [TQ.Gen (O.SelectArr a Fields -> O.SelectArr a Fields)]
 genSelectArrMapper =
-    [ do
-        thisLabel        <- TQ.arbitrary
-        return (O.label thisLabel)
+    [
     ]
 
 genSelectArrMaybeMapper :: [TQ.Gen (O.SelectArr a Fields
