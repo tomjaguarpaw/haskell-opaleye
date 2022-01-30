@@ -53,8 +53,8 @@ instance Divisible.Decidable Order where
 order :: HPQ.OrderOp -> (a -> F.Field_ n b) -> Order a
 order op f = Order (fmap (\column -> [(op, IC.unColumn column)]) f)
 
-orderByU :: Order a -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
-orderByU os (columns, primQ, t) = (columns, primQ', t)
+orderByU :: Order a -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
+orderByU os (columns, primQ) = (columns, primQ')
   where primQ' = PQ.DistinctOnOrderBy Nothing oExprs primQ
         oExprs = orderExprs columns os
 

@@ -57,7 +57,9 @@ example = 'orderBy' ('asc' fst \<\> 'desc' snd)
 -}
 orderBy :: O.Order a -> S.Select a -> S.Select a
 orderBy os q =
-  Q.productQueryArr (O.orderByU os . Q.runSimpleQueryArr q)
+  Q.productQueryArr' $ \() -> do
+    a_pq <- Q.runSimpleQueryArr' q ()
+    pure (O.orderByU os a_pq)
 
 -- | Specify an ascending ordering by the given expression.
 --   (Any NULLs appear last)
