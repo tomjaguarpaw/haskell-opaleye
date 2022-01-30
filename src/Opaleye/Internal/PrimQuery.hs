@@ -55,6 +55,9 @@ aProduct pq = PrimQueryArr (\lat primQuery -> times lat primQuery pq)
 aSemijoin :: SemijoinType -> PrimQuery -> PrimQueryArr
 aSemijoin joint existsQ = PrimQueryArr $ \_ primQ -> Semijoin joint primQ existsQ
 
+aRebind :: Bindings HPQ.PrimExpr -> PrimQueryArr
+aRebind bindings = PrimQueryArr $ \_ -> Rebind True bindings
+
 -- The function 'Lateral -> PrimQuery -> PrimQuery' represents a
 -- select arrow in the following way:
 --
