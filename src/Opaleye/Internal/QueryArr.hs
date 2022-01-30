@@ -49,9 +49,9 @@ leftJoinQueryArr f = QueryArr $ \a -> do
                             PQ.Join PQ.LeftJoin cond (PQ.NonLateral, primQueryL) (lat, primQuery'))
 
 runSimpleQueryArr :: QueryArr a b -> (a, Tag) -> (b, PQ.PrimQuery, Tag)
-runSimpleQueryArr (QueryArr f) (a, t0) =
-  let ((b, pq), t') = runState (f a) t0
-  in (b, PQ.toPrimQuery pq, t')
+runSimpleQueryArr f (a, t0) =
+  let ((b, pqa), t') = runState (runSimpleQueryArr' f a) t0
+  in (b, pqa, t')
 
 runSimpleQueryArr' :: QueryArr a b -> a -> State Tag (b, PQ.PrimQuery)
 runSimpleQueryArr' f a = do
