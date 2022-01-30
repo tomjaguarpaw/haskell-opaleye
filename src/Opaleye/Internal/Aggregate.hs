@@ -102,8 +102,8 @@ runAggregator (Aggregator a) = PM.traversePM a
 -- aggregate.  On the other hand, referring to a field from a previous
 -- query in an ORDER BY expression is totally fine!
 aggregateU :: Aggregator a b
-           -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
-aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
+           -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery)
+aggregateU agg (c0, primQ, t0) = (c1, primQ')
   where (c1, projPEs_inners) =
           PM.run (runAggregator agg (extractAggregateFields t0) c0)
 

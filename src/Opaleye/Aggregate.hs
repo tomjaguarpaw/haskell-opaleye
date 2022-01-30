@@ -43,6 +43,7 @@ import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.Tag as Tag
 
 import qualified Opaleye.Field     as F
 import qualified Opaleye.Order     as Ord
@@ -81,7 +82,10 @@ result of an aggregation.
 -- See 'Opaleye.Internal.Sql.aggregate' for details of how aggregating
 -- by an empty query with no group by is handled.
 aggregate :: Aggregator a b -> S.Select a -> S.Select b
-aggregate agg q = Q.productQueryArr (A.aggregateU agg . Q.runSimpleQueryArr q)
+aggregate agg q = Q.productQueryArr' $ \() -> do
+  (a, pq) <- Q.runSimpleQueryArr' q ()
+  t <- Tag.fresh
+  pure (A.aggregateU agg (a, pq, t))
 
 -- | Order the values within each aggregation in `Aggregator` using
 -- the given ordering. This is only relevant for aggregations that
