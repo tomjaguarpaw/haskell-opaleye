@@ -26,8 +26,8 @@ import           Control.Applicative (Applicative, pure, (<*>))
 valuesU :: U.Unpackspec columns columns'
         -> ValuesspecUnsafe columns columns'
         -> [columns]
-        -> ((), T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
-valuesU unpack valuesspec rows ((), t) = (newColumns, primQ', T.next t)
+        -> ((), T.Tag) -> (columns', PQ.PrimQuery)
+valuesU unpack valuesspec rows ((), t) = (newColumns, primQ')
   where runRow row = valuesRow
            where (_, valuesRow) =
                    PM.run (U.runUnpackspec unpack extractValuesEntry row)
@@ -68,9 +68,9 @@ instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
 
 valuesUSafe :: Valuesspec columns columns'
             -> [columns]
-            -> ((), T.Tag) -> (columns', PQ.PrimQuery, T.Tag)
+            -> ((), T.Tag) -> (columns', PQ.PrimQuery)
 valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows ((), t) =
-  (newColumns, primQ', T.next t)
+  (newColumns, primQ')
   where runRow row =
           case PM.run (U.runUnpackspec unpack extractValuesEntry row) of
             (_, []) -> [zero]
