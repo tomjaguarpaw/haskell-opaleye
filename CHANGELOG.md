@@ -1,3 +1,7 @@
+## 0.8.1.0
+
+* Cosmetic and re-export changes only.
+
 ## 0.8.0.1
 
 * Support GHC 9.2
