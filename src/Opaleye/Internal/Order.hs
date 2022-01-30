@@ -68,12 +68,12 @@ offset' :: Int -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
 offset' n (x, q) = (x, PQ.Limit (PQ.OffsetOp n) q)
 
 distinctOn :: U.Unpackspec b b -> (a -> b)
-           -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
+           -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
 distinctOn ups proj = distinctOnBy ups proj M.mempty
 
 distinctOnBy :: U.Unpackspec b b -> (a -> b) -> Order a
-             -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
-distinctOnBy ups proj ord (cols, pq, t) = (cols, pqOut, t)
+             -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
+distinctOnBy ups proj ord (cols, pq) = (cols, pqOut)
     where pqOut = case NL.nonEmpty (U.collectPEs ups (proj cols)) of
             Just xs -> PQ.DistinctOnOrderBy (Just xs) oexprs pq
             Nothing -> PQ.Limit (PQ.LimitOp 1) (PQ.DistinctOnOrderBy Nothing oexprs pq)

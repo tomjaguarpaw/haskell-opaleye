@@ -190,11 +190,15 @@ distinctOnExplicit :: U.Unpackspec b b
                    -> (a -> b)
                    -> S.Select a
                    -> S.Select a
-distinctOnExplicit unpack proj q = Q.productQueryArr (O.distinctOn unpack proj . Q.runSimpleQueryArr q)
+distinctOnExplicit unpack proj q = Q.productQueryArr' $ \() -> do
+  a_pq <- Q.runSimpleQueryArr' q ()
+  pure (O.distinctOn unpack proj a_pq)
 
 distinctOnByExplicit :: U.Unpackspec b b
                      -> (a -> b)
                      -> O.Order a
                      -> S.Select a
                      -> S.Select a
-distinctOnByExplicit unpack proj ord q = Q.productQueryArr (O.distinctOnBy unpack proj ord . Q.runSimpleQueryArr q)
+distinctOnByExplicit unpack proj ord q = Q.productQueryArr' $ \() -> do
+  a_pq <- Q.runSimpleQueryArr' q ()
+  pure (O.distinctOnBy unpack proj ord a_pq)
