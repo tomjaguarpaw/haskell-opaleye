@@ -128,7 +128,9 @@ that many result rows.
 'offset' with 'limit'.
 -}
 offset :: Int -> S.Select a -> S.Select a
-offset n a = Q.productQueryArr (O.offset' n . Q.runSimpleQueryArr a)
+offset n a = Q.productQueryArr' $ \() -> do
+  a_pq <- Q.runSimpleQueryArr' a ()
+  pure (O.offset' n a_pq)
 
 -- * Distinct on
 

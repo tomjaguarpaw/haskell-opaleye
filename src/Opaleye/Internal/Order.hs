@@ -64,8 +64,8 @@ orderExprs x (Order os) = map (uncurry HPQ.OrderExpr) (os x)
 limit' :: Int -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
 limit' n (x, q) = (x, PQ.Limit (PQ.LimitOp n) q)
 
-offset' :: Int -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
-offset' n (x, q, t) = (x, PQ.Limit (PQ.OffsetOp n) q, t)
+offset' :: Int -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
+offset' n (x, q) = (x, PQ.Limit (PQ.OffsetOp n) q)
 
 distinctOn :: U.Unpackspec b b -> (a -> b)
            -> (a, PQ.PrimQuery, T.Tag) -> (a, PQ.PrimQuery, T.Tag)
