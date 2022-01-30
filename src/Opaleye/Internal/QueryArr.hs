@@ -54,8 +54,8 @@ runQueryArr (QueryArr f) (a, t) =
   in (b, pq, t')
 
 runSimpleQueryArr :: QueryArr a b -> (a, Tag) -> (b, PQ.PrimQuery, Tag)
-runSimpleQueryArr f (a, t0) = (\(b, pqf, t) -> (b, PQ.toPrimQuery pqf, t))
-                              (runQueryArr f (a, t0))
+runSimpleQueryArr (QueryArr f) (a, t0) = (\(b, pqf, t) -> (b, PQ.toPrimQuery pqf, t))
+                                         (runQueryArr (QueryArr f) (a, t0))
 
 runSimpleQueryArr' :: QueryArr a b -> a -> State Tag (b, PQ.PrimQuery)
 runSimpleQueryArr' f a = do
