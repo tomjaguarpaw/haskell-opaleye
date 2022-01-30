@@ -36,7 +36,7 @@ type Query = SelectArr ()
 productQueryArr' :: (a -> State Tag (b, PQ.PrimQuery)) -> QueryArr a b
 productQueryArr' f = QueryArr $ \a -> do
   (b, pq) <- f a
-  pure (b, PQ.PrimQueryArr (\lat primQuery -> PQ.times lat primQuery pq))
+  pure (b, PQ.aProduct pq)
 
 leftJoinQueryArr' :: (a -> State Tag (b, HPQ.PrimExpr, PQ.PrimQuery)) -> QueryArr a b
 leftJoinQueryArr' f = QueryArr $ \a -> do

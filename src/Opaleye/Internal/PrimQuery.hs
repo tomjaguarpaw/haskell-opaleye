@@ -49,6 +49,9 @@ aLeftJoin :: HPQ.PrimExpr -> PrimQuery -> PrimQueryArr
 aLeftJoin cond primQuery' = PrimQueryArr $ \lat primQueryL ->
   Join LeftJoin cond (NonLateral, primQueryL) (lat, primQuery')
 
+aProduct :: PrimQuery -> PrimQueryArr
+aProduct pq = PrimQueryArr (\lat primQuery -> times lat primQuery pq)
+
 -- The function 'Lateral -> PrimQuery -> PrimQuery' represents a
 -- select arrow in the following way:
 --
