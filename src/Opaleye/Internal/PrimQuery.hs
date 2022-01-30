@@ -52,6 +52,9 @@ aLeftJoin cond primQuery' = PrimQueryArr $ \lat primQueryL ->
 aProduct :: PrimQuery -> PrimQueryArr
 aProduct pq = PrimQueryArr (\lat primQuery -> times lat primQuery pq)
 
+aSemijoin :: SemijoinType -> PrimQuery -> PrimQueryArr
+aSemijoin joint existsQ = PrimQueryArr $ \_ primQ -> Semijoin joint primQ existsQ
+
 -- The function 'Lateral -> PrimQuery -> PrimQuery' represents a
 -- select arrow in the following way:
 --

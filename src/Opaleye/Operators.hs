@@ -163,7 +163,7 @@ restrictExists criteria = QueryArr f where
   -- query it references so needs no special treatment on LATERAL.
   f a = do
     (_, existsQ) <- runSimpleQueryArr' criteria a
-    pure ((), PQ.PrimQueryArr $ \_ primQ -> PQ.Semijoin PQ.Semi primQ existsQ)
+    pure ((), PQ.aSemijoin PQ.Semi existsQ)
 
 {-| Add a @WHERE NOT EXISTS@ clause to the current query. -}
 restrictNotExists :: S.SelectArr a b -> S.SelectArr a ()
@@ -172,7 +172,7 @@ restrictNotExists criteria = QueryArr f where
   -- query it references so needs no special treatment on LATERAL.
   f a = do
     (_, existsQ) <- runSimpleQueryArr' criteria a
-    pure ((), PQ.PrimQueryArr $ \_ primQ -> PQ.Semijoin PQ.Anti primQ existsQ)
+    pure ((), PQ.aSemijoin PQ.Anti existsQ)
 
 infix 4 .==
 (.==) :: Field a -> Field a -> F.Field T.SqlBool
