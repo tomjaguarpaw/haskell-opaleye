@@ -13,6 +13,7 @@ import           Prelude hiding (compare, (.), id)
 import           Opaleye.Test.Fields
 
 import qualified Opaleye as O
+import qualified Opaleye.Exists as OE
 import qualified Opaleye.Join as OJ
 
 import           Control.Applicative (pure, (<$>), (<*>), liftA2)
@@ -497,6 +498,10 @@ genSelectMapper =
         pure $ \select -> do
           O.label' thisLabel
           select
+    , do
+        pure $ \select -> do
+          exists <- OE.exists select
+          pure (Choices [Left (CBool exists)])
     ]
 
 genSelectMapper2 :: [TQ.Gen (O.Select Fields -> O.Select Fields
