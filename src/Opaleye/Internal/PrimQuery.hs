@@ -61,6 +61,9 @@ aRebind bindings = PrimQueryArr $ \_ -> Rebind True bindings
 aRestrict :: HPQ.PrimExpr -> PrimQueryArr
 aRestrict predicate = PrimQueryArr $ \_ -> restrict predicate
 
+aLabel :: String -> PrimQueryArr
+aLabel l = PrimQueryArr $ \_ primQ -> Label l primQ
+
 -- The function 'Lateral -> PrimQuery -> PrimQuery' represents a
 -- select arrow in the following way:
 --

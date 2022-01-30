@@ -15,7 +15,7 @@ import           Control.Arrow (returnA)
 -- | Add a commented label to the generated SQL.
 label' :: String -> S.Select ()
 label' l = Q.QueryArr f where
-  f () = pure ((), PQ.PrimQueryArr $ \_ primQ -> PQ.Label l primQ)
+  f () = pure ((), PQ.aLabel l)
 
 -- | Will be deprecated in version 0.10.  Use 'label\'' instead.
 label :: String -> S.SelectArr a b -> S.SelectArr a b
