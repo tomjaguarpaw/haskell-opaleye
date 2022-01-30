@@ -58,6 +58,9 @@ aSemijoin joint existsQ = PrimQueryArr $ \_ primQ -> Semijoin joint primQ exists
 aRebind :: Bindings HPQ.PrimExpr -> PrimQueryArr
 aRebind bindings = PrimQueryArr $ \_ -> Rebind True bindings
 
+aRestrict :: HPQ.PrimExpr -> PrimQueryArr
+aRestrict predicate = PrimQueryArr $ \_ -> restrict predicate
+
 -- The function 'Lateral -> PrimQuery -> PrimQuery' represents a
 -- select arrow in the following way:
 --
