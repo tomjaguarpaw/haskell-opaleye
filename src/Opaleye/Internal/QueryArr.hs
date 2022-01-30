@@ -77,8 +77,7 @@ type Select = SelectArr ()
 lateral :: (i -> Select a) -> SelectArr i a
 lateral f = QueryArr $ \i -> do
   (a, primQueryR) <- unQueryArr (f i) ()
-  let primQueryJoin = PQ.lateral primQueryR
-  pure (a, primQueryJoin)
+  pure (a, PQ.lateral primQueryR)
 
 -- | Convert an arrow argument into a function argument so that it can
 -- be applied inside @do@-notation rather than arrow notation.
