@@ -184,47 +184,6 @@ arrangeDelete t cond =
   where Column condExpr = cond tableCols
         TI.View tableCols = TI.tableColumnsView (TI.tableColumns t)
 
-runInsert :: PGS.Connection -> T.Table fields fields' -> fields -> IO Int64
-runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
-
-runInsertReturning :: (D.Default RS.FromFields fieldsReturned haskells)
-                   => PGS.Connection
-                   -> T.Table fieldsW fieldsR
-                   -> fieldsW
-                   -> (fieldsR -> fieldsReturned)
-                   -> IO [haskells]
-runInsertReturning = runInsertReturningExplicit D.def
-
-runInsertReturningExplicit :: RS.FromFields columnsReturned haskells
-                           -> PGS.Connection
-                           -> T.Table columnsW columnsR
-                           -> columnsW
-                           -> (columnsR -> columnsReturned)
-                           -> IO [haskells]
-runInsertReturningExplicit qr conn t =
-  runInsertManyReturningExplicitI qr conn t . return
-
-runInsertManyReturningExplicitI :: RS.FromFields columnsReturned haskells
-                                -> PGS.Connection
-                                -> T.Table columnsW columnsR
-                                -> [columnsW]
-                                -> (columnsR -> columnsReturned)
-                                -> IO [haskells]
-runInsertManyReturningExplicitI qr conn t columns f =
-  runInsertManyReturningExplicit qr conn t columns f Nothing
-
-arrangeInsert :: T.Table columns a -> columns -> HSql.SqlInsert
-arrangeInsert t c = arrangeInsertManyI t (return c)
-
-arrangeInsertSql :: T.Table columns a -> columns -> String
-arrangeInsertSql = show . HPrint.ppInsert .: arrangeInsert
-
-arrangeInsertManyI :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
-arrangeInsertManyI t columns = arrangeInsertMany t columns Nothing
-
-arrangeInsertManySqlI :: T.Table columns a -> NEL.NonEmpty columns -> String
-arrangeInsertManySqlI t c  = arrangeInsertManySql t c Nothing
-
 arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Field SqlBool)
               -> HSql.SqlUpdate
@@ -243,22 +202,6 @@ arrangeUpdateSql = show . HPrint.ppUpdate .:. arrangeUpdate
 
 arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Field SqlBool) -> String
 arrangeDeleteSql = show . HPrint.ppDelete .: arrangeDelete
-
-arrangeInsertManyReturningI :: U.Unpackspec columnsReturned ignored
-                            -> T.Table columnsW columnsR
-                            -> NEL.NonEmpty columnsW
-                            -> (columnsR -> columnsReturned)
-                            -> Sql.Returning HSql.SqlInsert
-arrangeInsertManyReturningI unpackspec t columns returningf =
-  arrangeInsertManyReturning unpackspec t columns returningf Nothing
-
-arrangeInsertManyReturningSqlI :: U.Unpackspec columnsReturned ignored
-                               -> T.Table columnsW columnsR
-                               -> NEL.NonEmpty columnsW
-                               -> (columnsR -> columnsReturned)
-                               -> String
-arrangeInsertManyReturningSqlI u t c r =
-  arrangeInsertManyReturningSql u t c r Nothing
 
 arrangeUpdateReturning :: U.Unpackspec columnsReturned ignored
                        -> T.Table columnsW columnsR

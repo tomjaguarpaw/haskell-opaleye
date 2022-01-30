@@ -61,7 +61,7 @@ import qualified Opaleye.Internal.RunQuery as IRQ
 import qualified Opaleye.Table as T
 import qualified Opaleye.Internal.Table as TI
 import           Opaleye.Internal.Column (Column)
-import           Opaleye.Internal.Helpers ((.:), (.:.))
+import           Opaleye.Internal.Helpers ((.:.))
 import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 import           Opaleye.Internal.Manipulation (Updater(Updater))
 import qualified Opaleye.Internal.Manipulation as MI
@@ -90,13 +90,11 @@ runInsert  :: PGS.Connection
            -- you provided when creating the 'Insert'.
 runInsert conn i = case i of
   Insert table_ rows_ returning_ onConflict_ ->
-    let insert = case (returning_, onConflict_) of
-          (MI.Count, Nothing) ->
-            runInsertMany
-          (MI.Count, Just HSql.DoNothing) ->
-            runInsertManyOnConflictDoNothing
-          (MI.ReturningExplicit qr f, oc) ->
-            \c t r -> MI.runInsertManyReturningExplicit qr c t r f oc
+    let insert = case returning_ of
+          MI.Count ->
+            runInsertMany' onConflict_
+          MI.ReturningExplicit qr f ->
+            \c t r -> MI.runInsertManyReturningExplicit qr c t r f onConflict_
     in insert conn table_ rows_
 
 -- | Use 'runInsert' instead.  Will be deprecated in 0.10.
@@ -231,34 +229,17 @@ rReturningExplicit = MI.ReturningExplicit
 
 -- * Deprecated versions
 
--- | Insert rows into a table with @ON CONFLICT DO NOTHING@
-runInsertManyOnConflictDoNothing :: PGS.Connection
-                                 -- ^
-                                 -> T.Table columns columns'
-                                 -- ^ Table to insert into
-                                 -> [columns]
-                                 -- ^ Rows to insert
-                                 -> IO Int64
-                                 -- ^ Number of rows inserted
-runInsertManyOnConflictDoNothing conn table_ columns =
+runInsertMany' :: Maybe HSql.OnConflict
+               -> PGS.Connection
+               -> TI.Table columnsW columnsR
+               -> [columnsW]
+               -> IO Int64
+runInsertMany' oc conn t columns =
   case NEL.nonEmpty columns of
     -- Inserting the empty list is just the same as returning 0
     Nothing       -> return 0
     Just columns' -> (PGS.execute_ conn . fromString .:. MI.arrangeInsertManySql)
-                         table_ columns' (Just HSql.DoNothing)
-
-runInsertMany :: PGS.Connection
-              -- ^
-              -> T.Table columns columns'
-              -- ^ Table to insert into
-              -> [columns]
-              -- ^ Rows to insert
-              -> IO Int64
-              -- ^ Number of rows inserted
-runInsertMany conn t columns = case NEL.nonEmpty columns of
-  -- Inserting the empty list is just the same as returning 0
-  Nothing       -> return 0
-  Just columns' -> (PGS.execute_ conn . fromString .: MI.arrangeInsertManySqlI) t columns'
+                         t columns' oc
 
 runUpdateReturningExplicit :: RS.FromFields columnsReturned haskells
                            -> PGS.Connection
