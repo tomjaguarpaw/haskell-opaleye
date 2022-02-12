@@ -83,6 +83,15 @@ aLabel l = PrimQueryArr $ \_ primQ -> Label l primQ
 -- have performance implications
 -- (https://github.com/tomjaguarpaw/haskell-opaleye/pull/480) we still
 -- want to be cautious.
+--
+-- Not every function of type `Lateral -> PrimQuery -> PrimQuery` is
+-- valid to be a PrimQuery.  I think the condition that they must
+-- satisfy for validity is
+--
+--     q == lateral (aProduct (toPrimQuery q)
+--
+-- where == is observable equivalence, i.e. both queries must give the
+-- same results when combined with other queries and then run.
 newtype PrimQueryArr =
   PrimQueryArr { runPrimQueryArr :: Lateral -> PrimQuery -> PrimQuery }
 
