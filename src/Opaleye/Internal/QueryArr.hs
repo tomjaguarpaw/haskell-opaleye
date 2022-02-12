@@ -19,7 +19,7 @@ import           Control.Arrow ((&&&), (***), arr, returnA)
 import qualified Control.Category as C
 import           Control.Category ((<<<), id)
 import           Control.Applicative (Applicative, pure, (<*>))
-import           Control.Monad.Trans.State.Strict (State, runState)
+import           Control.Monad.Trans.State.Strict (State, runState, state)
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 import           Data.Semigroup ((<>))
@@ -52,6 +52,11 @@ runStateQueryArr :: QueryArr a b -> a -> Tag -> (b, PQ.PrimQueryArr, Tag)
 runStateQueryArr (QueryArr f) a tag =
   let ((b, pq), tag') = runState (f a) tag
   in (b, pq, tag')
+
+stateQueryArr :: (a -> Tag -> (b, PQ.PrimQueryArr, Tag)) -> QueryArr a b
+stateQueryArr f = QueryArr $ \a -> state $ \tag ->
+  let (b, pq, tag') = f a tag
+  in ((b, pq), tag')
 
 runSimpleQueryArrStart :: QueryArr a b -> a -> (b, PQ.PrimQuery, Tag)
 runSimpleQueryArrStart q a =
