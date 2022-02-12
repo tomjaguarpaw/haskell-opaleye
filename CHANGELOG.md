@@ -1,3 +1,5 @@
+## 0.9.1.0
+
 * Added `distinctOnExplicit` and `distinctOnByExplicit`
 
 * Added `label'` as a future replacement for `label`
