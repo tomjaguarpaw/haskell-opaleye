@@ -13,10 +13,12 @@ module Opaleye.MaybeFields (
   nothingFields,
   nothingFieldsOfTypeOf,
   justFields,
+  nullableToMaybeFields,
   -- * Using a 'MaybeFields'
   matchMaybe,
   fromMaybeFields,
   maybeFields,
+  maybeFieldsToNullable,
   -- * Creating a 'Select' which returns 'MaybeFields'
   Opaleye.Join.optional,
   Opaleye.MaybeFields.traverseMaybeFields,

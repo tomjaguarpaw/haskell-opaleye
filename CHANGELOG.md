@@ -1,3 +1,5 @@
+* Added `nullableToMaybeFields` and `maybeFieldsToNullable`
+
 ## 0.9.1.0
 
 * Added `distinctOnExplicit` and `distinctOnByExplicit`

@@ -182,6 +182,22 @@ optionalRestrictOptional q = optional $ proc cond -> do
   restrict -< cond a
   returnA -< a
 
+-- | Convert @NULL@ to 'nothingFields' and non-@NULL@ to a 'justFields'
+nullableToMaybeFields :: Opaleye.Field.FieldNullable a -> MaybeFields (Field a)
+nullableToMaybeFields x = MaybeFields
+  { mfPresent = Opaleye.Internal.Operators.not (Opaleye.Field.isNull x)
+  , mfFields = unsafeFromNonNull x
+  }
+  where unsafeFromNonNull :: Opaleye.Field.FieldNullable a -> Field a
+        unsafeFromNonNull = Opaleye.Field.unsafeCoerceField
+
+-- | Convert 'nothingFields' to @NULL@ to a 'justFields' to non-@NULL@
+maybeFieldsToNullable :: MaybeFields (Field a) -> Opaleye.Field.FieldNullable a
+maybeFieldsToNullable x =
+  IC.unsafeIfThenElse (mfPresent x)
+                      (Opaleye.Field.toNullable (mfFields x))
+                      Opaleye.Field.null
+
 fromFieldsMaybeFields :: RQ.FromFields fields haskells
                       -> RQ.FromFields (MaybeFields fields) (Maybe haskells)
 fromFieldsMaybeFields (RQ.FromFields u p c) = RQ.FromFields u' p' c'
