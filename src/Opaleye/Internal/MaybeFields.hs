@@ -42,7 +42,9 @@ import qualified Data.Profunctor.Product.Default as PP
 
 import qualified Database.PostgreSQL.Simple.FromRow as PGSR
 
--- | The Opaleye analogue of 'Data.Maybe.Maybe'
+-- | The Opaleye analogue of 'Data.Maybe.Maybe'.  A value of type
+-- @MaybeFields a@ either contains a value of type @a@, or it contains
+-- nothing.
 data MaybeFields fields =
   MaybeFields {
     mfPresent :: Opaleye.Column.Column Opaleye.SqlTypes.SqlBool
