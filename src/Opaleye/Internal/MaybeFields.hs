@@ -113,7 +113,12 @@ maybeFieldsToSelect = proc mf -> do
   restrict -< mfPresent mf
   returnA -< mfFields mf
 
--- | The Opaleye analogue of 'Data.Maybe.catMaybes'
+-- | The Opaleye analogue of 'Data.Maybe.catMaybes'.  Most commonly
+-- you will want to use this at type
+--
+-- @
+-- catMaybeFields :: Select (MaybeFields a) -> Select a
+-- @
 catMaybeFields :: SelectArr i (MaybeFields a) -> SelectArr i a
 catMaybeFields = (>>> maybeFieldsToSelect)
 
