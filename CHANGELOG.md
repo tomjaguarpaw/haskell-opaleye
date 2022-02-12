@@ -1,5 +1,14 @@
 * Added `distinctOnExplicit` and `distinctOnByExplicit`
 
+* Added `label'` as a future replacement for `label`
+
+* Exported `SqlFractional` from `Opaleye.SqlTypes`
+
+* Fixed [a bug in
+  `forUpdate`](https://github.com/tomjaguarpaw/haskell-opaleye/issues/540)
+
+* The internal implementation of `QueryArr` has changed.
+
 ## 0.9.0.0
 
 The switch from `Column` to `Field` is complete.  This is a small yet
