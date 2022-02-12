@@ -105,7 +105,9 @@ matchMaybe mf f = maybeFields (f Nothing) (f . Just) mf
 fromMaybeFields :: PP.Default IfPP b b => b -> MaybeFields b -> b
 fromMaybeFields = fromMaybeFieldsExplicit PP.def
 
--- | The Opaleye analogue of 'Data.Maybe.maybeToList'
+-- | The Opaleye analogue of 'Data.Maybe.maybeToList'. Unless you are
+-- using arrow notation you'll probably find 'catMaybeFields' easier
+-- to use.
 maybeFieldsToSelect :: SelectArr (MaybeFields a) a
 maybeFieldsToSelect = proc mf -> do
   restrict -< mfPresent mf
