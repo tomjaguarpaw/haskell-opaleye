@@ -1,3 +1,5 @@
+* Added `distinctOnExplicit` and `distinctOnByExplicit`
+
 ## 0.9.0.0
 
 The switch from `Column` to `Field` is complete.  This is a small yet

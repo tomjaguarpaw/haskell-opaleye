@@ -22,6 +22,9 @@ module Opaleye.Order ( -- * Order by
                      , O.exact
                      -- * Other
                      , SqlOrd
+                     -- * Explicit versions
+                     , distinctOnExplicit
+                     , distinctOnByExplicit
                      -- * Deprecated
                      , distinctOnCorrect
                      , distinctOnByCorrect
@@ -130,7 +133,7 @@ distinctOnCorrect :: D.Default U.Unpackspec b b
                   => (a -> b)
                   -> S.Select a
                   -> S.Select a
-distinctOnCorrect proj q = Q.productQueryArr (O.distinctOn D.def proj . Q.runSimpleQueryArr q)
+distinctOnCorrect = distinctOnExplicit D.def
 
 -- | Use 'distinctOnBy' instead.  Will be deprecated in 0.10.
 distinctOnByCorrect :: D.Default U.Unpackspec b b
@@ -138,7 +141,7 @@ distinctOnByCorrect :: D.Default U.Unpackspec b b
                     -> O.Order a
                     -> S.Select a
                     -> S.Select a
-distinctOnByCorrect proj ord q = Q.productQueryArr (O.distinctOnBy D.def proj ord . Q.runSimpleQueryArr q)
+distinctOnByCorrect = distinctOnByExplicit D.def
 
 
 -- * Other
@@ -176,3 +179,16 @@ distinctOn = distinctOnCorrect
 distinctOnBy :: D.Default U.Unpackspec b b => (a -> b) -> O.Order a
              -> S.Select a -> S.Select a
 distinctOnBy = distinctOnByCorrect
+
+distinctOnExplicit :: U.Unpackspec b b
+                   -> (a -> b)
+                   -> S.Select a
+                   -> S.Select a
+distinctOnExplicit unpack proj q = Q.productQueryArr (O.distinctOn unpack proj . Q.runSimpleQueryArr q)
+
+distinctOnByExplicit :: U.Unpackspec b b
+                     -> (a -> b)
+                     -> O.Order a
+                     -> S.Select a
+                     -> S.Select a
+distinctOnByExplicit unpack proj ord q = Q.productQueryArr (O.distinctOnBy unpack proj ord . Q.runSimpleQueryArr q)
