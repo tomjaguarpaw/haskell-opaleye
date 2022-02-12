@@ -13,6 +13,10 @@ rebind :: Default Unpackspec a a => SelectArr a a
 rebind = rebindExplicit def
 
 rebindExplicit :: Unpackspec a b -> SelectArr a b
-rebindExplicit u = QueryArr (\(a, tag) ->
-                     let (b, bindings) = PM.run (runUnpackspec u (PM.extractAttr "rebind" tag) a)
-                     in (b, \_ -> PQ.Rebind True bindings, Tag.next tag))
+rebindExplicit = rebindExplicitPrefix "rebind"
+
+rebindExplicitPrefix :: String -> Unpackspec a b -> SelectArr a b
+rebindExplicitPrefix prefix u =
+  QueryArr (\(a, tag) ->
+    let (b, bindings) = PM.run (runUnpackspec u (PM.extractAttr prefix tag) a)
+    in (b, \_ -> PQ.Rebind True bindings, Tag.next tag))
