@@ -1,3 +1,5 @@
+## 0.9.2.0
+
 * Added `nullableToMaybeFields` and `maybeFieldsToNullable`
 
 ## 0.9.1.0
