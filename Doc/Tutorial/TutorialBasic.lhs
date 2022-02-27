@@ -600,6 +600,18 @@ how to do this.
 >                                              , radius   = avg })
 >                              (selectTable widgetTable)
 
+> aggregateWidgetsFewer :: Select (Field SqlText, Field SqlText, Field SqlInt8)
+> aggregateWidgetsFewer = do
+>   w <- aggregate (pWidget Widget { style    = groupBy
+>                                  , color    = groupBy
+>                                  , location = count
+>                                  , quantity = sum
+>                                  , radius   = avg })
+>                  (selectTable widgetTable)
+>
+>   return (style w, color w, location w)
+
+
 The generated SQL is
 
 ghci> printSql aggregateWidgets
