@@ -611,6 +611,11 @@ how to do this.
 >
 >   return (style w, color w, location w)
 
+> aggregateWidgetsFewerBefore :: Select (Field SqlText, Field SqlText, Field SqlInt8)
+> aggregateWidgetsFewerBefore = do
+>   aggregate (p3 (groupBy, groupBy, count))
+>             (do w <- selectTable widgetTable
+>                 return (style w, color w, location w))
 
 The generated SQL is
 
