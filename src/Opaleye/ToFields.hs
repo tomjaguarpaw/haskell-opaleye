@@ -3,6 +3,8 @@
 module Opaleye.ToFields (-- * Creating 'Field's from Haskell values
                          toFields,
                          toFieldsI,
+                         C.toField,
+                         toFieldI,
                          -- * Creating @ToFields@
                          C.toToFields,
                          -- * Explicit versions
@@ -13,6 +15,7 @@ module Opaleye.ToFields (-- * Creating 'Field's from Haskell values
 
 import qualified Opaleye.Internal.Constant as C
 import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
+import qualified Opaleye.Field as F
 
 import qualified Data.Profunctor.Product.Default as D
 
@@ -53,3 +56,10 @@ toFieldsI :: (D.Default (Inferrable C.ToFields) haskells fields)
           -- ^
           -> fields
 toFieldsI = toFieldsExplicit (runInferrable D.def)
+
+-- | Version of 'C.toField' with better type inference
+toFieldI :: (D.Default (Inferrable C.ToFields) haskells (F.Field field))
+         => haskells
+         -- ^
+         -> F.Field field
+toFieldI = toFieldsExplicit (runInferrable D.def)
