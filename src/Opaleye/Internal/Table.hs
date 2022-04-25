@@ -39,7 +39,7 @@ import qualified Control.Arrow as Arr
 --
 -- widgetTable :: Table (Widget (Maybe (Field SqlInt4)) (Field SqlText) (Field SqlText)
 --                              (Field SqlInt4) (Field SqlFloat8))
---                      (Widget (Field SqlText) (Field SqlText) (Field SqlText)
+--                      (Widget (Field SqlInt4) (Field SqlText) (Field SqlText)
 --                              (Field SqlInt4) (Field SqlFloat8))
 -- widgetTable = table \"widgetTable\"
 --                      (pWidget Widget { wid      = tableField \"id\"
