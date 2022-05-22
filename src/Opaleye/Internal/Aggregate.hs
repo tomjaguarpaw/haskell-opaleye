@@ -46,30 +46,33 @@ makeAggr = makeAggr' . Just
 -- `Opaleye.Aggregate.arrayAgg` and `Opaleye.Aggregate.stringAgg`.
 --
 -- You can either apply it to an aggregation of multiple columns, in
--- which case it will apply to all aggregation functions in there, or you
--- can apply it to a single column, and then compose the aggregations
--- afterwards. Examples:
---
--- > x :: Aggregator (Column a, Column b) (Column (PGArray a), Column (PGArray a))
--- > x = (,) <$> orderAggregate (asc snd) (lmap fst arrayAggGrouped)
--- >         <*> orderAggregate (desc snd) (lmap fst arrayAggGrouped)
---
--- This will generate:
---
--- @
--- SELECT array_agg(a ORDER BY b ASC), array_agg(a ORDER BY b DESC)
--- FROM (SELECT a, b FROM ...)
--- @
---
--- Or:
---
+-- which case it will apply to all aggregation functions in there
+-- 
+-- Example:
+-- 
 -- > x :: Aggregator (Column a, Column b) (Column (PGArray a), Column (PGArray b))
--- > x = orderAggregate (asc snd) $ p2 (arrayAggGrouped, arrayAggGrouped)
+-- > x = orderAggregate (asc snd) $ p2 (arrayAgg, arrayAgg)
 --
 -- This will generate:
 --
 -- @
 -- SELECT array_agg(a ORDER BY b ASC), array_agg(b ORDER BY b ASC)
+-- FROM (SELECT a, b FROM ...)
+-- @
+-- 
+-- Or you can apply it to a single column, and then compose the aggregations
+-- afterwards. 
+-- 
+-- Example:
+--
+-- > x :: Aggregator (Column a, Column b) (Column (PGArray a), Column (PGArray a))
+-- > x = (,) <$> orderAggregate (asc snd) (lmap fst arrayAgg)
+-- >         <*> orderAggregate (desc snd) (lmap fst arrayAgg)
+--
+-- This will generate:
+--
+-- @
+-- SELECT array_agg(a ORDER BY b ASC), array_agg(a ORDER BY b DESC)
 -- FROM (SELECT a, b FROM ...)
 -- @
 
