@@ -36,6 +36,7 @@ module Opaleye ( module Opaleye.Adaptors
                , module Opaleye.Table
                , module Opaleye.ToFields
                , module Opaleye.Values
+               , module Opaleye.Window
                , module Opaleye.With
                ) where
 
@@ -62,4 +63,5 @@ import Opaleye.SqlTypes
 import Opaleye.Table
 import Opaleye.ToFields
 import Opaleye.Values
+import Opaleye.Window
 import Opaleye.With
