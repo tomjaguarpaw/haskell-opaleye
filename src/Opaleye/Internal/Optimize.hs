@@ -53,6 +53,7 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
                    \x y -> PQ.Product <$> sequenceOf (traverse._2) x
                                       <*> pure y
   , PQ.aggregate = fmap . PQ.Aggregate
+  , PQ.window    = fmap . PQ.Window
   , PQ.distinctOnOrderBy = \mDistinctOns -> fmap . PQ.DistinctOnOrderBy mDistinctOns
   , PQ.limit     = fmap . PQ.Limit
   , PQ.join      = \jt pe pq1 pq2 -> PQ.Join jt pe <$> sequence pq1 <*> sequence pq2

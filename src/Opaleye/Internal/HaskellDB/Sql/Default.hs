@@ -50,6 +50,13 @@ toSqlOrder gen (OrderExpr o e) =
             PQ.NullsLast  -> Sql.SqlNullsLast
 
 
+toSqlPartition :: SqlGenerator -> Partition -> SqlPartition
+toSqlPartition gen (Partition partition order) = SqlPartition
+  { sqlPartitionBy = map (sqlExpr gen) partition
+  , sqlOrderBy = map (toSqlOrder gen) order
+  }
+
+
 toSqlColumn :: Attribute -> SqlColumn
 toSqlColumn = SqlColumn
 
@@ -135,6 +142,9 @@ defaultSqlExpr gen expr =
                                                       AggrDistinct -> SqlDistinct
                                                       AggrAll      -> SqlNotDistinct
                                      in AggrFunSqlExpr op' e' ord' distinct'
+      WndwExpr op window  -> let (op', e') = showWndwOp gen op
+                                 window' = toSqlPartition gen window
+                              in WndwFunSqlExpr op' e' window'
       ConstExpr l      -> ConstSqlExpr (sqlLiteral gen l)
       CaseExpr cs e    -> let cs' = [(sqlExpr gen c, sqlExpr gen x)| (c,x) <- cs]
                               e'  = sqlExpr gen e
@@ -227,6 +237,22 @@ showAggrOp gen op arg = case op of
   JsonArr -> ("JSON_AGG", [sqlExpr gen arg])
   AggrStringAggr sep -> ("STRING_AGG", [sqlExpr gen arg, sqlExpr gen sep])
   AggrOther s -> (s, [sqlExpr gen arg])
+
+
+showWndwOp :: SqlGenerator -> WndwOp -> (String, [SqlExpr])
+showWndwOp gen op = case op of
+  WndwRowNumber -> ("ROW_NUMBER", [])
+  WndwRank -> ("RANK", [])
+  WndwDenseRank -> ("DENSE_RANK", [])
+  WndwPercentRank -> ("PERCENT_RANK", [])
+  WndwCumeDist -> ("CUME_DIST", [])
+  WndwNtile e -> ("NTILE", [sqlExpr gen e])
+  WndwLag e offset def -> ("LAG", map (sqlExpr gen) [e, offset, def])
+  WndwLead e offset def -> ("LEAD", map (sqlExpr gen) [e, offset, def])
+  WndwFirstValue e -> ("FIRST_VALUE", [sqlExpr gen e])
+  WndwLastValue e -> ("LAST_VALUE", [sqlExpr gen e])
+  WndwNthValue e n -> ("NTH_VALUE", map (sqlExpr gen) [e, n])
+  WndwAggregate op' arg -> showAggrOp gen op' arg
 
 
 defaultSqlLiteral :: SqlGenerator -> Literal -> String

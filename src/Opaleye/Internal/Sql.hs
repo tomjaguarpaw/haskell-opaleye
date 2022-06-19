@@ -111,6 +111,7 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.baseTable         = baseTable
   , PQ.product           = product
   , PQ.aggregate         = aggregate
+  , PQ.window            = window
   , PQ.distinctOnOrderBy = distinctOnOrderBy
   , PQ.limit             = limit_
   , PQ.join              = join
@@ -204,6 +205,12 @@ aggregate aggrs' s =
 
 aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct) -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = maybe id (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord)
+
+window :: PQ.Bindings (HPQ.WndwOp, HPQ.Partition) -> Select -> Select
+window wndws' s = SelectFrom $ newSelect
+  { attrs = SelectAttrsStar (ensureColumns (map (sqlBinding . fmap (uncurry HPQ.WndwExpr)) wndws'))
+  , tables = oneTable s
+  }
 
 distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr) -> [HPQ.OrderExpr] -> Select -> Select
 distinctOnOrderBy distinctExprs orderExprs s = SelectFrom $ newSelect
