@@ -1,7 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Opaleye.WithRecursive
-  ( withRecursive
+module Opaleye.With
+  ( with
+  , withExplicit
+  , withRecursive
   , withRecursiveExplicit
   )
 where
@@ -19,13 +21,37 @@ import qualified Opaleye.Internal.Tag                 as Tag
 import qualified Opaleye.Internal.PackMap as PM
 
 
+with :: Default Unpackspec a a => Select a -> (Select a -> Select b) -> Select b
+with = withExplicit def
+
+
 withRecursive :: Default Binaryspec a a => Select a -> (a -> Select a) -> Select a
 withRecursive = withRecursiveExplicit def
 
 
-binaryspecToUnpackspec :: Binaryspec a a -> Unpackspec a a
-binaryspecToUnpackspec (Binaryspec (PackMap spec)) =
-  Unpackspec $ PackMap $ \f a -> spec (\(pe, _) -> f pe) (a, a)
+withExplicit :: Unpackspec a a -> Select a -> (Select a -> Select b) -> Select b
+withExplicit unpackspec query f = productQueryArr' $ \_ -> do
+  tableName <- HPQ.Symbol "cte" <$> Tag.fresh
+
+  let
+    mkSelect =
+      PQ.BaseTable (PQ.TableIdentifier Nothing (Sql.sqlSymbol tableName))
+
+  (a, primQ) <- runSimpleQueryArr' query ()
+  startTag <- Tag.fresh
+
+  let
+    (a', bindings) = PM.run $
+      runUnpackspec unpackspec (PM.extractAttr "column" startTag) a
+    primQ' = mkSelect bindings
+    query' = productQueryArr' $ \_ -> pure (a', primQ')
+
+  (b, primQ'') <- runSimpleQueryArr' (f query') ()
+
+  let
+    query'' = PQ.With PQ.NotRecursive tableName primQ primQ''
+
+  pure (b, query'')
 
 
 withRecursiveExplicit :: Binaryspec a a -> Select a -> (a -> Select a) -> Select a
@@ -33,7 +59,6 @@ withRecursiveExplicit binaryspec base recursive = productQueryArr' $ \_ -> do
   tableName <- HPQ.Symbol "cte" <$> Tag.fresh
 
   let
-    mkSelect :: PQ.Bindings HPQ.PrimExpr -> PQ.PrimQuery
     mkSelect = PQ.BaseTable (PQ.TableIdentifier Nothing (Sql.sqlSymbol tableName))
 
   (a, primQBase) <- runSimpleQueryArr' base ()
@@ -76,3 +101,8 @@ withRecursiveExplicit binaryspec base recursive = productQueryArr' $ \_ -> do
   pure (result, withQuery)
   where
     unpackspec = binaryspecToUnpackspec binaryspec
+
+
+binaryspecToUnpackspec :: Binaryspec a a -> Unpackspec a a
+binaryspecToUnpackspec (Binaryspec (PackMap spec)) =
+  Unpackspec $ PackMap $ \f a -> spec (\(pe, _) -> f pe) (a, a)
