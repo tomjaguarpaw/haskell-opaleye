@@ -29,6 +29,7 @@ import           Control.Applicative (Applicative, pure, (<*>))
 import           Data.Functor                    ((<$>))
 
 import qualified Database.PostgreSQL.Simple.Range as R
+import           Database.PostgreSQL.Simple.Newtypes ( Aeson, getAeson )
 
 toFields :: D.Default ToFields haskells fields
          => haskells -> fields
@@ -134,11 +135,17 @@ instance D.Default ToFields SBS.ByteString (Field T.SqlJsonb) where
 instance D.Default ToFields LBS.ByteString (Field T.SqlJsonb) where
   def = toToFields T.sqlLazyJSONB
 
+instance (Ae.ToJSON a) => D.Default ToFields (Aeson a) (Field T.SqlJson) where
+  def = toToFields $ T.sqlValueJSON . getAeson
+
 instance D.Default ToFields Ae.Value (Field T.SqlJsonb) where
   def = toToFields T.sqlValueJSONB
 
 instance D.Default ToFields haskell (F.Field_ n sql) => D.Default ToFields (Maybe haskell) (Maybe (F.Field_ n sql)) where
   def = toToFields (toFields <$>)
+
+instance (Ae.ToJSON a) => D.Default ToFields (Aeson a) (F.Field T.SqlJsonb) where
+  def = toToFields $ T.sqlValueJSONB . getAeson
 
 instance (D.Default ToFields a (F.Field_ n b), T.IsSqlType b)
          => D.Default ToFields [a] (F.Field (T.SqlArray_ n b)) where
