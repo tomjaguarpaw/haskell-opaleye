@@ -136,7 +136,7 @@ instance D.Default ToFields LBS.ByteString (Field T.SqlJsonb) where
   def = toToFields T.sqlLazyJSONB
 
 instance (Ae.ToJSON a) => D.Default ToFields (Aeson a) (Field T.SqlJson) where
-  def = toToFields $ T.sqlValueJSON . Ae.toJSON . getAeson
+  def = toToFields $ T.sqlValueJSON . getAeson
 
 instance D.Default ToFields Ae.Value (Field T.SqlJsonb) where
   def = toToFields T.sqlValueJSONB
@@ -145,7 +145,7 @@ instance D.Default ToFields haskell (F.Field_ n sql) => D.Default ToFields (Mayb
   def = toToFields (toFields <$>)
 
 instance (Ae.ToJSON a) => D.Default ToFields (Aeson a) (F.Field T.SqlJsonb) where
-  def = toToFields $ T.sqlValueJSONB . Ae.toJSON . getAeson
+  def = toToFields $ T.sqlValueJSONB . getAeson
 
 instance (D.Default ToFields a (F.Field_ n b), T.IsSqlType b)
          => D.Default ToFields [a] (F.Field (T.SqlArray_ n b)) where
