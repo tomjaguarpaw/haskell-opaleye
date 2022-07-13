@@ -25,6 +25,11 @@ with :: Default Unpackspec a a => Select a -> (Select a -> Select b) -> Select b
 with = withExplicit def
 
 
+-- | @withRecursive s f@ is the smallest set of rows @r@ such that
+--
+-- @
+-- r == s \`'unionAll'\` (r >>= f)
+-- @
 withRecursive :: Default Binaryspec a a => Select a -> (a -> Select a) -> Select a
 withRecursive = withRecursiveExplicit def
 
