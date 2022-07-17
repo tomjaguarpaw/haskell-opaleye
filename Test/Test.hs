@@ -1283,7 +1283,7 @@ testMaybeFieldsDistinct = do
   it "MaybeFields equality" $ testH query2 (`shouldBe` [True])
   where nothing_ = OM.nothingFields :: MaybeFields ()
         query :: Select (MaybeFields (Field O.SqlInt4))
-        query = O.distinct (O.valuesSafe [ fmap (const 0) nothing_
+        query = O.distinct (O.values [ fmap (const 0) nothing_
                                          , fmap (const 1) nothing_ ])
         query2 :: Select (Field O.SqlBool)
         query2 = pure ((fmap (const (0 :: Field O.SqlInt4)) nothing_)

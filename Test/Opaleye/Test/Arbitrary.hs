@@ -448,13 +448,13 @@ genSelect =
         TQ.oneof [
             do
             ArbitraryHaskellsList l <- TQ.arbitrary
-            return (fmap fieldsList (O.valuesSafe (fmap O.toFields l)))
+            return (fmap fieldsList (O.values (fmap O.toFields l)))
           , -- We test empty lists of values separately, because we
             -- used to not support them
             do
               s <- TQ.choose (0, 5)
               l <- TQ.vectorOf s (pure ())
-              return (fmap (const emptyChoices) (O.valuesSafe l))
+              return (fmap (const emptyChoices) (O.values l))
           ]
     ]
 
