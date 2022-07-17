@@ -518,10 +518,10 @@ genSelectMapper2 =
       return (arbitraryBinary binaryOperation)
   ]
   where arbitraryBinary binaryOperation q1 q2 =
-          (fmap fieldsList
+           fmap fieldsList
             (binaryOperation
               (fmap listFields q1)
-              (fmap listFields q2)))
+              (fmap listFields q2))
 
 genSelectArrMapper :: [TQ.Gen (O.SelectArr a Fields -> O.SelectArr a Fields)]
 genSelectArrMapper =
