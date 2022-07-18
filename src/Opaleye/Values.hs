@@ -34,7 +34,7 @@ valuesUnsafeExplicit :: U.Unpackspec fields fields'
                      -> V.ValuesspecUnsafe fields fields'
                      -> [fields] -> S.Select fields'
 valuesUnsafeExplicit unpack valuesspec fields =
-  Q.productQueryArr' $ \() -> do
+  Q.productQueryArr $ do
   t <- Tag.fresh
   pure (V.valuesU unpack valuesspec fields ((), t))
 
@@ -60,7 +60,7 @@ values = valuesExplicit def
 valuesExplicit :: V.Valuesspec fields fields'
                -> [fields] -> S.Select fields'
 valuesExplicit valuesspec fields =
-  Q.productQueryArr' $ \() -> do
+  Q.productQueryArr $ do
     t <- Tag.fresh
     pure (V.valuesUSafe valuesspec fields ((), t))
 

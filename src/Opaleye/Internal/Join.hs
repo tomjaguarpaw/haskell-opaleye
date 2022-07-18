@@ -48,7 +48,7 @@ joinExplicit :: U.Unpackspec columnsA columnsA
              -> ((columnsA, columnsB) -> Field T.PGBool)
              -> Q.Query (returnedColumnsA, returnedColumnsB)
 joinExplicit uA uB returnColumnsA returnColumnsB joinType
-             qA qB cond = Q.productQueryArr' $ \() -> do
+             qA qB cond = Q.productQueryArr $ do
   (columnsA, primQueryA) <- Q.runSimpleQueryArr' qA ()
   (columnsB, primQueryB) <- Q.runSimpleQueryArr' qB ()
 

@@ -132,7 +132,7 @@ selectTableExplicit :: U.Unpackspec tablefields fields
                     -> Table a tablefields
                     -- ^
                     -> S.Select fields
-selectTableExplicit cm table' = Q.productQueryArr' $ \() -> do
+selectTableExplicit cm table' = Q.productQueryArr $ do
   t0 <- Tag.fresh
   let (retwires, primQ) = T.queryTable cm table' t0
   pure (retwires, primQ)

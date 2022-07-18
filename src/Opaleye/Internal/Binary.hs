@@ -40,7 +40,7 @@ binaryspecColumn = Binaryspec (PM.iso (mapBoth unColumn) Column)
 
 sameTypeBinOpHelper :: PQ.BinOp -> Binaryspec columns columns'
                     -> Q.Query columns -> Q.Query columns -> Q.Query columns'
-sameTypeBinOpHelper binop binaryspec q1 q2 = Q.productQueryArr' $ \() -> do
+sameTypeBinOpHelper binop binaryspec q1 q2 = Q.productQueryArr $ do
   (columns1, primQuery1) <- Q.runSimpleQueryArr' q1 ()
   (columns2, primQuery2) <- Q.runSimpleQueryArr' q2 ()
 
