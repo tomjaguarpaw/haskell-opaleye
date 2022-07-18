@@ -56,11 +56,6 @@ runStateQueryArr (QueryArr f) a tag =
   let ((b, pq), tag') = runState (f a) tag
   in (b, pq, tag')
 
-stateQueryArr :: (a -> Tag -> (b, PQ.PrimQueryArr, Tag)) -> QueryArr a b
-stateQueryArr f = QueryArr $ \a -> state $ \tag ->
-  let (b, pq, tag') = f a tag
-  in ((b, pq), tag')
-
 runSimpleQueryArrStart :: QueryArr a b -> a -> (b, PQ.PrimQuery, Tag)
 runSimpleQueryArrStart q a =
   let ((b, pqa), t') = runState (runSimpleQueryArr' q a) Tag.start
