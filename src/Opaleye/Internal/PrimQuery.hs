@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Opaleye.Internal.PrimQuery where
 
 import           Prelude hiding (product)
@@ -218,7 +220,7 @@ primQueryFoldDefault = PrimQueryFold
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
 foldPrimQuery f = fix fold
-  where fold self primQ = case primQ of
+  where fold self = \case
           Unit                        -> unit              f
           Empty a                     -> empty             f a
           BaseTable ti syms           -> baseTable         f ti syms
