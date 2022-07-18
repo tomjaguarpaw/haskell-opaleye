@@ -33,6 +33,9 @@ newtype SelectArr a b = QueryArr { unQueryArr :: a -> State Tag (b, PQ.PrimQuery
 type QueryArr = SelectArr
 type Query = SelectArr ()
 
+productQueryArr :: State Tag (a, PQ.PrimQuery) -> Query a
+productQueryArr f = productQueryArr' (\() -> f)
+
 productQueryArr' :: (a -> State Tag (b, PQ.PrimQuery)) -> QueryArr a b
 productQueryArr' f = QueryArr $ \a -> do
   (b, pq) <- f a
