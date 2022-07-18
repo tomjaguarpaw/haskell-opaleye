@@ -218,26 +218,28 @@ primQueryFoldDefault = PrimQueryFold
   , forUpdate         = ForUpdate
   }
 
+primQueryFoldF :: PrimQueryFold' a p -> (PrimQuery' a -> p) -> PrimQuery' a -> p
+primQueryFoldF f self = \case
+  Unit -> unit f
+  Empty a -> empty f a
+  BaseTable ti syms -> baseTable f ti syms
+  Product qs pes -> product f (fmap (fmap self) qs) pes
+  Aggregate aggrs q -> aggregate f aggrs (self q)
+  DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs (self q)
+  Limit op q -> limit f op (self q)
+  Join j cond q1 q2 -> join f j cond (fmap self q1) (fmap self q2)
+  Semijoin j q1 q2 -> semijoin f j (self q1) (self q2)
+  Values ss pes -> values f ss pes
+  Binary binop (q1, q2) -> binary f binop (self q1, self q2)
+  Label l pq -> label f l (self pq)
+  RelExpr pe syms -> relExpr f pe syms
+  Exists s q -> exists f s (self q)
+  Rebind star pes q -> rebind f star pes (self q)
+  ForUpdate q -> forUpdate f (self q)
+
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
-foldPrimQuery f = fix fold
-  where fold self = \case
-          Unit                        -> unit              f
-          Empty a                     -> empty             f a
-          BaseTable ti syms           -> baseTable         f ti syms
-          Product qs pes              -> product           f (fmap (fmap self) qs) pes
-          Aggregate aggrs q           -> aggregate         f aggrs (self q)
-          DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs (self q)
-          Limit op q                  -> limit             f op (self q)
-          Join j cond q1 q2           -> join              f j cond (fmap self q1) (fmap self q2)
-          Semijoin j q1 q2            -> semijoin          f j (self q1) (self q2)
-          Values ss pes               -> values            f ss pes
-          Binary binop (q1, q2)       -> binary            f binop (self q1, self q2)
-          Label l pq                  -> label             f l (self pq)
-          RelExpr pe syms             -> relExpr           f pe syms
-          Exists s q                  -> exists            f s (self q)
-          Rebind star pes q           -> rebind            f star pes (self q)
-          ForUpdate q                 -> forUpdate         f (self q)
-        fix g = let x = g x in x
+foldPrimQuery f = fix (primQueryFoldF f)
+  where fix g = let x = g x in x
 
 times :: Lateral -> PrimQuery -> PrimQuery -> PrimQuery
 times lat q q' = Product (pure q NEL.:| [(lat, q')]) []
