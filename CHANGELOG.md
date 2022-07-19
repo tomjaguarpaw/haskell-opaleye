@@ -1,3 +1,5 @@
+## 0.9.3.0
+
 * Add `with` and `withRecursive` (thanks to Erik Hesselink and Shane
   O'Brien).
 
