@@ -103,12 +103,13 @@ relationValuedExprExplicit :: RelExprMaker strings columns
                            -> (a -> HPQ.PrimExpr)
                            -> QA.QueryArr a columns
 relationValuedExprExplicit rem_ strings pe =
-  QA.productQueryArr' $ \a -> do
+  QA.productQueryArr' $ do
     tag <- Tag.fresh
-    let (primExprs, projcols) = runRelExprMaker rem_ tag strings
-        primQ :: PQ.PrimQuery
-        primQ = PQ.RelExpr (pe a) projcols
-    pure (primExprs, primQ)
+    pure $ \a ->
+      let (primExprs, projcols) = runRelExprMaker rem_ tag strings
+          primQ :: PQ.PrimQuery
+          primQ = PQ.RelExpr (pe a) projcols
+      in (primExprs, primQ)
 
 relationValuedExpr :: D.Default RelExprMaker strings columns
                    => strings
