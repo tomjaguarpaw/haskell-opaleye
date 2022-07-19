@@ -72,6 +72,7 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
   , PQ.relExpr   = return .: PQ.RelExpr
   , PQ.rebind    = \b -> fmap . PQ.Rebind b
   , PQ.forUpdate = fmap PQ.ForUpdate
+  , PQ.with      = \recursive name cols -> liftA2 (PQ.With recursive name cols)
   }
   where -- If only the first argument is Just, do n1 on it
         -- If only the second argument is Just, do n2 on it

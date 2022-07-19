@@ -10,6 +10,7 @@ import           Control.Applicative              ((<$>), (<*>), (<|>))
 import qualified Control.Applicative              as A
 import           Control.Arrow                    ((&&&), (***), (<<<), (>>>))
 import qualified Control.Arrow                    as Arr
+import           Control.Monad                    (guard)
 import qualified Data.Aeson                       as Json
 import qualified Data.Function                    as F
 import qualified Data.List                        as L
@@ -818,6 +819,24 @@ testTableFunctor :: Test
 testTableFunctor = it "" $ testH (O.selectTable table1F) (result `shouldBe`)
   where result = fmap (\(col1, col2) -> (col1 + col2, col1 - col2)) table1data
 
+recursive = O.withRecursive table1Q $ \(n, x) -> do
+          O.where_ (n O..< 5)
+          pure (n + 1, x + 1)
+
+testWithRecursive :: Test
+testWithRecursive = it "with recursive" $ testH recursive (`shouldBe` expected)
+  where expected = withRecursive [] table1data $ \(n, x) -> do
+          guard (n < 5)
+          pure (n + 1, x + 1)
+        withRecursive r s f =
+          let r' = s ++ (r >>= f)
+          in if r' == r then r else withRecursive r' s f
+
+testWith :: Test
+testWith = it "with" $ testH with (`shouldBe` expected)
+  where with = O.with table1Q $ \t -> (,) <$> t <*> table2Q
+        expected = (,) <$> table1data <*> table2data
+
 -- TODO: This is getting too complicated
 testUpdate :: Test
 testUpdate = it "" $ \conn -> do
@@ -1558,3 +1577,6 @@ main = do
         testAddIntervalFromTimestampToTimestamp
         testAddIntervalFromTimestamptzToTimestamptz
         testAddIntervalFromTimeToTime
+      describe "with" $ do
+        testWithRecursive
+        testWith
