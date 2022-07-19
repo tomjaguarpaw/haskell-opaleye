@@ -220,9 +220,32 @@ primQueryFoldDefault = PrimQueryFold
   , forUpdate         = ForUpdate
   }
 
+dimapPrimQueryFold :: (q -> p)
+                   -> (p' -> q')
+                   -> PrimQueryFoldP a p p'
+                   -> PrimQueryFoldP a q q'
+dimapPrimQueryFold self g f = PrimQueryFold
+  { unit = g (unit f)
+  , empty = g . empty f
+  , baseTable = \ti bs -> g (baseTable f ti bs)
+  , product = \ps conds -> g (product f ((fmap . fmap) self ps) conds)
+  , aggregate = \b p -> g (aggregate f b (self p))
+  , distinctOnOrderBy = \m os p -> g (distinctOnOrderBy f m os (self p))
+  , limit = \l p -> g (limit f l (self p))
+  , join = \j pe lp lp' -> g (join f j pe (fmap self lp) (fmap self lp'))
+  , semijoin = \j p1 p2 -> g (semijoin f j (self p1) (self p2))
+  , exists = \s p -> g (exists f s (self p))
+  , values = \ss nel -> g (values f ss nel)
+  , binary = \bo (p1, p2) -> g (binary f bo (self p1, self p2))
+  , label = \l p -> g (label f l (self p))
+  , relExpr = \pe bs -> g (relExpr f pe bs)
+  , rebind = \s bs p -> g (rebind f s bs (self p))
+  , forUpdate = \p -> g (forUpdate f (self p))
+  }
+
 primQueryFoldF ::
   PrimQueryFoldP a p p' -> (PrimQuery' a -> p) -> PrimQuery' a -> p'
-primQueryFoldF f self = \case
+primQueryFoldF g self' = \case
   Unit -> unit f
   Empty a -> empty f a
   BaseTable ti syms -> baseTable f ti syms
@@ -239,6 +262,8 @@ primQueryFoldF f self = \case
   Exists s q -> exists f s (self q)
   Rebind star pes q -> rebind f star pes (self q)
   ForUpdate q -> forUpdate f (self q)
+  where f = dimapPrimQueryFold self' id g
+        self = id
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
 foldPrimQuery f = fix (primQueryFoldF f)
