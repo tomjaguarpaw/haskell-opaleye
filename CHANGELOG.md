@@ -1,3 +1,9 @@
+* Add `with` and `withRecursive` (thanks to Erik Hesselink and Shane
+  O'Brien).
+
+* Add `Default ToFields` and `DefaultFromField` instances for
+  postgresql-simple's `Aeson` (thanks to Bas Van Dijk).
+
 ## 0.9.2.0
 
 * Added `nullableToMaybeFields` and `maybeFieldsToNullable`
