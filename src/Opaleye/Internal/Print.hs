@@ -13,8 +13,9 @@ import           Opaleye.Internal.Sql (Select(SelectFrom,
                                               SelectValues,
                                               SelectBinary,
                                               SelectLabel,
-                                              SelectExists),
-                                       From, Join, Semijoin, Values, Binary, Label, Exists)
+                                              SelectExists,
+                                              SelectWith),
+                                       From, Join, Semijoin, Values, Binary, Label, Exists, With)
 
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
@@ -42,6 +43,7 @@ ppSql (SelectValues v)   = ppSelectValues v
 ppSql (SelectBinary v)   = ppSelectBinary v
 ppSql (SelectLabel v)    = ppSelectLabel v
 ppSql (SelectExists v)   = ppSelectExists v
+ppSql (SelectWith r)     = ppWith r
 
 ppDistinctOn :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppDistinctOn = maybe mempty $ \nel ->
@@ -108,6 +110,20 @@ ppSelectExists e =
   text "SELECT EXISTS"
   <+> ppTable (Sql.sqlSymbol (Sql.existsBinding e), Sql.existsTable e)
 
+ppRecursive :: Sql.Recursive -> Doc
+ppRecursive Sql.Recursive = text "RECURSIVE"
+ppRecursive Sql.NonRecursive = mempty
+
+ppWith :: With -> Doc
+ppWith w
+  =  text "WITH" <+> ppRecursive (Sql.wRecursive w)
+  <+> HPrint.ppTable (Sql.wTable w)
+  <+> parens (HPrint.commaV unColumn (Sql.wCols w))
+  <+> text "AS"
+  $$ parens (ppSql (Sql.wWith w))
+  $$ ppSql (Sql.wSelect w)
+  where unColumn (HSql.SqlColumn col) = text col
+
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
 ppJoinType Sql.RightJoin = text "RIGHT OUTER JOIN"
@@ -150,6 +166,7 @@ ppTable (alias, select) = case select of
   SelectBinary slb      -> parens (ppSelectBinary slb)
   SelectLabel sll       -> parens (ppSelectLabel sll)
   SelectExists saj      -> parens (ppSelectExists saj)
+  SelectWith w          -> parens (ppWith w)
   `ppAs`
   Just alias
 

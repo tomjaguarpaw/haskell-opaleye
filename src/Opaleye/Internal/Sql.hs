@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Opaleye.Internal.Sql where
 
@@ -30,6 +31,7 @@ data Select = SelectFrom From
             | SelectBinary Binary
             | SelectLabel Label
             | SelectExists Exists
+            | SelectWith With
             deriving Show
 
 data SelectAttrs =
@@ -80,6 +82,15 @@ data SemijoinType = Semi | Anti deriving Show
 data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
 data Lateral = Lateral | NonLateral deriving Show
 data LockStrength = Update deriving Show
+data Recursive = NonRecursive | Recursive deriving Show
+data With = With {
+  wTable     :: HSql.SqlTable, -- The name of the result, i.e. WITH <name> AS
+  wCols      :: [HSql.SqlColumn],
+  wRecursive :: Recursive,
+  wWith      :: Select,
+  wSelect    :: Select
+} deriving Show
+
 
 data Label = Label {
   lLabel  :: String,
@@ -111,6 +122,7 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.exists            = exists
   , PQ.rebind            = rebind
   , PQ.forUpdate         = forUpdate
+  , PQ.with              = with
   }
 
 exists :: Symbol -> Select -> Select
@@ -248,6 +260,15 @@ binary op (select1, select2) = SelectBinary Binary {
   bSelect1 = select1,
   bSelect2 = select2
   }
+
+with :: PQ.Recursive -> Symbol -> [Symbol]-> Select -> Select -> Select
+with recursive name cols wWith wSelect = SelectWith $ With {..}
+  where
+   wTable = HSql.SqlTable Nothing (sqlSymbol name)
+   wRecursive = case recursive of
+     PQ.NonRecursive -> NonRecursive
+     PQ.Recursive -> Recursive
+   wCols = map (HSql.SqlColumn . sqlSymbol) cols
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
