@@ -271,6 +271,14 @@ foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
 foldPrimQuery f = fix (primQueryFoldF f)
   where fix g = let x = g x in x
 
+-- Would be nice to show that this is associative
+composePrimQueryFold ::
+  PrimQueryFoldP a (PrimQuery' a) q ->
+  PrimQueryFoldP a p (PrimQuery' a) ->
+  PrimQueryFoldP a p q
+composePrimQueryFold = fmapPrimQueryFold . applyPrimQueryFoldF
+  where fmapPrimQueryFold = dimapPrimQueryFold id
+
 times :: Lateral -> PrimQuery -> PrimQuery -> PrimQuery
 times lat q q' = Product (pure q NEL.:| [(lat, q')]) []
 
