@@ -44,10 +44,12 @@ productQueryArr' f = QueryArr $ \a -> do
   (b, pq) <- f a
   pure (b, PQ.aProduct pq)
 
-leftJoinQueryArr' :: (a -> State Tag (b, HPQ.PrimExpr, PQ.PrimQuery)) -> QueryArr a b
-leftJoinQueryArr' f = QueryArr $ \a -> do
-  (a1, cond, primQuery') <- f a
-  pure (a1, PQ.aLeftJoin cond primQuery')
+leftJoinQueryArr' :: State Tag (a -> (b, HPQ.PrimExpr, PQ.PrimQuery)) -> QueryArr a b
+leftJoinQueryArr' f = selectArr $ do
+  t <- f
+  pure $ \a ->
+    let (a1, cond, primQuery') = t a
+    in (a1, PQ.aLeftJoin cond primQuery')
 
 runSimpleQueryArr' :: QueryArr a b -> a -> State Tag (b, PQ.PrimQuery)
 runSimpleQueryArr' f a = do

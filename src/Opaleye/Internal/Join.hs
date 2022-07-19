@@ -75,13 +75,14 @@ leftJoinAExplicit :: U.Unpackspec a a
                   -> Q.Query a
                   -> Q.QueryArr (a -> Field T.PGBool) nullableA
 leftJoinAExplicit uA nullmaker rq =
-  Q.leftJoinQueryArr' $ \p -> do
+  Q.leftJoinQueryArr' $ do
     (newColumnsR, right) <- flip Q.runSimpleQueryArr' () $ proc () -> do
           a <- rq -< ()
           Rebind.rebindExplicit uA -< a
-    let renamedNullable = toNullable nullmaker newColumnsR
-        Column cond = p newColumnsR
-    pure (renamedNullable, cond, right)
+    pure $ \p ->
+      let renamedNullable = toNullable nullmaker newColumnsR
+          Column cond = p newColumnsR
+      in (renamedNullable, cond, right)
 
 optionalRestrict :: D.Default U.Unpackspec a a
                  => S.Select a
