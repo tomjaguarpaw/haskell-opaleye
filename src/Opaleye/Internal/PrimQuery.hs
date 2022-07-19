@@ -162,39 +162,41 @@ data PrimQuery' a = Unit
                  deriving Show
 
 type PrimQuery = PrimQuery' ()
-type PrimQueryFold = PrimQueryFold' ()
+type PrimQueryFold p = PrimQueryFold' () p
 
-data PrimQueryFold' a p = PrimQueryFold
-  { unit              :: p
-  , empty             :: a -> p
-  , baseTable         :: TableIdentifier -> Bindings HPQ.PrimExpr -> p
-  , product           :: NEL.NonEmpty (Lateral, p) -> [HPQ.PrimExpr] -> p
+type PrimQueryFold' a p = PrimQueryFoldP a p p
+
+data PrimQueryFoldP a p p' = PrimQueryFold
+  { unit              :: p'
+  , empty             :: a -> p'
+  , baseTable         :: TableIdentifier -> Bindings HPQ.PrimExpr -> p'
+  , product           :: NEL.NonEmpty (Lateral, p) -> [HPQ.PrimExpr] -> p'
   , aggregate         :: Bindings (Maybe
                              (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
                                    HPQ.Symbol)
                       -> p
-                      -> p
+                      -> p'
   , distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr)
                       -> [HPQ.OrderExpr]
                       -> p
-                      -> p
-  , limit             :: LimitOp -> p -> p
+                      -> p'
+  , limit             :: LimitOp -> p -> p'
   , join              :: JoinType
                       -> HPQ.PrimExpr
                       -> (Lateral, p)
                       -> (Lateral, p)
-                      -> p
-  , semijoin          :: SemijoinType -> p -> p -> p
-  , exists            :: Symbol -> p -> p
-  , values            :: [Symbol] -> NEL.NonEmpty [HPQ.PrimExpr] -> p
+                      -> p'
+  , semijoin          :: SemijoinType -> p -> p -> p'
+  , exists            :: Symbol -> p -> p'
+  , values            :: [Symbol] -> NEL.NonEmpty [HPQ.PrimExpr] -> p'
   , binary            :: BinOp
                       -> (p, p)
-                      -> p
-  , label             :: String -> p -> p
-  , relExpr           :: HPQ.PrimExpr -> Bindings HPQ.PrimExpr -> p
+                      -> p'
+  , label             :: String -> p -> p'
+  , relExpr           :: HPQ.PrimExpr -> Bindings HPQ.PrimExpr -> p'
     -- ^ A relation-valued expression
-  , rebind            :: Bool -> Bindings HPQ.PrimExpr -> p -> p
-  , forUpdate         :: p -> p
+  , rebind            :: Bool -> Bindings HPQ.PrimExpr -> p -> p'
+  , forUpdate         :: p -> p'
   }
 
 
