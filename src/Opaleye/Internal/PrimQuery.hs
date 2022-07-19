@@ -220,7 +220,8 @@ primQueryFoldDefault = PrimQueryFold
   , forUpdate         = ForUpdate
   }
 
-primQueryFoldF :: PrimQueryFold' a p -> (PrimQuery' a -> p) -> PrimQuery' a -> p
+primQueryFoldF ::
+  PrimQueryFoldP a p p' -> (PrimQuery' a -> p) -> PrimQuery' a -> p'
 primQueryFoldF f self = \case
   Unit -> unit f
   Empty a -> empty f a
