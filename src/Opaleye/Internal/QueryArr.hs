@@ -53,6 +53,9 @@ leftJoinQueryArr' f = selectArr $ do
     let (a1, cond, primQuery') = t a
     in (a1, PQ.aLeftJoin cond primQuery')
 
+runSimpleSelect :: Select a -> State Tag (a, PQ.PrimQuery)
+runSimpleSelect s = runSimpleQueryArr' s ()
+
 runSimpleQueryArr' :: QueryArr a b -> a -> State Tag (b, PQ.PrimQuery)
 runSimpleQueryArr' f a = do
   (b, pqf) <- unQueryArr f a

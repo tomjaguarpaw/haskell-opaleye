@@ -151,7 +151,7 @@ optionalInternal f query = IQ.leftJoinQueryArr' $ do
     -- This is basically a left join on TRUE, but Shane (@duairc)
     -- wrote it to ensure that we don't need an Unpackspec a a.
     let true = HPQ.ConstExpr (HPQ.BoolLit True)
-    (r, right) <- flip IQ.runSimpleQueryArr' () $ proc () -> do
+    (r, right) <- IQ.runSimpleSelect $ proc () -> do
           a <- query -< ()
           true_ <- Rebind.rebind -< Opaleye.Field.toNullable (IC.Column true)
           returnA -< f true_ a

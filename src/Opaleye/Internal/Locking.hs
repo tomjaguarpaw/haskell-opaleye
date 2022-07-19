@@ -22,5 +22,5 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 -- easy to create queries that fail at run time using this operation.
 forUpdate :: Q.Select a -> Q.Select a
 forUpdate s = Q.productQueryArr $ do
-  (a, query) <- Q.runSimpleQueryArr' s ()
+  (a, query) <- Q.runSimpleSelect s
   pure (a, PQ.ForUpdate query)

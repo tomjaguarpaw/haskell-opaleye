@@ -83,7 +83,7 @@ result of an aggregation.
 -- by an empty query with no group by is handled.
 aggregate :: Aggregator a b -> S.Select a -> S.Select b
 aggregate agg q = Q.productQueryArr $ do
-  (a, pq) <- Q.runSimpleQueryArr' q ()
+  (a, pq) <- Q.runSimpleSelect q
   t <- Tag.fresh
   pure (A.aggregateU agg (a, pq, t))
 

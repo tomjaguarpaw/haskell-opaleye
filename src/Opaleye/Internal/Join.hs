@@ -49,8 +49,8 @@ joinExplicit :: U.Unpackspec columnsA columnsA
              -> Q.Query (returnedColumnsA, returnedColumnsB)
 joinExplicit uA uB returnColumnsA returnColumnsB joinType
              qA qB cond = Q.productQueryArr $ do
-  (columnsA, primQueryA) <- Q.runSimpleQueryArr' qA ()
-  (columnsB, primQueryB) <- Q.runSimpleQueryArr' qB ()
+  (columnsA, primQueryA) <- Q.runSimpleSelect qA
+  (columnsB, primQueryB) <- Q.runSimpleSelect qB
 
   endTag <- T.fresh
 
@@ -76,7 +76,7 @@ leftJoinAExplicit :: U.Unpackspec a a
                   -> Q.QueryArr (a -> Field T.PGBool) nullableA
 leftJoinAExplicit uA nullmaker rq =
   Q.leftJoinQueryArr' $ do
-    (newColumnsR, right) <- flip Q.runSimpleQueryArr' () $ proc () -> do
+    (newColumnsR, right) <- Q.runSimpleSelect $ proc () -> do
           a <- rq -< ()
           Rebind.rebindExplicit uA -< a
     pure $ \p ->

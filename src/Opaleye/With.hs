@@ -18,7 +18,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import Opaleye.Internal.PackMap (PackMap (..))
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.PrimQuery as PQ
-import Opaleye.Internal.QueryArr (Select, productQueryArr, runSimpleQueryArr')
+import Opaleye.Internal.QueryArr (Select, productQueryArr, runSimpleSelect)
 import qualified Opaleye.Internal.Sql as Sql
 import qualified Opaleye.Internal.Tag as Tag
 import Opaleye.Internal.Unpackspec (Unpackspec (..), runUnpackspec)
@@ -59,8 +59,8 @@ withG unpackspec recursive rhsSelect bodySelect = do
   let rhsSelect' = rhsSelect selectCte
   let bodySelect' = bodySelect selectCte
 
-  (_, rhsQ) <- runSimpleQueryArr' rhsSelect' ()
-  bodyQ <- runSimpleQueryArr' bodySelect' ()
+  (_, rhsQ) <- runSimpleSelect rhsSelect'
+  bodyQ <- runSimpleSelect bodySelect'
 
   pure (withCte recursive rhsQ bodyQ)
 

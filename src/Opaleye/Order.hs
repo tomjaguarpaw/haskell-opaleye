@@ -58,7 +58,7 @@ example = 'orderBy' ('asc' fst \<\> 'desc' snd)
 orderBy :: O.Order a -> S.Select a -> S.Select a
 orderBy os q =
   Q.productQueryArr $ do
-    a_pq <- Q.runSimpleQueryArr' q ()
+    a_pq <- Q.runSimpleSelect q
     pure (O.orderByU os a_pq)
 
 -- | Specify an ascending ordering by the given expression.
@@ -117,7 +117,7 @@ SELECT * FROM (SELECT * FROM yourTable LIMIT 10) OFFSET 50
 -}
 limit :: Int -> S.Select a -> S.Select a
 limit n a = Q.productQueryArr $ do
-  a_pq <- Q.runSimpleQueryArr' a ()
+  a_pq <- Q.runSimpleSelect a
   pure (O.limit' n a_pq)
 
 {- |
@@ -129,7 +129,7 @@ that many result rows.
 -}
 offset :: Int -> S.Select a -> S.Select a
 offset n a = Q.productQueryArr $ do
-  a_pq <- Q.runSimpleQueryArr' a ()
+  a_pq <- Q.runSimpleSelect a
   pure (O.offset' n a_pq)
 
 -- * Distinct on
@@ -191,7 +191,7 @@ distinctOnExplicit :: U.Unpackspec b b
                    -> S.Select a
                    -> S.Select a
 distinctOnExplicit unpack proj q = Q.productQueryArr $ do
-  a_pq <- Q.runSimpleQueryArr' q ()
+  a_pq <- Q.runSimpleSelect q
   pure (O.distinctOn unpack proj a_pq)
 
 distinctOnByExplicit :: U.Unpackspec b b
@@ -200,5 +200,5 @@ distinctOnByExplicit :: U.Unpackspec b b
                      -> S.Select a
                      -> S.Select a
 distinctOnByExplicit unpack proj ord q = Q.productQueryArr $ do
-  a_pq <- Q.runSimpleQueryArr' q ()
+  a_pq <- Q.runSimpleSelect q
   pure (O.distinctOnBy unpack proj ord a_pq)
