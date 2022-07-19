@@ -14,17 +14,17 @@ import           Control.Applicative ((<$>), (<*>), liftA2, pure)
 import           Control.Arrow (first)
 
 optimize :: PQ.PrimQuery' a -> PQ.PrimQuery' a
-optimize = mergeProduct . removeUnit
+optimize = PQ.foldPrimQuery (mergeProduct `PQ.composePrimQueryFold` removeUnit)
 
-removeUnit :: PQ.PrimQuery' a -> PQ.PrimQuery' a
-removeUnit = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
+removeUnit :: PQ.PrimQueryFoldP a (PQ.PrimQuery' a) (PQ.PrimQuery' a)
+removeUnit = PQ.primQueryFoldDefault { PQ.product   = product }
   where product pqs = PQ.Product pqs'
           where pqs' = case NEL.nonEmpty (NEL.filter (not . PQ.isUnit . snd) pqs) of
                          Nothing -> return (pure PQ.Unit)
                          Just xs -> xs
 
-mergeProduct :: PQ.PrimQuery' a -> PQ.PrimQuery' a
-mergeProduct = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
+mergeProduct :: PQ.PrimQueryFoldP a (PQ.PrimQuery' a) (PQ.PrimQuery' a)
+mergeProduct = PQ.primQueryFoldDefault { PQ.product   = product }
   where product pqs pes = PQ.Product pqs' (pes ++ pes')
           where pqs' = pqs >>= queries
                 queries (lat, PQ.Product qs _) = fmap (first (lat <>)) qs
