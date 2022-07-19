@@ -243,9 +243,9 @@ dimapPrimQueryFold self g f = PrimQueryFold
   , forUpdate = \p -> g (forUpdate f (self p))
   }
 
-primQueryFoldF ::
-  PrimQueryFoldP a p p' -> (PrimQuery' a -> p) -> PrimQuery' a -> p'
-primQueryFoldF g self' = \case
+applyPrimQueryFoldF ::
+  PrimQueryFoldP a (PrimQuery' a) p -> PrimQuery' a -> p
+applyPrimQueryFoldF f = \case
   Unit -> unit f
   Empty a -> empty f a
   BaseTable ti syms -> baseTable f ti syms
@@ -262,7 +262,10 @@ primQueryFoldF g self' = \case
   Exists s q -> exists f s q
   Rebind star pes q -> rebind f star pes q
   ForUpdate q -> forUpdate f q
-  where f = dimapPrimQueryFold self' id g
+
+primQueryFoldF ::
+  PrimQueryFoldP a p p' -> (PrimQuery' a -> p) -> PrimQuery' a -> p'
+primQueryFoldF g self = applyPrimQueryFoldF (dimapPrimQueryFold self id g)
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
 foldPrimQuery f = fix (primQueryFoldF f)
