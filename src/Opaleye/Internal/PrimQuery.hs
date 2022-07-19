@@ -249,21 +249,20 @@ primQueryFoldF g self' = \case
   Unit -> unit f
   Empty a -> empty f a
   BaseTable ti syms -> baseTable f ti syms
-  Product qs pes -> product f (fmap (fmap self) qs) pes
-  Aggregate aggrs q -> aggregate f aggrs (self q)
-  DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs (self q)
-  Limit op q -> limit f op (self q)
-  Join j cond q1 q2 -> join f j cond (fmap self q1) (fmap self q2)
-  Semijoin j q1 q2 -> semijoin f j (self q1) (self q2)
+  Product qs pes -> product f qs pes
+  Aggregate aggrs q -> aggregate f aggrs q
+  DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs q
+  Limit op q -> limit f op q
+  Join j cond q1 q2 -> join f j cond q1 q2
+  Semijoin j q1 q2 -> semijoin f j q1 q2
   Values ss pes -> values f ss pes
-  Binary binop (q1, q2) -> binary f binop (self q1, self q2)
-  Label l pq -> label f l (self pq)
+  Binary binop (q1, q2) -> binary f binop (q1, q2)
+  Label l pq -> label f l pq
   RelExpr pe syms -> relExpr f pe syms
-  Exists s q -> exists f s (self q)
-  Rebind star pes q -> rebind f star pes (self q)
-  ForUpdate q -> forUpdate f (self q)
+  Exists s q -> exists f s q
+  Rebind star pes q -> rebind f star pes q
+  ForUpdate q -> forUpdate f q
   where f = dimapPrimQueryFold self' id g
-        self = id
 
 foldPrimQuery :: PrimQueryFold' a p -> PrimQuery' a -> p
 foldPrimQuery f = fix (primQueryFoldF f)
