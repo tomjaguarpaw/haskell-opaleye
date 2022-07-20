@@ -433,5 +433,5 @@ prepareQuery qr@(FromFields u _ _) q = (sql, parser)
   where sql :: Maybe PGS.Query
         sql = fmap String.fromString (S.showSqlExplicit u q)
         -- FIXME: We're doing work twice here
-        (b, _, _) = Q.runSimpleQueryArrStart q ()
+        (b, _) = Q.runSimpleSelectStart q
         parser = prepareRowParser qr b

@@ -19,7 +19,7 @@ import           Control.Arrow ((&&&), (***), arr, returnA)
 import qualified Control.Category as C
 import           Control.Category ((<<<), id)
 import           Control.Applicative (Applicative, pure, (<*>))
-import           Control.Monad.Trans.State.Strict (State, runState, state)
+import           Control.Monad.Trans.State.Strict (State, evalState, runState, state)
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 import           Data.Semigroup ((<>))
@@ -75,10 +75,15 @@ stateQueryArr f = QueryArr $ \a -> state $ \tag ->
   let (b, pq, tag') = f a tag
   in ((b, pq), tag')
 
+-- This is used by Rel8, but at some point it should switch to
+-- runSimpleSelectStart
 runSimpleQueryArrStart :: QueryArr a b -> a -> (b, PQ.PrimQuery, Tag)
 runSimpleQueryArrStart q a =
   let ((b, pqa), t') = runState (runSimpleQueryArr' q a) Tag.start
   in (b, pqa, t')
+
+runSimpleSelectStart :: Select a -> (a, PQ.PrimQuery)
+runSimpleSelectStart = flip evalState Tag.start . runSimpleSelect
 
 runQueryArrUnpack :: U.Unpackspec a b
                   -> Query a -> ([HPQ.PrimExpr], PQ.PrimQuery, Tag)
