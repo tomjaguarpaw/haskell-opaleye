@@ -62,7 +62,7 @@ valuesExplicit :: V.Valuesspec fields fields'
 valuesExplicit valuesspec fields =
   Q.productQueryArr $ do
     t <- Tag.fresh
-    pure (V.valuesUSafe valuesspec fields ((), t))
+    pure (V.valuesUSafe valuesspec fields t)
 
 {-# DEPRECATED valuesSafe "Use 'values' instead.  Will be removed in 0.10." #-}
 valuesSafe :: Default V.Valuesspec fields fields

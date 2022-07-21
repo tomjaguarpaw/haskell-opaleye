@@ -68,8 +68,8 @@ instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
 
 valuesUSafe :: Valuesspec columns columns'
             -> [columns]
-            -> ((), T.Tag) -> (columns', PQ.PrimQuery)
-valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows ((), t) =
+            -> T.Tag -> (columns', PQ.PrimQuery)
+valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows t =
   (newColumns, primQ')
   where runRow row =
           case PM.run (U.runUnpackspec unpack extractValuesEntry row) of
