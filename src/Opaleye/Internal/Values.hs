@@ -75,24 +75,15 @@ valuesUSafe valuesspec rows t =
     Nothing    -> emptyRow valuesspec t
     Just rows' -> nonEmptyValues valuesspec rows' t
 
-emptyRow :: Valuesspec columns a -> T.Tag -> (a, PQ.PrimQuery)
-emptyRow valuesspec t =
-  (newColumns, yieldNoRows (PQ.Values valuesPEs (pure nulls)))
+emptyRow :: Valuesspec columns a -> tag -> (a, PQ.PrimQuery)
+emptyRow valuesspec _ =
+  (newColumns, yieldNoRows)
       where
-        (newColumns, valuesPEs_nulls) =
-          PM.run (runValuesspecSafe valuesspec (extractValuesField t))
+        newColumns = runIdentity (runValuesspecSafe valuesspec pure)
 
-        valuesPEs = map fst valuesPEs_nulls
-        nulls = case map snd valuesPEs_nulls of
-          []     -> [nullInt]
-          nulls' -> nulls'
-
-        yieldNoRows :: PQ.PrimQuery -> PQ.PrimQuery
-        yieldNoRows = PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False))
-
-        nullInt = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType
-                                  (Nothing :: Maybe Opaleye.SqlTypes.SqlInt4))
-                               (HPQ.ConstExpr HPQ.NullLit)
+        yieldNoRows :: PQ.PrimQuery
+        yieldNoRows =
+          PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False)) PQ.Unit
 
 nonEmptyValues :: Valuesspec columns columns'
                -> NEL.NonEmpty columns
