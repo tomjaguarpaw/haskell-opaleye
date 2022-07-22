@@ -288,10 +288,7 @@ withNullsField :: (IsSqlType a, P.Profunctor p)
 withNullsField col = result
   where result = WithNulls (P.lmap (\(MaybeFields b c) ->
                                       ifExplict PP.def b c nullC) col)
-        nullC = IC.Column (V.nullPE (columnProxy result))
-
-        columnProxy :: f (IC.Field_ n sqlType) -> Maybe sqlType
-        columnProxy _ = Nothing
+        nullC = V.nullFields V.nullspecField
 
 binaryspecMaybeFields
   :: WithNulls B.Binaryspec a b
