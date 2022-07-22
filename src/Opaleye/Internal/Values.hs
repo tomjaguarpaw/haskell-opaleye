@@ -7,6 +7,7 @@ import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PGTypes
 import qualified Opaleye.SqlTypes
@@ -103,6 +104,10 @@ nonEmptyValues valuesspec@(ValuesspecSafe _ unpack) rows t =
 
         zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
 
+emptyRowExplicit :: Valuesspec columns a -> Q.Select a
+emptyRowExplicit valuesspec = Q.productQueryArr $ do
+    t <- T.fresh
+    pure (emptyRow valuesspec t)
 
 data Valuesspec fields fields' =
   ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
