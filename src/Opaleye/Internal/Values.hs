@@ -84,17 +84,13 @@ instance forall a n. Opaleye.Internal.PGTypes.IsSqlType a
   => Default Valuesspec (Field_ n a) (Field_ n a) where
   def = ValuesspecSafe nullspecField rowspecField
 
-nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
-nullPE sqlType = C.unColumn
-  (C.unsafeCast (Opaleye.Internal.PGTypes.showSqlType sqlType) OC.null)
-
 newtype Nullspec fields fields' = Nullspec fields'
 
 nullspecField :: forall a n sqlType.
                  Opaleye.SqlTypes.IsSqlType sqlType
               => Nullspec a (Field_ n sqlType)
 nullspecField = Nullspec (Column null_)
-    where null_ = nullPE (Nothing :: Maybe sqlType)
+    where null_ = C.unColumn (C.unsafeCast (Opaleye.Internal.PGTypes.showSqlType (Nothing :: Maybe sqlType)) OC.null)
 
 nullspecList :: Nullspec a [b]
 nullspecList = pure []
