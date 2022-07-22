@@ -76,12 +76,6 @@ data Valuesspec fields fields' =
   ValuesspecSafe (Nullspec fields fields')
                  (Rowspec fields fields')
 
-runValuesspecSafe :: Applicative f
-                  => Nullspec columns columns'
-                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
-                  -> f columns'
-runValuesspecSafe (Nullspec v) f = PM.traversePM v f ()
-
 valuesspecField :: Opaleye.SqlTypes.IsSqlType a
                 => Valuesspec (Field_ n a) (Field_ n a)
 valuesspecField = def
@@ -122,7 +116,7 @@ instance Opaleye.SqlTypes.IsSqlType b
 -- that!  Used to create such fields when we know we will never look
 -- at them expecting to find something non-NULL.
 nullFields :: Nullspec a fields -> fields
-nullFields v = runIdentity (runValuesspecSafe v pure)
+nullFields (Nullspec v) = runIdentity (PM.traversePM v pure ())
 
 -- {
 
