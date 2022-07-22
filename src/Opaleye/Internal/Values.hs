@@ -71,7 +71,12 @@ valuesUSafe :: Valuesspec columns columns'
             -> T.Tag -> (columns', PQ.PrimQuery)
 valuesUSafe valuesspec rows t =
   case NEL.nonEmpty rows of
-    Nothing    -> (newColumns, yieldNoRows (PQ.Values valuesPEs (pure nulls)))
+    Nothing    -> emptyRow valuesspec t
+    Just rows' -> nonEmptyValues valuesspec rows' t
+
+emptyRow :: Valuesspec columns a -> T.Tag -> (a, PQ.PrimQuery)
+emptyRow valuesspec t =
+  (newColumns, yieldNoRows (PQ.Values valuesPEs (pure nulls)))
       where
         (newColumns, valuesPEs_nulls) =
           PM.run (runValuesspecSafe valuesspec (extractValuesField t))
@@ -87,8 +92,6 @@ valuesUSafe valuesspec rows t =
         nullInt = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType
                                   (Nothing :: Maybe Opaleye.SqlTypes.SqlInt4))
                                (HPQ.ConstExpr HPQ.NullLit)
-
-    Just rows' -> nonEmptyValues valuesspec rows' t
 
 nonEmptyValues :: Valuesspec columns columns'
                -> NEL.NonEmpty columns
