@@ -92,8 +92,8 @@ nonEmptyValues (ValuesspecSafe nullspec unpack) rows =
 
       in (newColumns, PQ.Values valuesPEs (fmap runRow rows))
 
-emptyRowExplicit :: Nullspec columns a -> Q.Select a
-emptyRowExplicit nullspec = proc () -> do
+emptySelectExplicit :: Nullspec columns a -> Q.Select a
+emptySelectExplicit nullspec = proc () -> do
   O.restrict -< Opaleye.SqlTypes.sqlBool False
   returnA -< nullFields nullspec
 
