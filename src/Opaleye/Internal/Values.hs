@@ -72,12 +72,7 @@ valuesUSafe :: Valuesspec columns columns'
 valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows t =
   case NEL.nonEmpty rows of
     Nothing    -> (newColumns, yieldNoRows (PQ.Values valuesPEs (pure nulls)))
-    Just rows' -> (newColumns, PQ.Values valuesPEs (fmap runRow rows'))
-  where runRow row =
-          case PM.run (U.runUnpackspec unpack extractValuesEntry row) of
-            (_, []) -> [zero]
-            (_, xs) -> xs
-
+      where
         (newColumns, valuesPEs_nulls) =
           PM.run (runValuesspecSafe valuesspec (extractValuesField t))
 
@@ -89,10 +84,24 @@ valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows t =
         yieldNoRows :: PQ.PrimQuery -> PQ.PrimQuery
         yieldNoRows = PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False))
 
-        zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
         nullInt = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType
                                   (Nothing :: Maybe Opaleye.SqlTypes.SqlInt4))
                                (HPQ.ConstExpr HPQ.NullLit)
+
+    Just rows' -> (newColumns, PQ.Values valuesPEs (fmap runRow rows'))
+      where
+        runRow row =
+          case PM.run (U.runUnpackspec unpack extractValuesEntry row) of
+            (_, []) -> [zero]
+            (_, xs) -> xs
+
+        (newColumns, valuesPEs_nulls) =
+          PM.run (runValuesspecSafe valuesspec (extractValuesField t))
+
+        valuesPEs = map fst valuesPEs_nulls
+
+        zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
+
 
 data Valuesspec fields fields' =
   ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
