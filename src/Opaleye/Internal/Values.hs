@@ -67,25 +67,6 @@ runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
   def = Valuesspec (PM.iso id Column)
 
-{-# DEPRECATED valuesUSafe "Will be removed without warning in a future version" #-}
-valuesUSafe :: Valuesspec columns columns'
-            -> [columns]
-            -> T.Tag -> (columns', PQ.PrimQuery)
-valuesUSafe valuesspec rows t =
-  case NEL.nonEmpty rows of
-    Nothing    -> emptyRow valuesspec t
-    Just rows' -> nonEmptyValues valuesspec rows' t
-
-emptyRow :: Valuesspec columns a -> tag -> (a, PQ.PrimQuery)
-emptyRow valuesspec _ =
-  (newColumns, yieldNoRows)
-      where
-        newColumns = runIdentity (runValuesspecSafe valuesspec pure)
-
-        yieldNoRows :: PQ.PrimQuery
-        yieldNoRows =
-          PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False)) PQ.Unit
-
 nonEmptyValues :: Valuesspec columns columns'
                -> NEL.NonEmpty columns
                -> T.Tag -> (columns', PQ.PrimQuery)
@@ -106,8 +87,13 @@ nonEmptyValues valuesspec@(ValuesspecSafe _ unpack) rows t =
 
 emptyRowExplicit :: Valuesspec columns a -> Q.Select a
 emptyRowExplicit valuesspec = Q.productQueryArr $ do
-    t <- T.fresh
-    pure (emptyRow valuesspec t)
+    pure (newColumns, yieldNoRows)
+      where
+        newColumns = runIdentity (runValuesspecSafe valuesspec pure)
+
+        yieldNoRows :: PQ.PrimQuery
+        yieldNoRows =
+          PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False)) PQ.Unit
 
 data Valuesspec fields fields' =
   ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
