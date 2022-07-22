@@ -1,5 +1,6 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Opaleye.Internal.Values where
 
@@ -110,16 +111,14 @@ valuesspecField :: Opaleye.SqlTypes.IsSqlType a
                 => Valuesspec (Field_ n a) (Field_ n a)
 valuesspecField = def
 
-instance Opaleye.Internal.PGTypes.IsSqlType a
+instance forall a n. Opaleye.Internal.PGTypes.IsSqlType a
   => Default Valuesspec (Field_ n a) (Field_ n a) where
   def = def_
     where def_ = ValuesspecSafe (PM.PackMap (\f () -> fmap Column (f null_)))
                                 U.unpackspecField
           null_ = nullPE sqlType
 
-          sqlType = columnProxy def_
-          columnProxy :: f (Field_ n sqlType) -> Maybe sqlType
-          columnProxy _ = Nothing
+          sqlType = Nothing :: Maybe a
 
 nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
 nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
