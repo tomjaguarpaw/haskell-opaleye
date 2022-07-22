@@ -92,11 +92,9 @@ valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows t =
                                   (Nothing :: Maybe Opaleye.SqlTypes.SqlInt4))
                                (HPQ.ConstExpr HPQ.NullLit)
 
-        (values, wrap) = case NEL.nonEmpty rows of
-          Nothing    -> (pure nulls, yieldNoRows)
-          Just rows' -> (fmap runRow rows', id)
-
-        primQ' = wrap (PQ.Values valuesPEs values)
+        primQ' = case NEL.nonEmpty rows of
+          Nothing    -> yieldNoRows (PQ.Values valuesPEs (pure nulls))
+          Just rows' -> PQ.Values valuesPEs (fmap runRow rows')
 
 data Valuesspec fields fields' =
   ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
