@@ -74,7 +74,7 @@ instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
 nonEmptyValues :: Valuesspec columns columns'
                -> NEL.NonEmpty columns
                -> T.Tag -> (columns', PQ.PrimQuery)
-nonEmptyValues valuesspec@(ValuesspecSafe _ unpack) rows t =
+nonEmptyValues (ValuesspecSafe nullspec unpack) rows t =
   (newColumns, PQ.Values valuesPEs (fmap runRow rows))
       where
         runRow row =
@@ -83,16 +83,16 @@ nonEmptyValues valuesspec@(ValuesspecSafe _ unpack) rows t =
             (_, xs) -> xs
 
         (newColumns, valuesPEs_nulls) =
-          PM.run (runValuesspecSafe valuesspec (extractValuesField t))
+          PM.run (runValuesspecSafe nullspec (extractValuesField t))
 
         valuesPEs = map fst valuesPEs_nulls
 
         zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
 
 emptyRowExplicit :: Valuesspec columns a -> Q.Select a
-emptyRowExplicit valuesspec = proc () -> do
+emptyRowExplicit (ValuesspecSafe nullspec _) = proc () -> do
   O.restrict -< Opaleye.SqlTypes.sqlBool False
-  returnA -< runIdentity (runValuesspecSafe valuesspec pure)
+  returnA -< runIdentity (runValuesspecSafe nullspec pure)
 
 data Valuesspec fields fields' =
   ValuesspecSafe (Nullspec' fields fields')
@@ -102,10 +102,10 @@ data Valuesspec fields fields' =
 type ValuesspecSafe = Valuesspec
 
 runValuesspecSafe :: Applicative f
-                  => Valuesspec columns columns'
+                  => Nullspec' columns columns'
                   -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                   -> f columns'
-runValuesspecSafe (ValuesspecSafe v _) f = PM.traversePM v f ()
+runValuesspecSafe v f = PM.traversePM v f ()
 
 valuesspecField :: Opaleye.SqlTypes.IsSqlType a
                 => Valuesspec (Field_ n a) (Field_ n a)
@@ -154,7 +154,8 @@ instance Opaleye.SqlTypes.IsSqlType b
 -- that!  Used to create such fields when we know we will never look
 -- at them expecting to find something non-NULL.
 nullFields :: Nullspec a fields -> fields
-nullFields (Nullspec v) = runIdentity (runValuesspecSafe v pure)
+nullFields (Nullspec (ValuesspecSafe v _)) =
+  runIdentity (runValuesspecSafe v pure)
 
 -- {
 
