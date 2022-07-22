@@ -113,7 +113,7 @@ valuesspecField = def
 instance forall a n. Opaleye.Internal.PGTypes.IsSqlType a
   => Default Valuesspec (Field_ n a) (Field_ n a) where
   def = def_
-    where def_ = ValuesspecSafe nullspecField'
+    where def_ = ValuesspecSafe nullspecField
                                 U.unpackspecField
 nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
 nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
@@ -122,14 +122,10 @@ nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
 newtype Nullspec fields fields' =
   Nullspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
 
-nullspecField :: Opaleye.SqlTypes.IsSqlType b
-              => Nullspec a (Field_ n b)
-nullspecField = nullspecField'
-
-nullspecField' :: forall a n sqlType.
-                  Opaleye.SqlTypes.IsSqlType sqlType
-               => Nullspec a (Field_ n sqlType)
-nullspecField' = Nullspec (PM.PackMap (\f () -> fmap Column (f null_)))
+nullspecField :: forall a n sqlType.
+                 Opaleye.SqlTypes.IsSqlType sqlType
+              => Nullspec a (Field_ n sqlType)
+nullspecField = Nullspec (PM.PackMap (\f () -> fmap Column (f null_)))
     where null_ = nullPE (Nothing :: Maybe sqlType)
 
 nullspecList :: Nullspec a [b]
