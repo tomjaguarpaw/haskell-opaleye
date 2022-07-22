@@ -66,6 +66,7 @@ runValuesspec (Valuesspec v) f = PM.traversePM v f ()
 instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
   def = Valuesspec (PM.iso id Column)
 
+{-# DEPRECATED valuesUSafe "Will be removed without warning in a future version" #-}
 valuesUSafe :: Valuesspec columns columns'
             -> [columns]
             -> T.Tag -> (columns', PQ.PrimQuery)
