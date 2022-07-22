@@ -1,10 +1,12 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Opaleye.Internal.Values where
 
 import           Opaleye.Internal.Column (Field_(Column))
+import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.Operators as O
@@ -16,14 +18,16 @@ import qualified Opaleye.Internal.PGTypes
 import qualified Opaleye.SqlTypes
 
 import           Control.Arrow (returnA)
+import qualified Control.Monad.Trans.State.Strict as State
 import           Data.Functor.Identity (runIdentity)
 import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
+import           Data.Semigroup (Semigroup, (<>))
 
-import           Control.Applicative (Applicative, pure, (<*>))
+import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
 -- FIXME: We don't currently handle the case of zero columns.  Need to
 -- emit a dummy column and data.
@@ -73,33 +77,49 @@ instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
 nonEmptyValues :: Valuesspec columns columns'
                -> NEL.NonEmpty columns
                -> Q.Select columns'
-nonEmptyValues (ValuesspecSafe nullspec unpack) rows =
+nonEmptyValues (ValuesspecSafe _ rowspec) rows =
+  let nerowspec' = case rowspec of
+        NonEmptyRows nerowspec -> nerowspec
+        EmptyRows fields ->
+          dimap (const zero) (const fields) nonEmptyRowspecField
+          where zero = 0 :: C.Field Opaleye.SqlTypes.SqlInt4
+  in nonEmptyRows nerowspec' rows
+
+nonEmptyRows :: NonEmptyRowspec fields fields'
+             -> NEL.NonEmpty fields
+             -> Q.Select fields'
+nonEmptyRows (NonEmptyRowspec runRow fields) rows =
   Q.productQueryArr $ do
-    t <- T.fresh
-    pure $
-      let
-        runRow row =
-          case PM.run (U.runUnpackspec unpack extractValuesEntry row) of
-            (_, []) -> [zero]
-            (_, xs) -> xs
-
-        (newColumns, valuesPEs_nulls) =
-          PM.run (runValuesspecSafe nullspec (extractValuesField t))
-
-        valuesPEs = map fst valuesPEs_nulls
-
-        zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
-
-      in (newColumns, PQ.Values valuesPEs (fmap runRow rows))
+    (valuesPEs, newColumns) <- fields
+    pure (newColumns, PQ.Values (NEL.toList valuesPEs) (fmap (NEL.toList . runRow) rows))
 
 emptySelectExplicit :: Nullspec columns a -> Q.Select a
 emptySelectExplicit nullspec = proc () -> do
   O.restrict -< Opaleye.SqlTypes.sqlBool False
   returnA -< nullFields nullspec
 
+data NonEmptyRowspec fields fields' =
+  NonEmptyRowspec (fields -> NEL.NonEmpty HPQ.PrimExpr)
+                  (State.State T.Tag (NEL.NonEmpty HPQ.Symbol, fields'))
+
+-- Some overlap here with extractAttrPE
+nonEmptyRowspecField :: NonEmptyRowspec (Field_ n a) (Field_ n a)
+nonEmptyRowspecField = NonEmptyRowspec (pure . C.unColumn) s
+  where s = do
+          t <- T.fresh
+          let symbol = HPQ.Symbol "values" t
+          pure (pure symbol, C.Column (HPQ.AttrExpr symbol))
+
+rowspecField :: Rowspec (Field_ n a) (Field_ n a)
+rowspecField = NonEmptyRows nonEmptyRowspecField
+
+data Rowspec fields fields' =
+    NonEmptyRows (NonEmptyRowspec fields fields')
+  | EmptyRows fields'
+
 data Valuesspec fields fields' =
   ValuesspecSafe (Nullspec fields fields')
-                 (U.Unpackspec fields fields')
+                 (Rowspec fields fields')
 
 {-# DEPRECATED ValuesspecSafe "Use Valuesspec instead.  Will be removed in version 0.10." #-}
 type ValuesspecSafe = Valuesspec
@@ -116,7 +136,7 @@ valuesspecField = def
 
 instance forall a n. Opaleye.Internal.PGTypes.IsSqlType a
   => Default Valuesspec (Field_ n a) (Field_ n a) where
-  def = ValuesspecSafe nullspecField U.unpackspecField
+  def = ValuesspecSafe nullspecField rowspecField
 
 nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
 nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
@@ -196,6 +216,45 @@ instance Profunctor Nullspec where
   dimap _ g (Nullspec q) = Nullspec (fmap g q)
 
 instance ProductProfunctor Nullspec where
+  purePP = pure
+  (****) = (<*>)
+
+instance Functor (NonEmptyRowspec a) where
+  fmap = rmap
+
+instance Profunctor NonEmptyRowspec where
+  dimap f g (NonEmptyRowspec a b) =
+    NonEmptyRowspec (lmap f a) ((fmap . fmap) g b)
+
+instance Functor (Rowspec a) where
+  fmap = rmap
+
+instance Applicative (Rowspec a) where
+  pure x = EmptyRows x
+  r1 <*> r2 = case (r1, r2) of
+    (EmptyRows f, EmptyRows x) -> EmptyRows (f x)
+    (EmptyRows f, NonEmptyRows (NonEmptyRowspec x1 x2)) ->
+      NonEmptyRows (NonEmptyRowspec x1 ((fmap . fmap) f x2))
+    (NonEmptyRows (NonEmptyRowspec f1 f2), EmptyRows x) ->
+     NonEmptyRows (NonEmptyRowspec f1 ((fmap . fmap) ($ x) f2))
+    (NonEmptyRows (NonEmptyRowspec f1 f2),
+     NonEmptyRows (NonEmptyRowspec x1 x2)) ->
+      NonEmptyRows (NonEmptyRowspec
+            (f1 <> x1)
+            ((liftA2 . liftF2) ($) f2 x2))
+
+    where -- Instead of depending on Apply
+          -- https://www.stackage.org/haddock/lts-19.16/semigroupoids-5.3.7/Data-Functor-Apply.html#v:liftF2
+          liftF2 :: Semigroup m
+                 => (a' -> b -> c) -> (m, a') -> (m, b) -> (m, c)
+          liftF2 f (ys1, x1) (ys2, x2) = (ys1 <> ys2, f x1 x2)
+
+instance Profunctor Rowspec where
+  dimap f g = \case
+    EmptyRows x -> EmptyRows (g x)
+    NonEmptyRows x -> NonEmptyRows (dimap f g x)
+
+instance ProductProfunctor Rowspec where
   purePP = pure
   (****) = (<*>)
 
