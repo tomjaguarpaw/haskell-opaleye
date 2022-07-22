@@ -29,51 +29,6 @@ import           Data.Semigroup (Semigroup, (<>))
 
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
--- FIXME: We don't currently handle the case of zero columns.  Need to
--- emit a dummy column and data.
-valuesU :: U.Unpackspec columns columns'
-        -> ValuesspecUnsafe columns columns'
-        -> [columns]
-        -> ((), T.Tag) -> (columns', PQ.PrimQuery)
-valuesU unpack valuesspec rows ((), t) = (newColumns, primQ')
-  where runRow row = valuesRow
-           where (_, valuesRow) =
-                   PM.run (U.runUnpackspec unpack extractValuesEntry row)
-
-        (newColumns, valuesPEs_nulls) =
-          PM.run (runValuesspec valuesspec (extractValuesField t))
-
-        valuesPEs = map fst valuesPEs_nulls
-
-        values :: [[HPQ.PrimExpr]]
-        values = map runRow rows
-
-        primQ' = case NEL.nonEmpty values of
-          Nothing      -> PQ.Empty ()
-          Just values' -> PQ.Values valuesPEs values'
-
--- We don't actually use the return value of this.  It might be better
--- to come up with another Applicative instance for specifically doing
--- what we need.
-extractValuesEntry :: HPQ.PrimExpr -> PM.PM [HPQ.PrimExpr] HPQ.PrimExpr
-extractValuesEntry pe = do
-  PM.write pe
-  return pe
-
-extractValuesField :: T.Tag -> primExpr
-                   -> PM.PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
-extractValuesField = PM.extractAttr "values"
-
-newtype ValuesspecUnsafe columns columns' =
-  Valuesspec (PM.PackMap () HPQ.PrimExpr () columns')
-
-runValuesspec :: Applicative f => ValuesspecUnsafe columns columns'
-              -> (() -> f HPQ.PrimExpr) -> f columns'
-runValuesspec (Valuesspec v) f = PM.traversePM v f ()
-
-instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
-  def = Valuesspec (PM.iso id Column)
-
 nonEmptyValues :: Valuesspec columns columns'
                -> NEL.NonEmpty columns
                -> Q.Select columns'
@@ -120,9 +75,6 @@ data Rowspec fields fields' =
 data Valuesspec fields fields' =
   ValuesspecSafe (Nullspec fields fields')
                  (Rowspec fields fields')
-
-{-# DEPRECATED ValuesspecSafe "Use Valuesspec instead.  Will be removed in version 0.10." #-}
-type ValuesspecSafe = Valuesspec
 
 runValuesspecSafe :: Applicative f
                   => Nullspec columns columns'
@@ -259,3 +211,50 @@ instance ProductProfunctor Rowspec where
   (****) = (<*>)
 
 -- }
+
+{-# DEPRECATED valuesU "Will be removed in 0.10" #-}
+valuesU :: U.Unpackspec columns columns'
+        -> ValuesspecUnsafe columns columns'
+        -> [columns]
+        -> ((), T.Tag) -> (columns', PQ.PrimQuery)
+valuesU unpack valuesspec rows ((), t) = (newColumns, primQ')
+  where runRow row = valuesRow
+           where (_, valuesRow) =
+                   PM.run (U.runUnpackspec unpack extractValuesEntry row)
+
+        (newColumns, valuesPEs_nulls) =
+          PM.run (runValuesspec valuesspec (extractValuesField t))
+
+        valuesPEs = map fst valuesPEs_nulls
+
+        values :: [[HPQ.PrimExpr]]
+        values = map runRow rows
+
+        primQ' = case NEL.nonEmpty values of
+          Nothing      -> PQ.Empty ()
+          Just values' -> PQ.Values valuesPEs values'
+
+{-# DEPRECATED extractValuesEntry "Will be removed in 0.10" #-}
+extractValuesEntry :: HPQ.PrimExpr -> PM.PM [HPQ.PrimExpr] HPQ.PrimExpr
+extractValuesEntry pe = do
+  PM.write pe
+  return pe
+
+{-# DEPRECATED extractValuesField "Will be removed in 0.10" #-}
+extractValuesField :: T.Tag -> primExpr
+                   -> PM.PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
+extractValuesField = PM.extractAttr "values"
+
+{-# DEPRECATED runValuesspec "Will be removed in 0.10" #-}
+runValuesspec :: Applicative f => ValuesspecUnsafe columns columns'
+              -> (() -> f HPQ.PrimExpr) -> f columns'
+runValuesspec (Valuesspec v) f = PM.traversePM v f ()
+
+newtype ValuesspecUnsafe columns columns' =
+  Valuesspec (PM.PackMap () HPQ.PrimExpr () columns')
+
+instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
+  def = Valuesspec (PM.iso id Column)
+
+{-# DEPRECATED ValuesspecSafe "Use Valuesspec instead.  Will be removed in version 0.10." #-}
+type ValuesspecSafe = Valuesspec
