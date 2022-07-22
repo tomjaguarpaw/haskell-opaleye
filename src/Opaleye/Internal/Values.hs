@@ -91,7 +91,7 @@ nonEmptyValues (ValuesspecSafe nullspec unpack) rows t =
 emptyRowExplicit :: Nullspec columns a -> Q.Select a
 emptyRowExplicit nullspec = proc () -> do
   O.restrict -< Opaleye.SqlTypes.sqlBool False
-  returnA -< runIdentity (runValuesspecSafe nullspec pure)
+  returnA -< nullFields nullspec
 
 data Valuesspec fields fields' =
   ValuesspecSafe (Nullspec fields fields')
