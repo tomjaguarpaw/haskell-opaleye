@@ -146,8 +146,7 @@ instance Opaleye.SqlTypes.IsSqlType b
 -- that!  Used to create such fields when we know we will never look
 -- at them expecting to find something non-NULL.
 nullFields :: Nullspec a fields -> fields
-nullFields v =
-  runIdentity (runValuesspecSafe v pure)
+nullFields v = runIdentity (runValuesspecSafe v pure)
 
 -- {
 
