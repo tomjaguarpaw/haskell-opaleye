@@ -7,6 +7,7 @@ module Opaleye.Internal.Values where
 
 import           Opaleye.Internal.Column (Field_(Column))
 import qualified Opaleye.Internal.Column as C
+import qualified Opaleye.Column as OC
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.Operators as O
@@ -85,8 +86,8 @@ instance forall a n. Opaleye.Internal.PGTypes.IsSqlType a
   def = ValuesspecSafe nullspecField rowspecField
 
 nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
-nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
-                              (HPQ.ConstExpr HPQ.NullLit)
+nullPE sqlType = C.unColumn
+  (C.unsafeCast (Opaleye.Internal.PGTypes.showSqlType sqlType) OC.null)
 
 newtype Nullspec fields fields' =
   Nullspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
