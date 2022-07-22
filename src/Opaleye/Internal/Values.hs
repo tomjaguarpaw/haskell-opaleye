@@ -1,3 +1,4 @@
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 
 module Opaleye.Internal.Values where
@@ -5,6 +6,7 @@ module Opaleye.Internal.Values where
 import           Opaleye.Internal.Column (Field_(Column))
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
+import qualified Opaleye.Internal.Operators as O
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.QueryArr as Q
@@ -12,6 +14,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PGTypes
 import qualified Opaleye.SqlTypes
 
+import           Control.Arrow (returnA)
 import           Data.Functor.Identity (runIdentity)
 import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
@@ -86,14 +89,9 @@ nonEmptyValues valuesspec@(ValuesspecSafe _ unpack) rows t =
         zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
 
 emptyRowExplicit :: Valuesspec columns a -> Q.Select a
-emptyRowExplicit valuesspec = Q.productQueryArr $ do
-    pure (newColumns, yieldNoRows)
-      where
-        newColumns = runIdentity (runValuesspecSafe valuesspec pure)
-
-        yieldNoRows :: PQ.PrimQuery
-        yieldNoRows =
-          PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False)) PQ.Unit
+emptyRowExplicit valuesspec = proc () -> do
+  O.restrict -< Opaleye.SqlTypes.sqlBool False
+  returnA -< runIdentity (runValuesspecSafe valuesspec pure)
 
 data Valuesspec fields fields' =
   ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
