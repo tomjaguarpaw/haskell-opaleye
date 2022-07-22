@@ -20,7 +20,6 @@ import qualified Opaleye.SqlTypes
 
 import           Control.Arrow (returnA)
 import qualified Control.Monad.Trans.State.Strict as State
-import           Data.Functor.Identity (runIdentity)
 import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor)
@@ -89,13 +88,12 @@ nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
 nullPE sqlType = C.unColumn
   (C.unsafeCast (Opaleye.Internal.PGTypes.showSqlType sqlType) OC.null)
 
-newtype Nullspec fields fields' =
-  Nullspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
+newtype Nullspec fields fields' = Nullspec fields'
 
 nullspecField :: forall a n sqlType.
                  Opaleye.SqlTypes.IsSqlType sqlType
               => Nullspec a (Field_ n sqlType)
-nullspecField = Nullspec (PM.PackMap (\f () -> fmap Column (f null_)))
+nullspecField = Nullspec (Column null_)
     where null_ = nullPE (Nothing :: Maybe sqlType)
 
 nullspecList :: Nullspec a [b]
@@ -117,7 +115,7 @@ instance Opaleye.SqlTypes.IsSqlType b
 -- that!  Used to create such fields when we know we will never look
 -- at them expecting to find something non-NULL.
 nullFields :: Nullspec a fields -> fields
-nullFields (Nullspec v) = runIdentity (PM.traversePM v pure ())
+nullFields (Nullspec v) = v
 
 -- {
 
@@ -153,14 +151,14 @@ instance ProductProfunctor Valuesspec where
   (****) = (<*>)
 
 instance Functor (Nullspec a) where
-  fmap f (Nullspec g) = Nullspec (fmap f g)
+  fmap f (Nullspec g) = Nullspec (f g)
 
 instance Applicative (Nullspec a) where
-  pure = Nullspec . pure
-  Nullspec f <*> Nullspec x = Nullspec (f <*> x)
+  pure = Nullspec
+  Nullspec f <*> Nullspec x = Nullspec (f x)
 
 instance Profunctor Nullspec where
-  dimap _ g (Nullspec q) = Nullspec (fmap g q)
+  dimap _ g (Nullspec q) = Nullspec (g q)
 
 instance ProductProfunctor Nullspec where
   purePP = pure
