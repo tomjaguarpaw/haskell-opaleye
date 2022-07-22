@@ -89,8 +89,7 @@ newtype Nullspec fields fields' = Nullspec fields'
 nullspecField :: forall a n sqlType.
                  Opaleye.SqlTypes.IsSqlType sqlType
               => Nullspec a (Field_ n sqlType)
-nullspecField = Nullspec (Column null_)
-    where null_ = C.unColumn (C.unsafeCast (Opaleye.Internal.PGTypes.showSqlType (Nothing :: Maybe sqlType)) OC.null)
+nullspecField = Nullspec (Column (C.unColumn (C.unsafeCast (Opaleye.Internal.PGTypes.showSqlType (Nothing :: Maybe sqlType)) OC.null)))
 
 nullspecList :: Nullspec a [b]
 nullspecList = pure []
