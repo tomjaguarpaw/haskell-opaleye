@@ -69,7 +69,7 @@ instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
 valuesUSafe :: Valuesspec columns columns'
             -> [columns]
             -> T.Tag -> (columns', PQ.PrimQuery)
-valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows t =
+valuesUSafe valuesspec rows t =
   case NEL.nonEmpty rows of
     Nothing    -> (newColumns, yieldNoRows (PQ.Values valuesPEs (pure nulls)))
       where
@@ -88,7 +88,13 @@ valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows t =
                                   (Nothing :: Maybe Opaleye.SqlTypes.SqlInt4))
                                (HPQ.ConstExpr HPQ.NullLit)
 
-    Just rows' -> (newColumns, PQ.Values valuesPEs (fmap runRow rows'))
+    Just rows' -> nonEmptyValues valuesspec rows' t
+
+nonEmptyValues :: Valuesspec columns columns'
+               -> NEL.NonEmpty columns
+               -> T.Tag -> (columns', PQ.PrimQuery)
+nonEmptyValues valuesspec@(ValuesspecSafe _ unpack) rows t =
+  (newColumns, PQ.Values valuesPEs (fmap runRow rows))
       where
         runRow row =
           case PM.run (U.runUnpackspec unpack extractValuesEntry row) of
