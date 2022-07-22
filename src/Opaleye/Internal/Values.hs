@@ -89,8 +89,8 @@ nonEmptyValues (ValuesspecSafe nullspec unpack) rows t =
 
         zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
 
-emptyRowExplicit :: Valuesspec columns a -> Q.Select a
-emptyRowExplicit (ValuesspecSafe nullspec _) = proc () -> do
+emptyRowExplicit :: Nullspec' columns a -> Q.Select a
+emptyRowExplicit nullspec = proc () -> do
   O.restrict -< Opaleye.SqlTypes.sqlBool False
   returnA -< runIdentity (runValuesspecSafe nullspec pure)
 

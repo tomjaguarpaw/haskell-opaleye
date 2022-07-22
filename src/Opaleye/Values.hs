@@ -60,8 +60,8 @@ values = valuesExplicit def
 
 valuesExplicit :: V.Valuesspec fields fields'
                -> [fields] -> S.Select fields'
-valuesExplicit valuesspec fields = case NEL.nonEmpty fields of
-  Nothing -> emptyRowExplicit valuesspec
+valuesExplicit valuesspec@(V.ValuesspecSafe nullspec _) fields = case NEL.nonEmpty fields of
+  Nothing -> emptyRowExplicit nullspec
   Just rows' -> Q.productQueryArr $ do
     t <- Tag.fresh
     pure (V.nonEmptyValues valuesspec rows' t)
