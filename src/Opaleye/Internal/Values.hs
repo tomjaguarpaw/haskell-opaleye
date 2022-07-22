@@ -72,10 +72,12 @@ instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
 
 nonEmptyValues :: Valuesspec columns columns'
                -> NEL.NonEmpty columns
-               -> T.Tag -> (columns', PQ.PrimQuery)
-nonEmptyValues (ValuesspecSafe nullspec unpack) rows t =
-  (newColumns, PQ.Values valuesPEs (fmap runRow rows))
-      where
+               -> Q.Select columns'
+nonEmptyValues (ValuesspecSafe nullspec unpack) rows =
+  Q.productQueryArr $ do
+    t <- T.fresh
+    pure $
+      let
         runRow row =
           case PM.run (U.runUnpackspec unpack extractValuesEntry row) of
             (_, []) -> [zero]
@@ -87,6 +89,8 @@ nonEmptyValues (ValuesspecSafe nullspec unpack) rows t =
         valuesPEs = map fst valuesPEs_nulls
 
         zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
+
+      in (newColumns, PQ.Values valuesPEs (fmap runRow rows))
 
 emptyRowExplicit :: Nullspec columns a -> Q.Select a
 emptyRowExplicit nullspec = proc () -> do
