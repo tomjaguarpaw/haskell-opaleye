@@ -22,7 +22,6 @@ import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
-import           Data.Void (Void, absurd)
 
 import           Control.Applicative (Applicative, pure, (<*>))
 
@@ -89,23 +88,23 @@ nonEmptyValues (ValuesspecSafe nullspec unpack) rows t =
 
         zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
 
-emptyRowExplicit :: Nullspec' columns a -> Q.Select a
+emptyRowExplicit :: Nullspec columns a -> Q.Select a
 emptyRowExplicit nullspec = proc () -> do
   O.restrict -< Opaleye.SqlTypes.sqlBool False
   returnA -< runIdentity (runValuesspecSafe nullspec pure)
 
 data Valuesspec fields fields' =
-  ValuesspecSafe (Nullspec' fields fields')
+  ValuesspecSafe (Nullspec fields fields')
                  (U.Unpackspec fields fields')
 
 {-# DEPRECATED ValuesspecSafe "Use Valuesspec instead.  Will be removed in version 0.10." #-}
 type ValuesspecSafe = Valuesspec
 
 runValuesspecSafe :: Applicative f
-                  => Nullspec' columns columns'
+                  => Nullspec columns columns'
                   -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
                   -> f columns'
-runValuesspecSafe v f = PM.traversePM v f ()
+runValuesspecSafe (Nullspec v) f = PM.traversePM v f ()
 
 valuesspecField :: Opaleye.SqlTypes.IsSqlType a
                 => Valuesspec (Field_ n a) (Field_ n a)
@@ -120,19 +119,17 @@ nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
 nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
                               (HPQ.ConstExpr HPQ.NullLit)
 
--- Implementing this in terms of Valuesspec for convenience
-newtype Nullspec fields fields' = Nullspec (Valuesspec Void fields')
-
-type Nullspec' fields = PM.PackMap HPQ.PrimExpr HPQ.PrimExpr ()
+newtype Nullspec fields fields' =
+  Nullspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
 
 nullspecField :: Opaleye.SqlTypes.IsSqlType b
               => Nullspec a (Field_ n b)
-nullspecField = Nullspec (lmap absurd valuesspecField)
+nullspecField = nullspecField'
 
 nullspecField' :: forall a n sqlType.
                   Opaleye.SqlTypes.IsSqlType sqlType
-               => Nullspec' a (Field_ n sqlType)
-nullspecField' = PM.PackMap (\f () -> fmap Column (f null_))
+               => Nullspec a (Field_ n sqlType)
+nullspecField' = Nullspec (PM.PackMap (\f () -> fmap Column (f null_)))
     where null_ = nullPE (Nothing :: Maybe sqlType)
 
 nullspecList :: Nullspec a [b]
@@ -154,7 +151,7 @@ instance Opaleye.SqlTypes.IsSqlType b
 -- that!  Used to create such fields when we know we will never look
 -- at them expecting to find something non-NULL.
 nullFields :: Nullspec a fields -> fields
-nullFields (Nullspec (ValuesspecSafe v _)) =
+nullFields v =
   runIdentity (runValuesspecSafe v pure)
 
 -- {
@@ -184,7 +181,7 @@ instance Applicative (Valuesspec a) where
     ValuesspecSafe (f <*> x) (f' <*> x')
 
 instance Profunctor Valuesspec where
-  dimap f g (ValuesspecSafe q q') = ValuesspecSafe (rmap g q) (dimap f g q')
+  dimap f g (ValuesspecSafe q q') = ValuesspecSafe (dimap f g q) (dimap f g q')
 
 instance ProductProfunctor Valuesspec where
   purePP = pure
