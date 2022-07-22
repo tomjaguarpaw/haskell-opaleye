@@ -60,12 +60,14 @@ values = valuesExplicit def
 
 valuesExplicit :: V.Valuesspec fields fields'
                -> [fields] -> S.Select fields'
-valuesExplicit valuesspec fields =
-  Q.productQueryArr $ do
+valuesExplicit valuesspec fields = case NEL.nonEmpty fields of
+  Nothing -> Q.productQueryArr $ do
     t <- Tag.fresh
-    pure $ case NEL.nonEmpty fields of
-      Nothing    -> V.emptyRow valuesspec t
-      Just rows' -> V.nonEmptyValues valuesspec rows' t
+    pure (V.emptyRow valuesspec t)
+
+  Just rows' -> Q.productQueryArr $ do
+    t <- Tag.fresh
+    pure (V.nonEmptyValues valuesspec rows' t)
 
 {-# DEPRECATED valuesSafe "Use 'values' instead.  Will be removed in 0.10." #-}
 valuesSafe :: Default V.Valuesspec fields fields
