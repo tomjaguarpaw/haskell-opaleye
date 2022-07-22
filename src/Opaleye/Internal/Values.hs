@@ -29,10 +29,10 @@ import           Data.Semigroup (Semigroup, (<>))
 
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
-nonEmptyValues :: Valuesspec columns columns'
+nonEmptyValues :: Rowspec columns columns'
                -> NEL.NonEmpty columns
                -> Q.Select columns'
-nonEmptyValues (ValuesspecSafe _ rowspec) rows =
+nonEmptyValues rowspec rows =
   let nerowspec' = case rowspec of
         NonEmptyRows nerowspec -> nerowspec
         EmptyRows fields ->
