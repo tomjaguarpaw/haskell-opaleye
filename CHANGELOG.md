@@ -1,3 +1,7 @@
+## 0.9.3.2
+
+* No externally visible changes
+
 ## 0.9.3.1
 
 * No externally visible changes
