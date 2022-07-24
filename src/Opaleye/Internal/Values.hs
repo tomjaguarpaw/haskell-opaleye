@@ -120,7 +120,7 @@ instance Opaleye.Internal.PGTypes.IsSqlType a
   def = def_
     where def_ = ValuesspecSafe (PM.PackMap (\f () -> fmap Column (f null_)))
                                 U.unpackspecField
-          null_ = nullPE sqlType
+          null_ = nullPEType (Opaleye.Internal.PGTypes.showSqlType sqlType)
 
           sqlType = columnProxy def_
           columnProxy :: f (Field_ n sqlType) -> Maybe sqlType
