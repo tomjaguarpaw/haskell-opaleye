@@ -127,8 +127,10 @@ instance Opaleye.Internal.PGTypes.IsSqlType a
           columnProxy _ = Nothing
 
 nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
-nullPE sqlType = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType sqlType)
-                              (HPQ.ConstExpr HPQ.NullLit)
+nullPE sqlType = nullPEType (Opaleye.Internal.PGTypes.showSqlType sqlType)
+
+nullPEType :: String -> HPQ.PrimExpr
+nullPEType sqlType = HPQ.CastExpr sqlType (HPQ.ConstExpr HPQ.NullLit)
 
 -- Implementing this in terms of Valuesspec for convenience
 newtype Nullspec fields fields' = Nullspec (Valuesspec Void fields')
