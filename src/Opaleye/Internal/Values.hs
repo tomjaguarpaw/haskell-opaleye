@@ -113,11 +113,7 @@ runValuesspecSafe (ValuesspecSafe v _) f = PM.traversePM v f ()
 
 valuesspecField :: Opaleye.SqlTypes.IsSqlType a
                 => Valuesspec (Field_ n a) (Field_ n a)
-valuesspecField = def
-
-instance Opaleye.Internal.PGTypes.IsSqlType a
-  => Default Valuesspec (Field_ n a) (Field_ n a) where
-  def = def_
+valuesspecField = def_
     where def_ = ValuesspecSafe (PM.PackMap (\f () -> fmap Column (f null_)))
                                 U.unpackspecField
           null_ = nullPEType (Opaleye.Internal.PGTypes.showSqlType sqlType)
@@ -125,6 +121,10 @@ instance Opaleye.Internal.PGTypes.IsSqlType a
           sqlType = columnProxy def_
           columnProxy :: f (Field_ n sqlType) -> Maybe sqlType
           columnProxy _ = Nothing
+
+instance Opaleye.Internal.PGTypes.IsSqlType a
+  => Default Valuesspec (Field_ n a) (Field_ n a) where
+  def = valuesspecField
 
 nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
 nullPE sqlType = nullPEType (Opaleye.Internal.PGTypes.showSqlType sqlType)
