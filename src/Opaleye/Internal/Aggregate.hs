@@ -88,6 +88,14 @@ runAggregator
   -> a -> f b
 runAggregator (Aggregator a) = PM.traversePM a
 
+-- For rel8.
+--
+-- Like https://www.stackage.org/haddock/lts-19.10/base-4.15.1.0/Control-Arrow.html#t:ArrowApply
+aggregatorApply :: Aggregator (Aggregator a b, a) b
+aggregatorApply = Aggregator $ PM.PackMap $ \f (agg, a) ->
+  case agg of
+    Aggregator (PM.PackMap inner) -> inner f a
+
 -- In Postgres (and, I believe, standard SQL) "aggregate functions are
 -- not allowed in FROM clause of their own query level".  There
 -- doesn't seem to be any fundamental reason for this, but we are
