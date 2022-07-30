@@ -129,16 +129,12 @@ defaultSqlExpr gen expr =
       -- because it leads to a non-uniformity of treatment, as seen
       -- below.  Perhaps we should have just `AggrExpr AggrOp` and
       -- always put the `PrimExpr` in the `AggrOp`.
-      AggrExpr distinct op e ord -> let op' = showAggrOp op
-                                        e' = sqlExpr gen e
+      AggrExpr distinct op e ord -> let (op', e') = showAggrOp gen op e
                                         ord' = toSqlOrder gen <$> ord
                                         distinct' = case distinct of
                                                       AggrDistinct -> SqlDistinct
                                                       AggrAll      -> SqlNotDistinct
-                                        moreAggrFunParams = case op of
-                                          AggrStringAggr primE -> [sqlExpr gen primE]
-                                          _ -> []
-                                     in AggrFunSqlExpr op' (e' : moreAggrFunParams) ord' distinct'
+                                     in AggrFunSqlExpr op' e' ord' distinct'
       ConstExpr l      -> ConstSqlExpr (sqlLiteral gen l)
       CaseExpr cs e    -> let cs' = [(sqlExpr gen c, sqlExpr gen x)| (c,x) <- cs]
                               e'  = sqlExpr gen e
@@ -214,22 +210,23 @@ sqlUnOp  OpUpper       = ("UPPER", UnOpFun)
 sqlUnOp  (UnOpOther s) = (s, UnOpFun)
 
 
-showAggrOp :: AggrOp -> String
-showAggrOp AggrCount          = "COUNT"
-showAggrOp AggrSum            = "SUM"
-showAggrOp AggrAvg            = "AVG"
-showAggrOp AggrMin            = "MIN"
-showAggrOp AggrMax            = "MAX"
-showAggrOp AggrStdDev         = "StdDev"
-showAggrOp AggrStdDevP        = "StdDevP"
-showAggrOp AggrVar            = "Var"
-showAggrOp AggrVarP           = "VarP"
-showAggrOp AggrBoolAnd        = "BOOL_AND"
-showAggrOp AggrBoolOr         = "BOOL_OR"
-showAggrOp AggrArr            = "ARRAY_AGG"
-showAggrOp JsonArr            = "JSON_AGG"
-showAggrOp (AggrStringAggr _) = "STRING_AGG"
-showAggrOp (AggrOther s)      = s
+showAggrOp :: SqlGenerator -> AggrOp -> PrimExpr -> (String, [SqlExpr])
+showAggrOp gen op arg = case op of
+  AggrCount -> ("COUNT", [sqlExpr gen arg])
+  AggrSum -> ("SUM", [sqlExpr gen arg])
+  AggrAvg -> ("AVG", [sqlExpr gen arg])
+  AggrMin -> ("MIN", [sqlExpr gen arg])
+  AggrMax -> ("MAX", [sqlExpr gen arg])
+  AggrStdDev -> ("StdDev", [sqlExpr gen arg])
+  AggrStdDevP -> ("StdDevP", [sqlExpr gen arg])
+  AggrVar -> ("Var", [sqlExpr gen arg])
+  AggrVarP -> ("VarP", [sqlExpr gen arg])
+  AggrBoolAnd -> ("BOOL_AND", [sqlExpr gen arg])
+  AggrBoolOr -> ("BOOL_OR", [sqlExpr gen arg])
+  AggrArr -> ("ARRAY_AGG", [sqlExpr gen arg])
+  JsonArr -> ("JSON_AGG", [sqlExpr gen arg])
+  AggrStringAggr sep -> ("STRING_AGG", [sqlExpr gen arg, sqlExpr gen sep])
+  AggrOther s -> (s, [sqlExpr gen arg])
 
 
 defaultSqlLiteral :: SqlGenerator -> Literal -> String
