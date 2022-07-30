@@ -133,6 +133,7 @@ data PrimQuery' a = Unit
                                                 HPQ.AggrDistinct),
                                           HPQ.Symbol))
                               (PrimQuery' a)
+                  | Window (Bindings (HPQ.WndwOp, HPQ.Partition)) (PrimQuery' a)
                   -- | Represents both @DISTINCT ON@ and @ORDER BY@
                   --   clauses. In order to represent valid SQL only,
                   --   @DISTINCT ON@ expressions are always
@@ -180,6 +181,7 @@ data PrimQueryFoldP a p p' = PrimQueryFold
                                    HPQ.Symbol)
                       -> p
                       -> p'
+  , window            :: Bindings (HPQ.WndwOp, HPQ.Partition) -> p -> p'
   , distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr)
                       -> [HPQ.OrderExpr]
                       -> p
@@ -212,6 +214,7 @@ primQueryFoldDefault = PrimQueryFold
   , baseTable         = BaseTable
   , product           = Product
   , aggregate         = Aggregate
+  , window            = Window
   , distinctOnOrderBy = DistinctOnOrderBy
   , limit             = Limit
   , join              = Join
@@ -236,6 +239,7 @@ dimapPrimQueryFold self g f = PrimQueryFold
   , baseTable = \ti bs -> g (baseTable f ti bs)
   , product = \ps conds -> g (product f ((fmap . fmap) self ps) conds)
   , aggregate = \b p -> g (aggregate f b (self p))
+  , window = \b p -> g (window f b (self p))
   , distinctOnOrderBy = \m os p -> g (distinctOnOrderBy f m os (self p))
   , limit = \l p -> g (limit f l (self p))
   , join = \j pe lp lp' -> g (join f j pe (fmap self lp) (fmap self lp'))
@@ -258,6 +262,7 @@ applyPrimQueryFoldF f = \case
   BaseTable ti syms -> baseTable f ti syms
   Product qs pes -> product f qs pes
   Aggregate aggrs q -> aggregate f aggrs q
+  Window wndws q -> window f wndws q
   DistinctOnOrderBy dxs oxs q -> distinctOnOrderBy f dxs oxs q
   Limit op q -> limit f op q
   Join j cond q1 q2 -> join f j cond q1 q2

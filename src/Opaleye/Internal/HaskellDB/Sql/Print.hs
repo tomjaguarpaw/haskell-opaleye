@@ -24,7 +24,7 @@ import Prelude hiding ((<>))
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
                                SqlUpdate(..), SqlTable(..), SqlRangeBound(..),
-                               OnConflict(..))
+                               SqlPartition(..), OnConflict(..))
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 
 import Data.List (intersperse)
@@ -54,6 +54,22 @@ ppGroupBy es = text "GROUP BY" <+> ppGroupAttrs es
   where
     ppGroupAttrs :: [SqlExpr] -> Doc
     ppGroupAttrs = commaV (ppSqlExpr . deliteral)
+
+ppWindowExpr :: String -> [SqlExpr] -> SqlPartition -> Doc
+ppWindowExpr f es partition = text f <> parens (commaH ppSqlExpr es) <+> text "OVER" <+> parens (ppSqlPartition partition)
+
+ppSqlPartition :: SqlPartition -> Doc
+ppSqlPartition partition =
+  ppPartitionBy (sqlPartitionBy partition) <+>
+  ppOrderBy (maybe [] NEL.toList (sqlOrderBy partition))
+
+ppPartitionBy :: Maybe (NEL.NonEmpty SqlExpr) -> Doc
+ppPartitionBy Nothing = empty
+ppPartitionBy (Just es) =
+  text "PARTITION BY" <+> ppPartitionAttrs (NEL.toList es)
+  where
+    ppPartitionAttrs :: [SqlExpr] -> Doc
+    ppPartitionAttrs = commaH (ppSqlExpr . deliteral)
 
 ppOrderBy :: [(SqlExpr,SqlOrder)] -> Doc
 ppOrderBy [] = empty
@@ -177,6 +193,7 @@ ppSqlExpr expr =
       ArraySqlExpr es        -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
       RangeSqlExpr t s e     -> ppRange t s e
       AggrFunSqlExpr f es ord distinct -> text f <> parens (ppSqlDistinct distinct <+> commaH ppSqlExpr es <+> ppOrderBy ord)
+      WndwFunSqlExpr f es window -> ppWindowExpr f es window
       CaseSqlExpr cs el   -> text "CASE" <+> vcat (toList (fmap ppWhen cs))
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
           where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w
