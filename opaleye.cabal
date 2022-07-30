@@ -102,7 +102,7 @@ library
                    Opaleye.Internal.Tag,
                    Opaleye.Internal.TypeFamilies,
                    Opaleye.Internal.Unpackspec,
-                   Opaleye.Internal.Values
+                   Opaleye.Internal.Values,
                    Opaleye.Internal.HaskellDB.PrimQuery,
                    Opaleye.Internal.HaskellDB.Sql,
                    Opaleye.Internal.HaskellDB.Sql.Default,
