@@ -44,7 +44,7 @@ unsafeCoerceColumn (Column e) = Column e
 -- | Cast a column to any other type. Implements Postgres's @::@ or
 -- @CAST( ... AS ... )@ operations.  This is safe for some
 -- conversions, such as uuid to text.
-unsafeCast :: String -> Field_ n' a -> Field_ n' b
+unsafeCast :: String -> Field_ n a -> Field_ n b
 unsafeCast = mapColumn . HPQ.CastExpr
   where
     mapColumn :: (HPQ.PrimExpr -> HPQ.PrimExpr) -> Field_ n c -> Field_ n' a

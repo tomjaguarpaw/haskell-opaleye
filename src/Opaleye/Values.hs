@@ -17,10 +17,11 @@ module Opaleye.Values(
 
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Tag as Tag
-import           Opaleye.Internal.Values as V
+import qualified Opaleye.Internal.Values as V
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Select              as S
 
+import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor.Product.Default (Default, def)
 
 {-# DEPRECATED valuesUnsafe "Use 'values' instead.  Will be removed in 0.10." #-}
@@ -59,10 +60,9 @@ values = valuesExplicit def
 
 valuesExplicit :: V.Valuesspec fields fields'
                -> [fields] -> S.Select fields'
-valuesExplicit valuesspec fields =
-  Q.productQueryArr $ do
-    t <- Tag.fresh
-    pure (V.valuesUSafe valuesspec fields ((), t))
+valuesExplicit (V.ValuesspecSafe nullspec rowspec) fields = case NEL.nonEmpty fields of
+  Nothing -> V.emptySelectExplicit nullspec
+  Just rows -> V.nonEmptyValues rowspec rows
 
 {-# DEPRECATED valuesSafe "Use 'values' instead.  Will be removed in 0.10." #-}
 valuesSafe :: Default V.Valuesspec fields fields

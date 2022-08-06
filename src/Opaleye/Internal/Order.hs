@@ -14,7 +14,6 @@ import qualified Opaleye.Field                        as F
 import qualified Opaleye.Internal.Column              as IC
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PrimQuery           as PQ
-import qualified Opaleye.Internal.Tag                 as T
 import qualified Opaleye.Internal.Unpackspec          as U
 
 {-|

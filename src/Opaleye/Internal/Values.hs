@@ -1,115 +1,80 @@
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Opaleye.Internal.Values where
 
 import           Opaleye.Internal.Column (Field_(Column))
+import qualified Opaleye.Internal.Column as C
+import qualified Opaleye.Column as OC
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
+import qualified Opaleye.Internal.Operators as O
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.PackMap as PM
+import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.PGTypes
 import qualified Opaleye.SqlTypes
 
-import           Data.Functor.Identity (runIdentity)
+import           Control.Arrow (returnA)
+import qualified Control.Monad.Trans.State.Strict as State
 import qualified Data.List.NonEmpty as NEL
 import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
-import           Data.Void (Void, absurd)
+import           Data.Semigroup (Semigroup, (<>))
 
-import           Control.Applicative (Applicative, pure, (<*>))
+import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 
--- FIXME: We don't currently handle the case of zero columns.  Need to
--- emit a dummy column and data.
-valuesU :: U.Unpackspec columns columns'
-        -> ValuesspecUnsafe columns columns'
-        -> [columns]
-        -> ((), T.Tag) -> (columns', PQ.PrimQuery)
-valuesU unpack valuesspec rows ((), t) = (newColumns, primQ')
-  where runRow row = valuesRow
-           where (_, valuesRow) =
-                   PM.run (U.runUnpackspec unpack extractValuesEntry row)
+nonEmptyValues :: Rowspec columns columns'
+               -> NEL.NonEmpty columns
+               -> Q.Select columns'
+nonEmptyValues rowspec rows =
+  let nerowspec' = case rowspec of
+        NonEmptyRows nerowspec -> nerowspec
+        EmptyRows fields ->
+          dimap (const zero) (const fields) nonEmptyRowspecField
+          where zero = 0 :: C.Field Opaleye.SqlTypes.SqlInt4
+  in nonEmptyRows nerowspec' rows
 
-        (newColumns, valuesPEs_nulls) =
-          PM.run (runValuesspec valuesspec (extractValuesField t))
+nonEmptyRows :: NonEmptyRowspec fields fields'
+             -> NEL.NonEmpty fields
+             -> Q.Select fields'
+nonEmptyRows (NonEmptyRowspec runRow fields) rows =
+  Q.productQueryArr $ do
+    (valuesPEs, newColumns) <- fields
+    pure (newColumns, PQ.Values (NEL.toList valuesPEs) (fmap (NEL.toList . runRow) rows))
 
-        valuesPEs = map fst valuesPEs_nulls
+emptySelectExplicit :: Nullspec columns a -> Q.Select a
+emptySelectExplicit nullspec = proc () -> do
+  O.restrict -< Opaleye.SqlTypes.sqlBool False
+  returnA -< nullFields nullspec
 
-        values :: [[HPQ.PrimExpr]]
-        values = map runRow rows
+data NonEmptyRowspec fields fields' =
+  NonEmptyRowspec (fields -> NEL.NonEmpty HPQ.PrimExpr)
+                  (State.State T.Tag (NEL.NonEmpty HPQ.Symbol, fields'))
 
-        primQ' = case NEL.nonEmpty values of
-          Nothing      -> PQ.Empty ()
-          Just values' -> PQ.Values valuesPEs values'
+-- Some overlap here with extractAttrPE
+nonEmptyRowspecField :: NonEmptyRowspec (Field_ n a) (Field_ n a)
+nonEmptyRowspecField = NonEmptyRowspec (pure . C.unColumn) s
+  where s = do
+          t <- T.fresh
+          let symbol = HPQ.Symbol "values" t
+          pure (pure symbol, C.Column (HPQ.AttrExpr symbol))
 
--- We don't actually use the return value of this.  It might be better
--- to come up with another Applicative instance for specifically doing
--- what we need.
-extractValuesEntry :: HPQ.PrimExpr -> PM.PM [HPQ.PrimExpr] HPQ.PrimExpr
-extractValuesEntry pe = do
-  PM.write pe
-  return pe
+rowspecField :: Rowspec (Field_ n a) (Field_ n a)
+rowspecField = NonEmptyRows nonEmptyRowspecField
 
-extractValuesField :: T.Tag -> primExpr
-                   -> PM.PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
-extractValuesField = PM.extractAttr "values"
-
-newtype ValuesspecUnsafe columns columns' =
-  Valuesspec (PM.PackMap () HPQ.PrimExpr () columns')
-
-runValuesspec :: Applicative f => ValuesspecUnsafe columns columns'
-              -> (() -> f HPQ.PrimExpr) -> f columns'
-runValuesspec (Valuesspec v) f = PM.traversePM v f ()
-
-instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
-  def = Valuesspec (PM.iso id Column)
-
-valuesUSafe :: Valuesspec columns columns'
-            -> [columns]
-            -> ((), T.Tag) -> (columns', PQ.PrimQuery)
-valuesUSafe valuesspec@(ValuesspecSafe _ unpack) rows ((), t) =
-  (newColumns, primQ')
-  where runRow row =
-          case PM.run (U.runUnpackspec unpack extractValuesEntry row) of
-            (_, []) -> [zero]
-            (_, xs) -> xs
-
-        (newColumns, valuesPEs_nulls) =
-          PM.run (runValuesspecSafe valuesspec (extractValuesField t))
-
-        valuesPEs = map fst valuesPEs_nulls
-        nulls = case map snd valuesPEs_nulls of
-          []     -> [nullInt]
-          nulls' -> nulls'
-
-        yieldNoRows :: PQ.PrimQuery -> PQ.PrimQuery
-        yieldNoRows = PQ.restrict (HPQ.ConstExpr (HPQ.BoolLit False))
-
-        zero = HPQ.ConstExpr (HPQ.IntegerLit 0)
-        nullInt = HPQ.CastExpr (Opaleye.Internal.PGTypes.showSqlType
-                                  (Nothing :: Maybe Opaleye.SqlTypes.SqlInt4))
-                               (HPQ.ConstExpr HPQ.NullLit)
-
-        (values, wrap) = case NEL.nonEmpty rows of
-          Nothing    -> (pure nulls, yieldNoRows)
-          Just rows' -> (fmap runRow rows', id)
-
-        primQ' = wrap (PQ.Values valuesPEs values)
+data Rowspec fields fields' =
+    NonEmptyRows (NonEmptyRowspec fields fields')
+  | EmptyRows fields'
 
 data Valuesspec fields fields' =
-  ValuesspecSafe (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr () fields')
-                 (U.Unpackspec fields fields')
-
-{-# DEPRECATED ValuesspecSafe "Use Valuesspec instead.  Will be removed in version 0.10." #-}
-type ValuesspecSafe = Valuesspec
-
-runValuesspecSafe :: Applicative f
-                  => Valuesspec columns columns'
-                  -> (HPQ.PrimExpr -> f HPQ.PrimExpr)
-                  -> f columns'
-runValuesspecSafe (ValuesspecSafe v _) f = PM.traversePM v f ()
+  ValuesspecSafe (Nullspec fields fields')
+                 (Rowspec fields fields')
 
 valuesspecField :: Opaleye.SqlTypes.IsSqlType a
                 => Valuesspec (Field_ n a) (Field_ n a)
@@ -121,27 +86,28 @@ valuesspecField = def_
 
 -- For rel8
 valuesspecFieldType :: String -> Valuesspec (Field_ n a) (Field_ n a)
-valuesspecFieldType sqlType = def_
-    where def_ = ValuesspecSafe (PM.PackMap (\f () -> fmap Column (f null_)))
-                                U.unpackspecField
-          null_ = nullPEType sqlType
+valuesspecFieldType sqlType =
+  ValuesspecSafe (nullspecFieldType sqlType) rowspecField
 
-instance Opaleye.Internal.PGTypes.IsSqlType a
+instance forall a n. Opaleye.Internal.PGTypes.IsSqlType a
   => Default Valuesspec (Field_ n a) (Field_ n a) where
-  def = valuesspecField
+  def = ValuesspecSafe nullspecField rowspecField
 
-nullPE :: Opaleye.SqlTypes.IsSqlType a => proxy a -> HPQ.PrimExpr
-nullPE sqlType = nullPEType (Opaleye.Internal.PGTypes.showSqlType sqlType)
+newtype Nullspec fields fields' = Nullspec fields'
 
-nullPEType :: String -> HPQ.PrimExpr
-nullPEType sqlType = HPQ.CastExpr sqlType (HPQ.ConstExpr HPQ.NullLit)
+nullspecField :: forall a n sqlType.
+                 Opaleye.SqlTypes.IsSqlType sqlType
+              => Nullspec a (Field_ n sqlType)
+nullspecField = nullspecFieldType ty
+  where ty = Opaleye.Internal.PGTypes.showSqlType (Nothing :: Maybe sqlType)
 
--- Implementing this in terms of Valuesspec for convenience
-newtype Nullspec fields fields' = Nullspec (Valuesspec Void fields')
-
-nullspecField :: Opaleye.SqlTypes.IsSqlType b
-              => Nullspec a (Field_ n b)
-nullspecField = Nullspec (lmap absurd valuesspecField)
+nullspecFieldType :: String
+                  -> Nullspec a (Field_ n sqlType)
+nullspecFieldType sqlType =
+  (Nullspec
+  . C.unsafeCast sqlType
+  . C.unsafeCoerceColumn)
+  OC.null
 
 nullspecList :: Nullspec a [b]
 nullspecList = pure []
@@ -162,7 +128,7 @@ instance Opaleye.SqlTypes.IsSqlType b
 -- that!  Used to create such fields when we know we will never look
 -- at them expecting to find something non-NULL.
 nullFields :: Nullspec a fields -> fields
-nullFields (Nullspec v) = runIdentity (runValuesspecSafe v pure)
+nullFields (Nullspec v) = v
 
 -- {
 
@@ -191,24 +157,110 @@ instance Applicative (Valuesspec a) where
     ValuesspecSafe (f <*> x) (f' <*> x')
 
 instance Profunctor Valuesspec where
-  dimap f g (ValuesspecSafe q q') = ValuesspecSafe (rmap g q) (dimap f g q')
+  dimap f g (ValuesspecSafe q q') = ValuesspecSafe (dimap f g q) (dimap f g q')
 
 instance ProductProfunctor Valuesspec where
   purePP = pure
   (****) = (<*>)
 
 instance Functor (Nullspec a) where
-  fmap f (Nullspec g) = Nullspec (fmap f g)
+  fmap f (Nullspec g) = Nullspec (f g)
 
 instance Applicative (Nullspec a) where
-  pure = Nullspec . pure
-  Nullspec f <*> Nullspec x = Nullspec (f <*> x)
+  pure = Nullspec
+  Nullspec f <*> Nullspec x = Nullspec (f x)
 
 instance Profunctor Nullspec where
-  dimap _ g (Nullspec q) = Nullspec (fmap g q)
+  dimap _ g (Nullspec q) = Nullspec (g q)
 
 instance ProductProfunctor Nullspec where
   purePP = pure
   (****) = (<*>)
 
+instance Functor (NonEmptyRowspec a) where
+  fmap = rmap
+
+instance Profunctor NonEmptyRowspec where
+  dimap f g (NonEmptyRowspec a b) =
+    NonEmptyRowspec (lmap f a) ((fmap . fmap) g b)
+
+instance Functor (Rowspec a) where
+  fmap = rmap
+
+instance Applicative (Rowspec a) where
+  pure x = EmptyRows x
+  r1 <*> r2 = case (r1, r2) of
+    (EmptyRows f, EmptyRows x) -> EmptyRows (f x)
+    (EmptyRows f, NonEmptyRows (NonEmptyRowspec x1 x2)) ->
+      NonEmptyRows (NonEmptyRowspec x1 ((fmap . fmap) f x2))
+    (NonEmptyRows (NonEmptyRowspec f1 f2), EmptyRows x) ->
+     NonEmptyRows (NonEmptyRowspec f1 ((fmap . fmap) ($ x) f2))
+    (NonEmptyRows (NonEmptyRowspec f1 f2),
+     NonEmptyRows (NonEmptyRowspec x1 x2)) ->
+      NonEmptyRows (NonEmptyRowspec
+            (f1 <> x1)
+            ((liftA2 . liftF2) ($) f2 x2))
+
+    where -- Instead of depending on Apply
+          -- https://www.stackage.org/haddock/lts-19.16/semigroupoids-5.3.7/Data-Functor-Apply.html#v:liftF2
+          liftF2 :: Semigroup m
+                 => (a' -> b -> c) -> (m, a') -> (m, b) -> (m, c)
+          liftF2 f (ys1, x1) (ys2, x2) = (ys1 <> ys2, f x1 x2)
+
+instance Profunctor Rowspec where
+  dimap f g = \case
+    EmptyRows x -> EmptyRows (g x)
+    NonEmptyRows x -> NonEmptyRows (dimap f g x)
+
+instance ProductProfunctor Rowspec where
+  purePP = pure
+  (****) = (<*>)
+
 -- }
+
+{-# DEPRECATED valuesU "Will be removed in 0.10" #-}
+valuesU :: U.Unpackspec columns columns'
+        -> ValuesspecUnsafe columns columns'
+        -> [columns]
+        -> ((), T.Tag) -> (columns', PQ.PrimQuery)
+valuesU unpack valuesspec rows ((), t) = (newColumns, primQ')
+  where runRow row = valuesRow
+           where (_, valuesRow) =
+                   PM.run (U.runUnpackspec unpack extractValuesEntry row)
+
+        (newColumns, valuesPEs_nulls) =
+          PM.run (runValuesspec valuesspec (extractValuesField t))
+
+        valuesPEs = map fst valuesPEs_nulls
+
+        values :: [[HPQ.PrimExpr]]
+        values = map runRow rows
+
+        primQ' = case NEL.nonEmpty values of
+          Nothing      -> PQ.Empty ()
+          Just values' -> PQ.Values valuesPEs values'
+
+{-# DEPRECATED extractValuesEntry "Will be removed in 0.10" #-}
+extractValuesEntry :: HPQ.PrimExpr -> PM.PM [HPQ.PrimExpr] HPQ.PrimExpr
+extractValuesEntry pe = do
+  PM.write pe
+  return pe
+
+{-# DEPRECATED extractValuesField "Will be removed in 0.10" #-}
+extractValuesField :: T.Tag -> primExpr
+                   -> PM.PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
+extractValuesField = PM.extractAttr "values"
+
+{-# DEPRECATED runValuesspec "Will be removed in 0.10" #-}
+runValuesspec :: Applicative f => ValuesspecUnsafe columns columns'
+              -> (() -> f HPQ.PrimExpr) -> f columns'
+runValuesspec (Valuesspec v) f = PM.traversePM v f ()
+
+newtype ValuesspecUnsafe columns columns' =
+  Valuesspec (PM.PackMap () HPQ.PrimExpr () columns')
+
+instance Default ValuesspecUnsafe (Field_ n a) (Field_ n a) where
+  def = Valuesspec (PM.iso id Column)
+
+{-# DEPRECATED ValuesspecSafe "Use Valuesspec instead.  Will be removed in version 0.10." #-}
+type ValuesspecSafe = Valuesspec
