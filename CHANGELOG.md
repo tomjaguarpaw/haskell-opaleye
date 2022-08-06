@@ -1,3 +1,9 @@
+## 0.9.3.3
+
+* No externally visible changes
+
+* Substantial internal changes to `Opaleye.Values`
+
 ## 0.9.3.2
 
 * No externally visible changes
