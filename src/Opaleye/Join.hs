@@ -27,7 +27,7 @@ import qualified Data.Profunctor.Product.Default as D
 -- and more composable:
 --
 -- - Inner joins: use 'Opaleye.Operators.where_' directly, along with
---   @do@ notatation (or use 'Opaleye.Operators.restrict' directly,
+--   @do@ notation (or use 'Opaleye.Operators.restrict' directly,
 --   along with arrow notation)
 --
 -- - Left/right joins: use 'optional'
@@ -153,7 +153,7 @@ optionalRestrict = J.optionalRestrict
 --
 -- Typically everything except the 'optionalRestrict' line can be
 -- inlined in surrounding arrow notation.  In such cases, readability
--- and maintainibility increase dramatically.
+-- and maintainability increase dramatically.
 leftJoin  :: (D.Default U.Unpackspec fieldsL fieldsL,
               D.Default U.Unpackspec fieldsR fieldsR,
               D.Default J.NullMaker fieldsR nullableFieldsR)

@@ -48,7 +48,7 @@ import Opaleye.Manipulation (Delete (Delete))
 Status
 ======
 
-The Hspec tests are very superficial and pretty much the bare mininmum
+The Hspec tests are very superficial and pretty much the bare minimum
 that needs to be tested.  The property tests are very thorough, but
 could be made even more thorough.
 

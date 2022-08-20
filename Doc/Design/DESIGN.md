@@ -40,4 +40,4 @@ types `int4`, `text` and `bool`.
 
 A `Select` is a collection of rows and therefore if we have two of them
 we can form their Cartesian product.  This corresponds exactly to
-Haskells `Applicative` product on lists.
+Haskell's `Applicative` product on lists.

@@ -131,7 +131,7 @@ class InferrableTableField w n r
 instance InferrableTableField (Field_ n r) n r where
     tableField = requiredTableField
 
--- | Equivalaent to defining the column with 'optionalTableField'. If
+-- | Equivalent to defining the column with 'optionalTableField'. If
 -- the write type is @Maybe (Field_ n r)@ (i.e. @DEFAULT@ can be
 -- written to it) then the write type is @Field_ n r@.
 instance InferrableTableField (Maybe (Field_ n r)) n r where

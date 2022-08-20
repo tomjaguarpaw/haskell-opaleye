@@ -43,7 +43,7 @@ import qualified Data.Functor.Identity as I
 data PackMap a b s t = PackMap (forall f. Applicative f =>
                                 (a -> f b) -> s -> f t)
 
--- | Replaces the targeted occurences of @a@ in @s@ with @b@ (changing
+-- | Replaces the targeted occurrences of @a@ in @s@ with @b@ (changing
 -- the @s@ to a @t@ in the process).  This can be done via an
 -- 'Applicative' action.
 --
@@ -55,7 +55,7 @@ traversePM (PackMap f) = f
 -- | Modify the targeted occurrences of @a@ in @s@ with @b@ (changing
 -- the @s@ to a @t@ in the process).
 --
--- 'overPM' is just like @over@ from the @lens@ pacakge.
+-- 'overPM' is just like @over@ from the @lens@ package.
 overPM :: PackMap a b s t -> (a -> b) -> s -> t
 overPM p f = I.runIdentity . traversePM p (I.Identity . f)
 
@@ -90,7 +90,7 @@ run m = (r, as)
 -- function and the unique 'T.Tag' that is used as part of our
 -- @QueryArr@.
 --
--- Add the fresh name and the input value it refers to to the list in
+-- Add the fresh name and the input value it refers to the list in
 -- the state parameter.
 extractAttrPE :: (primExpr -> String -> String) -> T.Tag -> primExpr
                -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr

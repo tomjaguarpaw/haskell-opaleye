@@ -103,7 +103,7 @@ to ease user transition.
 
 ## 0.7.6.2
 
-Fix ISO 8601 date fomatting.  Thanks to Michal @kozak.
+Fix ISO 8601 date formatting.  Thanks to Michal @kozak.
 
 ## 0.7.6.1
 
@@ -266,7 +266,7 @@ S.SelectArr a b`
 
 ## 0.6.7003.1
 
-* Bumped some depedencies so there is an install plan on GHC 8.6
+* Bumped some dependencies so there is an install plan on GHC 8.6
 
 ## 0.6.7003.0
 

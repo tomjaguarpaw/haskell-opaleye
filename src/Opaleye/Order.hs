@@ -180,7 +180,7 @@ distinctOn = distinctOnCorrect
 
 -- | Keep the row from each set where the given function returns the same result. The
 --   row is chosen according to which comes first by the supplied ordering. However, no
---   output ordering is guaranteed. Mutliple fields may be distinguished by projecting
+--   output ordering is guaranteed. Multiple fields may be distinguished by projecting
 --   out tuples of 'Opaleye.Field.Field_'s.
 distinctOnBy :: D.Default U.Unpackspec b b => (a -> b) -> O.Order a
              -> S.Select a -> S.Select a
