@@ -16,7 +16,7 @@ data JoinType = LeftJoin deriving Show
 -- type Bindings a = [(Symbol, a)]
 
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
--- for emptiness explicity in the SQL generation phase.
+-- for emptiness explicitly in the SQL generation phase.
 data PrimQuery = Unit
                | BaseTable String [(Symbol, HPQ.PrimExpr)]
                | Product (NEL.NonEmpty PrimQuery) [HPQ.PrimExpr]

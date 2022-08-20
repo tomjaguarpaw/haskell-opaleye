@@ -114,7 +114,7 @@ toPrimQuery :: PrimQueryArr -> PrimQuery
 toPrimQuery (PrimQueryArr f) = f NonLateral Unit
 
 -- We use a 'NEL.NonEmpty' for Product because otherwise we'd have to check
--- for emptiness explicity in the SQL generation phase.
+-- for emptiness explicitly in the SQL generation phase.
 
 -- The type parameter 'a' is used to control whether the 'Empty'
 -- constructor can appear.  If 'a' = '()' then it can appear.  If 'a'

@@ -85,7 +85,7 @@ instance Functor (FromField u) where
 -- | A 'FromFields'
 --   specifies how to convert Postgres values (@fields@)
 --   into Haskell values (@haskells@).  Most likely you will never need
---   to create on of these or handle one directly.  It will be provided
+--   to create one of these or handle one directly.  It will be provided
 --   for you by the 'D.Default' 'FromFields' instance.
 --
 -- \"'FromFields' @fields@ @haskells@\" corresponds to

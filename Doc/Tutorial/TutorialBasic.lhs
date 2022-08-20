@@ -103,7 +103,7 @@ between Opaleye's version and the ideal.  Please submit any
 differences encountered in practice as an Opaleye bug.
 
 SELECT name,
-       age
+       age,
        address
 FROM personTable
 
@@ -646,7 +646,7 @@ Outer join
 
 Opaleye supports left joins.  (Full outer joins and right joins are
 left to be added as a simple starter project for a new Opaleye
-contributer!)
+contributor!)
 
 Because left joins can change non-nullable fields into nullable
 fields we have to make sure the type of the output supports

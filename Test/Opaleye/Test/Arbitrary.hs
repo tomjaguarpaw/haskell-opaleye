@@ -302,7 +302,7 @@ arbitrarySelectRecurse1 :: [Int -> TQ.Gen ArbitrarySelect]
 arbitrarySelectRecurse1 =
   arbitraryG (fmap ArbitrarySelect)
   [
-  -- I'm not sure this is neccessary anymore.  It should be covered by
+  -- I'm not sure this is necessary anymore.  It should be covered by
   -- other generation pathways.
   map (\fg size -> fg <*> arbitrarySelectArr size)
       [ pure (<<< pure emptyChoices) ]
