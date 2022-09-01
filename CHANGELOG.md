@@ -9,6 +9,9 @@
 
 * Added `ascNullsLast` and `descNullsFirst`.
 
+* Thanks to @abigailalice for pointing out the oversights in the
+  `Column` to `Field` change.
+
 ## 0.9.3.3
 
 * No externally visible changes
