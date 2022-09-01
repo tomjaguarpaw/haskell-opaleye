@@ -1,3 +1,10 @@
+* Changed `ascNullsFirst` and `descNullsLast` to work with nullable
+  fields.  This rectifies an oversight from the `Column` to `Field`
+  change.  This may technically be a PVP violation but I think the
+  risk of breakage is very small.  If you experience breakage please
+  report it on [the issue
+  tracker](https://github.com/tomjaguarpaw/haskell-opaleye/issues/new).
+
 ## 0.9.3.3
 
 * No externally visible changes
