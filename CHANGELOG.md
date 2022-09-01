@@ -454,7 +454,7 @@ changes.
 * Ordering operators and `max` and `min` aggregators are now restricted to a typeclass
 * Added `stringAgg` and `arrayAgg` aggregations.
 * Added `PGOrd` typeclass for typesafe ordering operations.
-* Support sorting NULLs first or last with `ascNullsFirst` and `descNullsFirst`
+* Support sorting NULLs first or last with `ascNullsFirst` and `descNullsLast`
 * Added JSON types
 * Added `runInsertMany`
 
