@@ -321,6 +321,10 @@ instance (Typeable b, DefaultFromField a b) =>
          DefaultFromField (T.SqlRange a) (PGSR.PGRange b) where
   defaultFromField = fromFieldRange defaultFromField
 
+instance (Typeable b, DefaultFromField a b) =>
+         DefaultFromField (T.SqlArray_ Nullable a) [Maybe b] where
+  defaultFromField = fromFieldArrayNullable defaultFromField
+
 fromFieldRange :: Typeable b
                => FromField a b
                -> FromField (T.SqlRange a) (PGSR.PGRange b)

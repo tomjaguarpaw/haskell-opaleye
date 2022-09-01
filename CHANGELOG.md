@@ -1,3 +1,5 @@
+* Added `instance DefaultFromField (T.SqlArray_ Nullable a) [Maybe b]`
+
 * Changed `ascNullsFirst` and `descNullsLast` to work with nullable
   fields.  This rectifies an oversight from the `Column` to `Field`
   change.  This may technically be a PVP violation but I think the
