@@ -1,3 +1,5 @@
+## 0.9.5.1
+
 * Actually expose `arrayAgg_`
 
 ## 0.9.5.0
