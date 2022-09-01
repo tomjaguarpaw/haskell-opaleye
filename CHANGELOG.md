@@ -1,3 +1,5 @@
+## 0.9.4.0
+
 * Added `instance DefaultFromField (T.SqlArray_ Nullable a) [Maybe b]`
 
 * Changed `ascNullsFirst` and `descNullsLast` to work with nullable
