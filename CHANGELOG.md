@@ -1,3 +1,7 @@
+## 0.9.4.1
+
+* Actually expose `ascNullsLast` and `descNullsFirst`.
+
 ## 0.9.4.0
 
 * Added `instance DefaultFromField (T.SqlArray_ Nullable a) [Maybe b]`

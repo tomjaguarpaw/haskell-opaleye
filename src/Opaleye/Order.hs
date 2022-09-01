@@ -11,7 +11,9 @@ module Opaleye.Order ( -- * Order by
                      , asc
                      , desc
                      , ascNullsFirst
+                     , ascNullsLast
                      , descNullsLast
+                     , descNullsFirst
                      -- * Limit and offset
                      , limit
                      , offset
