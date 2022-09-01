@@ -62,13 +62,11 @@ orderBy os q =
     pure (O.orderByU os a_pq)
 
 -- | Specify an ascending ordering by the given expression.
---   (Any NULLs appear last)
 asc :: SqlOrd b => (a -> F.Field b) -> O.Order a
 asc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                           , HPQ.orderNulls     = HPQ.NullsLast }
 
 -- | Specify an descending ordering by the given expression.
---   (Any NULLs appear first)
 desc :: SqlOrd b => (a -> F.Field b) -> O.Order a
 desc = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
                            , HPQ.orderNulls     = HPQ.NullsFirst }
