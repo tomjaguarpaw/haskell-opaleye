@@ -5,6 +5,8 @@
   report it on [the issue
   tracker](https://github.com/tomjaguarpaw/haskell-opaleye/issues/new).
 
+* Added `ascNullsLast` and `descNullsFirst`.
+
 ## 0.9.3.3
 
 * No externally visible changes

@@ -77,6 +77,17 @@ ascNullsFirst :: SqlOrd b => (a -> F.Field_ n b) -> O.Order a
 ascNullsFirst = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
                                     , HPQ.orderNulls     = HPQ.NullsFirst }
 
+-- | Specify an ascending ordering by the given expression.
+--   (Any NULLs appear last)
+ascNullsLast :: SqlOrd b => (a -> F.Field_ n b) -> O.Order a
+ascNullsLast = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpAsc
+                                   , HPQ.orderNulls     = HPQ.NullsLast }
+
+-- | Specify an descending ordering by the given expression.
+--   (Any NULLs appear first)
+descNullsFirst :: SqlOrd b => (a -> F.Field_ n b) -> O.Order a
+descNullsFirst = O.order HPQ.OrderOp { HPQ.orderDirection = HPQ.OpDesc
+                                     , HPQ.orderNulls     = HPQ.NullsFirst }
 
 -- | Specify an descending ordering by the given expression.
 --   (Any NULLs appear last)
