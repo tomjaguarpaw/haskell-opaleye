@@ -1,3 +1,5 @@
+## 0.9.5.0
+
 * Add `arrayAgg_` for aggregating nullable fields
 
 ## 0.9.4.1
