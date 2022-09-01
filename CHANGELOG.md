@@ -1,3 +1,5 @@
+* Actually expose `arrayAgg_`
+
 ## 0.9.5.0
 
 * Add `arrayAgg_` for aggregating nullable fields

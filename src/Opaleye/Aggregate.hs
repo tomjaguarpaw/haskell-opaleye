@@ -27,6 +27,7 @@ module Opaleye.Aggregate
        , boolOr
        , boolAnd
        , arrayAgg
+       , arrayAgg_
        , jsonAgg
        , stringAgg
        -- * Counting rows
