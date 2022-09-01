@@ -150,7 +150,10 @@ boolAnd :: Aggregator (F.Field T.SqlBool) (F.Field T.SqlBool)
 boolAnd = A.makeAggr HPQ.AggrBoolAnd
 
 arrayAgg :: Aggregator (F.Field a) (F.Field (T.SqlArray a))
-arrayAgg = A.makeAggr HPQ.AggrArr
+arrayAgg = P.dimap F.unsafeCoerceField F.unsafeCoerceField arrayAgg_
+
+arrayAgg_ :: Aggregator (F.Field_ n a) (F.Field (T.SqlArray_ n a))
+arrayAgg_ = A.makeAggr HPQ.AggrArr
 
 {-|
 FIXME: no longer supports nulls

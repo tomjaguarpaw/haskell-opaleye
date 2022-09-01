@@ -1,3 +1,5 @@
+* Add `arrayAgg_` for aggregating nullable fields
+
 ## 0.9.4.1
 
 * Actually expose `ascNullsLast` and `descNullsFirst`.
