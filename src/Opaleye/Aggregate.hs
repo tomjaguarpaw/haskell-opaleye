@@ -115,7 +115,7 @@ groupBy = A.makeAggr' Nothing
 -- runtime when the argument is 'T.SqlInt4' or 'T.SqlInt8'.  For those
 -- use 'sumInt4' or 'sumInt8' instead.
 sum :: Aggregator (F.Field a) (F.Field a)
-sum = A.makeAggr HPQ.AggrSum
+sum = A.unsafeSum
 
 sumInt4 :: Aggregator (F.Field T.SqlInt4) (F.Field T.SqlInt8)
 sumInt4 = fmap F.unsafeCoerceField Opaleye.Aggregate.sum
@@ -134,15 +134,15 @@ countStar = lmap (const (0 :: F.Field T.SqlInt4)) count
 
 -- | Average of a group
 avg :: Aggregator (F.Field T.SqlFloat8) (F.Field T.SqlFloat8)
-avg = A.makeAggr HPQ.AggrAvg
+avg = A.unsafeAvg
 
 -- | Maximum of a group
 max :: Ord.SqlOrd a => Aggregator (F.Field a) (F.Field a)
-max = A.makeAggr HPQ.AggrMax
+max = A.unsafeMax
 
 -- | Maximum of a group
 min :: Ord.SqlOrd a => Aggregator (F.Field a) (F.Field a)
-min = A.makeAggr HPQ.AggrMin
+min = A.unsafeMin
 
 boolOr :: Aggregator (F.Field T.SqlBool) (F.Field T.SqlBool)
 boolOr = A.makeAggr HPQ.AggrBoolOr

@@ -140,6 +140,18 @@ extractAggregateFields tag (m, pe) = do
 
   pure (HPQ.AttrExpr souter)
 
+unsafeMax :: Aggregator (C.Field a) (C.Field a)
+unsafeMax = makeAggr HPQ.AggrMax
+
+unsafeMin :: Aggregator (C.Field a) (C.Field a)
+unsafeMin = makeAggr HPQ.AggrMin
+
+unsafeAvg :: Aggregator (C.Field a) (C.Field a)
+unsafeAvg = makeAggr HPQ.AggrAvg
+
+unsafeSum :: Aggregator (C.Field a) (C.Field a)
+unsafeSum = makeAggr HPQ.AggrSum
+
 -- { Boilerplate instances
 
 instance Functor (Aggregator a) where
