@@ -1,3 +1,7 @@
+## 0.9.6.1
+
+* No externally visible changes
+
 ## 0.9.6.0
 
 * Add `Opaleye.Window` to support window functions.  Thanks to Shane
