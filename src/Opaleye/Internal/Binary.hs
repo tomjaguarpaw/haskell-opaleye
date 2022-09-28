@@ -35,8 +35,7 @@ runBinaryspec :: Applicative f => Binaryspec columns columns'
 runBinaryspec (Binaryspec b) = PM.traversePM b
 
 binaryspecColumn :: Binaryspec (Field_ n a) (Field_ n a)
-binaryspecColumn = Binaryspec (PM.iso (mapBoth unColumn) Column)
-  where mapBoth f (s, t) = (f s, f t)
+binaryspecColumn = dimap unColumn Column (Binaryspec (PM.PackMap id))
 
 sameTypeBinOpHelper :: PQ.BinOp -> Binaryspec columns columns'
                     -> Q.Query columns -> Q.Query columns -> Q.Query columns'
