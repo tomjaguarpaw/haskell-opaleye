@@ -39,7 +39,7 @@ newtype Unpackspec fields fields' =
 
 -- | Target the single 'HPQ.PrimExpr' inside a 'F.Field n'
 unpackspecField :: Unpackspec (F.Field_ n a) (F.Field_ n a)
-unpackspecField = Unpackspec (PM.iso IC.unColumn IC.Column)
+unpackspecField = dimap IC.unColumn IC.Column (Unpackspec (PM.PackMap id))
 
 -- | Modify all the targeted 'HPQ.PrimExpr's
 runUnpackspec :: Applicative f
