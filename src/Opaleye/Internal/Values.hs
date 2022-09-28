@@ -59,11 +59,11 @@ data NonEmptyRowspec fields fields' =
 
 -- Some overlap here with extractAttrPE
 nonEmptyRowspecField :: NonEmptyRowspec (Field_ n a) (Field_ n a)
-nonEmptyRowspecField = NonEmptyRowspec (pure . C.unColumn) s
+nonEmptyRowspecField = dimap C.unColumn C.Column $ NonEmptyRowspec pure s
   where s = do
           t <- T.fresh
           let symbol = HPQ.Symbol "values" t
-          pure (pure symbol, C.Column (HPQ.AttrExpr symbol))
+          pure (pure symbol, HPQ.AttrExpr symbol)
 
 rowspecField :: Rowspec (Field_ n a) (Field_ n a)
 rowspecField = NonEmptyRows nonEmptyRowspecField
