@@ -1,5 +1,3 @@
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 
 -- | @ORDER BY@, @LIMIT@, @OFFSET@ and @DISTINCT ON@
