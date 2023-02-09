@@ -62,7 +62,6 @@ library
                    Opaleye.MaybeFields,
                    Opaleye.Operators,
                    Opaleye.Order,
-                   Opaleye.PGTypes
                    Opaleye.RunSelect,
                    Opaleye.Select,
                    Opaleye.Sql,

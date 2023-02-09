@@ -91,9 +91,9 @@ module Opaleye.SqlTypes (
   -- * @IsSqlType@
   P.IsSqlType(P.showSqlType),
 
-  SqlTSQuery,
-  sqlTSQuery,
-  SqlTSVector
+  P.SqlTSQuery,
+  P.SqlTSVector,
+  sqlTSQuery
   ) where
 
 import qualified Opaleye.Field   as F
@@ -135,7 +135,6 @@ import qualified Data.Time.Compat as Time
 import qualified Data.UUID as UUID
 
 import qualified Database.PostgreSQL.Simple.Range as R
-import qualified Opaleye.PGTypes as P
 
 -- * Creating SQL values
 
@@ -212,7 +211,7 @@ sqlLazyJSON = P.pgLazyJSON
 sqlValueJSON :: Ae.ToJSON a => a -> F.Field SqlJson
 sqlValueJSON = P.pgValueJSON
 
-sqlTSQuery :: String -> F.Field SqlTSQuery
+sqlTSQuery :: String -> F.Field P.SqlTSQuery
 sqlTSQuery = P.pgTSQuery
 
 -- The jsonb data type was introduced in PostgreSQL version 9.4
@@ -241,27 +240,3 @@ sqlRange :: IsRangeType b
          -> R.RangeBound a
          -> F.Field (SqlRange b)
 sqlRange = P.pgRange
-
--- -- * SQL datatypes
-
--- type SqlBool = P.PGBool
--- type SqlDate = P.PGDate
--- type SqlFloat4 = P.PGFloat4
--- type SqlFloat8 = P.PGFloat8
--- type SqlInt8 = P.PGInt8
--- type SqlInt4 = P.PGInt4
--- type SqlInt2 = P.PGInt2
--- type SqlNumeric = P.PGNumeric
--- type SqlText = P.PGText
--- type SqlTime = P.PGTime
--- type SqlTimestamp = P.PGTimestamp
--- type SqlTimestamptz = P.PGTimestamptz
--- type SqlUuid = P.PGUuid
--- type SqlCitext = P.PGCitext
--- type SqlArray = P.PGArray
--- type SqlBytea = P.PGBytea
--- type SqlJson = P.PGJson
--- type SqlJsonb = P.PGJsonb
--- type SqlRange = P.PGRange
-type SqlTSQuery  = P.PGTSQuery
-type SqlTSVector = P.PGTSVector
