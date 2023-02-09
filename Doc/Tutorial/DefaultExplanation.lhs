@@ -4,8 +4,8 @@
 > import Opaleye (Field, FieldNullable, FromFields, Select,
 >                 SqlInt4, SqlBool, SqlText, SqlFloat4)
 > import qualified Opaleye as O
-> import qualified Opaleye.Internal.Binary as Internal.Binary
-> import Opaleye.Internal.Binary (Binaryspec)
+> import qualified Opaleye.Adaptors as Adaptors
+> import Opaleye.Adaptors (Binaryspec)
 >
 > import Data.Profunctor.Product ((***!), p4)
 > import Data.Profunctor.Product.Default (Default, def)
@@ -63,30 +63,30 @@ allows us to do.
 
 So the next question is, how do we get our hands on a value of that
 type?  Well, we have `binaryspecField` which is a value that allows
-us to access the column name within a single column.
+us to access the field name within a single field.
 
-> binaryspecColumn :: Binaryspec (Field a) (Field a)
-> binaryspecColumn = Internal.Binary.binaryspecColumn
+> binaryspecField :: Binaryspec (Field a) (Field a)
+> binaryspecField = Adaptors.binaryspecField
 
 `Binaryspec` is a `ProductProfunctor` so we can combine two of them to
 work on a pair.
 
-> binaryspecColumn2 :: Binaryspec (Field a, Field b) (Field a, Field b)
-> binaryspecColumn2 = binaryspecColumn ***! binaryspecColumn
+> binaryspecField2 :: Binaryspec (Field a, Field b) (Field a, Field b)
+> binaryspecField2 = binaryspecField ***! binaryspecField
 
-Then we can use `binaryspecColumn2` in `unionAllExplicit`.
+Then we can use `binaryspecField2` in `unionAllExplicit`.
 
 > theUnionAll :: Select (Field SqlInt4, Field SqlText)
-> theUnionAll = unionAllExplicit binaryspecColumn2 mySelect1 mySelect2
+> theUnionAll = unionAllExplicit binaryspecField2 mySelect1 mySelect2
 
-Now suppose that we wanted to take a union of two queries with columns
+Now suppose that we wanted to take a union of two queries with fields
 in a tuple of size four.  We can make a suitable `Binaryspec` like
 this:
 
-> binaryspecColumn4 :: Binaryspec (Field a, Field b, Field c, Field d)
+> binaryspecField4 :: Binaryspec (Field a, Field b, Field c, Field d)
 >                                 (Field a, Field b, Field c, Field d)
-> binaryspecColumn4 = p4 (binaryspecColumn, binaryspecColumn,
->                         binaryspecColumn, binaryspecColumn)
+> binaryspecField4 = p4 (binaryspecField, binaryspecField,
+>                        binaryspecField, binaryspecField)
 
 Then we can pass this `Binaryspec` to `unionAllExplicit`.
 
@@ -101,7 +101,7 @@ deduced.  This is where the `Default` typeclass comes in.
 `Opaleye.Internal.Binary` contains the `Default` instance
 
     instance Default Binaryspec (Field a) (Field a) where
-      def = binaryspecColumn
+      def = binaryspecField
 
 That means that we know the "default" way of getting a
 
@@ -168,7 +168,7 @@ Furthermore we will have basic ways of running queries which return
 > nullableIntRunner :: FromFields (FieldNullable SqlInt4) (Maybe Int)
 > nullableIntRunner = undefined
 
-If I have a very simple query with a single column of `SqlInt4` then I can
+If I have a very simple select with a single field of `SqlInt4` then I can
 run it using the `intRunner`.
 
 > mySelect3 :: Select (Field SqlInt4)
@@ -177,7 +177,7 @@ run it using the `intRunner`.
 > runTheSelect :: SQL.Connection -> IO [Int]
 > runTheSelect c = runSelectExplicit intRunner c mySelect3
 
-If my query has several columns of different types I need to build up
+If my select has several fields of different types I need to build up
 a larger `FromFields`.
 
 > mySelect4 :: Select (Field SqlInt4, Field SqlText, Field SqlBool, FieldNullable SqlInt4)
@@ -210,7 +210,7 @@ correct value of the type we want.
 > largerSelectRunner' = def
 
 And we can produce a version of `runSelect` which allows us to write
-our query without explicitly passing the product-profunctor value.
+our select without explicitly passing the product-profunctor value.
 
 > runSelect :: Default FromFields a b => SQL.Connection -> Select a -> IO [b]
 > runSelect = O.runSelectExplicit def

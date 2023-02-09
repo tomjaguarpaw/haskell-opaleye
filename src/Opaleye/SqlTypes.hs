@@ -2,13 +2,126 @@
 -- those types.  To create fields you may find it more convenient to use
 -- "Opaleye.ToFields" instead.
 
-module Opaleye.SqlTypes (module Opaleye.SqlTypes,
-                         P.IsSqlType,
-                         P.IsRangeType) where
+module Opaleye.SqlTypes (
+  -- * Numeric
+  -- ** Creating values
+  sqlInt4,
+  sqlDouble,
+  sqlInt8,
+  sqlNumeric,
+  -- ** Types
+  SqlInt4,
+  SqlFloat8,
+  SqlNumeric,
+  SqlInt8,
+  SqlInt2,
+  SqlFloat4,
+  -- ** Type classes
+  IC.SqlNum,
+  IC.SqlIntegral,
+  IC.SqlFractional,
+  -- * Date and time
+  -- ** Creating values
+  sqlDay,
+  sqlUTCTime,
+  sqlLocalTime,
+  sqlZonedTime,
+  sqlTimeOfDay,
+  P.sqlInterval,
+  -- ** Types
+  SqlDate,
+  SqlTime,
+  SqlTimestamp,
+  SqlTimestamptz,
+  SqlInterval,
+  -- * JSON
+  -- ** Creating values
+  sqlJSON,
+  sqlStrictJSON,
+  sqlLazyJSON,
+  sqlValueJSON,
+  -- ** Types
+  SqlJson,
+  -- * JSONB
+  -- ** Creating values
+  sqlJSONB,
+  sqlStrictJSONB,
+  sqlLazyJSONB,
+  sqlValueJSONB,
+  -- ** Types
+  SqlJsonb,
+  -- * Text
+  -- ** Creating values
+  sqlString,
+  sqlStrictText,
+  sqlLazyText,
+  P.sqlStringVarcharN,
+  P.sqlStrictTextVarcharN,
+  P.sqlLazyTextVarcharN,
+  sqlCiStrictText,
+  sqlCiLazyText,
+  -- ** Types
+  SqlText,
+  SqlVarcharN,
+  SqlCitext,
+  -- ** Type classes
+  IC.SqlString,
+  -- * Array
+  -- ** Creating values
+  sqlArray,
+  -- ** Types
+  SqlArray,
+  SqlArray_,
+  -- * Range
+  -- ** Creating values
+  sqlRange,
+  -- ** Types
+  SqlRange,
+  P.IsRangeType,
+  -- * Other
+  -- ** Creating values
+  sqlBool,
+  sqlUUID,
+  sqlLazyByteString,
+  sqlStrictByteString,
+  -- ** Types
+  SqlBool,
+  SqlUuid,
+  SqlBytea,
+  -- * @IsSqlType@
+  P.IsSqlType(P.showSqlType),
+
+  SqlTSQuery,
+  sqlTSQuery,
+  SqlTSVector
+  ) where
 
 import qualified Opaleye.Field   as F
-import qualified Opaleye.PGTypes as P
-import           Opaleye.PGTypes (IsSqlType, IsRangeType)
+import qualified Opaleye.Internal.Column as IC
+import qualified Opaleye.Internal.PGTypesExternal as P
+import           Opaleye.Internal.PGTypesExternal (IsSqlType, IsRangeType)
+import           Opaleye.Internal.PGTypesExternal (SqlBool,
+                                                   SqlDate,
+                                                   SqlFloat4,
+                                                   SqlFloat8,
+                                                   SqlInt8,
+                                                   SqlInt4,
+                                                   SqlInt2,
+                                                   SqlNumeric,
+                                                   SqlText,
+                                                   SqlVarcharN,
+                                                   SqlTime,
+                                                   SqlTimestamp,
+                                                   SqlTimestamptz,
+                                                   SqlInterval,
+                                                   SqlUuid,
+                                                   SqlCitext,
+                                                   SqlArray,
+                                                   SqlArray_,
+                                                   SqlBytea,
+                                                   SqlJson,
+                                                   SqlJsonb,
+                                                   SqlRange)
 
 import qualified Data.Aeson as Ae
 import qualified Data.ByteString as SByteString
@@ -18,10 +131,11 @@ import           Data.Int (Int64)
 import           Data.Scientific as Sci
 import qualified Data.Text as SText
 import qualified Data.Text.Lazy as LText
-import qualified Data.Time as Time
+import qualified Data.Time.Compat as Time
 import qualified Data.UUID as UUID
 
 import qualified Database.PostgreSQL.Simple.Range as R
+import qualified Opaleye.PGTypes as P
 
 -- * Creating SQL values
 
@@ -76,7 +190,6 @@ sqlTimeOfDay = P.pgTimeOfDay
 -- "We recommend not using the type time with time zone"
 -- http://www.postgresql.org/docs/8.3/static/datatype-datetime.html
 
-
 sqlCiStrictText :: CI.CI SText.Text -> F.Field SqlCitext
 sqlCiStrictText = P.pgCiStrictText
 
@@ -119,7 +232,7 @@ sqlLazyJSONB = P.pgLazyJSONB
 sqlValueJSONB :: Ae.ToJSON a => a -> F.Field SqlJsonb
 sqlValueJSONB = P.pgValueJSONB
 
-sqlArray :: IsSqlType b => (a -> F.Field b) -> [a] -> F.Field (SqlArray b)
+sqlArray :: IsSqlType b => (a -> F.Field_ n b) -> [a] -> F.Field (SqlArray_ n b)
 sqlArray = P.pgArray
 
 sqlRange :: IsRangeType b
@@ -129,26 +242,26 @@ sqlRange :: IsRangeType b
          -> F.Field (SqlRange b)
 sqlRange = P.pgRange
 
--- * SQL datatypes
+-- -- * SQL datatypes
 
-type SqlBool = P.PGBool
-type SqlDate = P.PGDate
-type SqlFloat4 = P.PGFloat4
-type SqlFloat8 = P.PGFloat8
-type SqlInt8 = P.PGInt8
-type SqlInt4 = P.PGInt4
-type SqlInt2 = P.PGInt2
-type SqlNumeric = P.PGNumeric
-type SqlText = P.PGText
-type SqlTime = P.PGTime
-type SqlTimestamp = P.PGTimestamp
-type SqlTimestamptz = P.PGTimestamptz
-type SqlUuid = P.PGUuid
-type SqlCitext = P.PGCitext
-type SqlArray = P.PGArray
-type SqlBytea = P.PGBytea
-type SqlJson = P.PGJson
-type SqlJsonb = P.PGJsonb
-type SqlRange = P.PGRange
+-- type SqlBool = P.PGBool
+-- type SqlDate = P.PGDate
+-- type SqlFloat4 = P.PGFloat4
+-- type SqlFloat8 = P.PGFloat8
+-- type SqlInt8 = P.PGInt8
+-- type SqlInt4 = P.PGInt4
+-- type SqlInt2 = P.PGInt2
+-- type SqlNumeric = P.PGNumeric
+-- type SqlText = P.PGText
+-- type SqlTime = P.PGTime
+-- type SqlTimestamp = P.PGTimestamp
+-- type SqlTimestamptz = P.PGTimestamptz
+-- type SqlUuid = P.PGUuid
+-- type SqlCitext = P.PGCitext
+-- type SqlArray = P.PGArray
+-- type SqlBytea = P.PGBytea
+-- type SqlJson = P.PGJson
+-- type SqlJsonb = P.PGJsonb
+-- type SqlRange = P.PGRange
 type SqlTSQuery  = P.PGTSQuery
 type SqlTSVector = P.PGTSVector

@@ -1,8 +1,10 @@
+{-# OPTIONS_HADDOCK not-home #-}
+
 {-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
 
 module Opaleye.Internal.Binary where
 
-import           Opaleye.Internal.Column (Column(Column), unColumn)
+import           Opaleye.Internal.Column (Field_(Column), unColumn)
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.QueryArr as Q
@@ -23,36 +25,40 @@ extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)
                              HPQ.PrimExpr
 extractBinaryFields = PM.extractAttr "binary"
 
-newtype Binaryspec columns columns' =
+newtype Binaryspec fields fields' =
   Binaryspec (PM.PackMap (HPQ.PrimExpr, HPQ.PrimExpr) HPQ.PrimExpr
-                         (columns, columns) columns')
+                         (fields, fields) fields')
 
 runBinaryspec :: Applicative f => Binaryspec columns columns'
                  -> ((HPQ.PrimExpr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
                  -> (columns, columns) -> f columns'
 runBinaryspec (Binaryspec b) = PM.traversePM b
 
-binaryspecColumn :: Binaryspec (Column a) (Column a)
+binaryspecColumn :: Binaryspec (Field_ n a) (Field_ n a)
 binaryspecColumn = Binaryspec (PM.iso (mapBoth unColumn) Column)
   where mapBoth f (s, t) = (f s, f t)
 
 sameTypeBinOpHelper :: PQ.BinOp -> Binaryspec columns columns'
                     -> Q.Query columns -> Q.Query columns -> Q.Query columns'
-sameTypeBinOpHelper binop binaryspec q1 q2 = Q.simpleQueryArr q where
-  q ((), startTag) = (newColumns, newPrimQuery, T.next endTag)
-    where (columns1, primQuery1, midTag) = Q.runSimpleQueryArr q1 ((), startTag)
-          (columns2, primQuery2, endTag) = Q.runSimpleQueryArr q2 ((), midTag)
+sameTypeBinOpHelper binop binaryspec q1 q2 = Q.productQueryArr $ do
+  (columns1, primQuery1) <- Q.runSimpleSelect q1
+  (columns2, primQuery2) <- Q.runSimpleSelect q2
 
-          (newColumns, pes) =
+  endTag <- T.fresh
+
+  let (newColumns, pes) =
             PM.run (runBinaryspec binaryspec (extractBinaryFields endTag)
                                     (columns1, columns2))
 
-          newPrimQuery = PQ.Binary binop
+      newPrimQuery = PQ.Binary binop
             ( PQ.Rebind False (map (fmap fst) pes) primQuery1
             , PQ.Rebind False (map (fmap snd) pes) primQuery2
             )
 
-instance Default Binaryspec (Column a) (Column a) where
+  pure (newColumns, newPrimQuery)
+
+
+instance Default Binaryspec (Field_ n a) (Field_ n a) where
   def = binaryspecColumn
 
 -- {

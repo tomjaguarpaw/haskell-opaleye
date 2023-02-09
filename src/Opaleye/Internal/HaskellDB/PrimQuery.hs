@@ -23,6 +23,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
                 | AggrExpr  AggrDistinct AggrOp PrimExpr [OrderExpr]
+                | WndwExpr  WndwOp Partition
                 | ConstExpr Literal
                 | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
                 | ListExpr (NEL.NonEmpty PrimExpr)
@@ -79,7 +80,8 @@ data UnOp = OpNot
 
 data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrStdDev | AggrStdDevP | AggrVar | AggrVarP
-                | AggrBoolOr | AggrBoolAnd | AggrArr | AggrStringAggr PrimExpr
+                | AggrBoolOr | AggrBoolAnd | AggrArr | JsonArr
+                | AggrStringAggr PrimExpr
                 | AggrOther String
                 deriving (Show,Read)
 
@@ -101,3 +103,24 @@ data OrderOp = OrderOp { orderDirection :: OrderDirection
 
 data BoundExpr = Inclusive PrimExpr | Exclusive PrimExpr | PosInfinity | NegInfinity
                  deriving (Show,Read)
+
+data WndwOp
+  = WndwRowNumber
+  | WndwRank
+  | WndwDenseRank
+  | WndwPercentRank
+  | WndwCumeDist
+  | WndwNtile PrimExpr
+  | WndwLag PrimExpr PrimExpr PrimExpr
+  | WndwLead PrimExpr PrimExpr PrimExpr
+  | WndwFirstValue PrimExpr
+  | WndwLastValue PrimExpr
+  | WndwNthValue PrimExpr PrimExpr
+  | WndwAggregate AggrOp PrimExpr
+  deriving (Show,Read)
+
+data Partition = Partition
+  { partitionBy :: [PrimExpr]
+  , orderBy :: [OrderExpr]
+  }
+  deriving (Read, Show)

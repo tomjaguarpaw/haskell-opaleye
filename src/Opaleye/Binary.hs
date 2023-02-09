@@ -18,10 +18,15 @@
 --          -> S.Select (Foo (Field a) (Field b) (Field c))
 -- @
 --
--- Please note that by design there are no binary relational functions
--- of type @S.SelectArr a b -> S.SelectArr a b -> S.SelectArr a b@.  Such
--- functions would allow violation of SQL's scoping rules and lead to
--- invalid queries.
+-- If you want to run a binary relational operator on
+-- 'Select.SelectArr's you should apply 'Opaleye.Lateral.bilaterally'
+-- to it, for example
+--
+-- @
+-- 'Opaleye.Lateral.bilaterally' 'union'
+--   :: 'Data.Profunctor.Product.Default' 'B.Binaryspec' fields fields
+--   => 'S.SelectArr' i fields -> 'S.SelectArr' i fields -> 'S.SelectArr' i fields
+-- @
 --
 -- `unionAll` is very close to being the @\<|\>@ operator of a
 -- @Control.Applicative.Alternative@ instance but it fails to work
@@ -29,21 +34,36 @@
 
 {-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
 
-module Opaleye.Binary where
+module Opaleye.Binary (-- * Binary operations
+                       unionAll,
+                       union,
+                       intersectAll,
+                       intersect,
+                       exceptAll,
+                       except,
+                       -- * Explicit versions
+                       unionAllExplicit,
+                       unionExplicit,
+                       intersectAllExplicit,
+                       intersectExplicit,
+                       exceptAllExplicit,
+                       exceptExplicit,
+                       -- * Adaptors
+                       binaryspecField,
+                      ) where
 
 import qualified Opaleye.Internal.Binary as B
+import qualified Opaleye.Internal.Column
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Select             as S
 
 import           Data.Profunctor.Product.Default (Default, def)
 
--- * Binary operations
-
 unionAll :: Default B.Binaryspec fields fields =>
             S.Select fields -> S.Select fields -> S.Select fields
 unionAll = unionAllExplicit def
 
--- | The same as unionAll, except that it additionally removes any
+-- | The same as 'unionAll', except that it additionally removes any
 --   duplicate rows.
 union :: Default B.Binaryspec fields fields =>
          S.Select fields -> S.Select fields -> S.Select fields
@@ -53,7 +73,7 @@ intersectAll :: Default B.Binaryspec fields fields =>
             S.Select fields -> S.Select fields -> S.Select fields
 intersectAll = intersectAllExplicit def
 
--- | The same as intersectAll, except that it additionally removes any
+-- | The same as 'intersectAll', except that it additionally removes any
 --   duplicate rows.
 intersect :: Default B.Binaryspec fields fields =>
          S.Select fields -> S.Select fields -> S.Select fields
@@ -63,13 +83,11 @@ exceptAll :: Default B.Binaryspec fields fields =>
             S.Select fields -> S.Select fields -> S.Select fields
 exceptAll = exceptAllExplicit def
 
--- | The same as exceptAll, except that it additionally removes any
+-- | The same as 'exceptAll', except that it additionally removes any
 --   duplicate rows.
 except :: Default B.Binaryspec fields fields =>
          S.Select fields -> S.Select fields -> S.Select fields
 except = exceptExplicit def
-
--- * Explicit versions
 
 unionAllExplicit :: B.Binaryspec fields fields'
                  -> S.Select fields -> S.Select fields -> S.Select fields'
@@ -94,3 +112,8 @@ exceptAllExplicit = B.sameTypeBinOpHelper PQ.ExceptAll
 exceptExplicit :: B.Binaryspec fields fields'
               -> S.Select fields -> S.Select fields -> S.Select fields'
 exceptExplicit = B.sameTypeBinOpHelper PQ.Except
+
+binaryspecField :: (B.Binaryspec
+                        (Opaleye.Internal.Column.Field_ n a)
+                        (Opaleye.Internal.Column.Field_ n a))
+binaryspecField = B.binaryspecColumn

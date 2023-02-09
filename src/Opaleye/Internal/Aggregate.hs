@@ -33,11 +33,11 @@ newtype Aggregator a b =
                          HPQ.PrimExpr
                          a b)
 
-makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
+makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr' mAggrOp = Aggregator (PM.PackMap
   (\f (C.Column e) -> fmap C.Column (f (fmap (, [], HPQ.AggrAll) mAggrOp, e))))
 
-makeAggr :: HPQ.AggrOp -> Aggregator (C.Column a) (C.Column b)
+makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
 
 -- | Order the values within each aggregation in `Aggregator` using
@@ -46,30 +46,33 @@ makeAggr = makeAggr' . Just
 -- `Opaleye.Aggregate.arrayAgg` and `Opaleye.Aggregate.stringAgg`.
 --
 -- You can either apply it to an aggregation of multiple columns, in
--- which case it will apply to all aggregation functions in there, or you
--- can apply it to a single column, and then compose the aggregations
--- afterwards. Examples:
+-- which case it will apply to all aggregation functions in there
 --
--- > x :: Aggregator (Column a, Column b) (Column (PGArray a), Column (PGArray a))
--- > x = (,) <$> orderAggregate (asc snd) (lmap fst arrayAggGrouped)
--- >         <*> orderAggregate (desc snd) (lmap fst arrayAggGrouped)
---
--- This will generate:
---
--- @
--- SELECT array_agg(a ORDER BY b ASC), array_agg(a ORDER BY b DESC)
--- FROM (SELECT a, b FROM ...)
--- @
---
--- Or:
+-- Example:
 --
 -- > x :: Aggregator (Column a, Column b) (Column (PGArray a), Column (PGArray b))
--- > x = orderAggregate (asc snd) $ p2 (arrayAggGrouped, arrayAggGrouped)
+-- > x = orderAggregate (asc snd) $ p2 (arrayAgg, arrayAgg)
 --
 -- This will generate:
 --
 -- @
 -- SELECT array_agg(a ORDER BY b ASC), array_agg(b ORDER BY b ASC)
+-- FROM (SELECT a, b FROM ...)
+-- @
+--
+-- Or you can apply it to a single column, and then compose the aggregations
+-- afterwards.
+--
+-- Example:
+--
+-- > x :: Aggregator (Column a, Column b) (Column (PGArray a), Column (PGArray a))
+-- > x = (,) <$> orderAggregate (asc snd) (lmap fst arrayAgg)
+-- >         <*> orderAggregate (desc snd) (lmap fst arrayAgg)
+--
+-- This will generate:
+--
+-- @
+-- SELECT array_agg(a ORDER BY b ASC), array_agg(a ORDER BY b DESC)
 -- FROM (SELECT a, b FROM ...)
 -- @
 
@@ -84,6 +87,14 @@ runAggregator
      -> f HPQ.PrimExpr)
   -> a -> f b
 runAggregator (Aggregator a) = PM.traversePM a
+
+-- For rel8.
+--
+-- Like https://www.stackage.org/haddock/lts-19.10/base-4.15.1.0/Control-Arrow.html#t:ArrowApply
+aggregatorApply :: Aggregator (Aggregator a b, a) b
+aggregatorApply = Aggregator $ PM.PackMap $ \f (agg, a) ->
+  case agg of
+    Aggregator (PM.PackMap inner) -> inner f a
 
 -- In Postgres (and, I believe, standard SQL) "aggregate functions are
 -- not allowed in FROM clause of their own query level".  There
@@ -102,8 +113,8 @@ runAggregator (Aggregator a) = PM.traversePM a
 -- aggregate.  On the other hand, referring to a field from a previous
 -- query in an ORDER BY expression is totally fine!
 aggregateU :: Aggregator a b
-           -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery, T.Tag)
-aggregateU agg (c0, primQ, t0) = (c1, primQ', T.next t0)
+           -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery)
+aggregateU agg (c0, primQ, t0) = (c1, primQ')
   where (c1, projPEs_inners) =
           PM.run (runAggregator agg (extractAggregateFields t0) c0)
 
@@ -128,6 +139,18 @@ extractAggregateFields tag (m, pe) = do
   PM.write ((souter, (m, sinner)), (sinner, pe))
 
   pure (HPQ.AttrExpr souter)
+
+unsafeMax :: Aggregator (C.Field a) (C.Field a)
+unsafeMax = makeAggr HPQ.AggrMax
+
+unsafeMin :: Aggregator (C.Field a) (C.Field a)
+unsafeMin = makeAggr HPQ.AggrMin
+
+unsafeAvg :: Aggregator (C.Field a) (C.Field a)
+unsafeAvg = makeAggr HPQ.AggrAvg
+
+unsafeSum :: Aggregator (C.Field a) (C.Field a)
+unsafeSum = makeAggr HPQ.AggrSum
 
 -- { Boilerplate instances
 

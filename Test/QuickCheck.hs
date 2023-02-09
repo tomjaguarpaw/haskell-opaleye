@@ -1,293 +1,40 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE Arrows #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module QuickCheck where
 
+import           Prelude hiding (compare, (.), id)
+
+import           Connection (Connection, withConnection)
+import           Opaleye.Test.Arbitrary
+import           Opaleye.Test.Fields
+import           Opaleye.Test.TraverseA (traverseA1)
+
 import qualified Opaleye as O
-import qualified Opaleye.Internal.Lateral as OL
-import qualified Opaleye.ToFields as O
-import           Wrapped (constructor, asSumProfunctor,
-                          constructorDecidable, asDecidable)
+import qualified Opaleye.Join as OJ
+import qualified Opaleye.Exists as OE
+
 import qualified Database.PostgreSQL.Simple as PGS
-import qualified Test.QuickCheck as TQ
-import           Test.QuickCheck ((===))
-import           Control.Applicative (Applicative, pure, (<$>), (<*>), liftA2)
-import qualified Data.Profunctor.Product.Default as D
-import           Data.List (sort)
-import qualified Data.List as List
-import qualified Data.MultiSet as MultiSet
-import qualified Data.Profunctor as P
-import qualified Data.Profunctor.Product as PP
-import qualified Data.Functor.Contravariant.Divisible as Divisible
-import qualified Data.Monoid as Monoid
-import qualified Data.Ord as Ord
-import qualified Data.Set as Set
-import qualified Data.Maybe as Maybe
+import           Control.Applicative (Applicative, pure, (<$>), (<*>))
 import qualified Control.Arrow as Arrow
 import           Control.Arrow ((<<<))
+import           Control.Category (Category, (.), id)
+import           Control.Monad (when, guard)
+import qualified Data.Profunctor.Product.Default as D
+import qualified Data.List as List
+import qualified Data.MultiSet as MultiSet
+import qualified Data.Monoid as Monoid
+import qualified Data.Ord as Ord hiding (compare)
+import qualified Data.Set as Set
+import qualified Data.Maybe as Maybe
+import qualified Test.QuickCheck as TQ
+import           Test.QuickCheck ((===), (.&&.))
 
-twoIntTable :: String
-            -> O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
-                       (O.Field O.SqlInt4, O.Field O.SqlInt4)
-twoIntTable n = O.Table n (PP.p2 (O.required "column1", O.required "column2"))
-
-table1 :: O.Table (O.Field O.SqlInt4, O.Field O.SqlInt4)
-                  (O.Field O.SqlInt4, O.Field O.SqlInt4)
-table1 = twoIntTable "table1"
-
-newtype SelectArrDenotation a b =
-  SelectArrDenotation { unSelectArrDenotation :: PGS.Connection -> a -> IO [b] }
-
-type SelectDenotation = SelectArrDenotation ()
-
-unSelectDenotation :: SelectDenotation b -> PGS.Connection -> IO [b]
-unSelectDenotation sa conn = unSelectArrDenotation sa conn ()
-
-onList :: ([a] -> [b]) -> SelectDenotation a -> SelectDenotation b
-onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
-
-data Choice i b s = CInt i | CBool b | CString s deriving (Show, Eq, Ord)
-
-chooseChoice :: Divisible.Decidable f
-             => (a -> Choice i b s) -> f i -> f b -> f s -> f a
-chooseChoice choose fi fb fs = asDecidable $ proc a -> case choose a of
-  CInt i    -> constructorDecidable fi -< i
-  CBool b   -> constructorDecidable fb -< b
-  CString s -> constructorDecidable fs -< s
-
-type Fields = [Choice (O.Field O.SqlInt4) (O.Field O.SqlBool) (O.Field O.SqlText)]
-type Haskells = [Choice Int Bool String]
-
-fieldsOfHaskells :: Haskells -> Fields
-fieldsOfHaskells = O.toFieldsExplicit defChoicesPP
-
-fieldsList :: (a, b) -> [Choice a b s]
-fieldsList (x, y) = [CInt x, CBool y]
-
-listFields :: Fields -> (O.Field O.SqlInt4, O.Field O.SqlBool)
-listFields f = (fst (firstIntOr 1 f),
-                fst (firstBoolOrTrue (O.sqlBool True) f))
-
-newtype ArbitrarySelect   = ArbitrarySelect (O.Select Fields)
-newtype ArbitrarySelectArr = ArbitrarySelectArr (O.SelectArr Fields Fields)
-newtype ArbitraryFields = ArbitraryFields { unArbitraryFields :: Haskells }
-                        deriving Show
-newtype ArbitraryFieldsList = ArbitraryFieldsList { unArbitraryFieldsList :: [(Int, Bool)] }
-                             deriving Show
-newtype ArbitraryPositiveInt = ArbitraryPositiveInt Int
-                            deriving Show
-newtype ArbitraryOrder = ArbitraryOrder { unArbitraryOrder :: [(Order, Int)] }
-                      deriving Show
-newtype ArbitraryGarble =
-  ArbitraryGarble { unArbitraryGarble :: forall a. [a] -> [a] }
-
-data Order = Asc | Desc deriving Show
-
-unpackFields :: O.Unpackspec Fields Fields
-unpackFields = defChoicesPP
-
-aggregateFields :: O.Aggregator Fields Fields
-aggregateFields =
-  -- The requirement to cast to int4 is silly, but we still have a bug
-  --
-  --     https://github.com/tomjaguarpaw/haskell-opaleye/issues/117
-  PP.list (choicePP (P.rmap (O.unsafeCast "int4") O.sum)
-                    O.boolAnd
-                    (O.stringAgg (O.sqlString ", ")))
-
-aggregateLaterally :: O.Aggregator b b'
-                   -> O.SelectArr i (Fields, b)
-                   -> O.SelectArr i (Fields, b')
-aggregateLaterally agg q = proc i -> do
-  (a, b) <- q -< i
-
-  b' <- OL.lateral
-    (\(a, b) ->
-        let aLateralInt :: O.Field O.SqlInt4
-            aLateralInt = fst (firstIntOr 0 a)
-        in (O.aggregateOrdered (O.asc (const aLateralInt)) agg) (pure b))
-            -< (a, b)
-  Arrow.returnA -< (a, b')
-
--- This is taking liberties.  Firstly it errors out when two fields
--- are of different types.  It should probably return a Maybe or an
--- Either.  Secondly, it doesn't detect when lists are the same
--- length and it probably should.
-aggregateDenotation :: [Haskells] -> [Haskells]
-aggregateDenotation cs = if null cs then [] else pure (List.foldl1' combine cs)
-  where combine = zipWith (curry (\case
-          (CInt  i1, CInt i2)  -> CInt (i1 + i2)
-          (CBool b1, CBool b2) -> CBool (b1 && b2)
-          (CString s1, CString s2) -> CString (s1 ++ ", " ++ s2)
-          _ -> error "Impossible"))
-
-instance Show ArbitrarySelect where
-  show (ArbitrarySelect q) = maybe "Empty query" id
-                              (O.showSqlExplicit unpackFields q)
-
-instance Show ArbitraryGarble where
-  show = const "A permutation"
-
-instance TQ.Arbitrary ArbitrarySelect where
-  arbitrary = do
-    ArbitrarySelectArr q <- TQ.arbitrary
-    return (ArbitrarySelect (q <<< pure []))
-
-instance TQ.Arbitrary ArbitrarySelectArr where
-  arbitrary = TQ.oneof [
-      do
-        ArbitraryFields fields_ <- TQ.arbitrary
-        aqArg ((pure . fieldsOfHaskells) fields_)
-    , aqArg (P.lmap (const ()) (fmap (\(x,y) -> [CInt x, CInt y]) (O.selectTable table1)))
-    , do
-        ArbitraryFieldsList l <- TQ.arbitrary
-        aqArg (P.lmap (const ()) (fmap fieldsList (O.values (fmap O.toFields l))))
-    , do
-        ArbitrarySelectArr q1 <- TQ.arbitrary
-        ArbitrarySelectArr q2 <- TQ.arbitrary
-        q <- TQ.oneof [ pure ((++) <$> q1 <*> q2)
-                      , pure (q1 <<< q2) ]
-        aqArg q
-    , do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        aq (O.distinctExplicit defChoicesPP) q
-    , do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        l                <- TQ.choose (0, 100)
-        aq (O.limit l) q
-    , do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        l                <- TQ.choose (0, 100)
-        aq (O.offset l) q
-    , do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        o                <- TQ.arbitrary
-        aq (O.orderBy (arbitraryOrder o)) q
-
-    , do
-        f                <- TQ.arbitrary
-        aqArg (Arrow.arr (unArbitraryGarble f))
-
-    , do
-        aqArg restrictFirstBool
-    , do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        aq (O.aggregate aggregateFields) q
-    , do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        thisLabel        <- TQ.arbitrary
-        aqArg (O.label thisLabel q)
-    , do
-        ArbitrarySelectArr q1 <- TQ.arbitrary
-        ArbitrarySelectArr q2 <- TQ.arbitrary
-        binaryOperation <- TQ.elements [ O.intersect
-                                       , O.intersectAll
-                                       , O.union
-                                       , O.unionAll
-                                       , O.except
-                                       , O.exceptAll
-                                       ]
-        q <- arbitraryBinary binaryOperation q1 q2
-        aqArg q
-    , -- This is stupidly simple way of generating lateral subqueries.
-      -- All it does is run a lateral aggregation.
-      do
-        ArbitrarySelectArr q <- TQ.arbitrary
-        aqArg ((fmap unpairColums
-                . aggregateLaterally aggregateFields
-                . fmap pairColumns) q)
-    ]
-    where -- Applies qf to the query, but uses [] for the input of
-          -- query, and ignores the input of the result.
-          aq qf = aqArg . OL.laterally qf
-
-          aqArg = return . ArbitrarySelectArr
-
-          arbitraryBinary binaryOperation q1 q2 =
-            return (fmap fieldsList
-                    (OL.bilaterally binaryOperation
-                     (fmap listFields q1)
-                     (fmap listFields q2)))
-
-instance TQ.Arbitrary ArbitraryFields where
-    arbitrary = do
-      -- Postgres strings cannot contain the zero codepoint.  See
-      --
-      -- https://www.postgresql.org/message-id/1171970019.3101.328.camel@coppola.muc.ecircle.de
-      let arbitraryPGString = filter (/= '\0') <$> TQ.arbitrary
-
-      l <- TQ.listOf (TQ.oneof [ CInt    <$> TQ.arbitrary
-                               , CBool   <$> TQ.arbitrary
-                               , CString <$> arbitraryPGString ])
-
-      return (ArbitraryFields l)
-
-instance TQ.Arbitrary ArbitraryFieldsList where
-  -- We don't want to choose very big lists because we take
-  -- products of queries and so their sizes are going to end up
-  -- multiplying.
-  arbitrary = do
-    k <- TQ.choose (0, 5)
-    l <- TQ.vectorOf k TQ.arbitrary
-    return (ArbitraryFieldsList l)
-
-instance TQ.Arbitrary ArbitraryPositiveInt where
-  arbitrary = fmap ArbitraryPositiveInt (TQ.choose (0, 100))
-
-instance TQ.Arbitrary ArbitraryOrder where
-  arbitrary = fmap ArbitraryOrder
-                   (TQ.listOf ((,)
-                               <$> TQ.oneof [return Asc, return Desc]
-                               <*> TQ.choose (0, 100)))
-
-odds :: [a] -> [a]
-odds []     = []
-odds (x:xs) = x : evens xs
-
-evens :: [a] -> [a]
-evens []     = []
-evens (_:xs) = odds xs
-
-pairColumns :: [a] -> ([a], [a])
-pairColumns cs = (evens cs, odds cs)
-
-unpairColums :: ([a], [a]) -> [a]
-unpairColums = uncurry (++)
-
-instance TQ.Arbitrary ArbitraryGarble where
-  arbitrary = do
-    i <- TQ.choose (0 :: Int, 4)
-
-    return (ArbitraryGarble (\xs ->
-        if i == 0 then
-          evens xs ++ odds xs
-        else if i == 1 then
-          evens xs ++ evens xs
-        else if i == 2 then
-          odds xs ++ odds xs
-        else if i == 3 then
-          evens xs
-        else
-          odds xs))
-
-arbitraryOrder :: ArbitraryOrder -> O.Order Fields
-arbitraryOrder =
-  Monoid.mconcat
-  . map (\(direction, index) ->
-           (case direction of
-              Asc  -> \f -> chooseChoice f (O.asc id) (O.asc id) (O.asc id)
-              Desc -> \f -> chooseChoice f (O.desc id) (O.desc id) (O.desc id))
-           -- If the list is empty we have to conjure up
-           -- an arbitrary value of type Field
-           (\l -> let len = length l
-                  in if len > 0 then
-                       l !! (index `mod` length l)
-                  else
-                       CInt 0))
-  . unArbitraryOrder
 
 arbitraryOrdering :: ArbitraryOrder -> Haskells -> Haskells -> Ord.Ordering
 arbitraryOrdering =
@@ -296,103 +43,350 @@ arbitraryOrdering =
             (case direction of
                 Asc  -> id
                 Desc -> flip)
-            -- If the list is empty we have to conjure up
-            -- an arbitrary value of type Field
+            -- If the list is empty we have to conjure up an arbitrary
+            -- value of type Field.  We don't know how to order
+            -- MaybeFields (yet) so we do the same if we hit a
+            -- MaybeFields.
             --
             -- Note that this one will compare CInt Int
             -- to CBool Bool, but it never gets asked to
             -- do so, so we don't care.
-            (Ord.comparing (\l -> let len = length l
+            (Ord.comparing (\c -> let l = unChoices c
+                                      len = length l
                                   in if len > 0 then
-                                       l !! (index `mod` length l)
+                                       case l !! (index `mod` length l) of
+                                         Left i  -> i
+                                         Right _ -> CInt 0
                                   else
                                        CInt 0)))
   . unArbitraryOrder
 
+newtype SelectArrDenotation a b =
+  SelectArrDenotation { unSelectArrDenotation :: PGS.Connection -> a -> IO [b] }
+
+type SelectDenotation = SelectArrDenotation ()
+
 instance Functor (SelectArrDenotation a) where
-  fmap f = SelectArrDenotation
-           . (fmap . fmap . fmap . fmap) f
-           . unSelectArrDenotation
+  fmap = onList . fmap
+
+instance Applicative (SelectArrDenotation a) where
+  pure = Arrow.arr . const
+  f <*> x = fmap (uncurry ($)) (f Arrow.&&& x)
+
+instance Category SelectArrDenotation where
+  id = Arrow.arr id
+  (.) = \(SelectArrDenotation f) (SelectArrDenotation g) ->
+          SelectArrDenotation (\conn a -> do
+                                  bs <- g conn a
+                                  concatMapM (f conn) bs)
+
+instance Arrow.Arrow SelectArrDenotation where
+  arr f = SelectArrDenotation (\_ -> pure . pure . f)
+  first f = SelectArrDenotation (\conn (a, b) -> do
+                                    as' <- unSelectArrDenotation f conn a
+                                    pure (fmap (\a' -> (a', b)) as'))
+
+instance Arrow.ArrowChoice SelectArrDenotation where
+  left f = SelectArrDenotation $ \conn -> \case
+    Left l -> (fmap . fmap) Left (unSelectArrDenotation f conn l)
+    Right r -> (pure . pure . pure) r
+
+runSelectArrDenotation :: SelectArrDenotation a b
+                       -> a
+                       -> PGS.Connection
+                       -> IO [b]
+runSelectArrDenotation sab a conn = unSelectArrDenotation sab conn a
+
+($$) :: Arrow.Arrow arr => arr a b -> a -> arr () b
+($$) f a = f <<< Arrow.arr (const a)
+
+unApply :: (a -> SelectDenotation b) -> SelectArrDenotation a b
+unApply f = SelectArrDenotation (\conn a -> unSelectArrDenotation (f a) conn ())
+
+onList :: ([a] -> [b]) -> SelectArrDenotation i a -> SelectArrDenotation i b
+onList f = SelectArrDenotation . (fmap . fmap . fmap) f . unSelectArrDenotation
+
+onListK :: (a -> [b]) -> SelectArrDenotation a b
+onListK f = SelectArrDenotation (\_ a -> pure (f a))
+
+-- This is taking liberties.  Firstly it errors out when two fields
+-- are of different types.  It should probably return a Maybe or an
+-- Either.  Secondly, it doesn't detect when lists are the same
+-- length and it probably should.
+--
+-- We don't have the ability to aggregate MaybeFields, at least, not
+-- yet.  Therefore we just replace them with Nothing.
+aggregateDenotation :: [Haskells] -> [Haskells]
+aggregateDenotation cs = if null cs
+                         then []
+                         else (pure
+                              . List.foldl1' combine
+                              . map emptyOutChoices
+                              ) cs
+  where combine h1 h2 = Choices (zipWith (curry (\case
+          (Left l1, Left l2) -> Left $ case (l1, l2) of
+            (CInt  i1, CInt i2)  -> CInt (i1 + i2)
+            (CBool b1, CBool b2) -> CBool (b1 && b2)
+            (CString s1, CString s2) -> CString (s1 ++ ", " ++ s2)
+            _ -> error "Impossible"
+          (Right _, Right _) -> Right Nothing
+          _ -> error "Impossible")) (unChoices h1) (unChoices h2))
+
+        emptyOutChoices c = Choices $ flip map (unChoices c) $ \case
+            Left l  -> Left l
+            Right _ -> Right Nothing
+
+optionalDenotation :: SelectArrDenotation i a -> SelectArrDenotation i (Maybe a)
+optionalDenotation = onList $ \case
+  [] -> [Nothing]
+  xs -> map Just xs
+
+lateralDenotation :: (a -> SelectDenotation r) -> SelectArrDenotation a r
+lateralDenotation = unApply
+
+optionalRestrictDenotation :: SelectDenotation Haskells
+                           -> SelectArrDenotation (Haskells -> Bool) (Maybe Haskells)
+optionalRestrictDenotation hs = optionalDenotation $ proc cond -> do
+  a <- hs -< ()
+  onListK guard -< cond a
+  Arrow.returnA -< a
 
 pureList :: [a] -> SelectDenotation a
 pureList = SelectArrDenotation . pure . pure . pure
 
-instance Applicative (SelectArrDenotation a) where
-  pure    = SelectArrDenotation . pure . pure . pure . pure
-  f <*> x = SelectArrDenotation ((liftA2 . liftA2 . liftA2 . liftA2) ($)
-                                   (unSelectArrDenotation f)
-                                   (unSelectArrDenotation x))
+concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
+concatMapM f = fmap concat . mapM f
 
-denotation :: O.FromFields fields a -> O.Select fields -> SelectDenotation a
-denotation qr q = SelectArrDenotation (\conn () -> O.runSelectExplicit qr conn q)
+denotationArrExplicit :: (ah -> af)
+                      -> O.FromFields bf bh
+                      -> O.SelectArr af bf
+                      -> SelectArrDenotation ah bh
+denotationArrExplicit toFields qr q =
+  SelectArrDenotation (\conn h ->
+      let fs = pure (toFields h)
+      in O.runSelectExplicit qr conn (q <<< fs))
 
-denotation' :: O.Select Fields -> SelectDenotation Haskells
-denotation' = denotation defChoicesPP
+denotationExplicit :: O.FromFields fields a
+                   -> O.Select fields
+                   -> SelectDenotation a
+denotationExplicit = denotationArrExplicit O.toFields
 
-denotation2 :: O.Select (Fields, Fields)
-            -> SelectDenotation (Haskells, Haskells)
-denotation2 = denotation (defChoicesPP PP.***! defChoicesPP)
+denotation :: O.Select Fields -> SelectDenotation Haskells
+denotation = denotationExplicit fromFieldsFields
+
+denotationArr :: O.SelectArr Fields Fields
+              -> SelectArrDenotation Haskells Haskells
+denotationArr = denotationArrExplicit fieldsOfHaskells fromFieldsFields
+
+denotationMaybeFields :: O.Select (O.MaybeFields Fields)
+                      -> SelectDenotation (Maybe Haskells)
+denotationMaybeFields =
+  denotationExplicit (O.fromFieldsMaybeFields fromFieldsFields)
+
+denotationArrMaybeFields
+  :: O.SelectArr (O.MaybeFields Fields) (O.MaybeFields Fields)
+  -> SelectArrDenotation (Maybe Haskells) (Maybe Haskells)
+denotationArrMaybeFields =
+  denotationArrExplicit
+    (O.toFieldsExplicit (O.toFieldsMaybeFields nullspecFields toFieldsFields))
+    (O.fromFieldsMaybeFields fromFieldsFields)
+
+unSelectDenotations :: SelectDenotation a
+                    -> SelectDenotation b
+                    -> ([a] -> [b] -> IO TQ.Property)
+                    -> Connection
+                    -> IO TQ.Property
+unSelectDenotations one two = unSelectArrDenotations one two ()
+
+unSelectArrDenotations :: SelectArrDenotation i a
+                       -> SelectArrDenotation i b
+                       -> i
+                       -> ([a] -> [b] -> IO TQ.Property)
+                       -> Connection
+                       -> IO TQ.Property
+unSelectArrDenotations one two i k conn = do
+  withConnection conn (runSelectArrDenotation one i) >>= \case
+    Left _ -> discard
+    Right oner -> withConnection conn (runSelectArrDenotation two i) >>= \case
+      Left _ -> discard
+      Right twor -> k oner twor
+
+  where discard = do
+          putStrLn "A denotation failed to run but it was not our fault"
+          pure (TQ.property TQ.Discard)
 
 -- { Comparing the results
 
--- compareNoSort is stronger than compare' so prefer to use it where possible
+-- compareNoSort is stronger than compare so prefer to use it where
+-- possible.  If the queries do not compare equal but do compare equal
+-- sorted then switch to "compare".  That's no big deal.
 compareNoSort :: (Ord a, Show a)
-              => PGS.Connection
+              => SelectDenotation a
               -> SelectDenotation a
-              -> SelectDenotation a
+              -> Connection
               -> IO TQ.Property
-compareNoSort conn one two = do
-  one' <- unSelectDenotation one conn
-  two' <- unSelectDenotation two conn
-
-  if (one' /= two')
-    then (putStrLn $ if (sort one' == sort two')
-                     then "[but they are equal sorted]"
-                     else "AND THEY'RE NOT EVEN EQUAL SORTED!")
-    else return ()
+compareNoSort one two =
+  unSelectDenotations one two $ \one' two' -> do
+  when (one' /= two')
+       (putStrLn $ if List.sort one' == List.sort two'
+                   then "[but they are equal sorted]"
+                   else "AND THEY'RE NOT EVEN EQUAL SORTED!")
 
   return (one' === two')
 
-compare' :: Ord a
-         => PGS.Connection
+compare :: (Show a, Ord a)
+         => SelectDenotation a
          -> SelectDenotation a
-         -> SelectDenotation a
-         -> IO Bool
-compare' conn one two = do
-  one' <- unSelectDenotation one conn
-  two' <- unSelectDenotation two conn
-  return (sort one' == sort two')
+         -> Connection
+         -> IO TQ.Property
+compare one two = unSelectDenotations one two $ \one' two' ->
+  return (List.sort one' === List.sort two')
 
-compareSortedBy :: Ord a
+-- The condition is *not* that denotation of the sort is equal to sort
+-- of the denotation, because the ordering may not fully specify the
+-- order.
+compareSortedBy :: (Show a, Ord a)
                 => (a -> a -> Ord.Ordering)
-                -> PGS.Connection
                 -> SelectDenotation a
                 -> SelectDenotation a
-                -> IO Bool
-compareSortedBy o conn one two = do
-  one' <- unSelectDenotation one conn
-  two' <- unSelectDenotation two conn
-  return ((sort one' == sort two')
-          && isSortedBy o one')
+                -> Connection
+                -> IO TQ.Property
+compareSortedBy o one two = unSelectDenotations one two $ \one' two' ->
+  return ((List.sort one' === List.sort two')
+          .&&. isSortedBy o one')
+
+type ArbitraryArgument = ArbitraryHaskells
+
+denotationC :: Arrow.Arrow selectArr
+            => (SelectDenotation Haskells -> selectArr () b -> t1 -> t2)
+            -> O.SelectArr Fields Fields
+            -> selectArr Haskells b
+            -> ArbitraryHaskells
+            -> t1
+            -> t2
+denotationC compare_ q d (ArbitraryHaskells h) conn =
+  compare_ (denotation (q . pure (fieldsOfHaskells h))) (d $$ h) conn
+
+compareDenotation :: O.SelectArr Fields Fields
+                  -> SelectArrDenotation Haskells Haskells
+                  -> ArbitraryArgument
+                  -> Connection
+                  -> IO TQ.Property
+compareDenotation = denotationC compare
+
+compareDenotationMaybe :: O.SelectArr (O.MaybeFields Fields) Fields
+                       -> SelectArrDenotation (Maybe Haskells) Haskells
+                       -> ArbitraryMaybeHaskells
+                       -> Connection
+                       -> IO TQ.Property
+compareDenotationMaybe q d (ArbitraryMaybeHaskells h) =
+  compare (denotation (q . pure (fieldsOfMaybeHaskells h))) (d $$ h)
+
+compareDenotationMaybe2 :: O.SelectArr (O.MaybeFields Fields)
+                                       (O.MaybeFields Fields)
+                        -> SelectArrDenotation (Maybe Haskells) (Maybe Haskells)
+                        -> ArbitraryMaybeHaskells
+                        -> Connection
+                        -> IO TQ.Property
+compareDenotationMaybe2 q d (ArbitraryMaybeHaskells h) =
+  compare (denotationMaybeFields (q . pure (fieldsOfMaybeHaskells h)))
+          (d $$ h)
+
+compareDenotationNoSort :: O.SelectArr Fields Fields
+                        -> SelectArrDenotation Haskells Haskells
+                        -> ArbitraryArgument
+                        -> Connection
+                        -> IO TQ.Property
+compareDenotationNoSort = denotationC compareNoSort
+
+compareDenotation' :: (O.Select Fields -> O.Select Fields)
+                   -> ([Haskells] -> [Haskells])
+                   -> ArbitrarySelect
+                   -> Connection
+                   -> IO TQ.Property
+compareDenotation' f g (ArbitrarySelect q) =
+  compare (denotation (f q)) (onList g (denotation q))
+
+compareDenotationMaybe' :: (O.Select Fields -> O.Select (O.MaybeFields Fields))
+                        -> (SelectDenotation Haskells -> SelectDenotation (Maybe Haskells))
+                        -> ArbitrarySelect
+                        -> Connection
+                        -> IO TQ.Property
+compareDenotationMaybe' f g (ArbitrarySelect q) =
+  compare (denotationMaybeFields (f q)) (g (denotation q))
+
+compareDenotationNoSort' :: (O.Select Fields -> O.Select Fields)
+                         -> ([Haskells] -> [Haskells])
+                         -> ArbitrarySelect
+                         -> Connection
+                         -> IO TQ.Property
+compareDenotationNoSort' f g (ArbitrarySelect q) =
+  compareNoSort (denotation (f q)) (onList g (denotation q))
 
 -- }
 
 -- { The tests
 
-fields :: PGS.Connection -> ArbitraryFields -> IO TQ.Property
-fields conn (ArbitraryFields c) =
-  compareNoSort conn (denotation' (pure (fieldsOfHaskells c)))
-                     (pure c)
+fields :: ArbitraryHaskells -> ArbitraryArgument -> Connection -> IO TQ.Property
+       -- ^ The ArbitraryArgument isn't really used
+fields (ArbitraryHaskells c) =
+  compareDenotationNoSort (pure (fieldsOfHaskells c)) (pure c)
 
-fmap' :: PGS.Connection -> ArbitraryGarble -> ArbitrarySelect -> IO TQ.Property
-fmap' conn f (ArbitrarySelect q) =
-  compareNoSort conn (denotation' (fmap (unArbitraryGarble f) q))
-                     (onList (fmap (unArbitraryGarble f)) (denotation' q))
+compose :: ArbitrarySelectArr
+        -> ArbitrarySelectArr
+        -> ArbitraryArgument
+        -> Connection
+        -> IO TQ.Property
+compose (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) = do
+  compareDenotation (q1 . q2) (denotationArr q1 . denotationArr q2)
 
-apply :: PGS.Connection -> ArbitrarySelect -> ArbitrarySelect -> IO Bool
-apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
-  compare' conn (denotation2 ((,) <$> q1 <*> q2))
-                ((,) <$> denotation' q1 <*> denotation' q2)
+-- We need to test this separately otherwise traverseMaybeFields won't
+-- be properly tested.  We need that [traverseMaybeFields q <<< q'] is
+-- [traverseMaybeFields q] <<< [q] and we only test it when q' is of
+-- the form pure h.  The 'compose' tests do the rest, therefore we
+-- need a version of 'compose' that checks composition of things whose
+-- types are 'MaybeFields Fields'.
+composeMaybe :: ArbitrarySelectArrMaybe
+             -> ArbitrarySelectArrMaybe
+             -> ArbitraryMaybeHaskells
+             -> Connection
+             -> IO TQ.Property
+composeMaybe (ArbitrarySelectArrMaybe q1) (ArbitrarySelectArrMaybe q2) = do
+  compareDenotationMaybe2 (q1 . q2) (denotation_ q1 . denotation_ q2)
+  where denotation_ = denotationArrMaybeFields
+
+identity :: ArbitraryArgument
+         -> Connection
+         -> IO TQ.Property
+identity = compareDenotation id id
+
+arr :: ArbitraryFunction
+    -> ArbitraryArgument
+    -> Connection
+    -> IO TQ.Property
+arr (ArbitraryFunction f) =
+  compareDenotationNoSort (Arrow.arr f) (Arrow.arr f)
+
+fmap' :: ArbitraryFunction
+      -> ArbitrarySelectArr
+      -> ArbitraryArgument
+      -> Connection
+      -> IO TQ.Property
+fmap' (ArbitraryFunction f) (ArbitrarySelectArr q) =
+  compareDenotationNoSort (fmap f q)
+                          (fmap f (denotationArr q))
+
+apply :: ArbitrarySelectArr
+      -> ArbitrarySelectArr
+      -> ArbitraryArgument
+      -> Connection
+      -> IO TQ.Property
+apply (ArbitrarySelectArr q1) (ArbitrarySelectArr q2) =
+  compareDenotation (pair <$> q1 <*> q2)
+                    (pair <$> denotationArr q1 <*> denotationArr q2)
+
+  where pair x y = Choices [Right (pure x), Right (pure y)]
+
 
 -- When combining arbitrary queries with the applicative product <*>
 -- the limit of the denotation is not always the denotation of the
@@ -402,84 +396,122 @@ apply conn (ArbitrarySelect q1) (ArbitrarySelect q2) =
 -- the remainder under the applied ordering.
 --
 -- Strangely the same caveat doesn't apply to offset.
-limit :: PGS.Connection
-      -> ArbitraryPositiveInt
+limit :: ArbitraryPositiveInt
       -> ArbitrarySelect
       -> ArbitraryOrder
-      -> IO Bool
-limit conn (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
-  let q' = O.limit l (O.orderBy (arbitraryOrder o) q)
+      -> Connection
+      -> IO TQ.Property
+limit (ArbitraryPositiveInt l) (ArbitrarySelect q) o = do
+  let limited = O.limit l (O.orderBy (arbitraryOrder o) q)
 
-  one' <- unSelectDenotation (denotation' q') conn
-  two' <- unSelectDenotation (denotation' q) conn
+  unSelectDenotations (denotation limited) (denotation q) $ \limited' unlimited' -> do
+      let remainder = MultiSet.fromList unlimited'
+                      `MultiSet.difference`
+                      MultiSet.fromList limited'
+          maxChosen :: Maybe Haskells
+          maxChosen = maximumBy (arbitraryOrdering o) limited'
+          minRemain :: Maybe Haskells
+          minRemain = minimumBy (arbitraryOrdering o) (MultiSet.toList remainder)
+          cond :: Maybe Bool
+          cond = lteBy (arbitraryOrdering o) <$> maxChosen <*> minRemain
+          condBool :: Bool
+          condBool = Maybe.fromMaybe True cond
 
-  let remainder = MultiSet.fromList two'
-                  `MultiSet.difference`
-                  MultiSet.fromList one'
-      maxChosen :: Maybe Haskells
-      maxChosen = maximumBy (arbitraryOrdering o) one'
-      minRemain :: Maybe Haskells
-      minRemain = minimumBy (arbitraryOrdering o) (MultiSet.toList remainder)
-      cond :: Maybe Bool
-      cond = lteBy (arbitraryOrdering o) <$> maxChosen <*> minRemain
-      condBool :: Bool
-      condBool = Maybe.fromMaybe True cond
+      return ((length limited' === min l (length unlimited'))
+              .&&. condBool)
 
-  return ((length one' == min l (length two'))
-          && condBool)
+offset :: ArbitraryPositiveInt -> ArbitrarySelect -> Connection
+       -> IO TQ.Property
+offset (ArbitraryPositiveInt n) =
+  compareDenotationNoSort' (O.offset n) (drop n)
 
-offset :: PGS.Connection -> ArbitraryPositiveInt -> ArbitrarySelect -> IO TQ.Property
-offset conn (ArbitraryPositiveInt l) (ArbitrarySelect q) =
-  compareNoSort conn (denotation' (O.offset l q))
-                     (onList (drop l) (denotation' q))
-
-order :: PGS.Connection -> ArbitraryOrder -> ArbitrarySelect -> IO Bool
-order conn o (ArbitrarySelect q) =
+order :: ArbitraryOrder -> ArbitrarySelect -> Connection -> IO TQ.Property
+order o (ArbitrarySelect q) =
   compareSortedBy (arbitraryOrdering o)
-                  conn
-                  (denotation' (O.orderBy (arbitraryOrder o) q))
-                  (denotation' q)
+                  (denotation (O.orderBy (arbitraryOrder o) q))
+                  (denotation q)
 
-distinct :: PGS.Connection -> ArbitrarySelect -> IO Bool
-distinct conn (ArbitrarySelect q) =
-  compare' conn (denotation' (O.distinctExplicit defChoicesPP q))
-                (onList nub (denotation' q))
+distinct :: ArbitrarySelect -> Connection -> IO TQ.Property
+distinct =
+  compareDenotation' (O.distinctExplicit distinctFields) nub
 
--- When we added <*> to the arbitrary queries we started getting some
--- consequences to do with the order of the returned rows and so
--- restrict had to start being compared sorted.
-restrict :: PGS.Connection -> ArbitrarySelect -> IO Bool
-restrict conn (ArbitrarySelect q) =
-  compare' conn (denotation' (restrictFirstBool <<< q))
-                (onList restrictFirstBoolList (denotation' q))
+-- When we generalise compareDenotation... we can just test
+--
+--    compareDenotation... conn restrict restrictDenotation
+restrict :: ArbitraryArgument -> Connection -> IO TQ.Property
+restrict =
+  compareDenotationNoSort restrictFirstBool restrictFirstBoolDenotation
 
-values :: PGS.Connection -> ArbitraryFieldsList -> IO TQ.Property
-values conn (ArbitraryFieldsList l) =
-  compareNoSort conn (denotation' (fmap fieldsList (O.values (fmap O.toFields l))))
-                     (pureList (fmap fieldsList l))
+values :: ArbitraryHaskellsList -> Connection -> IO TQ.Property
+values (ArbitraryHaskellsList l) =
+  compareNoSort (denotation (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
+                (pureList (fmap fieldsList l))
 
-aggregate :: PGS.Connection -> ArbitrarySelect -> IO TQ.Property
-aggregate conn (ArbitrarySelect q) =
-  compareNoSort conn (denotation' (O.aggregate aggregateFields q))
-                     (onList aggregateDenotation (denotation' q))
+-- We test values entries of length two in values, and values entries
+-- of length zero here.  Ideally we would find some way to merge them.
+valuesEmpty :: [()] -> Connection -> IO TQ.Property
+valuesEmpty l =
+  compareNoSort (denotationExplicit D.def (O.valuesSafe l))
+                (pureList l)
+
+aggregate :: ArbitrarySelect -> Connection -> IO TQ.Property
+aggregate =
+  compareDenotationNoSort' (O.aggregate aggregateFields)
+                           aggregateDenotation
 
 
-label :: PGS.Connection -> String -> ArbitrarySelect -> IO TQ.Property
-label conn comment (ArbitrarySelect q) =
-  compareNoSort conn (denotation' (O.label comment q))
-                     (denotation' q)
+label :: String -> ArbitrarySelect -> Connection -> IO TQ.Property
+label comment = compareDenotationNoSort' (O.label comment) id
+
+optional :: ArbitrarySelect -> Connection -> IO TQ.Property
+optional = compareDenotationMaybe' (OJ.optionalExplicit unpackFields)
+                                   optionalDenotation
+
+optionalRestrict :: ArbitrarySelect -> Connection -> IO TQ.Property
+optionalRestrict =
+  compareDenotationMaybe' optionalRestrictF optionalRestrictFDenotation
+  where optionalRestrictF = f (firstBoolOrTrue (O.sqlBool True))
+                              (O.optionalRestrictExplicit unpackFields)
+
+        optionalRestrictFDenotation = f (firstBoolOrTrue True)
+                                        optionalRestrictDenotation
+
+        f x y z = Arrow.arr (\() -> fst . x) Arrow.>>> (y z)
+
+maybeFieldsToSelect :: ArbitraryMaybeHaskells -> Connection -> IO TQ.Property
+maybeFieldsToSelect =
+  compareDenotationMaybe O.maybeFieldsToSelect
+                         (onListK Maybe.maybeToList)
+
+traverseMaybeFields :: ArbitrarySelectArr
+                    -> ArbitraryMaybeHaskells
+                    -> Connection
+                    -> IO TQ.Property
+traverseMaybeFields (ArbitrarySelectArr q) =
+  compareDenotationMaybe2 (traverse' q)
+                          (traverseA1 (denotationArr q))
+  where traverse' = O.traverseMaybeFieldsExplicit unpackFields unpackFields
+
+lateral :: ArbitraryKleisli
+        -> ArbitraryArgument
+        -> Connection
+        -> IO TQ.Property
+lateral (ArbitraryKleisli f) =
+  compareDenotation (O.lateral f) (lateralDenotation (denotation . f'))
+  where f' = f . fieldsOfHaskells
+
+exists :: ArbitrarySelect -> Connection -> IO TQ.Property
+exists = compareDenotationNoSort' (existsQ OE.exists) (existsQ existsList)
+  where existsList l = [not (null l)]
+        existsQ existsf q = do
+          exists_ <- existsf q
+          pure (Choices [Left (CBool exists_)])
 
 
 {- TODO
 
   * Nullability
-  * Left join
   * Operators (mathematical, logical, etc.)
-  * Denotation of <<<
-
-  * The denotation of lateral subqueries (at the moment we just
-    generate subqueries containing them, but we don't check their
-    behaviour)
 
 -}
 
@@ -487,40 +519,69 @@ label conn comment (ArbitrarySelect q) =
 
 -- { Running the QuickCheck
 
-run :: PGS.Connection -> IO ()
+-- One way that the property tests can fail is because of LIMIT and
+-- OFFSET.  It seems that a query returning LIMIT or OFFSET does not
+-- always return the same result when it is part of a larger query.
+-- This happens rarely.  We could sort before LIMIT or OFFSET to make
+-- it even rarer.
+
+run :: Connection -> IO ()
 run conn = do
-  let prop1 p = fmap          TQ.ioProperty (p conn)
-      prop2 p = (fmap . fmap) TQ.ioProperty (p conn)
-      prop3 p = (fmap . fmap . fmap) TQ.ioProperty (p conn)
+  let prop1 :: TQ.Testable prop
+            => (a -> Connection -> IO prop) -> a -> TQ.Property
+      prop1 = fmap (\p -> TQ.ioProperty (p conn))
+
+      prop2 :: TQ.Testable prop
+            => (a1 -> a2 -> Connection -> IO prop)
+            -> a1 -> a2 -> TQ.Property
+      prop2 = (fmap . fmap) (\p -> TQ.ioProperty (p conn))
+
+
+      prop3 :: TQ.Testable prop
+            => (a1 -> a2 -> a3 -> Connection -> IO prop)
+            -> a1 -> a2 -> a3 -> TQ.Property
+      prop3 = (fmap . fmap . fmap) (\p -> TQ.ioProperty (p conn))
 
       test1 :: (Show a, TQ.Arbitrary a, TQ.Testable prop)
-               => (PGS.Connection -> a -> IO prop) -> IO ()
+               => (a -> Connection -> IO prop) -> IO ()
       test1 = t . prop1
 
       test2 :: (Show a1, Show a2, TQ.Arbitrary a1, TQ.Arbitrary a2,
                 TQ.Testable prop)
-               => (PGS.Connection -> a1 -> a2 -> IO prop) -> IO ()
+               => (a1 -> a2 -> Connection -> IO prop) -> IO ()
       test2 = t . prop2
 
       test3 :: (Show a1, Show a2, Show a3,
                 TQ.Arbitrary a1, TQ.Arbitrary a2, TQ.Arbitrary a3,
                 TQ.Testable prop)
-               => (PGS.Connection -> a1 -> a2 -> a3 -> IO prop) -> IO ()
+               => (a1 -> a2 -> a3 -> Connection -> IO prop) -> IO ()
       test3 = t . prop3
 
-      t p = errorIfNotSuccess =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
+      t p = errorIfNotSuccess
+        =<< TQ.quickCheckWithResult (TQ.stdArgs { TQ.maxSuccess = 1000 }) p
 
-  test1 fields
-  test2 fmap'
-  test2 apply
+  test1 identity
+  test2 arr
+  test3 compose
+  test3 composeMaybe
+  test2 fields
+  test3 fmap'
+  test3 apply
   test3 limit
   test2 offset
   test2 order
   test1 distinct
   test1 restrict
   test1 values
+  test1 valuesEmpty
   test1 aggregate
   test2 label
+  test1 optional
+  test1 optionalRestrict
+  test1 maybeFieldsToSelect
+  test2 traverseMaybeFields
+  test2 lateral
+  test1 exists
 
 -- }
 
@@ -529,59 +590,15 @@ run conn = do
 nub :: Ord a => [a] -> [a]
 nub = Set.toList . Set.fromList
 
-choicePP :: PP.SumProfunctor p
-         => p i1 i2 -> p b1 b2 -> p s1 s2
-         -> p (Choice i1 b1 s1) (Choice i2 b2 s2)
-choicePP p1 p2 p3 = asSumProfunctor $ proc choice -> case choice of
-  CInt i    -> constructor CInt    p1 -< i
-  CBool b   -> constructor CBool   p2 -< b
-  CString s -> constructor CString p3 -< s
-
-defChoicesPP :: (D.Default p a a', D.Default p b b', D.Default p s s',
-                 PP.SumProfunctor p, PP.ProductProfunctor p)
-             => p [Choice a b s] [Choice a' b' s']
-defChoicesPP = PP.list (choicePP D.def D.def D.def)
-
--- Replace this with `isSuccess` when the following issue is fixed
---
---     https://github.com/nick8325/quickcheck/issues/220
 errorIfNotSuccess :: TQ.Result -> IO ()
-errorIfNotSuccess r = case r of
-  TQ.Success {} -> return ()
-  _             -> error "Failed"
+errorIfNotSuccess r = if TQ.isSuccess r
+                      then return ()
+                      else error "Failed"
 
-firstBoolOrTrue :: b -> [Choice a b s] -> (b, [Choice a b s])
-firstBoolOrTrue true c = (b, c)
-  where b = case Maybe.mapMaybe isBool c of
-          []    -> true
-          (x:_) -> x
-
-firstIntOr :: a -> [Choice a b s] -> (a, [Choice a b s])
-firstIntOr else_ c = (b, c)
-  where b = case Maybe.mapMaybe isInt c of
-          []    -> else_
-          (x:_) -> x
-
-isBool :: Choice a b s
-       -> Maybe b
-isBool (CInt _)  = Nothing
-isBool (CBool l) = Just l
-isBool (CString _) = Nothing
-
-isInt :: Choice a b s -> Maybe a
-isInt (CInt a)  = Just a
-isInt (CBool _) = Nothing
-isInt (CString _) = Nothing
-
-restrictFirstBool :: O.SelectArr Fields Fields
-restrictFirstBool = Arrow.arr snd
-      <<< Arrow.first O.restrict
-      <<< Arrow.arr (firstBoolOrTrue (O.sqlBool True))
-
-restrictFirstBoolList :: [Haskells] -> [Haskells]
-restrictFirstBoolList = map snd
-                        . filter fst
-                        . map (firstBoolOrTrue True)
+restrictFirstBoolDenotation :: SelectArrDenotation Haskells Haskells
+restrictFirstBoolDenotation = proc hs -> do
+  onListK guard -< fst (firstBoolOrTrue True hs)
+  Arrow.returnA -< hs
 
 isSortedBy ::(a -> a -> Ord.Ordering) -> [a] -> Bool
 isSortedBy comp xs = all (uncurry (.<=)) (zip xs (tail' xs))

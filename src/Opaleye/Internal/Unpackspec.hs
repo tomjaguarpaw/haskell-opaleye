@@ -1,10 +1,12 @@
+{-# OPTIONS_HADDOCK not-home #-}
+
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 
 module Opaleye.Internal.Unpackspec where
 
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.Column as IC
-import qualified Opaleye.Column as C
+import qualified Opaleye.Field as F
 
 import           Control.Applicative (Applicative, pure, (<*>))
 import           Data.Profunctor (Profunctor, dimap)
@@ -14,15 +16,15 @@ import qualified Data.Profunctor.Product.Default as D
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-newtype Unpackspec columns columns' =
-  -- | An 'Unpackspec' @columns@ @columns'@ allows you to extract and
+newtype Unpackspec fields fields' =
+  -- | An 'Unpackspec' @fields@ @fields'@ allows you to extract and
   -- modify a sequence of 'HPQ.PrimExpr's inside a value of type
-  -- @columns@.
+  -- @fields@.
   --
-  -- For example, the 'Default' instance of type 'Unpackspec' @(Column
-  -- a, Column b)@ @(Column a, Column b)@ allows you to manipulate or
-  -- extract the two 'HPQ.PrimExpr's inside a @(Column a, Column b)@.  The
-  -- 'Default' instance of type @Foo (Column a) (Column b) (Column c)@
+  -- For example, the 'Default' instance of type 'Unpackspec' @(Field
+  -- a, Field b)@ @(Field a, Field b)@ allows you to manipulate or
+  -- extract the two 'HPQ.PrimExpr's inside a @(Field a, Field b)@.  The
+  -- 'Default' instance of type @Foo (Field a) (Field b) (Field c)@
   -- will allow you to manipulate or extract the three 'HPQ.PrimExpr's
   -- contained therein (for a user-defined product type @Foo@, assuming
   -- the @makeAdaptorAndInstance@ splice from
@@ -31,13 +33,13 @@ newtype Unpackspec columns columns' =
   -- Users should almost never need to create or manipulate
   -- `Unpackspec`s.  Typically they will be created automatically by
   -- the 'D.Default' instance.  If you really need to you can create
-  -- 'Unpackspec's by hand using 'unpackspecColumn' and the
+  -- 'Unpackspec's by hand using 'unpackspecField' and the
   -- 'Profunctor', 'ProductProfunctor' and 'SumProfunctor' operations.
-  Unpackspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr columns columns')
+  Unpackspec (PM.PackMap HPQ.PrimExpr HPQ.PrimExpr fields fields')
 
--- | Target the single 'HPQ.PrimExpr' inside a 'C.Column'
-unpackspecColumn :: Unpackspec (C.Column a) (C.Column a)
-unpackspecColumn = Unpackspec (PM.iso IC.unColumn IC.Column)
+-- | Target the single 'HPQ.PrimExpr' inside a 'F.Field n'
+unpackspecField :: Unpackspec (F.Field_ n a) (F.Field_ n a)
+unpackspecField = Unpackspec (PM.iso IC.unColumn IC.Column)
 
 -- | Modify all the targeted 'HPQ.PrimExpr's
 runUnpackspec :: Applicative f
@@ -51,8 +53,8 @@ collectPEs :: Unpackspec s t -> s -> [HPQ.PrimExpr]
 collectPEs unpackspec = fst . runUnpackspec unpackspec f
   where f pe = ([pe], pe)
 
-instance D.Default Unpackspec (C.Column a) (C.Column a) where
-  def = unpackspecColumn
+instance D.Default Unpackspec (F.Field_ n a) (F.Field_ n a) where
+  def = unpackspecField
 
 -- {
 

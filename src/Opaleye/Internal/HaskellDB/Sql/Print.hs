@@ -9,6 +9,7 @@ module Opaleye.Internal.HaskellDB.Sql.Print (
                                      ppUpdate,
                                      ppDelete,
                                      ppInsert,
+                                     ppValues_,
                                      ppSqlExpr,
                                      ppWhere,
                                      ppGroupBy,
@@ -23,7 +24,7 @@ import Prelude hiding ((<>))
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
                                SqlUpdate(..), SqlTable(..), SqlRangeBound(..),
-                               OnConflict(..))
+                               SqlPartition(..), OnConflict(..))
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 
 import Data.List (intersperse)
@@ -54,6 +55,22 @@ ppGroupBy es = text "GROUP BY" <+> ppGroupAttrs es
     ppGroupAttrs :: [SqlExpr] -> Doc
     ppGroupAttrs = commaV (ppSqlExpr . deliteral)
 
+ppWindowExpr :: String -> [SqlExpr] -> SqlPartition -> Doc
+ppWindowExpr f es partition = text f <> parens (commaH ppSqlExpr es) <+> text "OVER" <+> parens (ppSqlPartition partition)
+
+ppSqlPartition :: SqlPartition -> Doc
+ppSqlPartition partition =
+  ppPartitionBy (sqlPartitionBy partition) <+>
+  ppOrderBy (maybe [] NEL.toList (sqlOrderBy partition))
+
+ppPartitionBy :: Maybe (NEL.NonEmpty SqlExpr) -> Doc
+ppPartitionBy Nothing = empty
+ppPartitionBy (Just es) =
+  text "PARTITION BY" <+> ppPartitionAttrs (NEL.toList es)
+  where
+    ppPartitionAttrs :: [SqlExpr] -> Doc
+    ppPartitionAttrs = commaH (ppSqlExpr . deliteral)
+
 ppOrderBy :: [(SqlExpr,SqlOrder)] -> Doc
 ppOrderBy [] = empty
 ppOrderBy ord = text "ORDER BY" <+> commaV ppOrd ord
@@ -79,9 +96,9 @@ ppSqlDistinct :: Sql.SqlDistinct -> Doc
 ppSqlDistinct Sql.SqlDistinct = text "DISTINCT"
 ppSqlDistinct Sql.SqlNotDistinct = empty
 
-ppAs :: Maybe String -> Doc -> Doc
-ppAs Nothing      expr = expr
-ppAs (Just alias) expr = expr <+> hsep [text "as", doubleQuotes (text alias)]
+ppAs :: Doc -> Maybe String -> Doc
+ppAs expr Nothing      = expr
+ppAs expr (Just alias) = expr <+> hsep [text "as", doubleQuotes (text alias)]
 
 
 ppUpdate :: SqlUpdate -> Doc
@@ -106,9 +123,11 @@ ppInsert :: SqlInsert -> Doc
 ppInsert (SqlInsert table names values onConflict)
     = text "INSERT INTO" <+> ppTable table
       <+> parens (commaV ppColumn names)
-      $$ text "VALUES" <+> commaV (parens . commaV ppSqlExpr)
-                                  (NEL.toList values)
+      $$ ppValues_ (NEL.toList values)
       <+> ppConflictStatement onConflict
+
+ppValues_ :: [[SqlExpr]] -> Doc
+ppValues_ v = text "VALUES" $$ commaV (parens . commaH ppSqlExpr) v
 
 -- If we wanted to make the SQL slightly more readable this would be
 -- one easy place to do it.  Currently we wrap all column references
@@ -174,6 +193,7 @@ ppSqlExpr expr =
       ArraySqlExpr es        -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
       RangeSqlExpr t s e     -> ppRange t s e
       AggrFunSqlExpr f es ord distinct -> text f <> parens (ppSqlDistinct distinct <+> commaH ppSqlExpr es <+> ppOrderBy ord)
+      WndwFunSqlExpr f es window -> ppWindowExpr f es window
       CaseSqlExpr cs el   -> text "CASE" <+> vcat (toList (fmap ppWhen cs))
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
           where ppWhen (w,t) = text "WHEN" <+> ppSqlExpr w

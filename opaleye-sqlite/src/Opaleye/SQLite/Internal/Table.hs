@@ -16,7 +16,8 @@ import           Data.Profunctor (Profunctor, dimap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product as PP
 import qualified Data.List.NonEmpty as NEL
-import           Data.Monoid (Monoid, mempty, mappend)
+import           Data.Semigroup (Semigroup, (<>))
+import           Data.Monoid (Monoid, mempty)
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import qualified Control.Arrow as Arr
 
@@ -108,10 +109,12 @@ runWriter' (Writer (PM.PackMap f)) columns = Arr.first unZip outColumns
 
 data Zip a = Zip { unZip :: NEL.NonEmpty [a] }
 
+instance Semigroup (Zip a) where
+  Zip xs <> Zip ys = Zip (NEL.zipWith (++) xs ys)
+
 instance Monoid (Zip a) where
   mempty = Zip mempty'
     where mempty' = [] `NEL.cons` mempty'
-  Zip xs `mappend` Zip ys = Zip (NEL.zipWith (++) xs ys)
 
 required :: String -> Writer (Column a) (Column a)
 required columnName =

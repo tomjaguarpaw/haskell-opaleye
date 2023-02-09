@@ -313,8 +313,8 @@ eitherPP = PP.list (D.def PP.+++! D.def)
 
 errorIfNotSuccess :: TQ.Result -> IO ()
 errorIfNotSuccess r = case r of
-  TQ.Success _ _ _ -> return ()
-  _                -> error "Failed"
+  TQ.Success {} -> return ()
+  _             -> error "Failed"
 
 firstBoolOrTrue :: b -> [Either a b] -> (b, [Either a b])
 firstBoolOrTrue true c = (b, c)

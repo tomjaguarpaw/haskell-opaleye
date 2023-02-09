@@ -10,21 +10,23 @@ import           Opaleye.Internal.Helpers   ((.:))
 import qualified Data.List.NonEmpty as NEL
 import           Data.Semigroup ((<>))
 
-import           Control.Applicative ((<$>), (<*>), pure)
+import           Control.Applicative ((<$>), (<*>), liftA2, pure)
 import           Control.Arrow (first)
 
 optimize :: PQ.PrimQuery' a -> PQ.PrimQuery' a
-optimize = mergeProduct . removeUnit
+optimize = PQ.foldPrimQuery (noSingletonProduct
+                             `PQ.composePrimQueryFold` mergeProduct
+                             `PQ.composePrimQueryFold` removeUnit)
 
-removeUnit :: PQ.PrimQuery' a -> PQ.PrimQuery' a
-removeUnit = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
+removeUnit :: PQ.PrimQueryFoldP a (PQ.PrimQuery' a) (PQ.PrimQuery' a)
+removeUnit = PQ.primQueryFoldDefault { PQ.product   = product }
   where product pqs = PQ.Product pqs'
           where pqs' = case NEL.nonEmpty (NEL.filter (not . PQ.isUnit . snd) pqs) of
                          Nothing -> return (pure PQ.Unit)
                          Just xs -> xs
 
-mergeProduct :: PQ.PrimQuery' a -> PQ.PrimQuery' a
-mergeProduct = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product }
+mergeProduct :: PQ.PrimQueryFoldP a (PQ.PrimQuery' a) (PQ.PrimQuery' a)
+mergeProduct = PQ.primQueryFoldDefault { PQ.product   = product }
   where product pqs pes = PQ.Product pqs' (pes ++ pes')
           where pqs' = pqs >>= queries
                 queries (lat, PQ.Product qs _) = fmap (first (lat <>)) qs
@@ -32,6 +34,12 @@ mergeProduct = PQ.foldPrimQuery PQ.primQueryFoldDefault { PQ.product   = product
                 pes' = NEL.toList pqs >>= conds
                 conds (_lat, PQ.Product _ cs) = cs
                 conds _ = []
+
+noSingletonProduct :: PQ.PrimQueryFoldP a (PQ.PrimQuery' a) (PQ.PrimQuery' a)
+noSingletonProduct = PQ.primQueryFoldDefault { PQ.product = product }
+  where product pqs conds = case (NEL.uncons pqs, conds) of
+          (((PQ.NonLateral, x), Nothing), []) -> x
+          _ -> PQ.Product pqs conds
 
 removeEmpty :: PQ.PrimQuery' a -> Maybe (PQ.PrimQuery' b)
 removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
@@ -45,10 +53,12 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
                    \x y -> PQ.Product <$> sequenceOf (traverse._2) x
                                       <*> pure y
   , PQ.aggregate = fmap . PQ.Aggregate
+  , PQ.window    = fmap . PQ.Window
   , PQ.distinctOnOrderBy = \mDistinctOns -> fmap . PQ.DistinctOnOrderBy mDistinctOns
   , PQ.limit     = fmap . PQ.Limit
-  , PQ.join      = \jt pe pes1 pes2 pq1 pq2 -> PQ.Join jt pe pes1 pes2 <$> pq1 <*> pq2
-  , PQ.existsf   = \b pq1 pq2 -> PQ.Exists b <$> pq1 <*> pq2
+  , PQ.join      = \jt pe pq1 pq2 -> PQ.Join jt pe <$> sequence pq1 <*> sequence pq2
+  , PQ.semijoin  = liftA2 . PQ.Semijoin
+  , PQ.exists    = fmap . PQ.Exists
   , PQ.values    = return .: PQ.Values
   , PQ.binary    = \case
       -- Some unfortunate duplication here
@@ -62,6 +72,8 @@ removeEmpty = PQ.foldPrimQuery PQ.PrimQueryFold {
   , PQ.label     = fmap . PQ.Label
   , PQ.relExpr   = return .: PQ.RelExpr
   , PQ.rebind    = \b -> fmap . PQ.Rebind b
+  , PQ.forUpdate = fmap PQ.ForUpdate
+  , PQ.with      = \recursive name cols -> liftA2 (PQ.With recursive name cols)
   }
   where -- If only the first argument is Just, do n1 on it
         -- If only the second argument is Just, do n2 on it

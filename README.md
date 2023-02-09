@@ -1,4 +1,4 @@
-# Brief introduction to Opaleye [![Hackage version](https://img.shields.io/hackage/v/opaleye.svg?label=Hackage)](https://hackage.haskell.org/package/opaleye) [![Linux build status](https://img.shields.io/travis/tomjaguarpaw/haskell-opaleye/master.svg?label=Linux%20build)](https://travis-ci.org/tomjaguarpaw/haskell-opaleye)
+# Brief introduction to Opaleye [![Hackage version](https://img.shields.io/hackage/v/opaleye.svg?label=Hackage)](https://hackage.haskell.org/package/opaleye) [![Build status](https://img.shields.io/github/workflow/status/tomjaguarpaw/haskell-opaleye/ci/master.svg)](https://github.com/tomjaguarpaw/haskell-opaleye/actions)
 
 Opaleye is a Haskell library that provides an SQL-generating embedded
 domain specific language for targeting Postgres.  You need Opaleye if
@@ -12,7 +12,7 @@ Patterson, [Position Development](http://positiondev.com/)
 
 > "We use it for most of our DB code. It's very flexible and almost
   always as performant as manually written queries" &ndash; [Adam
-  Bergmark](http://ircbrowse.net/browse/haskell?id=22634197&timestamp=1460980502#t1460980502),
+  Bergmark](https://github.com/bergmark),
   [Silk.co](http://www.silk.co/)
 
 > "Opaleye is absolutely fantastic. It has been solid in production
@@ -67,6 +67,13 @@ page](https://github.com/tomjaguarpaw/haskell-opaleye/issues/) for
 discussion of or questions about Opaleye even if they don't relate to
 a bug or issue.
 
+## PRs
+
+You are welcome to make PRs to Opaleye.  If you would like to discuss
+the design of your PR before you start work on it feel free to do so
+by [filing a new
+issue](https://github.com/tomjaguarpaw/haskell-opaleye/issues/new).
+
 # `Internal` modules
 
 Opaleye exports a number of modules named `Opaleye.Internal....`.
@@ -94,13 +101,29 @@ Agile](http://www.purelyagile.com/).
 
 # Backup maintainers
 
-In the event of the main developer becoming unreachable, please
-contact the following who are authorised to make bugfixes and
-dependency version bumps:
+The only person authorised to merge to `master` or upload this package
+to Hackage is Tom Ellis.
 
-* Adam Bergmark
-* Erik Hesselink
-* Oliver Charles
+However, to ensure continuity of service to Opaleye users there are
+backup maintainers.
+
+* If Tom Ellis is unavailable or unresponsive to maintenance requests
+for three months then full ownership of the project, including the
+GitHub repository, Hackage upload rights, and the right to amend this
+backup maintainers policy, passes to Oliver Charles
+(ollie@ocharles.org.uk).
+
+* If Tom Ellis is unavailable or unresponsive to maintenance requests
+for four months, and this policy has not been changed to the contrary,
+then full ownership of the project, including the GitHub repository,
+Hackage upload rights, and the right to amend this backup maintainers
+policy passes to Shane O'Brien (@duairc).
+
+* If Tom Ellis is unavailable or unresponsive to maintenance requests
+for six months, and this policy has not been changed to the contrary,
+then full ownership of the project, including the GitHub repository,
+Hackage upload rights, and the right to amend this backup maintainers
+policy passes to Joe Hermaszewski (@expipiplus1).
 
 # Contributors
 

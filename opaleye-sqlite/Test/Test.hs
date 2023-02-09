@@ -31,7 +31,7 @@ import           GHC.Int (Int64)
 Status
 ======
 
-The tests here are very superficial and pretty much the bare mininmum
+The tests here are very superficial and pretty much the bare minimum
 that needs to be tested.
 
 

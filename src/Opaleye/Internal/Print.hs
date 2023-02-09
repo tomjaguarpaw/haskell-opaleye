@@ -9,14 +9,21 @@ import           Opaleye.Internal.Sql (Select(SelectFrom,
                                               Table,
                                               RelExpr,
                                               SelectJoin,
+                                              SelectSemijoin,
                                               SelectValues,
                                               SelectBinary,
                                               SelectLabel,
-                                              SelectExists),
-                                       From, Join, Values, Binary, Label, Exists)
+                                              SelectExists,
+                                              SelectWith),
+                                       From, Join, Semijoin, Values, Binary, Label, Exists, With)
 
+import qualified Opaleye.Internal.PrimQuery as PQ
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Print as HPrint
+import           Opaleye.Internal.HaskellDB.Sql.Print (ppAs)
+import qualified Opaleye.Internal.Optimize as Op
+import qualified Opaleye.Internal.Tag as T
 
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
                                             parens)
@@ -27,14 +34,16 @@ import qualified Data.Text          as ST
 type TableAlias = String
 
 ppSql :: Select -> Doc
-ppSql (SelectFrom s)   = ppSelectFrom s
-ppSql (Table table)    = HPrint.ppTable table
-ppSql (RelExpr expr)   = HPrint.ppSqlExpr expr
-ppSql (SelectJoin j)   = ppSelectJoin j
-ppSql (SelectValues v) = ppSelectValues v
-ppSql (SelectBinary v) = ppSelectBinary v
-ppSql (SelectLabel v)  = ppSelectLabel v
-ppSql (SelectExists v) = ppSelectExists v
+ppSql (SelectFrom s)     = ppSelectFrom s
+ppSql (Table table)      = HPrint.ppTable table
+ppSql (RelExpr expr)     = HPrint.ppSqlExpr expr
+ppSql (SelectJoin j)     = ppSelectJoin j
+ppSql (SelectSemijoin j) = ppSelectSemijoin j
+ppSql (SelectValues v)   = ppSelectValues v
+ppSql (SelectBinary v)   = ppSelectBinary v
+ppSql (SelectLabel v)    = ppSelectLabel v
+ppSql (SelectExists v)   = ppSelectExists v
+ppSql (SelectWith r)     = ppWith r
 
 ppDistinctOn :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppDistinctOn = maybe mempty $ \nel ->
@@ -51,17 +60,28 @@ ppSelectFrom s = text "SELECT"
                  $$  HPrint.ppOrderBy (Sql.orderBy s)
                  $$  ppLimit (Sql.limit s)
                  $$  ppOffset (Sql.offset s)
+                 $$  ppFor (Sql.for s)
 
 
 ppSelectJoin :: Join -> Doc
 ppSelectJoin j = text "SELECT *"
                  $$  text "FROM"
-                 $$  ppTable (tableAlias 1 s1)
+                 $$  ppTable_tableAlias (1, s1)
                  $$  ppJoinType (Sql.jJoinType j)
-                 $$  ppTable (tableAlias 2 s2)
+                 $$  ppTable_tableAlias (2, s2)
                  $$  text "ON"
                  $$  HPrint.ppSqlExpr (Sql.jCond j)
   where (s1, s2) = Sql.jTables j
+
+ppSelectSemijoin :: Semijoin -> Doc
+ppSelectSemijoin v =
+  text "SELECT *"
+  $$  text "FROM"
+  $$  ppTable (tableAlias 1 (Sql.sjTable v))
+  $$  case Sql.sjType v of
+        Sql.Semi -> text "WHERE EXISTS"
+        Sql.Anti -> text "WHERE NOT EXISTS"
+  $$ parens (ppSql (Sql.sjCriteria v))
 
 ppSelectValues :: Values -> Doc
 ppSelectValues v = text "SELECT"
@@ -86,14 +106,23 @@ ppSelectLabel l = text "/*" <+> text (preprocess (Sql.lLabel l)) <+> text "*/"
                    . ST.pack
 
 ppSelectExists :: Exists -> Doc
-ppSelectExists v =
-  text "SELECT *"
-  $$ text "FROM"
-  $$ ppTable (tableAlias 1 (Sql.existsTable v))
-  $$ case Sql.existsBool v of
-       True -> text "WHERE EXISTS"
-       False -> text "WHERE NOT EXISTS"
-  $$ parens (ppSql (Sql.existsCriteria v))
+ppSelectExists e =
+  text "SELECT EXISTS"
+  <+> ppTable (Sql.sqlSymbol (Sql.existsBinding e), Sql.existsTable e)
+
+ppRecursive :: Sql.Recursive -> Doc
+ppRecursive Sql.Recursive = text "RECURSIVE"
+ppRecursive Sql.NonRecursive = mempty
+
+ppWith :: With -> Doc
+ppWith w
+  =  text "WITH" <+> ppRecursive (Sql.wRecursive w)
+  <+> HPrint.ppTable (Sql.wTable w)
+  <+> parens (HPrint.commaV unColumn (Sql.wCols w))
+  <+> text "AS"
+  $$ parens (ppSql (Sql.wWith w))
+  $$ ppSql (Sql.wSelect w)
+  where unColumn (HSql.SqlColumn col) = text col
 
 ppJoinType :: Sql.JoinType -> Doc
 ppJoinType Sql.LeftJoin = text "LEFT OUTER JOIN"
@@ -108,33 +137,38 @@ ppAttrs (Sql.SelectAttrsStar xs) =
 
 -- This is pretty much just nameAs from HaskellDB
 nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
-nameAs (expr, name) = HPrint.ppAs (fmap unColumn name) (HPrint.ppSqlExpr expr)
+nameAs (expr, name) = HPrint.ppSqlExpr expr `ppAs` fmap unColumn name
   where unColumn (HSql.SqlColumn s) = s
 
 ppTables :: [(Sql.Lateral, Select)] -> Doc
 ppTables [] = empty
 ppTables ts = text "FROM" <+> HPrint.commaV ppTable_tableAlias (zip [1..] ts)
-  where ppTable_tableAlias :: (Int, (Sql.Lateral, Select)) -> Doc
-        ppTable_tableAlias (i, (lat, select)) =
-          lateral lat $ ppTable (tableAlias i select)
-        lateral = \case
-            Sql.NonLateral -> id
-            Sql.Lateral -> (text "LATERAL" $$)
+
+ppTable_tableAlias :: (Int, (Sql.Lateral, Select)) -> Doc
+ppTable_tableAlias (i, (lat, select)) =
+  lateral lat $ ppTable (tableAlias i select)
+  where lateral = \case
+          Sql.NonLateral -> id
+          Sql.Lateral -> (text "LATERAL" $$)
 
 tableAlias :: Int -> Select -> (TableAlias, Select)
 tableAlias i select = ("T" ++ show i, select)
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
-ppTable (alias, select) = HPrint.ppAs (Just alias) $ case select of
+ppTable (alias, select) = case select of
   Table table           -> HPrint.ppTable table
   RelExpr expr          -> HPrint.ppSqlExpr expr
   SelectFrom selectFrom -> parens (ppSelectFrom selectFrom)
   SelectJoin slj        -> parens (ppSelectJoin slj)
+  SelectSemijoin slj    -> parens (ppSelectSemijoin slj)
   SelectValues slv      -> parens (ppSelectValues slv)
   SelectBinary slb      -> parens (ppSelectBinary slb)
   SelectLabel sll       -> parens (ppSelectLabel sll)
   SelectExists saj      -> parens (ppSelectExists saj)
+  SelectWith w          -> parens (ppWith w)
+  `ppAs`
+  Just alias
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
@@ -148,11 +182,12 @@ ppOffset :: Maybe Int -> Doc
 ppOffset Nothing = empty
 ppOffset (Just n) = text ("OFFSET " ++ show n)
 
-ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = HPrint.ppAs (Just "V") (parens (text "VALUES" $$ HPrint.commaV ppValuesRow v))
+ppFor :: Maybe Sql.LockStrength -> Doc
+ppFor Nothing       = empty
+ppFor (Just Sql.Update) = text "FOR UPDATE"
 
-ppValuesRow :: [HSql.SqlExpr] -> Doc
-ppValuesRow = parens . HPrint.commaH HPrint.ppSqlExpr
+ppValues :: [[HSql.SqlExpr]] -> Doc
+ppValues v = parens (HPrint.ppValues_ v) `ppAs` Just "V"
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of
@@ -180,3 +215,12 @@ ppDeleteReturning (Sql.Returning delete returnExprs) =
   HPrint.ppDelete delete
   $$ text "RETURNING"
   <+> HPrint.commaV HPrint.ppSqlExpr (NEL.toList returnExprs)
+
+-- * Bits from "Opaleye.Sql".  They don't really belong here but I
+-- * have to put them somewhere.
+
+formatAndShowSQL :: ([HPQ.PrimExpr], PQ.PrimQuery' a, T.Tag) -> Maybe String
+formatAndShowSQL = fmap (show . ppSql . Sql.sql) . traverse2Of3 Op.removeEmpty
+  where -- Just a lens
+        traverse2Of3 :: Functor f => (a -> f b) -> (x, a, y) -> f (x, b, y)
+        traverse2Of3 f (x, y, z) = fmap (\y' -> (x, y', z)) (f y)

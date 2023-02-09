@@ -6,7 +6,7 @@
 
 It's very heavyweight to abstract over anything in SQL.  You can
 perhaps use temporary tables and views and you can perhaps use named
-columns as "let bindings" but it's all very clumsy.  This means it's
+fields as "let bindings" but it's all very clumsy.  This means it's
 very hard to reuse code.
 
 It's awkward to generate composable SQL strings from another language
@@ -19,7 +19,7 @@ Every subselect has to be given a name.  Typically this is redundant.
 
 ### SQL language inconsistencies
 
-This orders by the second column
+This orders by the second field
 
     SELECT * from table ORDER BY 2;
 
@@ -27,17 +27,17 @@ whereas this orders by the value of 1 + 1, i.e. 2.
 
     SELECT * from table ORDER BY 1 + 1;
 
-## `Query` and `Column`
+## `Select` and `Field`
 
-The most important types in Opaleye are `Query` and `Column`.  A
-`Query` represents the result of running a database query, i.e. a
-collection of rows with particular column types.  The column types are
-specified in the type parameter to `Query` as a collection of
-`Column`s.  Each `Column` also has a type parameter reflecting its SQL
-type.  For example a `Query (Column PGInt4, Column PGText, Column
-PGBool)` is the type of a database query which has three columns, of
+The most important types in Opaleye are `Select` and `Field`.  A
+`Select` represents the result of running a database `SELECT`, i.e. a
+collection of rows with particular field types.  The field types are
+specified in the type parameter to `Select` as a collection of
+`Field`s.  Each `Field` also has a type parameter reflecting its SQL
+type.  For example a `Select (Field PGInt4, Field PGText, Field
+PGBool)` is the type of a database `SELECT` which has three fields, of
 types `int4`, `text` and `bool`.
 
-A `Query` is a collection of rows and therefore if we have two of them
+A `Select` is a collection of rows and therefore if we have two of them
 we can form their Cartesian product.  This corresponds exactly to
-Haskells `Applicative` product on lists.
+Haskell's `Applicative` product on lists.

@@ -3,32 +3,45 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Opaleye.RunSelect
-  (module Opaleye.RunSelect,
+  (-- * Running 'S.Select's
+   runSelect,
+   runSelectI,
+   runSelectFold,
+   -- * Cursor interface
+   declareCursor,
+   closeCursor,
+   foldForward,
+   -- * Creating new 'FromField's
+   unsafeFromField,
+   -- * Explicit versions
+   runSelectExplicit,
+   runSelectFoldExplicit,
+   declareCursorExplicit,
    -- * Datatypes
    IRQ.Cursor,
    IRQ.FromFields,
    IRQ.FromField,
-   IRQ.DefaultFromField,
-   IRQ.defaultFromField,
+   IRQ.DefaultFromField(defaultFromField),
    -- * Helper functions
    IRQ.fromPGSFromField,
-   IRQ.fromPGSFieldParser) where
+   IRQ.fromPGSFieldParser,
+   -- * Deprecated
+   runSelectTF,
+   ) where
 
-import qualified Data.Profunctor            as P
 import qualified Database.PostgreSQL.Simple as PGS
 
-import qualified Opaleye.Column as C
 import qualified Opaleye.Select as S
-import qualified Opaleye.RunQuery          as RQ
+import qualified Opaleye.Internal.RunQueryExternal as RQ
 import qualified Opaleye.TypeFamilies as TF
 import           Opaleye.Internal.RunQuery (FromFields)
 import qualified Opaleye.Internal.RunQuery as IRQ
+import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 
 import qualified Data.Profunctor.Product.Default as D
 
--- * Running 'S.Select's
-
--- | @runSelect@'s use of the 'D.Default' typeclass means that the
+-- | @runSelect@'s use of the @'D.Default' 'FromFields'@
+-- typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runSelect@.
@@ -53,8 +66,7 @@ runSelect :: D.Default FromFields fields haskells
           -> IO [haskells]
 runSelect = RQ.runQuery
 
--- | 'runSelectTF' has better type inference than 'runSelect' but only
--- works with "higher-kinded data" types.
+{-# DEPRECATED runSelectTF "Use 'runSelectI' instead." #-}
 runSelectTF :: D.Default FromFields (rec TF.O) (rec TF.H)
             => PGS.Connection
             -- ^
@@ -80,8 +92,6 @@ runSelectFold
   -- ^
   -> IO b
 runSelectFold = RQ.runQueryFold
-
--- * Cursor interface
 
 -- | Declare a temporary cursor. The cursor is given a unique name for the given
 -- connection.
@@ -113,16 +123,15 @@ foldForward
     -> IO (Either a a)
 foldForward = RQ.foldForward
 
--- * Creating new 'FromField's
-
 -- | Use 'unsafeFromField' to make an instance to allow you to run
 --   queries on your own datatypes.  For example:
 --
 -- @
 -- newtype Foo = Foo Int
+-- data SqlFoo
 --
--- instance QueryRunnerColumnDefault Foo Foo where
---    defaultFromField = unsafeFromField Foo defaultFromField
+-- instance 'IRQ.DefaultFromField' SqlFoo Foo where
+--    'IRQ.defaultFromField' = unsafeFromField Foo defaultFromField
 -- @
 --
 -- It is \"unsafe\" because it does not check that the @sqlType@
@@ -130,13 +139,8 @@ foldForward = RQ.foldForward
 unsafeFromField :: (b -> b')
                 -> IRQ.FromField sqlType b
                 -> IRQ.FromField sqlType' b'
-unsafeFromField haskellF qrc = IRQ.QueryRunnerColumn (P.lmap colF u)
-                                                     (fmapFP haskellF fp)
-  where IRQ.QueryRunnerColumn u fp = qrc
-        fmapFP = fmap . fmap . fmap
-        colF = C.unsafeCoerceColumn
-
--- * Explicit versions
+unsafeFromField haskellF (IRQ.FromField fp) =
+  fmap haskellF (IRQ.FromField fp)
 
 runSelectExplicit :: FromFields fields haskells
                   -> PGS.Connection
@@ -159,3 +163,12 @@ declareCursorExplicit
     -> S.Select fields
     -> IO (IRQ.Cursor haskells)
 declareCursorExplicit = RQ.declareCursorExplicit
+
+-- | Version of 'runSelect' with better type inference
+runSelectI :: (D.Default (Inferrable FromFields) fields haskells)
+           => PGS.Connection
+           -- ^
+           -> S.Select fields
+           -- ^
+           -> IO [haskells]
+runSelectI = RQ.runQueryExplicit (runInferrable D.def)

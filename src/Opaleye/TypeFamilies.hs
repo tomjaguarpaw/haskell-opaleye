@@ -1,4 +1,4 @@
-module Opaleye.TypeFamilies
+module Opaleye.TypeFamilies {-# DEPRECATED "No longer supported" #-}
   ( TF.TableRecordField
   , TF.RecordField
   , (TF.:<*>)
@@ -15,7 +15,6 @@ module Opaleye.TypeFamilies
   , TF.Opt
   , TF.Req
   , TF.Nulls
-  , TF.TableField
   ) where
 
 import Opaleye.Internal.TypeFamilies as TF

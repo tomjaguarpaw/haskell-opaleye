@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Opaleye.Internal.Sql where
 
@@ -25,10 +26,12 @@ data Select = SelectFrom From
             | RelExpr HSql.SqlExpr
             -- ^ A relation-valued expression
             | SelectJoin Join
+            | SelectSemijoin Semijoin
             | SelectValues Values
             | SelectBinary Binary
             | SelectLabel Label
             | SelectExists Exists
+            | SelectWith With
             deriving Show
 
 data SelectAttrs =
@@ -45,16 +48,23 @@ data From = From {
   orderBy    :: [(HSql.SqlExpr, HSql.SqlOrder)],
   distinctOn :: Maybe (NEL.NonEmpty HSql.SqlExpr),
   limit      :: Maybe Int,
-  offset     :: Maybe Int
+  offset     :: Maybe Int,
+  for        :: Maybe LockStrength
   }
           deriving Show
 
 data Join = Join {
   jJoinType   :: JoinType,
-  jTables     :: (Select, Select),
+  jTables     :: ((Lateral, Select), (Lateral, Select)),
   jCond       :: HSql.SqlExpr
   }
                 deriving Show
+
+data Semijoin = Semijoin
+  { sjType     :: SemijoinType
+  , sjTable    :: Select
+  , sjCriteria :: Select
+  } deriving Show
 
 data Values = Values {
   vAttrs  :: SelectAttrs,
@@ -68,8 +78,19 @@ data Binary = Binary {
 } deriving Show
 
 data JoinType = LeftJoin | RightJoin | FullJoin deriving Show
+data SemijoinType = Semi | Anti deriving Show
 data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll deriving Show
 data Lateral = Lateral | NonLateral deriving Show
+data LockStrength = Update deriving Show
+data Recursive = NonRecursive | Recursive deriving Show
+data With = With {
+  wTable     :: HSql.SqlTable, -- The name of the result, i.e. WITH <name> AS
+  wCols      :: [HSql.SqlColumn],
+  wRecursive :: Recursive,
+  wWith      :: Select,
+  wSelect    :: Select
+} deriving Show
+
 
 data Label = Label {
   lLabel  :: String,
@@ -79,9 +100,8 @@ data Label = Label {
 data Returning a = Returning a (NEL.NonEmpty HSql.SqlExpr)
 
 data Exists = Exists
-  { existsBool :: Bool
+  { existsBinding :: Symbol
   , existsTable :: Select
-  , existsCriteria :: Select
   } deriving Show
 
 sqlQueryGenerator :: PQ.PrimQueryFold' V.Void Select
@@ -91,19 +111,23 @@ sqlQueryGenerator = PQ.PrimQueryFold
   , PQ.baseTable         = baseTable
   , PQ.product           = product
   , PQ.aggregate         = aggregate
+  , PQ.window            = window
   , PQ.distinctOnOrderBy = distinctOnOrderBy
   , PQ.limit             = limit_
   , PQ.join              = join
+  , PQ.semijoin          = semijoin
   , PQ.values            = values
   , PQ.binary            = binary
   , PQ.label             = label
   , PQ.relExpr           = relExpr
-  , PQ.existsf           = exists
+  , PQ.exists            = exists
   , PQ.rebind            = rebind
+  , PQ.forUpdate         = forUpdate
+  , PQ.with              = with
   }
 
-exists :: Bool -> Select -> Select -> Select
-exists b q1 q2 = SelectExists (Exists b q1 q2)
+exists :: Symbol -> Select -> Select
+exists binding table = SelectExists (Exists binding table)
 
 sql :: ([HPQ.PrimExpr], PQ.PrimQuery' V.Void, T.Tag) -> Select
 sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (makeAttrs pes))
@@ -164,9 +188,7 @@ aggregate aggrs' s =
         --- "GROUP BY 0" means group by the zeroth column so we
         --- instead use an expression rather than a constant.
         handleEmpty :: [HSql.SqlExpr] -> NEL.NonEmpty HSql.SqlExpr
-        handleEmpty =
-          M.fromMaybe (return (SP.deliteral (HSql.ConstSqlExpr "0")))
-          . NEL.nonEmpty
+        handleEmpty = ensureColumnsGen SP.deliteral
 
         aggrs = (map . Arr.second . Arr.second) HPQ.AttrExpr aggrs'
 
@@ -183,6 +205,12 @@ aggregate aggrs' s =
 
 aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct) -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = maybe id (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord)
+
+window :: PQ.Bindings (HPQ.WndwOp, HPQ.Partition) -> Select -> Select
+window wndws' s = SelectFrom $ newSelect
+  { attrs = SelectAttrsStar (ensureColumns (map (sqlBinding . fmap (uncurry HPQ.WndwExpr)) wndws'))
+  , tables = oneTable s
+  }
 
 distinctOnOrderBy :: Maybe (NEL.NonEmpty HPQ.PrimExpr) -> [HPQ.OrderExpr] -> Select -> Select
 distinctOnOrderBy distinctExprs orderExprs s = SelectFrom $ newSelect
@@ -209,19 +237,20 @@ limit_ lo s = SelectFrom $ newSelect { tables = oneTable s
 
 join :: PQ.JoinType
      -> HPQ.PrimExpr
-     -> PQ.Bindings HPQ.PrimExpr
-     -> PQ.Bindings HPQ.PrimExpr
+     -> (PQ.Lateral, Select)
+     -> (PQ.Lateral, Select)
      -> Select
-     -> Select
-     -> Select
-join j cond pes1 pes2 s1 s2 =
+join j cond s1 s2 =
   SelectJoin Join { jJoinType = joinType j
-                  , jTables   = (selectFrom pes1 s1, selectFrom pes2 s2)
+                  , jTables   = (Arr.first lat s1, Arr.first lat s2)
                   , jCond     = sqlExpr cond }
-  where selectFrom pes s = SelectFrom $ newSelect {
-            attrs  = SelectAttrsStar (ensureColumns (map sqlBinding pes))
-          , tables = oneTable s
-          }
+  where lat = \case
+          PQ.Lateral -> Lateral
+          PQ.NonLateral -> NonLateral
+
+semijoin :: PQ.SemijoinType -> Select -> Select -> Select
+semijoin t q1 q2 = SelectSemijoin (Semijoin (semijoinType t) q1 q2)
+
 
 -- Postgres seems to name columns of VALUES clauses "column1",
 -- "column2", ... . I'm not sure to what extent it is customisable or
@@ -239,10 +268,23 @@ binary op (select1, select2) = SelectBinary Binary {
   bSelect2 = select2
   }
 
+with :: PQ.Recursive -> Symbol -> [Symbol]-> Select -> Select -> Select
+with recursive name cols wWith wSelect = SelectWith $ With {..}
+  where
+   wTable = HSql.SqlTable Nothing (sqlSymbol name)
+   wRecursive = case recursive of
+     PQ.NonRecursive -> NonRecursive
+     PQ.Recursive -> Recursive
+   wCols = map (HSql.SqlColumn . sqlSymbol) cols
+
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
 joinType PQ.RightJoin = RightJoin
 joinType PQ.FullJoin = FullJoin
+
+semijoinType :: PQ.SemijoinType -> SemijoinType
+semijoinType PQ.Semi = Semi
+semijoinType PQ.Anti = Anti
 
 binOp :: PQ.BinOp -> BinOp
 binOp o = case o of
@@ -262,15 +304,18 @@ newSelect = From {
   orderBy    = [],
   distinctOn = Nothing,
   limit      = Nothing,
-  offset     = Nothing
+  offset     = Nothing,
+  for        = Nothing
   }
 
 sqlExpr :: HPQ.PrimExpr -> HSql.SqlExpr
 sqlExpr = SG.sqlExpr SD.defaultSqlGenerator
 
+sqlSymbol :: Symbol -> String
+sqlSymbol (Symbol sym t) = T.tagWith t sym
+
 sqlBinding :: (Symbol, HPQ.PrimExpr) -> (HSql.SqlExpr, Maybe HSql.SqlColumn)
-sqlBinding (Symbol sym t, pe) =
-  (sqlExpr pe, Just (HSql.SqlColumn (T.tagWith t sym)))
+sqlBinding (s, pe) = (sqlExpr pe, Just (HSql.SqlColumn (sqlSymbol s)))
 
 ensureColumns :: [(HSql.SqlExpr, Maybe a)]
              -> NEL.NonEmpty (HSql.SqlExpr, Maybe a)
@@ -301,3 +346,9 @@ rebind star pes select = SelectFrom newSelect
   where selectAttrs = case star of
           True  -> SelectAttrsStar
           False -> SelectAttrs
+
+forUpdate :: Select -> Select
+forUpdate s = SelectFrom newSelect {
+    tables = [(NonLateral, s)]
+  , for = Just Update
+  }

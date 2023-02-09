@@ -77,7 +77,7 @@ By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
 could have used the `tableWithSchema` constructor instead of `table`.
 
-To query a table we use `selectTable`.
+To select from a table we use `selectTable`.
 
 (Here and in a few other places in Opaleye there is some typeclass
 magic going on behind the scenes to reduce boilerplate.  However, you
@@ -114,7 +114,7 @@ between Opaleye's version and the ideal.  Please submit any
 differences encountered in practice as an Opaleye bug.
 
 SELECT name,
-       age
+       age,
        address
 FROM personTable
 
@@ -278,7 +278,7 @@ Outer join
 
 Opaleye supports left joins.  (Full outer joins and right joins are
 left to be added as a simple starter project for a new Opaleye
-contributer!)
+contributor!)
 
 Because left joins can change non-nullable fields into nullable
 fields we have to make sure the type of the output supports
@@ -405,4 +405,4 @@ Utilities
 This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . showSql
+> printSql = putStrLn . maybe "Empty select" id . showSql

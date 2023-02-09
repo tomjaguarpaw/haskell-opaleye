@@ -1,4 +1,3 @@
-> {-# LANGUAGE Arrows #-}
 > {-# LANGUAGE FlexibleContexts #-}
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
@@ -10,19 +9,17 @@
 >
 > import           Opaleye (Field, FieldNullable, matchNullable, isNull,
 >                          Table, table, tableField, selectTable,
->                          Select, SelectArr, restrict, (.==), (.<=), (.&&), (.<),
+>                          Select, (.==), (.<=), (.&&), (.<),
 >                          (.===),
 >                          (.++), ifThenElse, sqlString, aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runSelect,
->                          showSql, Unpackspec,
+>                          showSql, where_, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8, SqlBool)
 >
 > import           Data.Profunctor.Product (p2, p3)
 > import           Data.Profunctor.Product.Default (Default)
 > import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 > import           Data.Time.Calendar (Day)
->
-> import           Control.Arrow (returnA)
 >
 > import qualified Database.PostgreSQL.Simple as PGS
 
@@ -69,7 +66,7 @@ By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
 could have used the `tableWithSchema` function instead of `table`.
 
-To query a table we use `selectTable`.
+To select all rows of a table we use `selectTable`.
 
 (Here and in a few other places in Opaleye there is some typeclass
 magic going on behind the scenes to reduce boilerplate.  However, you
@@ -106,7 +103,7 @@ between Opaleye's version and the ideal.  Please submit any
 differences encountered in practice as an Opaleye bug.
 
 SELECT name,
-       age
+       age,
        address
 FROM personTable
 
@@ -167,24 +164,21 @@ FROM birthdayTable
 Projection
 ==========
 
-"Projection" means discarding some of the fields of our query, for
+"Projection" means discarding some of the fields of our select, for
 example we might want to discard the "address" field of our
 `personSelect`.
 
-Projection gives us our first example of using "arrow notation" to
-write Opaleye queries.  Arrow notation is essentially a restricted
-version of "do notation".  Arrow notation allows you to write arrow
-computations, and do notation allows you to write monadic
-computations.
+Projection gives us our first example of using "do notation" to
+write Opaleye queries.
 
 Here we run the `personSelect` passing in () to signify "zero
 arguments".  We pattern match on the results and return only the
 fields we are interested in.
 
 > nameAge :: Select (Field SqlText, Field SqlInt4)
-> nameAge = proc () -> do
->   (name, age, _) <- personSelect -< ()
->   returnA -< (name, age)
+> nameAge = do
+>   (name, age, _) <- personSelect
+>   pure (name, age)
 
 ghci> printSql nameAge
 SELECT name0_1 as result1,
@@ -205,16 +199,16 @@ Product
 =======
 
 "Product" means taking the Cartesian product of two queries.  This is
-simple in arrow notation.  Here we take the product of `personSelect`
+simple in do notation.  Here we take the product of `personSelect`
 and `birthdaySelect`.
 
 > personBirthdayProduct ::
 >   Select ((Field SqlText, Field SqlInt4, Field SqlText), BirthdayField)
-> personBirthdayProduct = proc () -> do
->   personRow   <- personSelect -< ()
->   birthdayRow <- birthdaySelect -< ()
+> personBirthdayProduct = do
+>   personRow   <- personSelect
+>   birthdayRow <- birthdaySelect
 >
->   returnA -< (personRow, birthdayRow)
+>   pure (personRow, birthdayRow)
 
 ghci> printSql personBirthdayProduct
 SELECT name0_1 as result1,
@@ -250,18 +244,18 @@ FROM (SELECT name as name0,
 Restriction
 ===========
 
-"Restriction" means restricting the rows of the result of a query to
+"Restriction" means restricting the rows of the result of a select to
 only those where some condition holds.
 
 We can restrict `personSelect` to the rows where the person is up to 18
 years old.
 
 > youngPeople :: Select (Field SqlText, Field SqlInt4, Field SqlText)
-> youngPeople = proc () -> do
->   row@(_, age, _) <- personSelect -< ()
->   restrict -< age .<= 18
+> youngPeople = do
+>   row@(_, age, _) <- personSelect
+>   where_ (age .<= 18)
 >
->   returnA -< row
+>   pure row
 
 ghci> printSql youngPeople
 SELECT name0_1 as result1,
@@ -287,13 +281,13 @@ We can use a variety of operators to form more complex restriction
 conditions.
 
 > twentiesAtAddress :: Select (Field SqlText, Field SqlInt4, Field SqlText)
-> twentiesAtAddress = proc () -> do
->   row@(_, age, address) <- personSelect -< ()
+> twentiesAtAddress = do
+>   row@(_, age, address) <- personSelect
 >
->   restrict -< (20 .<= age) .&& (age .< 30)
->   restrict -< address .== sqlString "1 My Street, My Town"
+>   where_ $ (20 .<= age) .&& (age .< 30)
+>   where_ $ address .== sqlString "1 My Street, My Town"
 >
->   returnA -< row
+>   pure row
 
 ghci> printSql twentiesAtAddress
 
@@ -323,18 +317,18 @@ Inner join
 ----------
 
 A Product followed by a restriction is sometimes called a "join" or
-"inner join" in SQL terminology.  The following query is an example of
+"inner join" in SQL terminology.  The following select is an example of
 such.
 
 > personAndBirthday ::
 >   Select (Field SqlText, Field SqlInt4, Field SqlText, Field SqlDate)
-> personAndBirthday = proc () -> do
->   (name, age, address) <- personSelect -< ()
->   birthday             <- birthdaySelect -< ()
+> personAndBirthday = do
+>   (name, age, address) <- personSelect
+>   birthday             <- birthdaySelect
 >
->   restrict -< name .== bdName birthday
+>   where_ $ name .== bdName birthday
 >
->   returnA -< (name, age, address, bdDay birthday)
+>   pure (name, age, address, bdDay birthday)
 
 
 ghci> printSql personAndBirthday
@@ -385,16 +379,16 @@ recorded as NULL then that means they have no boss!
 > employeeTable = table "employeeTable" (p2 ( tableField "name"
 >                                           , tableField "boss" ))
 
-We can write a query that returns as string indicating for each
+We can write a select that returns as string indicating for each
 employee whether they have a boss.
 
 > hasBoss :: Select (Field SqlText)
-> hasBoss = proc () -> do
->   (name, nullableBoss) <- selectTable employeeTable -< ()
+> hasBoss = do
+>   (name, nullableBoss) <- selectTable employeeTable
 >
 >   let aOrNo = ifThenElse (isNull nullableBoss) (sqlString "no") (sqlString "a")
 >
->   returnA -< name .++ sqlString " has " .++ aOrNo .++ sqlString " boss"
+>   pure $ name .++ sqlString " has " .++ aOrNo .++ sqlString " boss"
 
 ghci> printSql hasBoss
 
@@ -413,18 +407,18 @@ SELECT name || ' has '
 FROM employeeTable
 
 But we can do much more than just check for NULL of course.  We can
-write a query arrow to produce a string describing each employee's
+write a select to produce a string describing each employee's
 status along with the name of their boss, if any.  The combinator
 `matchNullable` checks whether `nullableBoss` is NULL.  If so it
 returns its first argument.  If not it passes the non-NULL value to
 the function that is the second argument.
 
-> bossSelect :: SelectArr (Field SqlText, FieldNullable SqlText) (Field SqlText)
-> bossSelect = proc (name, nullableBoss) -> do
->   returnA -< matchNullable (name .++ sqlString " has no boss")
->                            (\boss -> sqlString "The boss of " .++ name
->                                      .++ sqlString " is " .++ boss)
->                            nullableBoss
+> bossSelect :: (Field SqlText, FieldNullable SqlText) -> Select (Field SqlText)
+> bossSelect (name, nullableBoss) = do
+>   pure $ matchNullable (name .++ sqlString " has no boss")
+>                        (\boss -> sqlString "The boss of " .++ name
+>                                  .++ sqlString " is " .++ boss)
+>                        nullableBoss
 
 Note that `matchNullable` corresponds to Haskell's
 
@@ -464,7 +458,7 @@ Composability
 Rewriting `twentiesAtAddress` will allow us to get our first glimpse
 of the enormous composability that Opaleye offers.
 
-We can factor out some parts of the 'twentiesAtAddress' query.  For
+We can factor out some parts of the 'twentiesAtAddress' select.  For
 example we can pull out the restriction to one's age being "in the
 twenties" and the restriction to the one's address being "1 My Street,
 My Town".
@@ -474,13 +468,13 @@ fields of type `a` but do not return any fields.  (Note: `Select` is
 just a synonym for `SelectArr ()` which means that it is a `SelectArr`
 that does not read any fields.)
 
-> restrictIsTwenties :: SelectArr (Field SqlInt4) ()
-> restrictIsTwenties = proc age -> do
->   restrict -< (20 .<= age) .&& (age .< 30)
+> restrictIsTwenties :: Field SqlInt4 -> Select ()
+> restrictIsTwenties age = do
+>   where_ $ (20 .<= age) .&& (age .< 30)
 >
-> restrictAddressIs1MyStreet :: SelectArr (Field SqlText) ()
-> restrictAddressIs1MyStreet = proc address -> do
->   restrict -< address .== sqlString "1 My Street, My Town"
+> restrictAddressIs1MyStreet :: Field SqlText -> Select ()
+> restrictAddressIs1MyStreet address = do
+>   where_ $ address .== sqlString "1 My Street, My Town"
 
 We can't generate "the SQL of" these combinators.  They are not
 `Select`s so they don't have any SQL!  (This corresponds to the
@@ -489,13 +483,13 @@ functions cannot be "shown".) Instead we use them to reimplement
 `twentiesAtAddress` in a more neatly-factored way.
 
 > twentiesAtAddress' :: Select (Field SqlText, Field SqlInt4, Field SqlText)
-> twentiesAtAddress' = proc () -> do
->   row@(_, age, address) <- personSelect -< ()
+> twentiesAtAddress' = do
+>   row@(_, age, address) <- personSelect
 >
->   restrictIsTwenties -< age
->   restrictAddressIs1MyStreet -< address
+>   restrictIsTwenties age
+>   restrictAddressIs1MyStreet address
 >
->   returnA -< row
+>   pure row
 
 The SQL generated is exactly the same as before
 
@@ -519,23 +513,23 @@ We can perform a similar transformation for `personAndBirthday` by
 pulling out a `SelectArr` which perform the mapping of a person's name
 to their date of birth by looking up in `birthdaySelect`.
 
-> birthdayOfPerson :: SelectArr (Field SqlText) (Field SqlDate)
-> birthdayOfPerson = proc name -> do
->   birthday <- birthdaySelect -< ()
+> birthdayOfPerson :: Field SqlText -> Select (Field SqlDate)
+> birthdayOfPerson name = do
+>   birthday <- birthdaySelect
 >
->   restrict -< name .== bdName birthday
+>   where_ $ name .== bdName birthday
 >
->   returnA -< bdDay birthday
+>   pure (bdDay birthday)
 
 We can then reimplement `personAndBirthday` as follows
 
 > personAndBirthday' ::
 >   Select (Field SqlText, Field SqlInt4, Field SqlText, Field SqlDate)
-> personAndBirthday' = proc () -> do
->   (name, age, address) <- personSelect -< ()
->   birthday <- birthdayOfPerson -< name
+> personAndBirthday' = do
+>   (name, age, address) <- personSelect
+>   birthday <- birthdayOfPerson name
 >
->   returnA -< (name, age, address, birthday)
+>   pure (name, age, address, birthday)
 
 and it yields the same SQL as before.
 
@@ -652,7 +646,7 @@ Outer join
 
 Opaleye supports left joins.  (Full outer joins and right joins are
 left to be added as a simple starter project for a new Opaleye
-contributer!)
+contributor!)
 
 Because left joins can change non-nullable fields into nullable
 fields we have to make sure the type of the output supports
@@ -814,7 +808,7 @@ Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
 
-For example, for the 'twentiesAtAddress' query `runSelect` would have
+For example, for the 'twentiesAtAddress' select `runSelect` would have
 the following type:
 
 > runTwentiesSelect :: PGS.Connection
@@ -825,7 +819,7 @@ the following type:
 Note that nullable fields are indicated with the FieldNullable type
 constructor, and these are converted to Maybe when executed.  If we
 have a table with a nullable field then FieldNullables turn into
-Maybes.  We could run the query `selectTable employeeTable` like this.
+Maybes.  We could run the select `selectTable employeeTable` like this.
 
 > runEmployeesSelect :: PGS.Connection
 >                   -> Select (Field SqlText, FieldNullable SqlText)
@@ -834,8 +828,8 @@ Maybes.  We could run the query `selectTable employeeTable` like this.
 
 Newtypes are taken care of automatically by the typeclass instance
 that was generated by `makeAdaptorAndInstance`.  A `WarehouseId'
-(Field SqlInt4)` becomes a `WarehouseId' Int` when the query is run.
-We could run the query `selectTable goodWarehouseTable` like this.
+(Field SqlInt4)` becomes a `WarehouseId' Int` when the select is run.
+We could run the select `selectTable goodWarehouseTable` like this.
 
 > type WarehouseId = WarehouseId' Int
 > type GoodWarehouse = Warehouse' WarehouseId String Int
@@ -857,4 +851,4 @@ Utilities
 This is a little utility function to help with printing generated SQL.
 
 > printSql :: Default Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . showSql
+> printSql = putStrLn . maybe "Empty select" id . showSql

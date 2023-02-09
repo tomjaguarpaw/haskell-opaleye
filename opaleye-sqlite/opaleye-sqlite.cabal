@@ -1,10 +1,14 @@
 name:            opaleye-sqlite
 copyright:       Copyright (c) 2014-2015 Purely Agile Limited
-version:         0.0.1.0
+version:         0.0.1.1
 synopsis:        An SQL-generating DSL targeting SQLite
 description:     An SQL-generating DSL targeting SQLite.  Allows
                  SQLite queries to be written within Haskell in a
                  typesafe and composable fashion.
+
+                 This package is old and unmaintained. It may work, or
+                 it may not. If you are interested in reviving it
+                 please file an issue on the GitHub repository.
 homepage:        https://github.com/tomjaguarpaw/haskell-opaleye
 bug-reports:     https://github.com/tomjaguarpaw/haskell-opaleye/issues
 license:         BSD3
@@ -13,7 +17,7 @@ author:          Purely Agile
 maintainer:      Purely Agile
 category:        Database
 build-type:      Simple
-cabal-version:   >= 1.8
+cabal-version:   1.18
 extra-doc-files: Doc/*.md
 tested-with:     GHC==7.10.1, GHC==7.8.4, GHC==7.6.3
 
@@ -22,22 +26,23 @@ source-repository head
   location: https://github.com/tomjaguarpaw/haskell-opaleye.git
 
 library
+  default-language: Haskell2010
   hs-source-dirs: src
   build-depends:
       base                >= 4       && < 5
     , base16-bytestring   >= 0.1.1.6 && < 0.2
     , case-insensitive    >= 1.2     && < 1.3
     , bytestring          >= 0.10    && < 0.11
-    , contravariant       >= 1.2     && < 1.5
+    , contravariant       >= 1.2     && < 1.6
     , direct-sqlite       >= 2.3.13  && < 2.4
     , pretty              >= 1.1.1.0 && < 1.2
-    , product-profunctors >= 0.6.2   && < 0.8
-    , profunctors         >= 4.0     && < 5.3
-    , semigroups          >= 0.13    && < 0.19
+    , product-profunctors >= 0.6.2   && < 0.12
+    , profunctors         >= 4.0     && < 5.6
+    , semigroups          >= 0.13    && < 0.20
     , sqlite-simple
     , text                >= 0.11    && < 1.3
     , transformers        >= 0.3     && < 0.6
-    , time                >= 1.4     && < 1.7
+    , time                >= 1.4     && < 1.10
     , time-locale-compat  >= 0.1     && < 0.2
     , uuid                >= 1.3     && < 1.4
     , void                >= 0.4     && < 0.8
@@ -86,6 +91,7 @@ library
   ghc-options:     -Wall
 
 test-suite test
+  default-language: Haskell2010
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules: QuickCheck
@@ -103,6 +109,7 @@ test-suite test
   ghc-options: -Wall
 
 test-suite tutorial
+  default-language: Haskell2010
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules: TutorialAdvanced,

@@ -2,7 +2,6 @@
 
 module Opaleye.Internal.TableMaker where
 
-import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.Unpackspec as U
@@ -37,17 +36,17 @@ runColumnMaker :: Applicative f
 runColumnMaker = U.runUnpackspec
 
 -- There's surely a way of simplifying this implementation
-tableColumn :: ViewColumnMaker String (C.Column a)
+tableColumn :: ViewColumnMaker String (IC.Field_ n a)
 tableColumn = ViewColumnMaker
               (PM.PackMap (\f s -> fmap (const (mkColumn s)) (f ())))
   where mkColumn = IC.Column . HPQ.BaseTableAttrExpr
 
-instance Default ViewColumnMaker String (C.Column a) where
+instance Default ViewColumnMaker String (IC.Field_ n a) where
   def = tableColumn
 
 {-# DEPRECATED column "Use unpackspecColumn instead" #-}
-column :: ColumnMaker (C.Column a) (C.Column a)
-column = U.unpackspecColumn
+column :: ColumnMaker (IC.Field_ n a) (IC.Field_ n a)
+column = U.unpackspecField
 
 -- {
 

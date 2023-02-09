@@ -26,11 +26,11 @@ Manipulation means changing the data in the database.  This means SQL
 DELETE, INSERT and UPDATE.
 
 To demonstrate manipulation in Opaleye we will need a table to perform
-our manipulation on.  It will have four columns: an int4-valued "id"
-column (assumed to be an auto-incrementing field) and three
+our manipulation on.  It will have four fields: an int4-valued "id"
+field (assumed to be an auto-incrementing field) and three
 float8-valued required fields.  The `Table` type constructor has two
 type arguments.  The first one is the type of writes to the table, and
-the second is the type of reads from the table.  The "id" column is
+the second is the type of reads from the table.  The "id" field is
 defined as optional (for writes) because its write type is `Maybe
 (Field SqlInt4)`.  That means we don't necessarily need to specify it
 when writing to the table.  The database will automatically fill in a
@@ -58,7 +58,7 @@ DELETE FROM tablename
 WHERE ((x) < (y))
 
 
-To insert we provide rows with the write type.  Optional columns can
+To insert we provide rows with the write type.  Optional fields can
 be omitted by providing `Nothing` instead.  Numeric SQL types have a
 Haskell `Num` instance so we can write them using numeric literals.
 Values of other types should be created using the functions in the
@@ -104,7 +104,7 @@ VALUES (DEFAULT,
         E'Hello')
 
 
-If we really want to specify an optional column we can use `Just`.
+If we really want to specify an optional field we can use `Just`.
 
 > insertJust :: Insert Int64
 > insertJust = Insert
@@ -137,7 +137,7 @@ according to the update function.
 >   , uReturning  = rCount
 >   }
 
-SET "id" = DEFAULT,
+SET "id" = "id",
     "x" = ("x") + ("y"),
     "y" = ("x") - ("y"),
     "s" = "s"

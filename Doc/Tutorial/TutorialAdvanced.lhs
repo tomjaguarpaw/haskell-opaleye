@@ -27,7 +27,7 @@ Postgres.
 
 We can define an aggregator to calculate the range of a group, that is
 the difference between its maximum and minimum.  Although we can write
-this easily in SQL as `MAX(column) - MIN(column)`, Opaleye has the
+this easily in SQL as `MAX(field) - MIN(field)`, Opaleye has the
 advantage of treating `range` as a first-class value able to be passed
 around between functions and manipulated at will.
 
@@ -72,4 +72,4 @@ Helper function
 ===============
 
 > printSql :: Default U.Unpackspec a a => Select a -> IO ()
-> printSql = putStrLn . maybe "Empty query" id . Sql.showSql
+> printSql = putStrLn . maybe "Empty select" id . Sql.showSql

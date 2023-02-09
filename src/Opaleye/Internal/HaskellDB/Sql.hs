@@ -31,6 +31,13 @@ data SqlOrder = SqlOrder { sqlOrderDirection :: SqlOrderDirection
                          , sqlOrderNulls     :: SqlOrderNulls }
   deriving Show
 
+
+data SqlPartition = SqlPartition
+  { sqlPartitionBy :: Maybe (NEL.NonEmpty SqlExpr)
+  , sqlOrderBy :: Maybe (NEL.NonEmpty (SqlExpr, SqlOrder))
+  }
+  deriving Show
+
 data SqlRangeBound = Inclusive SqlExpr | Exclusive SqlExpr | PosInfinity | NegInfinity
                    deriving Show
 
@@ -46,6 +53,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | PostfixSqlExpr String SqlExpr
              | FunSqlExpr     String [SqlExpr]
              | AggrFunSqlExpr String [SqlExpr] [(SqlExpr, SqlOrder)] SqlDistinct -- ^ Aggregate functions separate from normal functions.
+             | WndwFunSqlExpr String [SqlExpr] SqlPartition
              | ConstSqlExpr   String
              | CaseSqlExpr    (NEL.NonEmpty (SqlExpr,SqlExpr)) SqlExpr
              | ListSqlExpr    (NEL.NonEmpty SqlExpr)

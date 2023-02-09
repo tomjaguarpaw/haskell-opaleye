@@ -10,6 +10,7 @@ import qualified Data.Functor.Contravariant as C
 import qualified Data.Functor.Contravariant.Divisible as Divisible
 import qualified Data.Profunctor as P
 import qualified Data.Monoid as M
+import qualified Data.Semigroup as S
 import qualified Data.Void as Void
 
 {-|
@@ -28,9 +29,11 @@ newtype Order a = Order (a -> [(HPQ.OrderOp, HPQ.PrimExpr)])
 instance C.Contravariant Order where
   contramap f (Order g) = Order (P.lmap f g)
 
+instance S.Semigroup (Order a) where
+  Order o <> Order o' = Order (o `M.mappend` o')
+
 instance M.Monoid (Order a) where
   mempty = Order M.mempty
-  Order o `mappend` Order o' = Order (o `M.mappend` o')
 
 instance Divisible.Divisible Order where
   divide f o o' = M.mappend (C.contramap (fst . f) o)

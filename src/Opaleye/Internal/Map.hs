@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeFamilies #-}
 
-module Opaleye.Map where
+module Opaleye.Internal.Map where
 
 type family Map f x
 

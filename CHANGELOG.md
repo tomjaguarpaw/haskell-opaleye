@@ -1,9 +1,257 @@
+## 0.9.6.1
+
+* No externally visible changes
+
+## 0.9.6.0
+
+* Add `Opaleye.Window` to support window functions.  Thanks to Shane
+  O'Brien.
+
+## 0.9.5.1
+
+* Actually expose `arrayAgg_`
+
+## 0.9.5.0
+
+* Add `arrayAgg_` for aggregating nullable fields
+
+## 0.9.4.1
+
+* Actually expose `ascNullsLast` and `descNullsFirst`.
+
+## 0.9.4.0
+
+* Added `instance DefaultFromField (T.SqlArray_ Nullable a) [Maybe b]`
+
+* Changed `ascNullsFirst` and `descNullsLast` to work with nullable
+  fields.  This rectifies an oversight from the `Column` to `Field`
+  change.  This may technically be a PVP violation but I think the
+  risk of breakage is very small.  If you experience breakage please
+  report it on [the issue
+  tracker](https://github.com/tomjaguarpaw/haskell-opaleye/issues/new).
+
+* Added `ascNullsLast` and `descNullsFirst`.
+
+* Thanks to @abigailalice for pointing out the oversights in the
+  `Column` to `Field` change.
+
+## 0.9.3.3
+
+* No externally visible changes
+
+* Substantial internal changes to `Opaleye.Values`
+
+## 0.9.3.2
+
+* No externally visible changes
+
+## 0.9.3.1
+
+* No externally visible changes
+
+## 0.9.3.0
+
+* Add `with` and `withRecursive` (thanks to Erik Hesselink and Shane
+  O'Brien).
+
+* Add `Default ToFields` and `DefaultFromField` instances for
+  postgresql-simple's `Aeson` (thanks to Bas Van Dijk).
+
+## 0.9.2.0
+
+* Added `nullableToMaybeFields` and `maybeFieldsToNullable`
+
+## 0.9.1.0
+
+* Added `distinctOnExplicit` and `distinctOnByExplicit`
+
+* Added `label'` as a future replacement for `label`
+
+* Exported `SqlFractional` from `Opaleye.SqlTypes`
+
+* Fixed [a bug in
+  `forUpdate`](https://github.com/tomjaguarpaw/haskell-opaleye/issues/540)
+
+* The internal implementation of `QueryArr` has changed.
+
+## 0.9.0.0
+
+The switch from `Column` to `Field` is complete.  This is a small yet
+pervasive change.  To update your code please change all usages of
+`Column` as follows:
+
+* `Column` of a non-nullable type: to `Field`
+* `Column` of a nullable type: to `FieldNullable`
+* `Column` of a nullability-polymorphic type: to `Field_ n`
+
+For example
+
+* `Column SqlText` -> `Field SqlText`
+* `Column (Nullable SqlInt4)` -> `FieldNullable SqlInt4`
+* `Column a` -> `Field_ n a`
+
+This is the only change that has been made in this version, in order
+to ease user transition.
+
+* See also
+  <https://github.com/tomjaguarpaw/haskell-opaleye/issues/326>
+
+## 0.8.1.0
+
+* Cosmetic and re-export changes only.
+
+## 0.8.0.1
+
+* Support GHC 9.2
+
+## 0.8.0.0
+
+* Removed the following deprecated functions, types and modules
+
+  * `Opaleye.Query`, `Query`, `QueryArr`, `queryRunnerColumnDefault`
+  * `Opaleye.RunQuery`, `runQuery`, `runQueryFold`,
+    `queryRunnerColumn`
+  * `Opaleye.Constant`, `constant`
+  * The `Table` and `TableWithSchema` constructors
+  * `View`, `Writer`, `required`, `optional`, `readOnly`,
+    `tableColumn`, `queryTable`
+  * `Nulled`, `leftJoinInferrable`, `rightJoinInferrable`, `fullJoinInferrable`
+  * `unpackspecColumn`
+  * `TableField`
+  * `runInsertManyReturningOnConflictDoNothing`,
+    `runInsertManyReturning`, `runUpdateEasy`, `runUpdateReturning`,
+    `runDelete`
+  * `charLength`, `exists`, `notExists`, `inQuery`
+  * `PGIsJson`, `PGOrd`, `PG<typename>`
+  * `showSqlForPostgres`, `showSqlForPostgresUnopt`
+
+* Replaced the following old internal names
+
+  * `QueryRunnerColumnDefault` -> `DefaultFromField`
+  * `QueryRunnerColumn` -> `FromField` (type alias and constructor)
+  * `QueryRunner` -> `FromFields` (type alias and constructor)
+
+* `Opaleye.Join.optional` exported from top-level
+
+* Bug fix: `distinctOn` and `distinctOnBy` now return a single row if
+  zero columns are chosen to be distinct.
+
+* Add `runInsert`/`Update`/`Delete` without underscore
+
+## 0.7.6.2
+
+Fix ISO 8601 date formatting.  Thanks to Michal @kozak.
+
+## 0.7.6.1
+
+No user-visible changes
+
+## 0.7.6.0
+
+* Added `matchMaybe`
+
+* Added `SqlVarcharN` and supporting functions
+
+## 0.7.5.0
+
+* Added `enumMapperWithSchema`.  Thanks to Steve Mao.
+
+* Added `SqlInterval`.  Thanks to Bas van Dijk.
+
+## 0.7.4.0
+
+* Added `distinctOnCorrect` and `distinctOnByCorrect` which will
+  replace `distinctOn` and `distinctOnBy` in a future version.
+
+## 0.7.3.0
+
+* Added DefaultFromField SqlJson(b) instances for Strict/Lazy
+  Text/ByteString. Thanks to Nathan Jaremko.
+
+## 0.7.2.0
+
+* Added `jsonAgg`, `jsonBuildObject` and `jsonBuildObjectField`.  Thanks
+  to Nathan Jaremko.
+
+* Added `now` function. Thanks to Nathan Jaremko.
+
+* Added `Opaleye.Exists.exists`. Thanks to @duairc.
+
+* Added `Opaleye.Experimental.Enum`
+
+* Added `Opaleye.Operators.array_position` and
+  `Opaleye.Operators.sqlElem`.  Thanks to Ashesh Ambasta.
+
+## 0.7.1.0
+
+* Added `Opaleye.Experimental.Enum` for an easy way to deal with
+  Postgres `ENUM` types.
+
+* Added `Opaleye.Manipulation.rReturningI` which has better type
+  inference.
+
+* Added `Opaleye.Operators.where_` for easier restriction in monadic
+  style.
+
+* Added `Opaleye.Operators.sqlLength` and
+  `Opaleye.Operators.dateOfTimestamp`.
+
+## 0.7.0.0
+
+* Many renamings have taken place to help make Opaleye easier to
+  understand.  The old versions have been deprecated.
+
+* All previously deprecated functions have been removed.
+
+Old | New
+-----|-------
+Query | Select
+QueryArr | SelectArr
+PG*Type*  | Sql*Type*
+PG*Class* | Sql*Class*
+Constant | ToFields
+QueryRunner | FromFields
+QueryRunnerColumn | FromField
+QueryRunnerColumnDefault | DefaultFromField
+TableProperties | TableFields
+optional | optionalTableField
+required | requiredTableField
+readOnly | readOnlyTableField
+
+## 0.6.7006.0
+
+* Added `Opaleye.RunSelect.runSelectI` and
+  `Opaleye.ToFields.toFieldsI` which have better inferability.
+
+* Preliminary `FOR UPDATE` support in `Opaleye.Internal.Locking`.
+
+* Added `fromFieldArray` for making `FromField`s for arrays.
+
+## 0.6.7005.0
+
+* Thanks to Shane (@duairc) and Ollie Charles (@ocharles) for writing
+  most of the `lateral`- and `MaybeFields`-related code in this
+  release.
+
+* Add a `Monad` instance for `Select` (and `SelectArr i`).
+
+* Add `Opaleye.Lateral`, to support LATERAL subqueries.
+
+* Add `Opaleye.Join.optionalRestrict` and `Opaleye.Join.optional`, as
+  more convenient and composable ways of doing left/right joins.
+
+* Add `Opaleye.MaybeFields`
+
 * Add `optionalTableField`, `readOnlyTableField`,
   `requiredTableField`, to replace `optional`, `readOnly` and
   `required` in a later version.
 
-* Add `Opaleye.Unpackspec` as the forward-compatible place to import
-  `Unpackspec` from
+* Add `valuesSafe`, a version of `values`. `values` of an empty list
+  generates incorrect queries when mixed with @OUTER@/@LEFT@/@RIGHT
+  JOIN@s.  `valuesSafe` will replace it in version 0.7
+
+* Add `Opaleye.Adaptors` as the forward-compatible place to import
+  `Unpackspec` and `unpackspecField` from, as well as other adaptors.
 
 * Unicode characters are escaped properly in `sqlString`/`toFields`
 
@@ -55,7 +303,7 @@ S.SelectArr a b`
 
 ## 0.6.7003.1
 
-* Bumped some depedencies so there is an install plan on GHC 8.6
+* Bumped some dependencies so there is an install plan on GHC 8.6
 
 ## 0.6.7003.0
 
@@ -243,7 +491,7 @@ changes.
 * Ordering operators and `max` and `min` aggregators are now restricted to a typeclass
 * Added `stringAgg` and `arrayAgg` aggregations.
 * Added `PGOrd` typeclass for typesafe ordering operations.
-* Support sorting NULLs first or last with `ascNullsFirst` and `descNullsFirst`
+* Support sorting NULLs first or last with `ascNullsFirst` and `descNullsLast`
 * Added JSON types
 * Added `runInsertMany`
 

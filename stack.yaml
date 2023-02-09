@@ -1,5 +1,1 @@
-resolver: lts-12.1
-extra-deps:
-- aeson-1.2.4.0
-- multiset-0.3.4.1
-- base-compat-0.9.3
+resolver: lts-16.29

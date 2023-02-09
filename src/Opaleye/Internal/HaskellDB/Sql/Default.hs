@@ -50,6 +50,13 @@ toSqlOrder gen (OrderExpr o e) =
             PQ.NullsLast  -> Sql.SqlNullsLast
 
 
+toSqlPartition :: SqlGenerator -> Partition -> SqlPartition
+toSqlPartition gen (Partition partition order) = SqlPartition
+  { sqlPartitionBy = NEL.nonEmpty (map (sqlExpr gen) partition)
+  , sqlOrderBy = NEL.nonEmpty (map (toSqlOrder gen) order)
+  }
+
+
 toSqlColumn :: Attribute -> SqlColumn
 toSqlColumn = SqlColumn
 
@@ -123,22 +130,21 @@ defaultSqlExpr gen expr =
                                 UnOpFun     -> FunSqlExpr op' [e']
                                 UnOpPrefix  -> PrefixSqlExpr op' (ParensSqlExpr e')
                                 UnOpPostfix -> PostfixSqlExpr op' (ParensSqlExpr e')
-      -- TODO: The current arrangement whereby the delimeter parameter
+      -- TODO: The current arrangement whereby the delimiter parameter
       -- of string_agg is in the AggrStringAggr constructor, but the
       -- parameter being aggregated is not, seems unsatisfactory
       -- because it leads to a non-uniformity of treatment, as seen
       -- below.  Perhaps we should have just `AggrExpr AggrOp` and
       -- always put the `PrimExpr` in the `AggrOp`.
-      AggrExpr distinct op e ord -> let op' = showAggrOp op
-                                        e' = sqlExpr gen e
+      AggrExpr distinct op e ord -> let (op', e') = showAggrOp gen op e
                                         ord' = toSqlOrder gen <$> ord
                                         distinct' = case distinct of
                                                       AggrDistinct -> SqlDistinct
                                                       AggrAll      -> SqlNotDistinct
-                                        moreAggrFunParams = case op of
-                                          AggrStringAggr primE -> [sqlExpr gen primE]
-                                          _ -> []
-                                     in AggrFunSqlExpr op' (e' : moreAggrFunParams) ord' distinct'
+                                     in AggrFunSqlExpr op' e' ord' distinct'
+      WndwExpr op window  -> let (op', e') = showWndwOp gen op
+                                 window' = toSqlPartition gen window
+                              in WndwFunSqlExpr op' e' window'
       ConstExpr l      -> ConstSqlExpr (sqlLiteral gen l)
       CaseExpr cs e    -> let cs' = [(sqlExpr gen c, sqlExpr gen x)| (c,x) <- cs]
                               e'  = sqlExpr gen e
@@ -215,21 +221,39 @@ sqlUnOp  OpUpper       = ("UPPER", UnOpFun)
 sqlUnOp  (UnOpOther s) = (s, UnOpFun)
 
 
-showAggrOp :: AggrOp -> String
-showAggrOp AggrCount          = "COUNT"
-showAggrOp AggrSum            = "SUM"
-showAggrOp AggrAvg            = "AVG"
-showAggrOp AggrMin            = "MIN"
-showAggrOp AggrMax            = "MAX"
-showAggrOp AggrStdDev         = "StdDev"
-showAggrOp AggrStdDevP        = "StdDevP"
-showAggrOp AggrVar            = "Var"
-showAggrOp AggrVarP           = "VarP"
-showAggrOp AggrBoolAnd        = "BOOL_AND"
-showAggrOp AggrBoolOr         = "BOOL_OR"
-showAggrOp AggrArr            = "ARRAY_AGG"
-showAggrOp (AggrStringAggr _) = "STRING_AGG"
-showAggrOp (AggrOther s)      = s
+showAggrOp :: SqlGenerator -> AggrOp -> PrimExpr -> (String, [SqlExpr])
+showAggrOp gen op arg = case op of
+  AggrCount -> ("COUNT", [sqlExpr gen arg])
+  AggrSum -> ("SUM", [sqlExpr gen arg])
+  AggrAvg -> ("AVG", [sqlExpr gen arg])
+  AggrMin -> ("MIN", [sqlExpr gen arg])
+  AggrMax -> ("MAX", [sqlExpr gen arg])
+  AggrStdDev -> ("StdDev", [sqlExpr gen arg])
+  AggrStdDevP -> ("StdDevP", [sqlExpr gen arg])
+  AggrVar -> ("Var", [sqlExpr gen arg])
+  AggrVarP -> ("VarP", [sqlExpr gen arg])
+  AggrBoolAnd -> ("BOOL_AND", [sqlExpr gen arg])
+  AggrBoolOr -> ("BOOL_OR", [sqlExpr gen arg])
+  AggrArr -> ("ARRAY_AGG", [sqlExpr gen arg])
+  JsonArr -> ("JSON_AGG", [sqlExpr gen arg])
+  AggrStringAggr sep -> ("STRING_AGG", [sqlExpr gen arg, sqlExpr gen sep])
+  AggrOther s -> (s, [sqlExpr gen arg])
+
+
+showWndwOp :: SqlGenerator -> WndwOp -> (String, [SqlExpr])
+showWndwOp gen op = case op of
+  WndwRowNumber -> ("ROW_NUMBER", [])
+  WndwRank -> ("RANK", [])
+  WndwDenseRank -> ("DENSE_RANK", [])
+  WndwPercentRank -> ("PERCENT_RANK", [])
+  WndwCumeDist -> ("CUME_DIST", [])
+  WndwNtile e -> ("NTILE", [sqlExpr gen e])
+  WndwLag e offset def -> ("LAG", map (sqlExpr gen) [e, offset, def])
+  WndwLead e offset def -> ("LEAD", map (sqlExpr gen) [e, offset, def])
+  WndwFirstValue e -> ("FIRST_VALUE", [sqlExpr gen e])
+  WndwLastValue e -> ("LAST_VALUE", [sqlExpr gen e])
+  WndwNthValue e n -> ("NTH_VALUE", map (sqlExpr gen) [e, n])
+  WndwAggregate op' arg -> showAggrOp gen op' arg
 
 
 defaultSqlLiteral :: SqlGenerator -> Literal -> String
