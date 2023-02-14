@@ -184,11 +184,11 @@ pgRange pgEl start end =
 
 -- Full Text Search
 
-pgTSVector :: String -> Field PGTSVector
-pgTSVector = IPT.castToType "tsvector" . HSD.quote
+pgTSVector :: Field SqlText -> Field SqlTSVector
+pgTSVector (C.Column e) = C.Column (HPQ.FunExpr "tsvector" [e])
 
-pgTSQuery :: String -> Field PGTSQuery
-pgTSQuery = IPT.castToType "tsquery" . HSD.quote
+pgTSQuery :: Field SqlText -> Field SqlTSQuery
+pgTSQuery (C.Column e) = C.Column (HPQ.FunExpr "tsquery" [e])
 
 
 instance IsSqlType SqlBool where
@@ -322,5 +322,3 @@ type PGBytea = SqlBytea
 type PGJson = SqlJson
 type PGJsonb = SqlJsonb
 type PGRange = SqlRange
-type PGTSQuery = SqlTSQuery
-type PGTSVector = SqlTSVector

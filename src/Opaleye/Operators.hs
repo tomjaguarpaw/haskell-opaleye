@@ -214,7 +214,7 @@ infix 4 .>=
 (.>=) = C.binOp (HPQ.:>=)
 
 infix 4 @@
-(@@) :: Field a -> Field T.SqlTSQuery -> F.Field T.SqlBool
+(@@) :: Field T.SqlTSVector -> Field T.SqlTSQuery -> F.Field T.SqlBool
 (@@) = C.binOp (HPQ.:@@)
 
 -- * Numerical operators

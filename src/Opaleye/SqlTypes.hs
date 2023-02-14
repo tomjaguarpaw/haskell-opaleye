@@ -212,7 +212,7 @@ sqlValueJSON :: Ae.ToJSON a => a -> F.Field SqlJson
 sqlValueJSON = P.pgValueJSON
 
 sqlTSQuery :: String -> F.Field P.SqlTSQuery
-sqlTSQuery = P.pgTSQuery
+sqlTSQuery = P.pgTSQuery . sqlString
 
 -- The jsonb data type was introduced in PostgreSQL version 9.4
 -- JSONB values must be SQL string quoted
