@@ -22,7 +22,7 @@ type Field = Field_ NonNullable
 type FieldNullable = Field_ 'Nullable
 
 -- | Only used within a 'Column', to indicate that it can be @NULL@.
--- For example, a 'Column' ('Nullable' @SqlText@) can be @NULL@ but a
+-- For example, a @'Column' ('Nullable' SqlText)@ can be @NULL@ but a
 -- 'Column' @SqlText@ cannot.
 data Nullable a = Nullable_
 
