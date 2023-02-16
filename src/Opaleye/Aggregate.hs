@@ -157,9 +157,7 @@ arrayAgg_ :: Aggregator (F.Field_ n a) (F.Field (T.SqlArray_ n a))
 arrayAgg_ = A.makeAggr HPQ.AggrArr
 
 {-|
-FIXME: no longer supports nulls
-
-Aggregates values, including nulls, as a JSON array
+Aggregates values as a JSON array
 
 An example usage:
 
