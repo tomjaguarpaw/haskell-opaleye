@@ -157,9 +157,7 @@ arrayAgg_ :: Aggregator (F.Field_ n a) (F.Field (T.SqlArray_ n a))
 arrayAgg_ = A.makeAggr HPQ.AggrArr
 
 {-|
-Aggregates values as a JSON array
-
-An example usage:
+Aggregates values as a JSON array. An example usage:
 
 @
 import qualified Opaleye as O
