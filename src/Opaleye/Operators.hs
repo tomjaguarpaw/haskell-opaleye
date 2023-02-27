@@ -39,6 +39,7 @@ module Opaleye.Operators
   , (.<)
   , (.<=)
   , (.>=)
+  , (@@)
   -- * Numerical operators
   , quot_
   , rem_
@@ -211,6 +212,12 @@ infix 4 .<=
 infix 4 .>=
 (.>=) :: Ord.SqlOrd a => Field a -> Field a -> F.Field T.SqlBool
 (.>=) = C.binOp (HPQ.:>=)
+
+infix 4 @@
+(@@) :: Field T.SqlTSVector -> Field T.SqlTSQuery -> F.Field T.SqlBool
+(@@) = C.binOp (HPQ.:@@)
+
+-- * Numerical operators
 
 -- | Integral division, named after 'Prelude.quot'.  It maps to the
 -- @/@ operator in Postgres.
