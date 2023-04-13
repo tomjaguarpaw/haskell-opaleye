@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        ghc: ['9.2', '9.0', '8.10', '8.8', '8.6', '8.4', '8.2', '8.0']
+        ghc: ['9.6', '9.4', '9.2', '9.0', '8.10', '8.8']
 
     services:
       postgres:
@@ -43,9 +43,9 @@ jobs:
         path: ${{ steps.setup-haskell.outputs.cabal-store }}
         key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
         restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
-    - uses: tomjaguarpaw/neil@tag-f72b0d2
+    - uses: tomjaguarpaw/neil@tag-ac7e72e
       with:
         github-user: tomjaguarpaw
-        branch: tag-f72b0d2
+        branch: tag-ac7e72e
       env:
         POSTGRES_CONNSTRING: "user='postgres' dbname='postgres' password='postgres' host='localhost' port='5432'"
