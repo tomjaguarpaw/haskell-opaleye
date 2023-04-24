@@ -158,9 +158,7 @@ product ss pes = SelectFrom $
           PQ.Lateral    -> Lateral
           PQ.NonLateral -> NonLateral
 
-aggregate :: [(Symbol,
-               (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                HPQ.Symbol))]
+aggregate :: PQ.Bindings (HPQ.Aggr, HPQ.Symbol)
           -> Select
           -> Select
 aggregate aggrs' s =
@@ -192,19 +190,17 @@ aggregate aggrs' s =
 
         aggrs = (map . Arr.second . Arr.second) HPQ.AttrExpr aggrs'
 
-        groupBy' :: [(symbol, (Maybe aggrOp, HPQ.PrimExpr))]
+        groupBy' :: [(symbol, (HPQ.Aggr, HPQ.PrimExpr))]
                  -> NEL.NonEmpty HSql.SqlExpr
-        groupBy' = handleEmpty
-                   . map sqlExpr
-                   . map expr
-                   . filter (M.isNothing . aggrOp)
+        groupBy' aggs = handleEmpty $ do
+          (_, (HPQ.GroupBy, expr)) <- aggs
+          pure $ sqlExpr expr
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
-        expr (_, (_, e)) = e
-        aggrOp (_, (x, _)) = x
 
-
-aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct) -> HPQ.PrimExpr -> HPQ.PrimExpr
-aggrExpr = maybe id (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord)
+aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
+aggrExpr = \case
+  HPQ.GroupBy -> id
+  HPQ.Aggr op ord distinct -> \e -> HPQ.AggrExpr distinct op e ord
 
 window :: PQ.Bindings (HPQ.WndwOp, HPQ.Partition) -> Select -> Select
 window wndws' s = SelectFrom $ newSelect

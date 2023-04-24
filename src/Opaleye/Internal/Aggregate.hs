@@ -2,6 +2,7 @@
 module Opaleye.Internal.Aggregate where
 
 import           Control.Applicative (Applicative, pure, (<*>))
+import           Data.Bifunctor (first)
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
@@ -28,14 +29,15 @@ type @a@ to a single row of type @b@, a 'Control.Foldl.Fold' @a@ @b@
 takes a list of @a@ and returns a single value of type @b@.
 -}
 newtype Aggregator a b =
-  Aggregator (PM.PackMap (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
-                          HPQ.PrimExpr)
-                         HPQ.PrimExpr
-                         a b)
+  Aggregator (PM.PackMap (HPQ.Aggr, HPQ.PrimExpr) HPQ.PrimExpr a b)
 
 makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap
-  (\f e -> f (fmap (, [], HPQ.AggrAll) mAggrOp, e)))
+  (\f e -> f (aggr, e)))
+  where
+    aggr = case mAggrOp of
+      Nothing -> HPQ.GroupBy
+      Just op -> HPQ.Aggr op [] HPQ.AggrAll
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
@@ -78,13 +80,18 @@ makeAggr = makeAggr' . Just
 
 orderAggregate :: O.Order a -> Aggregator a b -> Aggregator a b
 orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
-  (\f c -> pm (f . P.first' (fmap ((\f' (a,b,c') -> (a,f' b,c')) (const $ O.orderExprs c o)))) c))
+  (\f c -> pm (f . P.first' (setOrder (O.orderExprs c o))) c))
+  where
+    setOrder _ HPQ.GroupBy = HPQ.GroupBy
+    setOrder order aggr =
+      aggr
+        { HPQ.aggrOrder = order
+        }
 
 runAggregator
   :: Applicative f
   => Aggregator a b
-  -> ((Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)
-     -> f HPQ.PrimExpr)
+  -> ((HPQ.Aggr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
   -> a -> f b
 runAggregator (Aggregator a) = PM.traversePM a
 

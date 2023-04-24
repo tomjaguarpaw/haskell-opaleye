@@ -87,6 +87,15 @@ data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
 data AggrDistinct = AggrDistinct | AggrAll
                   deriving (Eq,Show,Read)
 
+data Aggr
+  = GroupBy
+  | Aggr
+      { aggrOp :: !AggrOp
+      , aggrOrder :: ![OrderExpr]
+      , aggrDistinct :: !AggrDistinct
+      }
+  deriving (Show, Read)
+
 data OrderExpr = OrderExpr OrderOp PrimExpr
                deriving (Show,Read)
 
