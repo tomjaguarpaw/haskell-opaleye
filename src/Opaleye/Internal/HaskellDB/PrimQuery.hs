@@ -22,7 +22,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | CompositeExpr     PrimExpr Attribute -- ^ Composite Type Query
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
-                | AggrExpr  AggrDistinct AggrOp PrimExpr [OrderExpr]
+                | AggrExpr  AggrDistinct AggrOp PrimExpr [OrderExpr] (Maybe PrimExpr)
                 | WndwExpr  WndwOp Partition
                 | ConstExpr Literal
                 | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
@@ -93,6 +93,7 @@ data Aggr
       { aggrOp :: !AggrOp
       , aggrOrder :: ![OrderExpr]
       , aggrDistinct :: !AggrDistinct
+      , aggrFilter :: !(Maybe PrimExpr)
       }
   deriving (Show, Read)
 

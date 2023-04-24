@@ -200,7 +200,7 @@ aggregate aggrs' s =
 aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = \case
   HPQ.GroupBy -> id
-  HPQ.Aggr op ord distinct -> \e -> HPQ.AggrExpr distinct op e ord
+  HPQ.Aggr op ord distinct filter -> \e -> HPQ.AggrExpr distinct op e ord filter
 
 window :: PQ.Bindings (HPQ.WndwOp, HPQ.Partition) -> Select -> Select
 window wndws' s = SelectFrom $ newSelect
