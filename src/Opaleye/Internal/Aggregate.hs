@@ -28,10 +28,7 @@ type @a@ to a single row of type @b@, a 'Control.Foldl.Fold' @a@ @b@
 takes a list of @a@ and returns a single value of type @b@.
 -}
 newtype Aggregator a b =
-  Aggregator (PM.PackMap (HPQ.Aggr,
-                          HPQ.PrimExpr)
-                         HPQ.PrimExpr
-                         a b)
+  Aggregator (PM.PackMap (HPQ.Aggr, HPQ.PrimExpr) HPQ.PrimExpr a b)
 
 makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap

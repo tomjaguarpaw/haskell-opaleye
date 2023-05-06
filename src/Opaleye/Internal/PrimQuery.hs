@@ -128,8 +128,7 @@ data PrimQuery' a = Unit
                   | Product   (NEL.NonEmpty (Lateral, PrimQuery' a)) [HPQ.PrimExpr]
                   -- | The subqueries to take the product of and the
                   --   restrictions to apply
-                  | Aggregate (Bindings (HPQ.Aggr,
-                                          HPQ.Symbol))
+                  | Aggregate (Bindings (HPQ.Aggr, HPQ.Symbol))
                               (PrimQuery' a)
                   | Window (Bindings (HPQ.WndwOp, HPQ.Partition)) (PrimQuery' a)
                   -- | Represents both @DISTINCT ON@ and @ORDER BY@
@@ -174,8 +173,7 @@ data PrimQueryFoldP a p p' = PrimQueryFold
   , empty             :: a -> p'
   , baseTable         :: TableIdentifier -> Bindings HPQ.PrimExpr -> p'
   , product           :: NEL.NonEmpty (Lateral, p) -> [HPQ.PrimExpr] -> p'
-  , aggregate         :: Bindings (HPQ.Aggr,
-                                   HPQ.Symbol)
+  , aggregate         :: Bindings (HPQ.Aggr, HPQ.Symbol)
                       -> p
                       -> p'
   , window            :: Bindings (HPQ.WndwOp, HPQ.Partition) -> p -> p'
