@@ -78,8 +78,9 @@ makeAggr = makeAggr' . Just
 
 orderAggregate :: O.Order a -> Aggregator a b -> Aggregator a b
 orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
-  (\f c -> pm (f . P.first' ((fmap . g . const) (O.orderExprs c o))) c))
+  (\f c -> pm (f . P.first' (setOrder (O.orderExprs c o))) c))
   where
+    setOrder = fmap . g . const
     g = \f' (a,b,c') -> (a,f' b,c')
 
 runAggregator
