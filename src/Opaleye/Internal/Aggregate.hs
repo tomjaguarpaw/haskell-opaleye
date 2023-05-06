@@ -80,8 +80,7 @@ orderAggregate :: O.Order a -> Aggregator a b -> Aggregator a b
 orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
   (\f c -> pm (f . P.first' (setOrder (O.orderExprs c o))) c))
   where
-    setOrder order = fmap (g (const order))
-    g = \f' (a,b,c') -> (a,f' b,c')
+    setOrder order = fmap ((\f' (a,b,c') -> (a,f' b,c')) (const order))
 
 runAggregator
   :: Applicative f
