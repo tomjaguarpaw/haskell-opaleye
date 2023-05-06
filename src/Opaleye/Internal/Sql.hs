@@ -194,11 +194,10 @@ aggregate aggrs' s =
                  -> NEL.NonEmpty HSql.SqlExpr
         groupBy' aggs = handleEmpty $ do
           (_, (x, e)) <- aggs
-          Nothing <- [aggrOp (x, e)]
+          Nothing <- [x]
           pure $ expr (x, e)
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
         expr (_, e) = sqlExpr e
-        aggrOp (x, _) = x
 
 aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = \case
