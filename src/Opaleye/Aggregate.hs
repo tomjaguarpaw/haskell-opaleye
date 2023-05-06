@@ -13,6 +13,7 @@ module Opaleye.Aggregate
          aggregate
        , aggregateOrdered
        , distinctAggregator
+       , filterWhere
        , Aggregator
        -- * Basic 'Aggregator's
        , groupBy
@@ -41,8 +42,10 @@ import qualified Data.Profunctor as P
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
 import qualified Opaleye.Internal.Column as IC
+import           Opaleye.Internal.MaybeFields (MaybeFields (MaybeFields))
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import qualified Opaleye.Internal.Operators as O
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.Tag as Tag
 
@@ -110,6 +113,13 @@ distinctAggregator (A.Aggregator (PM.PackMap pm)) =
       aggr
         { HPQ.aggrDistinct = HPQ.AggrDistinct
         }
+
+-- | Aggregate only rows matching the given predicate
+filterWhere
+  :: (a -> F.Field T.SqlBool)
+  -> Aggregator a b
+  -> Aggregator a (MaybeFields b)
+filterWhere = A.filterWhereInternal (MaybeFields . O.not . F.isNull)
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
 groupBy :: Aggregator (F.Field_ n a) (F.Field_ n a)

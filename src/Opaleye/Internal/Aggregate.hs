@@ -1,17 +1,18 @@
 {-# LANGUAGE TupleSections #-}
 module Opaleye.Internal.Aggregate where
 
-import           Control.Applicative (Applicative, pure, (<*>))
-import           Data.Bifunctor (first)
+import           Control.Applicative (Applicative, liftA2, pure, (<*>))
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 
+import qualified Opaleye.Field as F
+import qualified Opaleye.Internal.Column as C
+import qualified Opaleye.Internal.Order as O
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Tag as T
-import qualified Opaleye.Internal.Column as C
-import qualified Opaleye.Internal.Order as O
+import qualified Opaleye.SqlTypes as T
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
@@ -37,7 +38,7 @@ makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap
   where
     aggr = case mAggrOp of
       Nothing -> HPQ.GroupBy
-      Just op -> HPQ.Aggr op [] HPQ.AggrAll
+      Just op -> HPQ.Aggr op [] HPQ.AggrAll Nothing
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
@@ -158,6 +159,29 @@ unsafeAvg = makeAggr HPQ.AggrAvg
 
 unsafeSum :: Aggregator (C.Field a) (C.Field a)
 unsafeSum = makeAggr HPQ.AggrSum
+
+-- | Aggregate only rows matching the given predicate
+filterWhereInternal
+  :: (F.FieldNullable T.SqlBool -> b -> mb)
+  -> (a -> F.Field T.SqlBool)
+  -> Aggregator a b
+  -> Aggregator a mb
+filterWhereInternal maybeField predicate aggregator =
+  case liftA2 maybeField true aggregator of
+    Aggregator (PM.PackMap pm) ->
+      Aggregator (PM.PackMap (\f c -> pm (f . P.first' (setFilter c)) c))
+  where
+    true = P.lmap (const (T.sqlBool True)) (makeAggr HPQ.AggrBoolAnd)
+    setFilter _ HPQ.GroupBy = HPQ.GroupBy
+    setFilter row aggr =
+      aggr
+        { HPQ.aggrFilter = aggrFilter'
+        }
+      where
+        C.Column cond' = predicate row
+        aggrFilter' = Just $ case HPQ.aggrFilter aggr of
+          Nothing -> cond'
+          Just cond -> HPQ.BinExpr HPQ.OpAnd cond cond'
 
 -- { Boilerplate instances
 
