@@ -105,7 +105,8 @@ distinctAggregator :: Aggregator a b -> Aggregator a b
 distinctAggregator (A.Aggregator (PM.PackMap pm)) =
   A.Aggregator (PM.PackMap (\f c -> pm (f . P.first' setDistinct) c))
   where
-    setDistinct = fmap (\(a,b,_) -> (a,b,HPQ.AggrDistinct))
+    setDistinct Nothing = Nothing
+    setDistinct (Just x) = (\(a,b,_) -> (a,b,HPQ.AggrDistinct)) x
 
 -- | Group the aggregation by equality on the input to 'groupBy'.
 groupBy :: Aggregator (F.Field_ n a) (F.Field_ n a)
