@@ -2,6 +2,7 @@
 module Opaleye.Internal.Aggregate where
 
 import           Control.Applicative (Applicative, pure, (<*>))
+import           Data.Bifunctor (first)
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
@@ -35,8 +36,8 @@ makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap
   (\f e -> f (aggr, e)))
   where
     aggr = case mAggrOp of
-      Nothing -> Nothing
-      Just op -> Just (op, [], HPQ.AggrAll)
+      Nothing -> HPQ.GroupBy
+      Just op -> HPQ.Aggr op [] HPQ.AggrAll
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
@@ -81,8 +82,11 @@ orderAggregate :: O.Order a -> Aggregator a b -> Aggregator a b
 orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
   (\f c -> pm (f . P.first' (setOrder (O.orderExprs c o))) c))
   where
-    setOrder _ Nothing = Nothing
-    setOrder order (Just (a, _, c')) = Just (a,order,c')
+    setOrder _ HPQ.GroupBy = HPQ.GroupBy
+    setOrder order aggr =
+      aggr
+        { HPQ.aggrOrder = order
+        }
 
 runAggregator
   :: Applicative f

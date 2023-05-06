@@ -193,14 +193,14 @@ aggregate aggrs' s =
         groupBy' :: [(symbol, (HPQ.Aggr, HPQ.PrimExpr))]
                  -> NEL.NonEmpty HSql.SqlExpr
         groupBy' aggs = handleEmpty $ do
-          (_, (Nothing, e)) <- aggs
+          (_, (HPQ.GroupBy, e)) <- aggs
           pure $ sqlExpr e
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
 
 aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = \case
-  Nothing -> id
-  Just (op, ord, distinct) -> \e -> HPQ.AggrExpr distinct op e ord
+  HPQ.GroupBy -> id
+  HPQ.Aggr op ord distinct -> \e -> HPQ.AggrExpr distinct op e ord
 
 window :: PQ.Bindings (HPQ.WndwOp, HPQ.Partition) -> Select -> Select
 window wndws' s = SelectFrom $ newSelect
