@@ -193,8 +193,7 @@ aggregate aggrs' s =
         groupBy' :: [(symbol, (HPQ.Aggr, HPQ.PrimExpr))]
                  -> NEL.NonEmpty HSql.SqlExpr
         groupBy' = handleEmpty
-                   . map sqlExpr
-                   . map expr
+                   . map (sqlExpr . expr)
                    . filter (M.isNothing . aggrOp)
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
         expr (_, (_, e)) = e
