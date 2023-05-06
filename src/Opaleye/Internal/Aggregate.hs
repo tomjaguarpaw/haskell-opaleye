@@ -34,7 +34,9 @@ makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap
   (\f e -> f (aggr, e)))
   where
-    aggr = fmap (, [], HPQ.AggrAll) mAggrOp
+    aggr = case mAggrOp of
+      Nothing -> Nothing
+      Just op -> Just (op, [], HPQ.AggrAll)
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
