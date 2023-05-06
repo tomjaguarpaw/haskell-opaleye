@@ -158,9 +158,7 @@ product ss pes = SelectFrom $
           PQ.Lateral    -> Lateral
           PQ.NonLateral -> NonLateral
 
-aggregate :: [(Symbol,
-               (HPQ.Aggr,
-                HPQ.Symbol))]
+aggregate :: [(Symbol, (HPQ.Aggr, HPQ.Symbol))]
           -> Select
           -> Select
 aggregate aggrs' s =
