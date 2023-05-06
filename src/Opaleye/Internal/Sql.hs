@@ -195,9 +195,8 @@ aggregate aggrs' s =
         groupBy' aggs = handleEmpty $ do
           (_, (x, e)) <- aggs
           Nothing <- [x]
-          pure $ expr (x, e)
+          pure $ sqlExpr e
         attr = sqlBinding . Arr.second (uncurry aggrExpr)
-        expr (_, e) = sqlExpr e
 
 aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = \case
