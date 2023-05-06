@@ -87,8 +87,7 @@ orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
 runAggregator
   :: Applicative f
   => Aggregator a b
-  -> ((HPQ.Aggr, HPQ.PrimExpr)
-     -> f HPQ.PrimExpr)
+  -> ((HPQ.Aggr, HPQ.PrimExpr) -> f HPQ.PrimExpr)
   -> a -> f b
 runAggregator (Aggregator a) = PM.traversePM a
 
