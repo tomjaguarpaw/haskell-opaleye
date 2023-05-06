@@ -52,7 +52,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | PrefixSqlExpr  String SqlExpr
              | PostfixSqlExpr String SqlExpr
              | FunSqlExpr     String [SqlExpr]
-             | AggrFunSqlExpr String [SqlExpr] [(SqlExpr, SqlOrder)] SqlDistinct -- ^ Aggregate functions separate from normal functions.
+             | AggrFunSqlExpr String [SqlExpr] [(SqlExpr, SqlOrder)] SqlDistinct (Maybe SqlExpr) -- ^ Aggregate functions separate from normal functions.
              | WndwFunSqlExpr String [SqlExpr] SqlPartition
              | ConstSqlExpr   String
              | CaseSqlExpr    (NEL.NonEmpty (SqlExpr,SqlExpr)) SqlExpr

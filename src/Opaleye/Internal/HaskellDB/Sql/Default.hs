@@ -136,14 +136,15 @@ defaultSqlExpr gen expr =
       -- because it leads to a non-uniformity of treatment, as seen
       -- below.  Perhaps we should have just `AggrExpr AggrOp` and
       -- always put the `PrimExpr` in the `AggrOp`.
-      AggrExpr distinct op e ord ->
+      AggrExpr distinct op e ord mfilter ->
         let
           (op', e') = showAggrOp gen op e
           ord' = toSqlOrder gen <$> ord
           distinct' = case distinct of
             AggrDistinct -> SqlDistinct
             AggrAll      -> SqlNotDistinct
-         in AggrFunSqlExpr op' e' ord' distinct'
+          mfilter' = sqlExpr gen <$> mfilter
+         in AggrFunSqlExpr op' e' ord' distinct' mfilter'
       WndwExpr op window  -> let (op', e') = showWndwOp gen op
                                  window' = toSqlPartition gen window
                               in WndwFunSqlExpr op' e' window'
