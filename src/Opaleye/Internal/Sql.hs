@@ -159,7 +159,7 @@ product ss pes = SelectFrom $
           PQ.NonLateral -> NonLateral
 
 aggregate :: [(Symbol,
-               (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
+               (HPQ.Aggr,
                 HPQ.Symbol))]
           -> Select
           -> Select
@@ -192,7 +192,7 @@ aggregate aggrs' s =
 
         aggrs = (map . Arr.second . Arr.second) HPQ.AttrExpr aggrs'
 
-        groupBy' :: [(symbol, (Maybe aggrOp, HPQ.PrimExpr))]
+        groupBy' :: [(symbol, (HPQ.Aggr, HPQ.PrimExpr))]
                  -> NEL.NonEmpty HSql.SqlExpr
         groupBy' = handleEmpty
                    . map sqlExpr
@@ -203,7 +203,7 @@ aggregate aggrs' s =
         aggrOp (_, (x, _)) = x
 
 
-aggrExpr :: Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct) -> HPQ.PrimExpr -> HPQ.PrimExpr
+aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = maybe id (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord)
 
 window :: PQ.Bindings (HPQ.WndwOp, HPQ.Partition) -> Select -> Select

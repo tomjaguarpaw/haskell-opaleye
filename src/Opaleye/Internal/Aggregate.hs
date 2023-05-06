@@ -28,7 +28,7 @@ type @a@ to a single row of type @b@, a 'Control.Foldl.Fold' @a@ @b@
 takes a list of @a@ and returns a single value of type @b@.
 -}
 newtype Aggregator a b =
-  Aggregator (PM.PackMap (Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct),
+  Aggregator (PM.PackMap (HPQ.Aggr,
                           HPQ.PrimExpr)
                          HPQ.PrimExpr
                          a b)
@@ -86,7 +86,7 @@ orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
 runAggregator
   :: Applicative f
   => Aggregator a b
-  -> ((Maybe (HPQ.AggrOp, [HPQ.OrderExpr], HPQ.AggrDistinct), HPQ.PrimExpr)
+  -> ((HPQ.Aggr, HPQ.PrimExpr)
      -> f HPQ.PrimExpr)
   -> a -> f b
 runAggregator (Aggregator a) = PM.traversePM a

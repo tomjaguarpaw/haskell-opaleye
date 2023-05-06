@@ -87,6 +87,8 @@ data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
 data AggrDistinct = AggrDistinct | AggrAll
                   deriving (Eq,Show,Read)
 
+type Aggr = Maybe (AggrOp, [OrderExpr], AggrDistinct)
+
 data OrderExpr = OrderExpr OrderOp PrimExpr
                deriving (Show,Read)
 
