@@ -200,7 +200,6 @@ aggregate aggrs' s =
         expr (_, (_, e)) = e
         aggrOp (_, (x, _)) = x
 
-
 aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
 aggrExpr = maybe id (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord)
 
