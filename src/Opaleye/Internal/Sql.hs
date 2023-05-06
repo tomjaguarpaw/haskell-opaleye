@@ -201,7 +201,9 @@ aggregate aggrs' s =
         aggrOp (_, (x, _)) = x
 
 aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
-aggrExpr = maybe id (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord)
+aggrExpr = \case
+  Nothing -> id
+  Just x -> (\(op, ord, distinct) e -> HPQ.AggrExpr distinct op e ord) x
 
 window :: PQ.Bindings (HPQ.WndwOp, HPQ.Partition) -> Select -> Select
 window wndws' s = SelectFrom $ newSelect
