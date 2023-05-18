@@ -123,7 +123,7 @@ policy passes to Shane O'Brien (@duairc).
 for six months, and this policy has not been changed to the contrary,
 then full ownership of the project, including the GitHub repository,
 Hackage upload rights, and the right to amend this backup maintainers
-policy passes to Joe Hermaszewski (@expipiplus1).
+policy passes to Ellie Hermaszewska (@expipiplus1).
 
 # Contributors
 
