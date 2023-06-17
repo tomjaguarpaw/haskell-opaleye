@@ -26,12 +26,23 @@ import qualified Opaleye.Internal.Optimize as Op
 import qualified Opaleye.Internal.Tag as T
 
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
-                                            parens)
+                                            parens, doubleQuotes)
 import qualified Data.Char
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text          as ST
 
-type TableAlias = String
+
+data TableAlias = TableAlias String (Maybe [HSql.SqlColumn])
+
+
+ppTableAlias :: TableAlias -> Doc
+ppTableAlias (TableAlias table columns) =
+  text "AS" <+>
+  doubleQuotes (text table) <+>
+  foldMap (parens . HPrint.commaH (doubleQuotes . unColumn)) columns
+    where
+      unColumn (HSql.SqlColumn col) = text col
+
 
 ppSql :: Select -> Doc
 ppSql (SelectFrom s)     = ppSelectFrom s
@@ -66,18 +77,20 @@ ppSelectFrom s = text "SELECT"
 ppSelectJoin :: Join -> Doc
 ppSelectJoin j = text "SELECT *"
                  $$  text "FROM"
-                 $$  ppTable_tableAlias (1, s1)
+                 $$  ppTable_tableAlias (1, alias s1)
                  $$  ppJoinType (Sql.jJoinType j)
-                 $$  ppTable_tableAlias (2, s2)
+                 $$  ppTable_tableAlias (2, alias s2)
                  $$  text "ON"
                  $$  HPrint.ppSqlExpr (Sql.jCond j)
-  where (s1, s2) = Sql.jTables j
+  where
+    (s1, s2) = Sql.jTables j
+    alias (a, b) = (a, b, Nothing)
 
 ppSelectSemijoin :: Semijoin -> Doc
 ppSelectSemijoin v =
   text "SELECT *"
   $$  text "FROM"
-  $$  ppTable (tableAlias 1 (Sql.sjTable v))
+  $$  ppTable (tableAlias 1 (Sql.sjTable v) Nothing)
   $$  case Sql.sjType v of
         Sql.Semi -> text "WHERE EXISTS"
         Sql.Anti -> text "WHERE NOT EXISTS"
@@ -108,7 +121,9 @@ ppSelectLabel l = text "/*" <+> text (preprocess (Sql.lLabel l)) <+> text "*/"
 ppSelectExists :: Exists -> Doc
 ppSelectExists e =
   text "SELECT EXISTS"
-  <+> ppTable (Sql.sqlSymbol (Sql.existsBinding e), Sql.existsTable e)
+  <+> ppTable (alias, Sql.existsTable e)
+  where
+    alias = TableAlias (Sql.sqlSymbol (Sql.existsBinding e)) Nothing
 
 ppRecursive :: Sql.Recursive -> Doc
 ppRecursive Sql.Recursive = text "RECURSIVE"
@@ -140,19 +155,21 @@ nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
 nameAs (expr, name) = HPrint.ppSqlExpr expr `ppAs` fmap unColumn name
   where unColumn (HSql.SqlColumn s) = s
 
-ppTables :: [(Sql.Lateral, Select)] -> Doc
+ppTables :: [(Sql.Lateral, Select, Maybe [HSql.SqlColumn])] -> Doc
 ppTables [] = empty
 ppTables ts = text "FROM" <+> HPrint.commaV ppTable_tableAlias (zip [1..] ts)
 
-ppTable_tableAlias :: (Int, (Sql.Lateral, Select)) -> Doc
-ppTable_tableAlias (i, (lat, select)) =
-  lateral lat $ ppTable (tableAlias i select)
+ppTable_tableAlias :: (Int, (Sql.Lateral, Select, Maybe [HSql.SqlColumn])) -> Doc
+ppTable_tableAlias (i, (lat, select, columns)) =
+  lateral lat $ ppTable (tableAlias i select columns)
   where lateral = \case
           Sql.NonLateral -> id
           Sql.Lateral -> (text "LATERAL" $$)
 
-tableAlias :: Int -> Select -> (TableAlias, Select)
-tableAlias i select = ("T" ++ show i, select)
+tableAlias :: Int -> Select -> Maybe [HSql.SqlColumn] -> (TableAlias, Select)
+tableAlias i select columns = (alias, select)
+  where
+    alias = TableAlias ("T" ++ show i) columns
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
@@ -167,8 +184,7 @@ ppTable (alias, select) = case select of
   SelectLabel sll       -> parens (ppSelectLabel sll)
   SelectExists saj      -> parens (ppSelectExists saj)
   SelectWith w          -> parens (ppWith w)
-  `ppAs`
-  Just alias
+  <+> ppTableAlias alias
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
@@ -187,7 +203,7 @@ ppFor Nothing       = empty
 ppFor (Just Sql.Update) = text "FOR UPDATE"
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = parens (HPrint.ppValues_ v) `ppAs` Just "V"
+ppValues v = parens (HPrint.ppValues_ v) <+> ppTableAlias (TableAlias "V" Nothing)
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of

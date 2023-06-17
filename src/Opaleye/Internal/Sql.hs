@@ -42,7 +42,7 @@ data SelectAttrs =
 
 data From = From {
   attrs      :: SelectAttrs,
-  tables     :: [(Lateral, Select)],
+  tables     :: [(Lateral, Select, Maybe [HSql.SqlColumn])],
   criteria   :: [HSql.SqlExpr],
   groupBy    :: Maybe (NEL.NonEmpty HSql.SqlExpr),
   orderBy    :: [(HSql.SqlExpr, HSql.SqlOrder)],
@@ -142,8 +142,8 @@ unit = SelectFrom newSelect { attrs  = SelectAttrs (ensureColumns []) }
 empty :: V.Void -> select
 empty = V.absurd
 
-oneTable :: t -> [(Lateral, t)]
-oneTable t = [(NonLateral, t)]
+oneTable :: t -> [(Lateral, t, Maybe [HSql.SqlColumn])]
+oneTable t = [(NonLateral, t, Nothing)]
 
 baseTable :: PQ.TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> Select
 baseTable ti columns = SelectFrom $
@@ -154,7 +154,7 @@ product :: NEL.NonEmpty (PQ.Lateral, Select) -> [HPQ.PrimExpr] -> Select
 product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss'
               , criteria = map sqlExpr pes }
-  where ss' = flip fmap ss $ Arr.first $ \case
+  where ss' = flip fmap ss $ (\f (a, b) -> (f a, b, Nothing)) $ \case
           PQ.Lateral    -> Lateral
           PQ.NonLateral -> NonLateral
 
@@ -328,11 +328,13 @@ label :: String -> Select -> Select
 label l s = SelectLabel (Label l s)
 
 -- Very similar to 'baseTable'
-relExpr :: HPQ.PrimExpr -> [(Symbol, HPQ.PrimExpr)] -> Select
+relExpr :: HPQ.PrimExpr -> [Symbol] -> Select
 relExpr pe columns = SelectFrom $
-    newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
-              , tables = oneTable (RelExpr (sqlExpr pe))
+    newSelect { attrs = Star
+              , tables = [(NonLateral, RelExpr (sqlExpr pe), Just columns')]
               }
+  where
+    columns' = HSql.SqlColumn . sqlSymbol <$> columns
 
 rebind :: Bool -> [(Symbol, HPQ.PrimExpr)] -> Select -> Select
 rebind star pes select = SelectFrom newSelect
@@ -345,6 +347,6 @@ rebind star pes select = SelectFrom newSelect
 
 forUpdate :: Select -> Select
 forUpdate s = SelectFrom newSelect {
-    tables = [(NonLateral, s)]
+    tables = [(NonLateral, s, Nothing)]
   , for = Just Update
   }

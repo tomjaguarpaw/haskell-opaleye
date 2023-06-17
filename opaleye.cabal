@@ -99,7 +99,6 @@ library
                    Opaleye.Internal.RunQueryExternal,
                    Opaleye.Internal.Sql,
                    Opaleye.Internal.Table,
-                   Opaleye.Internal.TableMaker,
                    Opaleye.Internal.Tag,
                    Opaleye.Internal.TypeFamilies,
                    Opaleye.Internal.Unpackspec,

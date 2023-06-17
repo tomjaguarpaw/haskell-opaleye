@@ -6,21 +6,21 @@
 
 module Opaleye.Internal.Operators where
 
+import Control.Applicative (liftA2)
+
 import           Opaleye.Internal.Column (Field_(Column))
 import qualified Opaleye.Internal.Column as C
+import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.QueryArr as QA
-import qualified Opaleye.Internal.Table as Table
-import qualified Opaleye.Internal.TableMaker as TM
 import qualified Opaleye.Internal.Tag as Tag
-import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.PGTypesExternal as T
 import qualified Opaleye.Field as F
 import           Opaleye.Field (Field)
 import qualified Opaleye.Select as S
 
-import           Data.Profunctor (Profunctor, dimap, lmap, rmap)
+import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor, empty, (***!))
 import qualified Data.Profunctor.Product.Default as D
 
@@ -77,43 +77,32 @@ instance D.Default IfPP (Field_ n a) (Field_ n a) where
   def = IfPP C.unsafeIfThenElse
 
 
--- This seems to be the only place we use ViewColumnMaker now.
-data RelExprMaker a b =
-  forall c. RelExprMaker {
-      relExprVCM :: TM.ViewColumnMaker a c
-    , relExprCM  :: U.Unpackspec c b
-    }
+newtype RelExprPP a b = RelExprPP (Tag.Tag -> PM.PM [HPQ.Symbol] b)
 
-relExprColumn :: RelExprMaker String (Field_ n a)
-relExprColumn = RelExprMaker TM.tableColumn U.unpackspecField
 
-instance D.Default RelExprMaker String (Field_ n a) where
+runRelExprPP :: RelExprPP a b -> Tag.Tag -> (b, [HPQ.Symbol])
+runRelExprPP (RelExprPP m) = PM.run . m
+
+
+instance D.Default RelExprPP (Field_ n a) (Field_ n a) where
   def = relExprColumn
 
-runRelExprMaker :: RelExprMaker strings columns
-                -> Tag.Tag
-                -> strings
-                -> (columns, [(HPQ.Symbol, HPQ.PrimExpr)])
-runRelExprMaker rem_ tag =
-  case rem_ of RelExprMaker vcm cm -> Table.runColumnMaker cm tag
-                                    . TM.runViewColumnMaker vcm
 
-relationValuedExprExplicit :: RelExprMaker strings columns
-                           -> strings
+relExprColumn :: RelExprPP (Field_ n a) (Field_ n a)
+relExprColumn = RelExprPP $ fmap Column . PM.extract "relExpr"
+
+
+relationValuedExprExplicit :: RelExprPP columns columns
                            -> (a -> HPQ.PrimExpr)
                            -> QA.QueryArr a columns
-relationValuedExprExplicit rem_ strings pe =
+relationValuedExprExplicit relExprPP pe =
   QA.productQueryArr' $ do
-    tag <- Tag.fresh
-    pure $ \a ->
-      let (primExprs, projcols) = runRelExprMaker rem_ tag strings
-          primQ :: PQ.PrimQuery
-          primQ = PQ.RelExpr (pe a) projcols
-      in (primExprs, primQ)
+    (columns, symbols) <- runRelExprPP relExprPP <$> Tag.fresh
+    pure $ \a -> (columns, PQ.RelExpr (pe a) symbols)
 
-relationValuedExpr :: D.Default RelExprMaker strings columns
-                   => strings
-                   -> (a -> HPQ.PrimExpr)
+
+relationValuedExpr :: D.Default RelExprPP columns columns
+                   => (a -> HPQ.PrimExpr)
                    -> QA.QueryArr a columns
 relationValuedExpr = relationValuedExprExplicit D.def
 
@@ -127,16 +116,13 @@ instance ProductProfunctor EqPP where
   EqPP f ***! EqPP f' = EqPP (\a a' ->
                                f (fst a) (fst a') .&& f' (snd a) (snd a'))
 
-instance Profunctor RelExprMaker where
-  dimap f g (RelExprMaker a b) = RelExprMaker (lmap f a) (rmap g b)
+instance Profunctor RelExprPP where
+  dimap _ f (RelExprPP m) = RelExprPP (fmap (fmap f) m)
 
-instance ProductProfunctor RelExprMaker where
-  empty = RelExprMaker empty empty
-  f ***! g = case f of RelExprMaker vcmf cmf ->
-                        case g of RelExprMaker vcmg cmg ->
-                                    h vcmf vcmg cmf cmg
-    where h vcmg vcmf cmg cmf = RelExprMaker (vcmg ***! vcmf)
-                                             (cmg  ***! cmf)
+instance ProductProfunctor RelExprPP where
+  empty = RelExprPP (pure (pure ()))
+  RelExprPP f ***! RelExprPP g =
+    RelExprPP $ liftA2 (liftA2 (,)) f g
 
 instance Profunctor IfPP where
   dimap f g (IfPP h) = IfPP (\b a a' -> g (h b (f a) (f a')))
