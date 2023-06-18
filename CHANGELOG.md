@@ -1,3 +1,7 @@
+## 0.9.7.0
+
+* Added `filterWhere` (thanks to Shane O'Brien)
+
 ## 0.9.6.2
 
 * No externally visible changes
