@@ -13,6 +13,7 @@ import qualified Control.Arrow                    as Arr
 import           Control.Monad                    (guard)
 import qualified Data.Aeson                       as Json
 import qualified Data.Function                    as F
+import           Data.Int (Int32)
 import qualified Data.List                        as L
 import           Data.Monoid                      ((<>))
 import qualified Data.Ord                         as Ord
@@ -30,8 +31,11 @@ import           GHC.Int                          (Int64)
 import           Opaleye                          (Field, FieldNullable, Select,
                                                    SelectArr, (.==), (.>))
 import qualified Opaleye                          as O
-import qualified Opaleye.Field                    as  F
+import qualified Opaleye.Field                    as F
 import qualified Opaleye.Internal.Aggregate       as IA
+import qualified Opaleye.Internal.Column          as O (unColumn)
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as O (PrimExpr (..))
+import qualified Opaleye.Internal.Operators       as O (relationValuedExpr)
 import           Opaleye.Internal.RunQuery        (DefaultFromField)
 import           Opaleye.Internal.MaybeFields     as OM
 import           Opaleye.Internal.Locking         as OL
@@ -1415,6 +1419,32 @@ testAddIntervalFromTimeToTime = do
                         (realToFrac (Time.ctTime c :: Time.NominalDiffTime) :: Time.DiffTime)
                           + Time.timeOfDayToTime t
 
+testUnnest :: Test
+testUnnest = do
+  it "unnest" $ testH query (`shouldBe` expectation)
+  where query :: Select (Field O.SqlInt4, Field O.SqlText)
+        query = O.relationValuedExpr columns (const expr)
+          where
+            expr = O.FunExpr "unnest" [O.unColumn as', O.unColumn bs']
+              where
+                as' :: Field (O.SqlArray O.SqlInt4)
+                as' = O.toFields as
+                bs' :: Field (O.SqlArray O.SqlText)
+                bs' = O.toFields bs
+
+        columns :: (String, String)
+        columns = ("unnest", "unnest")
+
+        as :: [Int32]
+        as = [1, 2, 3]
+
+        bs :: [T.Text]
+        bs = ["a", "b", "c"]
+
+        expectation :: [(Int32, T.Text)]
+        expectation = zipWith (,) as bs
+
+
 main :: IO ()
 main = do
   let envVarName = "POSTGRES_CONNSTRING"
@@ -1580,3 +1610,5 @@ main = do
       describe "with" $ do
         testWithRecursive
         testWith
+      describe "relation valued exprs" $ do
+        testUnnest
