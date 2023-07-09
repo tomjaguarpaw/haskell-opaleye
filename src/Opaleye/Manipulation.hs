@@ -50,8 +50,8 @@ module Opaleye.Manipulation (-- * Insert
                              runDelete_,
                              -- ** @DoNothing@
                              -- | Use 'doNothing' instead.
-                             -- @DoNothing@ will be deprecated in
-                             -- version 0.10.
+                             -- @DoNothing@ will be removed in
+                             -- version 0.11.
                              HSql.OnConflict(HSql.DoNothing),
                              ) where
 
@@ -97,7 +97,7 @@ runInsert conn i = case i of
             \c t r -> MI.runInsertManyReturningExplicit qr c t r f onConflict_
     in insert conn table_ rows_
 
--- | Use 'runInsert' instead.  Will be deprecated in 0.10.
+{-# DEPRECATED runInsert_ "Use 'runInsert' instead.  Will be removed in 0.11." #-}
 runInsert_ :: PGS.Connection
            -> Insert haskells
            -> IO haskells
@@ -119,7 +119,7 @@ runUpdate  conn i = case i of
           MI.ReturningExplicit qr f ->
             runUpdateReturningExplicit qr conn table_ updateWith_ where_ f
 
--- | Use 'runUpdate' instead.  Will be deprecated in 0.10.
+{-# DEPRECATED runUpdate_ "Use 'runUpdate' instead.  Will be removed in 0.11." #-}
 runUpdate_ :: PGS.Connection
            -> Update haskells
            -> IO haskells
@@ -140,7 +140,7 @@ runDelete conn i = case i of
           MI.ReturningExplicit qr f ->
             MI.runDeleteReturningExplicit qr conn table_ where_ f
 
--- | Use 'runDelete' instead.  Will be deprecated in 0.10.
+{-# DEPRECATED runDelete_ "Use 'runDelete' instead.  Will be removed in 0.11." #-}
 runDelete_ :: PGS.Connection
            -> Delete haskells
            -> IO haskells
@@ -158,7 +158,7 @@ data Insert haskells = forall fieldsW fieldsR. Insert
    --
    --     * 'iOnConflict' @=@ 'Nothing' means omit @ON CONFLICT@ statement
    --
-   --     * 'iOnConflict' @=@ 'Just' 'HSql.DoNothing' means @ON CONFLICT DO
+   --     * 'iOnConflict' @=@ 'Just' 'HSql.doNothing' means @ON CONFLICT DO
    --        NOTHING@
    }
 
