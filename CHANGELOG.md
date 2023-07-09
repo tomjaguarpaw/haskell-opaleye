@@ -1,3 +1,18 @@
+## 0.10.0.0
+
+* Changed `relationValuedExpr` to work in more cases.  (This is a
+  breaking change to an internal function.)
+
+* Removed the following, which were all previously deprecated:
+
+  `valuesSafe`, `valuesSafeExplicit`, `valuesUnsafe`,
+  `valuesUnsafeExplicit`, `ValuesspecSafe`, `fieldQueryRunnerColumn`,
+  `fieldParserQueryRunnerColumn`, `queryRunner`, `joinF`, `leftJoinF`,
+  `rightJoinF`, `fromFieldToFieldsEnum`, `keepWhen`
+
+  See their documentation in the 0.9 series to learn about their
+  replacements.
+
 ## 0.9.7.0
 
 * Added `filterWhere` (thanks to Shane O'Brien)
