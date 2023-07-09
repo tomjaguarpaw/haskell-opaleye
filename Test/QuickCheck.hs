@@ -444,14 +444,14 @@ restrict =
 
 values :: ArbitraryHaskellsList -> Connection -> IO TQ.Property
 values (ArbitraryHaskellsList l) =
-  compareNoSort (denotation (fmap fieldsList (O.valuesSafe (fmap O.toFields l))))
+  compareNoSort (denotation (fmap fieldsList (O.values (fmap O.toFields l))))
                 (pureList (fmap fieldsList l))
 
 -- We test values entries of length two in values, and values entries
 -- of length zero here.  Ideally we would find some way to merge them.
 valuesEmpty :: [()] -> Connection -> IO TQ.Property
 valuesEmpty l =
-  compareNoSort (denotationExplicit D.def (O.valuesSafe l))
+  compareNoSort (denotationExplicit D.def (O.values l))
                 (pureList l)
 
 aggregate :: ArbitrarySelect -> Connection -> IO TQ.Property
