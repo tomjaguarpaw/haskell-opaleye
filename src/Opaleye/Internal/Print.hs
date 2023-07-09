@@ -81,7 +81,7 @@ ppSelectJoin j = text "SELECT *"
                  $$  HPrint.ppSqlExpr (Sql.jCond j)
   where
     (s1, s2) = Sql.jTables j
-    alias (a, b) = (a, b)
+    alias (a, b) = (a, b, Nothing)
 
 ppSelectSemijoin :: Semijoin -> Doc
 ppSelectSemijoin v =
@@ -152,13 +152,13 @@ nameAs :: (HSql.SqlExpr, Maybe HSql.SqlColumn) -> Doc
 nameAs (expr, name) = HPrint.ppSqlExpr expr `ppAs` fmap unColumn name
   where unColumn (HSql.SqlColumn s) = s
 
-ppTables :: [(Sql.Lateral, Select)] -> Doc
+ppTables :: [(Sql.Lateral, Select, Maybe [HSql.SqlColumn])] -> Doc
 ppTables [] = empty
 ppTables ts = text "FROM" <+> HPrint.commaV ppTable_tableAlias (zip [1..] ts)
 
-ppTable_tableAlias :: (Int, (Sql.Lateral, Select)) -> Doc
-ppTable_tableAlias (i, (lat, select)) =
-  lateral lat $ ppTable (tableAlias i select Nothing)
+ppTable_tableAlias :: (Int, (Sql.Lateral, Select, Maybe [HSql.SqlColumn])) -> Doc
+ppTable_tableAlias (i, (lat, select, columns)) =
+  lateral lat $ ppTable (tableAlias i select columns)
   where lateral = \case
           Sql.NonLateral -> id
           Sql.Lateral -> (text "LATERAL" $$)

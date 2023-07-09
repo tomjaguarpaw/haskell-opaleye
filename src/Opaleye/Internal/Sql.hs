@@ -42,7 +42,7 @@ data SelectAttrs =
 
 data From = From {
   attrs      :: SelectAttrs,
-  tables     :: [(Lateral, Select)],
+  tables     :: [(Lateral, Select, Maybe [HSql.SqlColumn])],
   criteria   :: [HSql.SqlExpr],
   groupBy    :: Maybe (NEL.NonEmpty HSql.SqlExpr),
   orderBy    :: [(HSql.SqlExpr, HSql.SqlOrder)],
@@ -142,8 +142,8 @@ unit = SelectFrom newSelect { attrs  = SelectAttrs (ensureColumns []) }
 empty :: V.Void -> select
 empty = V.absurd
 
-oneTable :: t -> [(Lateral, t)]
-oneTable t = [(NonLateral, t)]
+oneTable :: t -> [(Lateral, t, Maybe a)]
+oneTable t = [(NonLateral, t, Nothing)]
 
 baseTable :: PQ.TableIdentifier -> [(Symbol, HPQ.PrimExpr)] -> Select
 baseTable ti columns = SelectFrom $
@@ -154,7 +154,7 @@ product :: NEL.NonEmpty (PQ.Lateral, Select) -> [HPQ.PrimExpr] -> Select
 product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss'
               , criteria = map sqlExpr pes }
-  where ss' = flip fmap ss $ (\f (a, b) -> (f a, b)) $ \case
+  where ss' = flip fmap ss $ (\f (a, b) -> (f a, b, Nothing)) $ \case
           PQ.Lateral    -> Lateral
           PQ.NonLateral -> NonLateral
 
@@ -345,6 +345,6 @@ rebind star pes select = SelectFrom newSelect
 
 forUpdate :: Select -> Select
 forUpdate s = SelectFrom newSelect {
-    tables = [(NonLateral, s)]
+    tables = [(NonLateral, s, Nothing)]
   , for = Just Update
   }
