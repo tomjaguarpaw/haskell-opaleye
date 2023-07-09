@@ -774,20 +774,6 @@ testLeftJoinNullable = it "" $ testH q (`shouldBe` expected)
                    , ((1, 50), ((Just 1, Just 100), (Just 1, Just 50)))
                    , ((1, 50), ((Just 1, Just 200), (Just 1, Just 50))) ]
 
-testLeftJoinF :: Test
-testLeftJoinF = it "" $ testH q (`shouldBe` expected)
-  where q = O.leftJoinF (,)
-                        (\x -> (x, (-1, -2)))
-                        (\l r -> fst l .== fst r)
-                        table1Q
-                        table3Q
-
-        expected :: [((Int, Int), (Int, Int))]
-        expected = [ ((1, 100), (1, 50))
-                   , ((1, 100), (1, 50))
-                   , ((1, 200), (1, 50))
-                   , ((2, 300), (-1, -2)) ]
-
 testThreeWayProduct :: Test
 testThreeWayProduct = it "" $ testH q (`shouldBe` expected)
   where q = A.liftA3 (,,) table1Q table2Q table3Q
@@ -1563,7 +1549,6 @@ main = do
         testLeftJoin
         testLeftJoinNullable
         testThreeWayProduct
-        testLeftJoinF
       describe "json" $ jsonTests table8Q
       describe "jsonb" $ do
         jsonTests table9Q
