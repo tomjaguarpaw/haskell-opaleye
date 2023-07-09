@@ -87,7 +87,7 @@ ppSelectSemijoin :: Semijoin -> Doc
 ppSelectSemijoin v =
   text "SELECT *"
   $$  text "FROM"
-  $$  ppTable (tableAlias 1 (Sql.sjTable v))
+  $$  ppTable (tableAlias 1 (Sql.sjTable v) Nothing)
   $$  case Sql.sjType v of
         Sql.Semi -> text "WHERE EXISTS"
         Sql.Anti -> text "WHERE NOT EXISTS"
@@ -158,15 +158,15 @@ ppTables ts = text "FROM" <+> HPrint.commaV ppTable_tableAlias (zip [1..] ts)
 
 ppTable_tableAlias :: (Int, (Sql.Lateral, Select)) -> Doc
 ppTable_tableAlias (i, (lat, select)) =
-  lateral lat $ ppTable (tableAlias i select)
+  lateral lat $ ppTable (tableAlias i select Nothing)
   where lateral = \case
           Sql.NonLateral -> id
           Sql.Lateral -> (text "LATERAL" $$)
 
-tableAlias :: Int -> Select -> (TableAlias, Select)
-tableAlias i select = (alias, select)
+tableAlias :: Int -> Select -> Maybe [HSql.SqlColumn] -> (TableAlias, Select)
+tableAlias i select columns = (alias, select)
   where
-    alias = TableAlias ("T" ++ show i) Nothing
+    alias = TableAlias ("T" ++ show i) columns
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
