@@ -143,14 +143,14 @@ offset n a = Q.productQueryArr $ do
 
 -- * Distinct on
 
--- | Use 'distinctOn' instead.  Will be deprecated in 0.10.
+{-# DEPRECATED distinctOnCorrect "Use 'distinctOn' instead.  Will be removed in 0.11." #-}
 distinctOnCorrect :: D.Default U.Unpackspec b b
                   => (a -> b)
                   -> S.Select a
                   -> S.Select a
 distinctOnCorrect = distinctOnExplicit D.def
 
--- | Use 'distinctOnBy' instead.  Will be deprecated in 0.10.
+{-# DEPRECATED distinctOnByCorrect "Use 'distinctOnBy' instead.  Will be removed in 0.11." #-}
 distinctOnByCorrect :: D.Default U.Unpackspec b b
                     => (a -> b)
                     -> O.Order a
