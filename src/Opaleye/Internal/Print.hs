@@ -26,12 +26,17 @@ import qualified Opaleye.Internal.Optimize as Op
 import qualified Opaleye.Internal.Tag as T
 
 import           Text.PrettyPrint.HughesPJ (Doc, ($$), (<+>), text, empty,
-                                            parens)
+                                            parens, doubleQuotes)
 import qualified Data.Char
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text          as ST
 
 type TableAlias = String
+
+ppTableAlias :: TableAlias -> Doc
+ppTableAlias table =
+  text "AS" <+>
+  doubleQuotes (text table)
 
 ppSql :: Select -> Doc
 ppSql (SelectFrom s)     = ppSelectFrom s
@@ -167,8 +172,7 @@ ppTable (alias, select) = case select of
   SelectLabel sll       -> parens (ppSelectLabel sll)
   SelectExists saj      -> parens (ppSelectExists saj)
   SelectWith w          -> parens (ppWith w)
-  `ppAs`
-  Just alias
+  <+> ppTableAlias alias
 
 ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
@@ -187,7 +191,7 @@ ppFor Nothing       = empty
 ppFor (Just Sql.Update) = text "FOR UPDATE"
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = parens (HPrint.ppValues_ v) `ppAs` Just "V"
+ppValues v = parens (HPrint.ppValues_ v) <+> ppTableAlias "V"
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of
