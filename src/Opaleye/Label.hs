@@ -17,7 +17,7 @@ label' :: String -> S.Select ()
 label' l = Q.selectArr f where
   f = pure (\() -> ((), PQ.aLabel l))
 
--- | Will be deprecated in version 0.10.  Use 'label\'' instead.
+{-# DEPRECATED label "Will be removed in version 0.11.  Use 'label\'' instead." #-}
 label :: String -> S.SelectArr a b -> S.SelectArr a b
 label l s = proc a -> do
   b <- s -< a
