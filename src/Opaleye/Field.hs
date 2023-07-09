@@ -10,7 +10,7 @@
 -- SqlType@, and if you see @'C.Column' ('C.Nullable' SqlType)@ then
 -- you can understand it as @'FieldNullable' SqlType@.
 --
--- 'C.Column' will be fully deprecated in version 0.10.
+-- 'C.Column' will be removed in version 0.11.
 
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
