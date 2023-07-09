@@ -105,7 +105,6 @@ module Opaleye.Operators
   , addInterval
   , minusInterval
   -- * Deprecated
-  , keepWhen
   )
 
   where
@@ -489,12 +488,6 @@ addInterval = C.binOp (HPQ.:+)
 
 minusInterval :: IntervalNum from to => F.Field from -> F.Field T.SqlInterval -> F.Field to
 minusInterval = C.binOp (HPQ.:-)
-
-{-# DEPRECATED keepWhen "Use 'where_' or 'restrict' instead.  Will be removed in version 0.10." #-}
-keepWhen :: (a -> F.Field T.SqlBool) -> S.SelectArr a a
-keepWhen p = proc a -> do
-  restrict  -< p a
-  A.returnA -< a
 
 -- | Current date and time (start of current transaction)
 now :: F.Field T.SqlTimestamptz
