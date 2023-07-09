@@ -113,7 +113,9 @@ ppSelectLabel l = text "/*" <+> text (preprocess (Sql.lLabel l)) <+> text "*/"
 ppSelectExists :: Exists -> Doc
 ppSelectExists e =
   text "SELECT EXISTS"
-  <+> ppTable (TableAlias (Sql.sqlSymbol (Sql.existsBinding e)), Sql.existsTable e)
+  <+> ppTable (alias, Sql.existsTable e)
+  where
+    alias = TableAlias (Sql.sqlSymbol (Sql.existsBinding e))
 
 ppRecursive :: Sql.Recursive -> Doc
 ppRecursive Sql.Recursive = text "RECURSIVE"
