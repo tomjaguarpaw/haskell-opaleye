@@ -159,7 +159,9 @@ ppTable_tableAlias (i, (lat, select)) =
           Sql.Lateral -> (text "LATERAL" $$)
 
 tableAlias :: Int -> Select -> (TableAlias, Select)
-tableAlias i select = (TableAlias ("T" ++ show i), select)
+tableAlias i select = (alias, select)
+  where
+    alias = TableAlias ("T" ++ show i)
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
