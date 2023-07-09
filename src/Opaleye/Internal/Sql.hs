@@ -154,7 +154,7 @@ product :: NEL.NonEmpty (PQ.Lateral, Select) -> [HPQ.PrimExpr] -> Select
 product ss pes = SelectFrom $
     newSelect { tables = NEL.toList ss'
               , criteria = map sqlExpr pes }
-  where ss' = flip fmap ss $ Arr.first $ \case
+  where ss' = flip fmap ss $ (\f (a, b) -> (f a, b)) $ \case
           PQ.Lateral    -> Lateral
           PQ.NonLateral -> NonLateral
 
