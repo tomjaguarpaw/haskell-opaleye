@@ -512,8 +512,10 @@ testAggregate = it "" $ O.aggregate (PP.p2 (O.groupBy, O.sumInt4))
 
 testAggregate0 :: Test
 testAggregate0 = it "" $    O.aggregate (PP.p2 (O.sum, O.sumInt4))
-                                        (O.keepWhen (const (O.sqlBool False))
-                                         <<< table1Q)
+                                        (proc () -> do
+                                            r <- table1Q -< ()
+                                            O.restrict -< O.sqlBool False
+                                            Arr.returnA -< r)
                          `selectShouldReturnSorted` ([] :: [(Int, Int64)])
 
 testAggregateFunction :: Test
@@ -648,7 +650,10 @@ testOverwriteAggregateOrdered = it "" $ q `selectShouldReturnSorted` expected
 
 testCountRows0 :: Test
 testCountRows0 = it "" $ q `selectShouldReturnSorted` [0 :: Int64]
-  where q        = O.countRows (O.keepWhen (const (O.sqlBool False)) <<< table7Q)
+  where q        = O.countRows (proc () -> do
+                                   r <- table7Q -< ()
+                                   O.restrict -< O.sqlBool False
+                                   Arr.returnA -< r)
 
 testCountRows3 :: Test
 testCountRows3 = it "" $ q `selectShouldReturnSorted` [3 :: Int64]
