@@ -8,9 +8,7 @@ module Opaleye.Internal.RunQueryExternal
                          IRQ.Cursor,
                          IRQ.FromFields,
                          IRQ.FromField,
-                         -- * Creating new 'FromField's
-                         IRQ.fieldQueryRunnerColumn,
-                         IRQ.fieldParserQueryRunnerColumn) where
+                 ) where
 
 import           Control.Applicative (pure, (<$>))
 import qualified Database.PostgreSQL.Simple as PGS
