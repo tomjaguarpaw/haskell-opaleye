@@ -31,12 +31,15 @@ import qualified Data.Char
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text          as ST
 
-data TableAlias = TableAlias String
+data TableAlias = TableAlias String (Maybe [HSql.SqlColumn])
 
 ppTableAlias :: TableAlias -> Doc
-ppTableAlias (TableAlias table) =
+ppTableAlias (TableAlias table columns) =
   text "AS" <+>
-  doubleQuotes (text table)
+  doubleQuotes (text table) <+>
+  foldMap (parens . HPrint.commaH (doubleQuotes . unColumn)) columns
+    where
+      unColumn (HSql.SqlColumn col) = text col
 
 ppSql :: Select -> Doc
 ppSql (SelectFrom s)     = ppSelectFrom s
@@ -115,7 +118,7 @@ ppSelectExists e =
   text "SELECT EXISTS"
   <+> ppTable (alias, Sql.existsTable e)
   where
-    alias = TableAlias (Sql.sqlSymbol (Sql.existsBinding e))
+    alias = TableAlias (Sql.sqlSymbol (Sql.existsBinding e)) Nothing
 
 ppRecursive :: Sql.Recursive -> Doc
 ppRecursive Sql.Recursive = text "RECURSIVE"
@@ -161,7 +164,7 @@ ppTable_tableAlias (i, (lat, select)) =
 tableAlias :: Int -> Select -> (TableAlias, Select)
 tableAlias i select = (alias, select)
   where
-    alias = TableAlias ("T" ++ show i)
+    alias = TableAlias ("T" ++ show i) Nothing
 
 -- TODO: duplication with ppSql
 ppTable :: (TableAlias, Select) -> Doc
@@ -195,7 +198,7 @@ ppFor Nothing       = empty
 ppFor (Just Sql.Update) = text "FOR UPDATE"
 
 ppValues :: [[HSql.SqlExpr]] -> Doc
-ppValues v = parens (HPrint.ppValues_ v) <+> ppTableAlias (TableAlias "V")
+ppValues v = parens (HPrint.ppValues_ v) <+> ppTableAlias (TableAlias "V" Nothing)
 
 ppBinOp :: Sql.BinOp -> Doc
 ppBinOp o = text $ case o of
