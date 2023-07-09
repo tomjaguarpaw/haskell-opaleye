@@ -302,7 +302,8 @@ inSelect :: D.Default O.EqPP fields fields
          => fields -> S.Select fields -> S.Select (F.Field T.SqlBool)
 inSelect c q = E.exists $ proc () -> do
   r <- q -< ()
-  keepWhen (c .===) -< r
+  restrict -< c .=== r
+  A.returnA -< r
 
 -- | Class of Postgres types that represent json values.
 -- Used to overload functions and operators that work on both 'T.SqlJson' and 'T.SqlJsonb'.
