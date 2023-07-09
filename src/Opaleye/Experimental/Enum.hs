@@ -8,7 +8,6 @@ module Opaleye.Experimental.Enum
     enumMapperWithSchema,
     enumFromField,
     enumToFields,
-    fromFieldToFieldsEnum,
   ) where
 
 import           Opaleye.Field (Field)
@@ -139,12 +138,3 @@ enumMapper' type_ from to_ = EnumMapper {
        Just s -> case from (unpack s) of
          Just r -> r
          Nothing -> error ("Unexpected: " ++ unpack s)
-
-{-# DEPRECATED fromFieldToFieldsEnum "Use 'enumMapper' instead.  Will be removed in 0.10." #-}
-fromFieldToFieldsEnum :: String
-                      -> (String -> Maybe haskellSum)
-                      -> (haskellSum -> String)
-                      -> (RQ.FromField sqlEnum haskellSum,
-                          O.ToFields haskellSum (Field sqlEnum))
-fromFieldToFieldsEnum type_ from to_ = (enumFromField e, enumToFields e)
-  where e = enumMapper type_ from to_
