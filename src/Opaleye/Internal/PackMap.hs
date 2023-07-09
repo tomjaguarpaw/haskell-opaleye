@@ -1,4 +1,5 @@
 {-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE TupleSections #-}
 
 module Opaleye.Internal.PackMap where
 
@@ -7,6 +8,7 @@ import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
+import           Control.Arrow (first, second)
 import qualified Control.Monad.Trans.State as State
 import           Data.Profunctor (Profunctor, dimap, rmap)
 import           Data.Profunctor.Product (ProductProfunctor)
@@ -109,6 +111,21 @@ extractAttr :: String
             -> primExpr
             -> PM [(HPQ.Symbol, primExpr)] HPQ.PrimExpr
 extractAttr s = extractAttrPE (const (s ++))
+
+isoState ::
+  Functor m =>
+  (s1 -> s2) ->
+  (s2 -> s1) ->
+  State.StateT s1 m a ->
+  State.StateT s2 m a
+isoState to from =
+  State.StateT . ((fmap . second) to .) . (. from) . State.runStateT
+
+extract :: String -> T.Tag -> PM [HPQ.Symbol] HPQ.PrimExpr
+extract s t = isoState to from (extractAttr s t ())
+  where
+    to = (first . fmap) fst
+    from = (first . fmap) (\x -> (x, ()))
 
 -- }
 

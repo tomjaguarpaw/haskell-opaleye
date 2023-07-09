@@ -328,11 +328,13 @@ label :: String -> Select -> Select
 label l s = SelectLabel (Label l s)
 
 -- Very similar to 'baseTable'
-relExpr :: HPQ.PrimExpr -> [(Symbol, HPQ.PrimExpr)] -> Select
+relExpr :: HPQ.PrimExpr -> [Symbol] -> Select
 relExpr pe columns = SelectFrom $
-    newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
-              , tables = oneTable (RelExpr (sqlExpr pe))
+    newSelect { attrs = Star
+              , tables = [(NonLateral, RelExpr (sqlExpr pe), Just columns')]
               }
+  where
+    columns' = HSql.SqlColumn . sqlSymbol <$> columns
 
 rebind :: Bool -> [(Symbol, HPQ.PrimExpr)] -> Select -> Select
 rebind star pes select = SelectFrom newSelect

@@ -151,7 +151,7 @@ data PrimQuery' a = Unit
                   | Binary    BinOp
                               (PrimQuery' a, PrimQuery' a)
                   | Label     String (PrimQuery' a)
-                  | RelExpr   HPQ.PrimExpr (Bindings HPQ.PrimExpr)
+                  | RelExpr   HPQ.PrimExpr [Symbol]
                   | Rebind    Bool
                               (Bindings HPQ.PrimExpr)
                               (PrimQuery' a)
@@ -194,7 +194,7 @@ data PrimQueryFoldP a p p' = PrimQueryFold
                       -> (p, p)
                       -> p'
   , label             :: String -> p -> p'
-  , relExpr           :: HPQ.PrimExpr -> Bindings HPQ.PrimExpr -> p'
+  , relExpr           :: HPQ.PrimExpr -> [Symbol] -> p'
     -- ^ A relation-valued expression
   , rebind            :: Bool -> Bindings HPQ.PrimExpr -> p -> p'
   , forUpdate         :: p -> p'

@@ -1423,7 +1423,7 @@ testUnnest :: Test
 testUnnest = do
   it "unnest" $ testH query (`shouldBe` expectation)
   where query :: Select (Field O.SqlInt4, Field O.SqlText)
-        query = O.relationValuedExpr columns (const expr)
+        query = O.relationValuedExpr (const expr)
           where
             expr = O.FunExpr "unnest" [O.unColumn as', O.unColumn bs']
               where
@@ -1431,9 +1431,6 @@ testUnnest = do
                 as' = O.toFields as
                 bs' :: Field (O.SqlArray O.SqlText)
                 bs' = O.toFields bs
-
-        columns :: (String, String)
-        columns = ("unnest", "unnest")
 
         as :: [Int32]
         as = [1, 2, 3]
