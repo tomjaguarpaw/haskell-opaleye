@@ -300,7 +300,9 @@ in_ fcas (Column a) = case NEL.nonEmpty (F.toList fcas) of
 -- This operation is equivalent to Postgres's @IN@ operator.
 inSelect :: D.Default O.EqPP fields fields
          => fields -> S.Select fields -> S.Select (F.Field T.SqlBool)
-inSelect c q = E.exists (keepWhen (c .===) A.<<< q)
+inSelect c q = E.exists $ proc () -> do
+  r <- q -< ()
+  keepWhen (c .===) -< r
 
 -- | Class of Postgres types that represent json values.
 -- Used to overload functions and operators that work on both 'T.SqlJson' and 'T.SqlJsonb'.
