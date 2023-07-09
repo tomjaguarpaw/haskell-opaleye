@@ -74,13 +74,14 @@ ppSelectFrom s = text "SELECT"
 ppSelectJoin :: Join -> Doc
 ppSelectJoin j = text "SELECT *"
                  $$  text "FROM"
-                 $$  ppTable_tableAlias (1, s1)
+                 $$  ppTable_tableAlias (1, alias s1)
                  $$  ppJoinType (Sql.jJoinType j)
-                 $$  ppTable_tableAlias (2, s2)
+                 $$  ppTable_tableAlias (2, alias s2)
                  $$  text "ON"
                  $$  HPrint.ppSqlExpr (Sql.jCond j)
   where
     (s1, s2) = Sql.jTables j
+    alias (a, b) = (a, b)
 
 ppSelectSemijoin :: Semijoin -> Doc
 ppSelectSemijoin v =
