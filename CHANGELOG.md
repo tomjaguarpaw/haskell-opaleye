@@ -1,3 +1,7 @@
+## 0.10.1.0
+
+* Added `withRecursiveDistinct` (thanks to Shane O'Brien)
+
 ## 0.10.0.0
 
 * Changed `relationValuedExpr` to work in more cases.  (This is a
