@@ -3,16 +3,18 @@
 module Opaleye.With
   ( with,
     withRecursive,
+    withRecursiveDistinct,
 
     -- * Explicit versions
     withExplicit,
     withRecursiveExplicit,
+    withRecursiveDistinctExplicit,
   )
 where
 
 import Control.Monad.Trans.State.Strict (State)
 import Data.Profunctor.Product.Default (Default, def)
-import Opaleye.Binary (unionAllExplicit)
+import Opaleye.Binary (unionAllExplicit, unionExplicit)
 import Opaleye.Internal.Binary (Binaryspec (..))
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import Opaleye.Internal.PackMap (PackMap (..))
@@ -26,13 +28,38 @@ import Opaleye.Internal.Unpackspec (Unpackspec (..), runUnpackspec)
 with :: Default Unpackspec a a => Select a -> (Select a -> Select b) -> Select b
 with = withExplicit def
 
--- | @withRecursive s f@ is the smallest set of rows @r@ such that
+-- | Denotionally, @withRecursive s f@ is the smallest set of rows @r@ such
+-- that
 --
 -- @
 -- r == s \`'unionAll'\` (r >>= f)
 -- @
+--
+-- Operationally, @withRecursive s f@ takes each row in an initial set @s@ and
+-- supplies it to @f@, resulting in a new generation of rows which are added
+-- to the result set. Each row from this new generation is then fed back to
+-- @f@, and this process is repeated until a generation comes along for which
+-- @f@ returns an empty set for each row therein.
 withRecursive :: Default Binaryspec a a => Select a -> (a -> Select a) -> Select a
 withRecursive = withRecursiveExplicit def
+
+-- | Denotationally, @withRecursiveDistinct s f@ is the smallest set of rows
+-- @r@ such that
+--
+-- @
+-- r == s \`'union'\` (r >>= f)
+-- @
+--
+-- Operationally, @withRecursiveDistinct s f@ takes each /distinct/ row in an
+-- initial set @s@ and supplies it to @f@, resulting in a new generation of
+-- rows. Any rows returned by @f@ that already exist in the result set are not
+-- considered part of this new generation by `withRecursiveDistinct` (in
+-- contrast to `withRecursive`). This new generation is then added to the
+-- result set, and each row therein is then fed back to @f@, and this process
+-- is repeated until a generation comes along for which @f@ returns no rows
+-- that don't already exist in the result set.
+withRecursiveDistinct :: Default Binaryspec a a => Select a -> (a -> Select a) -> Select a
+withRecursiveDistinct = withRecursiveDistinctExplicit def
 
 withExplicit :: Unpackspec a a -> Select a -> (Select a -> Select b) -> Select b
 withExplicit unpackspec rhsSelect bodySelect = productQueryArr $ do
@@ -42,6 +69,15 @@ withRecursiveExplicit :: Binaryspec a a -> Select a -> (a -> Select a) -> Select
 withRecursiveExplicit binaryspec base recursive = productQueryArr $ do
   let bodySelect selectCte = selectCte
   let rhsSelect selectCte = unionAllExplicit binaryspec base (selectCte >>= recursive)
+
+  withG unpackspec PQ.Recursive rhsSelect bodySelect
+  where
+    unpackspec = binaryspecToUnpackspec binaryspec
+
+withRecursiveDistinctExplicit :: Binaryspec a a -> Select a -> (a -> Select a) -> Select a
+withRecursiveDistinctExplicit binaryspec base recursive = productQueryArr $ do
+  let bodySelect selectCte = selectCte
+  let rhsSelect selectCte = unionExplicit binaryspec base (selectCte >>= recursive)
 
   withG unpackspec PQ.Recursive rhsSelect bodySelect
   where
