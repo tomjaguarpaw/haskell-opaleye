@@ -265,7 +265,12 @@ binary op (select1, select2) = SelectBinary Binary {
   }
 
 with :: PQ.Recursive -> Symbol -> [Symbol] -> Select -> Select -> Select
-with recursive name cols wWith wSelect = SelectWith $ With {..}
+with recursive name cols wWith wSelect =
+  SelectFrom
+    newSelect
+      { attrs = Star
+      , tables = [(NonLateral, SelectWith $ With {..}, Nothing)]
+      }
   where
    wTable = HSql.SqlTable Nothing (sqlSymbol name)
    wRecursive = case recursive of
