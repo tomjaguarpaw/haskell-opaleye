@@ -264,7 +264,7 @@ binary op (select1, select2) = SelectBinary Binary {
   bSelect2 = select2
   }
 
-with :: PQ.Recursive -> Symbol -> [Symbol]-> Select -> Select -> Select
+with :: PQ.Recursive -> Symbol -> [Symbol] -> Select -> Select -> Select
 with recursive name cols wWith wSelect = SelectWith $ With {..}
   where
    wTable = HSql.SqlTable Nothing (sqlSymbol name)
