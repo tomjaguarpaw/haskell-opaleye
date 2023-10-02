@@ -63,6 +63,9 @@ aSemijoin joint existsQ = PrimQueryArr $ \_ primQ -> Semijoin joint primQ exists
 aRebind :: Bindings HPQ.PrimExpr -> PrimQueryArr
 aRebind bindings = PrimQueryArr $ \_ -> Rebind True bindings
 
+aRebindNoStar :: Bindings HPQ.PrimExpr -> PrimQueryArr
+aRebindNoStar bindings = PrimQueryArr $ \_ -> Rebind False bindings
+
 aRestrict :: HPQ.PrimExpr -> PrimQueryArr
 aRestrict predicate = PrimQueryArr $ \_ -> restrict predicate
 
