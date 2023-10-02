@@ -3,7 +3,7 @@
 
 module Opaleye.Internal.Sql where
 
-import           Prelude hiding (product)
+import           Prelude hiding (filter, product)
 
 import qualified Opaleye.Internal.PrimQuery as PQ
 
