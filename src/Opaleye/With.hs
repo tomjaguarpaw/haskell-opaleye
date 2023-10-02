@@ -12,6 +12,7 @@ module Opaleye.With
   )
 where
 
+import Control.Category ((>>>))
 import Control.Monad.Trans.State.Strict (State)
 import Data.Profunctor.Product.Default (Default, def)
 import Opaleye.Binary (unionAllExplicit, unionExplicit)
@@ -21,6 +22,7 @@ import Opaleye.Internal.PackMap (PackMap (..))
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.PrimQuery as PQ
 import Opaleye.Internal.QueryArr (Select, productQueryArr, runSimpleSelect)
+import Opaleye.Internal.Rebind (rebindExplicitPrefixNoStar)
 import qualified Opaleye.Internal.Sql as Sql
 import qualified Opaleye.Internal.Tag as Tag
 import Opaleye.Internal.Unpackspec (Unpackspec (..), runUnpackspec)
@@ -63,7 +65,9 @@ withRecursiveDistinct = withRecursiveDistinctExplicit def
 
 withExplicit :: Unpackspec a a -> Select a -> (Select a -> Select b) -> Select b
 withExplicit unpackspec rhsSelect bodySelect = productQueryArr $ do
-  withG unpackspec PQ.NonRecursive (\_ -> rhsSelect) bodySelect
+  withG unpackspec PQ.NonRecursive (\_ -> rebind rhsSelect) bodySelect
+  where
+    rebind = (>>> rebindExplicitPrefixNoStar "rebind" unpackspec)
 
 withRecursiveExplicit :: Binaryspec a a -> Select a -> (a -> Select a) -> Select a
 withRecursiveExplicit binaryspec base recursive = productQueryArr $ do

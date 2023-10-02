@@ -278,6 +278,7 @@ with recursive name cols wWith wSelect =
      PQ.Recursive -> Recursive
    wCols = map (HSql.SqlColumn . sqlSymbol) cols
 
+
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
 joinType PQ.RightJoin = RightJoin

@@ -21,3 +21,10 @@ rebindExplicitPrefix prefix u = selectArr $ do
   pure $ \a ->
     let (b, bindings) = PM.run (runUnpackspec u (PM.extractAttr prefix tag) a)
     in (b, PQ.aRebind bindings)
+
+rebindExplicitPrefixNoStar :: String -> Unpackspec a b -> SelectArr a b
+rebindExplicitPrefixNoStar prefix u = selectArr $ do
+  tag <- Tag.fresh
+  pure $ \a ->
+    let (b, bindings) = PM.run (runUnpackspec u (PM.extractAttr prefix tag) a)
+    in (b, PQ.aRebindNoStar bindings)
