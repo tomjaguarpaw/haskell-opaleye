@@ -1,3 +1,9 @@
+## 0.10.1.1
+
+* Fix bugs in `WITH`.  See
+  https://github.com/tomjaguarpaw/haskell-opaleye/pull/572 (thanks to
+  Shane O'Brien)
+
 ## 0.10.1.0
 
 * Added `withRecursiveDistinct` (thanks to Shane O'Brien)
