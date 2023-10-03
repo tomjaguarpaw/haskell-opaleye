@@ -832,6 +832,12 @@ testWith = it "with" $ testH with (`shouldBe` expected)
   where with = O.with table1Q $ \t -> (,) <$> t <*> table2Q
         expected = (,) <$> table1data <*> table2data
 
+testNestedWith :: Test
+testNestedWith = it "with nested within with" $ testH with (`shouldBe` expected)
+  where
+    with = O.with table1Q $ \t -> O.with table2Q $ \u -> (,) <$> t <*> u
+    expected = (,) <$> table1data <*> table2data
+
 -- TODO: This is getting too complicated
 testUpdate :: Test
 testUpdate = it "" $ \conn -> do
@@ -1597,5 +1603,6 @@ main = do
       describe "with" $ do
         testWithRecursive
         testWith
+        testNestedWith
       describe "relation valued exprs" $ do
         testUnnest
