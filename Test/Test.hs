@@ -25,6 +25,7 @@ import qualified Data.ByteString                  as SBS
 import qualified Data.Text                        as T
 import qualified Data.Time.Compat                 as Time
 import qualified Data.Time.Clock.POSIX.Compat     as Time
+import           Data.Tuple (swap)
 import qualified Database.PostgreSQL.Simple       as PGS
 import qualified Database.PostgreSQL.Simple.Range as R
 import           GHC.Int                          (Int64)
@@ -838,6 +839,12 @@ testNestedWith = it "with nested within with" $ testH with (`shouldBe` expected)
     with = O.with table1Q $ \t -> O.with table2Q $ \u -> (,) <$> t <*> u
     expected = (,) <$> table1data <*> table2data
 
+testWithRebind :: Test
+testWithRebind = it "with (rebinding)" $ testH with (`shouldBe` expected)
+  where
+    with = O.with (fmap swap table1Q) $ \t -> (,) <$> t <*> table2Q
+    expected = (,) <$> fmap swap table1data <*> table2data
+
 -- TODO: This is getting too complicated
 testUpdate :: Test
 testUpdate = it "" $ \conn -> do
@@ -1604,5 +1611,6 @@ main = do
         testWithRecursive
         testWith
         testNestedWith
+        testWithRebind
       describe "relation valued exprs" $ do
         testUnnest
