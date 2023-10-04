@@ -2,6 +2,8 @@
 --                HWT Group (c) 2003, haskelldb-users@lists.sourceforge.net
 -- License     :  BSD-style
 
+{-# LANGUAGE DeriveTraversable #-}
+
 module Opaleye.Internal.HaskellDB.PrimQuery where
 
 import qualified Opaleye.Internal.Tag as T
@@ -22,7 +24,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | CompositeExpr     PrimExpr Attribute -- ^ Composite Type Query
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
-                | AggrExpr  AggrDistinct AggrOp PrimExpr [OrderExpr] (Maybe PrimExpr)
+                | AggrExpr  Aggr
                 | WndwExpr  WndwOp Partition
                 | ConstExpr Literal
                 | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
@@ -80,22 +82,28 @@ data UnOp = OpNot
 data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrStdDev | AggrStdDevP | AggrVar | AggrVarP
                 | AggrBoolOr | AggrBoolAnd | AggrArr | JsonArr
-                | AggrStringAggr PrimExpr
+                | AggrStringAggr
                 | AggrOther String
                 deriving (Show,Read)
 
 data AggrDistinct = AggrDistinct | AggrAll
                   deriving (Eq,Show,Read)
 
-data Aggr
-  = GroupBy
-  | Aggr
-      { aggrOp :: !AggrOp
-      , aggrOrder :: ![OrderExpr]
-      , aggrDistinct :: !AggrDistinct
-      , aggrFilter :: !(Maybe PrimExpr)
-      }
-  deriving (Show, Read)
+type Aggregate = Aggregate' PrimExpr
+
+data Aggregate' a = GroupBy a | Aggregate (Aggr' a)
+  deriving (Functor, Foldable, Traversable, Show, Read)
+
+type Aggr = Aggr' PrimExpr
+
+data Aggr' a = Aggr
+  { aggrOp :: !AggrOp
+  , aggrExprs :: ![a]
+  , aggrOrder :: ![OrderExpr]
+  , aggrDistinct :: !AggrDistinct
+  , aggrFilter :: !(Maybe PrimExpr)
+  }
+  deriving (Functor, Foldable, Traversable, Show, Read)
 
 data OrderExpr = OrderExpr OrderOp PrimExpr
                deriving (Show,Read)
@@ -125,7 +133,7 @@ data WndwOp
   | WndwFirstValue PrimExpr
   | WndwLastValue PrimExpr
   | WndwNthValue PrimExpr PrimExpr
-  | WndwAggregate AggrOp PrimExpr
+  | WndwAggregate AggrOp [PrimExpr]
   deriving (Show,Read)
 
 data Partition = Partition

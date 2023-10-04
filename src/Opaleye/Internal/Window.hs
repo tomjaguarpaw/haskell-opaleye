@@ -127,9 +127,9 @@ makeWndwAny op = lmap (const op) makeWndw
 -- argument to 'over').
 aggregatorWindowFunction :: A.Aggregator a b -> (a' -> a) -> WindowFunction a' b
 aggregatorWindowFunction agg g = WindowFunction $ PM.PackMap $ \f a ->
-  pm (\(mop, expr) -> case mop of
-         HPQ.GroupBy -> pure expr
-         HPQ.Aggr op _ _ _ -> f (HPQ.WndwAggregate op expr)) a
+  pm (\aggregate -> case aggregate of
+         HPQ.GroupBy expr -> pure expr
+         HPQ.Aggregate (HPQ.Aggr op exprs _ _ _) -> f (HPQ.WndwAggregate op exprs)) a
   where A.Aggregator (PM.PackMap pm) = lmap g agg
 
 

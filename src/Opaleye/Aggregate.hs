@@ -38,6 +38,7 @@ module Opaleye.Aggregate
 import           Control.Applicative (pure)
 import           Data.Profunctor     (lmap)
 import qualified Data.Profunctor as P
+import           Data.Profunctor.Product.Default (def)
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
@@ -106,11 +107,11 @@ aggregateOrdered o agg = aggregate (orderAggregate o agg)
 -- | Aggregate only distinct values
 distinctAggregator :: Aggregator a b -> Aggregator a b
 distinctAggregator (A.Aggregator (PM.PackMap pm)) =
-  A.Aggregator (PM.PackMap (\f c -> pm (f . P.first' setDistinct) c))
+  A.Aggregator (PM.PackMap (\f c -> pm (f . setDistinct) c))
   where
-    setDistinct HPQ.GroupBy = HPQ.GroupBy
-    setDistinct aggr =
-      aggr
+    setDistinct (HPQ.GroupBy expr) = HPQ.GroupBy expr
+    setDistinct (HPQ.Aggregate aggr) =
+      HPQ.Aggregate aggr
         { HPQ.aggrDistinct = HPQ.AggrDistinct
         }
 
@@ -195,7 +196,8 @@ jsonAgg = A.makeAggr HPQ.JsonArr
 
 stringAgg :: F.Field T.SqlText
           -> Aggregator (F.Field T.SqlText) (F.Field T.SqlText)
-stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
+stringAgg delimiter =
+  lmap (\a -> (a, delimiter)) $ A.makeAggrExplicit def HPQ.AggrStringAggr
 
 -- | Count the number of rows in a query.  This is different from
 -- 'aggregate' 'count' because it always returns exactly one row, even
