@@ -17,7 +17,7 @@ type Name = String
 type Scheme     = [Attribute]
 type Assoc      = [(Attribute,PrimExpr)]
 
-data Symbol = Symbol String T.Tag deriving (Read, Show)
+data Symbol = Symbol String T.Tag deriving (Eq, Ord, Read, Show)
 
 data PrimExpr   = AttrExpr  Symbol
                 | BaseTableAttrExpr Attribute
@@ -40,7 +40,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | ArrayExpr [PrimExpr] -- ^ ARRAY[..]
                 | RangeExpr String BoundExpr BoundExpr
                 | ArrayIndex PrimExpr PrimExpr
-                deriving (Read,Show)
+                deriving (Eq, Ord, Read, Show)
 
 data Literal = NullLit
              | DefaultLit            -- ^ represents a default value
@@ -51,7 +51,7 @@ data Literal = NullLit
              | DoubleLit Double
              | NumericLit Sci.Scientific
              | OtherLit String       -- ^ used for hacking in custom SQL
-               deriving (Read,Show)
+               deriving (Eq, Ord, Read, Show)
 
 data BinOp      = (:==) | (:<) | (:<=) | (:>) | (:>=) | (:<>)
                 | OpAnd | OpOr
@@ -66,7 +66,7 @@ data BinOp      = (:==) | (:<) | (:<=) | (:>) | (:>=) | (:<>)
                 | (:->) | (:->>) | (:#>) | (:#>>)
                 | (:@>) | (:<@) | (:?) | (:?|) | (:?&)
                 | (:&&) | (:<<) | (:>>) | (:&<) | (:&>) | (:-|-)
-                deriving (Show,Read)
+                deriving (Eq, Ord, Read, Show)
 
 data UnOp = OpNot
           | OpIsNull
@@ -77,22 +77,22 @@ data UnOp = OpNot
           | OpLower
           | OpUpper
           | UnOpOther String
-          deriving (Show,Read)
+          deriving (Eq, Ord, Read, Show)
 
 data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrStdDev | AggrStdDevP | AggrVar | AggrVarP
                 | AggrBoolOr | AggrBoolAnd | AggrArr | JsonArr
                 | AggrStringAggr
                 | AggrOther String
-                deriving (Show,Read)
+                deriving (Eq, Ord, Read, Show)
 
 data AggrDistinct = AggrDistinct | AggrAll
-                  deriving (Eq,Show,Read)
+                  deriving (Eq, Ord, Read, Show)
 
 type Aggregate = Aggregate' PrimExpr
 
 data Aggregate' a = GroupBy a | Aggregate (Aggr' a)
-  deriving (Functor, Foldable, Traversable, Show, Read)
+  deriving (Functor, Foldable, Traversable, Eq, Ord, Read, Show)
 
 type Aggr = Aggr' PrimExpr
 
@@ -103,23 +103,25 @@ data Aggr' a = Aggr
   , aggrDistinct :: !AggrDistinct
   , aggrFilter :: !(Maybe PrimExpr)
   }
-  deriving (Functor, Foldable, Traversable, Show, Read)
+  deriving (Functor, Foldable, Traversable, Eq, Ord, Read, Show)
 
-data OrderExpr = OrderExpr OrderOp PrimExpr
-               deriving (Show,Read)
+type OrderExpr = OrderExpr' PrimExpr
+
+data OrderExpr' a = OrderExpr OrderOp a
+  deriving (Functor, Foldable, Traversable, Eq, Ord, Read, Show)
 
 data OrderNulls = NullsFirst | NullsLast
-                deriving (Show,Read)
+                deriving (Eq, Ord, Read, Show)
 
 data OrderDirection = OpAsc | OpDesc
-                    deriving (Show,Read)
+                    deriving (Eq, Ord, Read, Show)
 
 data OrderOp = OrderOp { orderDirection :: OrderDirection
                        , orderNulls     :: OrderNulls }
-               deriving (Show,Read)
+               deriving (Eq, Ord, Read, Show)
 
 data BoundExpr = Inclusive PrimExpr | Exclusive PrimExpr | PosInfinity | NegInfinity
-                 deriving (Show,Read)
+                 deriving (Eq, Ord, Read, Show)
 
 data WndwOp
   = WndwRowNumber
@@ -134,10 +136,10 @@ data WndwOp
   | WndwLastValue PrimExpr
   | WndwNthValue PrimExpr PrimExpr
   | WndwAggregate AggrOp [PrimExpr]
-  deriving (Show,Read)
+  deriving (Eq, Ord, Read, Show)
 
 data Partition = Partition
   { partitionBy :: [PrimExpr]
   , orderBy :: [OrderExpr]
   }
-  deriving (Read, Show)
+  deriving (Eq, Ord, Read, Show)

@@ -2,11 +2,18 @@
 module Opaleye.Internal.Aggregate where
 
 import           Control.Applicative (Applicative, liftA2, pure, (<*>))
+import           Control.Arrow ((***))
 import           Data.Foldable (toList)
 import           Data.Traversable (for)
 
+import           Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
+
+import           Control.Monad.Trans.Class (lift)
+import           Control.Monad.Trans.State.Strict (StateT, gets, modify, runStateT)
 
 import qualified Opaleye.Field as F
 import qualified Opaleye.Internal.Column as C
@@ -130,42 +137,61 @@ aggregatorApply = Aggregator $ PM.PackMap $ \f (agg, a) ->
 --
 -- Instead of detecting when we are aggregating over a field from a
 -- previous query we just create new names for all field before we
--- aggregate.  On the other hand, referring to a field from a previous
--- query in an ORDER BY expression is totally fine!
+-- aggregate.
+--
+-- Additionally, PostgreSQL imposes a limitation on aggregations using ORDER
+-- BY in combination with DISTINCT - essentially the expression you pass to
+-- ORDER BY must also be present in the argument list to the aggregation
+-- function. This means that not only do we also have to also create new
+-- names for the ORDER BY expressions (if we only rewrite the function
+-- arguments then they can't match and therefore ORDER BY can never be used
+-- with DISTINCT), but that these names actually have to match the names
+-- created for the aggregation function arguments. To accomplish this, when
+-- traversing over the aggregations, we keep track of all the expressions
+-- we've encountered so far, and only create new names for new expressions,
+-- reusing old names where possible.
 aggregateU :: Aggregator a b
            -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery)
-aggregateU agg (c0, primQ, t0) = (c1, primQ')
-  where (c1, projPEs_inners) =
-          PM.run (runAggregator agg (extractAggregateFields t0) c0)
+aggregateU agg (a, primQ, tag) = (b, primQ')
+  where
+    (inners, outers, b) =
+      runSymbols (runAggregator agg (extractAggregateFields tag) a)
 
-        projPEs = map fst projPEs_inners
-        inners  = concatMap snd projPEs_inners
-
-        primQ' = PQ.Aggregate projPEs (PQ.Rebind True inners primQ)
+    primQ' = PQ.Aggregate outers (PQ.Rebind True inners primQ)
 
 extractAggregateFields
   :: Traversable t
   => T.Tag
-  -> (t HPQ.PrimExpr)
-  -> PM.PM [((HPQ.Symbol,
-              t HPQ.Symbol),
-              PQ.Bindings HPQ.PrimExpr)]
-           HPQ.PrimExpr
+  -> t HPQ.PrimExpr
+  -> Symbols HPQ.PrimExpr (PQ.Bindings (t HPQ.Symbol)) HPQ.PrimExpr
 extractAggregateFields tag agg = do
-  i <- PM.new
+  result <- mkSymbol "result" <$> lift PM.new
+  agg' <- traverse (symbolize (mkSymbol "inner")) agg
+  lift $ PM.write (result, agg')
+  pure $ HPQ.AttrExpr result
+  where
+    mkSymbol name i = HPQ.Symbol (name ++ i) tag
 
-  let souter = HPQ.Symbol ("result" ++ i) tag
+type Symbols e s =
+  StateT
+    (Map e HPQ.Symbol, PQ.Bindings e -> PQ.Bindings e)
+    (PM.PM s)
 
-  bindings <- for agg $ \pe -> do
-    j <- PM.new
-    let sinner = HPQ.Symbol ("inner" ++ j) tag
-    pure (sinner, pe)      
+runSymbols :: Symbols e [s] a -> (PQ.Bindings e, [s], a)
+runSymbols m = (dlist [], outers, a)
+  where
+    ((a, (_, dlist)), outers) = PM.run $ runStateT m (Map.empty, id)
 
-  let agg' = fmap fst bindings
-
-  PM.write ((souter, agg'), toList bindings)
-
-  pure (HPQ.AttrExpr souter)
+symbolize :: Ord e =>
+  (String -> HPQ.Symbol) -> e -> Symbols e s HPQ.Symbol
+symbolize f expr = do
+  msymbol <- gets (Map.lookup expr . fst)
+  case msymbol of
+    Just symbol -> pure symbol
+    Nothing -> do
+      symbol <- f <$> lift PM.new
+      modify (Map.insert expr symbol *** (. ((symbol, expr) :)))
+      pure symbol
 
 unsafeMax :: Aggregator (C.Field a) (C.Field a)
 unsafeMax = makeAggr HPQ.AggrMax
