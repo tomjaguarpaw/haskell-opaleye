@@ -158,13 +158,13 @@ product ss pes = SelectFrom $
           PQ.Lateral    -> Lateral
           PQ.NonLateral -> NonLateral
 
-aggregate :: PQ.Bindings (HPQ.Aggr, HPQ.Symbol)
+aggregate :: PQ.Bindings (HPQ.Aggregate' HPQ.Symbol)
           -> Select
           -> Select
 aggregate aggrs' s =
   SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (map attr aggrs))
                          , tables = oneTable s
-                         , groupBy = (Just . groupBy') aggrs }
+                         , groupBy = Just (groupBy' aggrs) }
   where --- Although in the presence of an aggregation function,
         --- grouping by an empty list is equivalent to omitting group
         --- by, the equivalence does not hold in the absence of an
@@ -188,19 +188,21 @@ aggregate aggrs' s =
         handleEmpty :: [HSql.SqlExpr] -> NEL.NonEmpty HSql.SqlExpr
         handleEmpty = ensureColumnsGen SP.deliteral
 
-        aggrs = (map . Arr.second . Arr.second) HPQ.AttrExpr aggrs'
+        -- [(symbol0, (HPQ.Aggr, HPQ.PrimExpr))]
+        aggrs = fmap (fmap (fmap HPQ.AttrExpr)) aggrs'
 
-        groupBy' :: [(symbol, (HPQ.Aggr, HPQ.PrimExpr))]
+        groupBy' :: [(symbol, HPQ.Aggregate)]
                  -> NEL.NonEmpty HSql.SqlExpr
         groupBy' aggs = handleEmpty $ do
-          (_, (HPQ.GroupBy, e)) <- aggs
+          (_, HPQ.GroupBy e) <- aggs
           pure $ sqlExpr e
-        attr = sqlBinding . Arr.second (uncurry aggrExpr)
 
-aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
+        attr = sqlBinding . Arr.second aggrExpr
+
+aggrExpr :: HPQ.Aggregate -> HPQ.PrimExpr
 aggrExpr = \case
-  HPQ.GroupBy -> id
-  HPQ.Aggr op ord distinct filter -> \e -> HPQ.AggrExpr distinct op e ord filter
+  HPQ.GroupBy e -> e
+  HPQ.Aggregate aggr -> HPQ.AggrExpr aggr
 
 window :: PQ.Bindings (HPQ.WndwOp, HPQ.Partition) -> Select -> Select
 window wndws' s = SelectFrom $ newSelect
@@ -277,7 +279,6 @@ with recursive name cols wWith wSelect =
      PQ.NonRecursive -> NonRecursive
      PQ.Recursive -> Recursive
    wCols = map (HSql.SqlColumn . sqlSymbol) cols
-
 
 joinType :: PQ.JoinType -> JoinType
 joinType PQ.LeftJoin = LeftJoin
