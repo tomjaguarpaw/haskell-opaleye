@@ -3,7 +3,7 @@ module Opaleye.Internal.Tag where
 import Control.Monad.Trans.State.Strict ( get, modify', State )
 
 -- | Tag is for use as a source of unique IDs in QueryArr
-newtype Tag = UnsafeTag Int deriving (Read, Show)
+newtype Tag = UnsafeTag Int deriving (Eq, Ord, Read, Show)
 
 start :: Tag
 start = UnsafeTag 1
