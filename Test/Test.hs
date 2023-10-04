@@ -15,6 +15,7 @@ import qualified Data.Aeson                       as Json
 import qualified Data.Function                    as F
 import           Data.Int (Int32)
 import qualified Data.List                        as L
+import qualified Data.List.NonEmpty               as NE
 import           Data.Monoid                      ((<>))
 import qualified Data.Ord                         as Ord
 import qualified Data.Profunctor                  as P
@@ -617,6 +618,21 @@ testStringArrayAggregateOrdered = it "" $ q `selectShouldReturnSorted` expected
                       )
                      ]
         sortedData = L.sortBy (Ord.comparing snd) table7data
+
+
+testStringArrayAggregateOrderedDistinct :: Test
+testStringArrayAggregateOrderedDistinct = it "" $ q `selectShouldReturnSorted` expected
+  where q =
+          O.aggregateOrdered
+            (O.asc snd)
+            (PP.p2 (O.arrayAgg, O.distinctAggregator . O.stringAgg . O.sqlString $ ","))
+            table7Q
+        expected = [( map fst sortedData
+                      , L.intercalate "," $ map NE.head $ NE.group $ map snd sortedData
+                      )
+                     ]
+        sortedData = L.sortBy (Ord.comparing snd) table7data
+
 
 -- | Using orderAggregate you can apply different orderings to
 -- different aggregates.
@@ -1524,6 +1540,7 @@ main = do
         testOverwriteAggregateOrdered
         testMultipleAggregateOrdered
         testStringArrayAggregateOrdered
+        testStringArrayAggregateOrderedDistinct
         testDistinctAndAggregate
         testDoubleAggregate
       describe "distinct" $ do
