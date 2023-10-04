@@ -3,6 +3,7 @@
 -- License     :  BSD-style
 
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Opaleye.Internal.HaskellDB.PrimQuery where
 
@@ -17,7 +18,7 @@ type Name = String
 type Scheme     = [Attribute]
 type Assoc      = [(Attribute,PrimExpr)]
 
-data Symbol = Symbol String T.Tag deriving (Read, Show)
+data Symbol = Symbol String T.Tag deriving (Eq, Ord, Read, Show)
 
 data PrimExpr   = AttrExpr  Symbol
                 | BaseTableAttrExpr Attribute
@@ -41,6 +42,29 @@ data PrimExpr   = AttrExpr  Symbol
                 | RangeExpr String BoundExpr BoundExpr
                 | ArrayIndex PrimExpr PrimExpr
                 deriving (Read,Show)
+
+traverseSymbols :: Applicative f => (Symbol -> f Symbol) -> PrimExpr -> f PrimExpr
+traverseSymbols f = go
+  where
+    go = \case
+      AttrExpr symbol -> AttrExpr <$> f symbol
+      BaseTableAttrExpr attribute -> pure $ BaseTableAttrExpr attribute
+      CompositeExpr a attribute -> CompositeExpr <$> go a <*> pure attribute
+      BinExpr op a b -> BinExpr op <$> go a <*> go b
+      UnExpr op a -> UnExpr op <$> go a
+      AggrExpr aggr -> AggrExpr <$> traverse go aggr
+      WndwExpr wndw partition -> WndwExpr <$> traverse go wndw <*> traverse go partition
+      ConstExpr literal -> pure $ ConstExpr literal
+      CaseExpr conds a -> CaseExpr <$> traverse (bitraverse go go) conds <*> go a
+      ListExpr as -> ListExpr <$> traverse go as
+      ParamExpr name a -> ParamExpr name <$> go a
+      FunExpr name args -> FunExpr name <$> traverse go args
+      CastExpr name a -> CastExpr name <$> go a
+      DefaultInsertExpr -> pure DefaultInsertExpr
+      ArrayExpr as -> ArrayExpr <$> traverse go as
+      RangeExpr s a b -> RangeExpr s <$> traverse go a <*> traverse go b
+      ArrayIndex a b -> ArrayIndex <$> go a <*> go b
+    bitraverse g h (a, b) = (,) <$> g a <*> h b
 
 data Literal = NullLit
              | DefaultLit            -- ^ represents a default value
@@ -119,26 +143,32 @@ data OrderOp = OrderOp { orderDirection :: OrderDirection
                        , orderNulls     :: OrderNulls }
                deriving (Show,Read)
 
-data BoundExpr = Inclusive PrimExpr | Exclusive PrimExpr | PosInfinity | NegInfinity
-                 deriving (Show,Read)
+type BoundExpr = BoundExpr' PrimExpr
 
-data WndwOp
+data BoundExpr' a = Inclusive a | Exclusive a | PosInfinity | NegInfinity
+  deriving (Foldable, Functor, Traversable, Read, Show)
+
+type WndwOp = WndwOp' PrimExpr
+
+data WndwOp' a
   = WndwRowNumber
   | WndwRank
   | WndwDenseRank
   | WndwPercentRank
   | WndwCumeDist
-  | WndwNtile PrimExpr
-  | WndwLag PrimExpr PrimExpr PrimExpr
-  | WndwLead PrimExpr PrimExpr PrimExpr
-  | WndwFirstValue PrimExpr
-  | WndwLastValue PrimExpr
-  | WndwNthValue PrimExpr PrimExpr
-  | WndwAggregate AggrOp [PrimExpr]
-  deriving (Show,Read)
+  | WndwNtile a
+  | WndwLag a a a
+  | WndwLead a a a
+  | WndwFirstValue a
+  | WndwLastValue a
+  | WndwNthValue a a
+  | WndwAggregate AggrOp [a]
+  deriving (Foldable, Functor, Traversable, Show, Read)
 
-data Partition = Partition
-  { partitionBy :: [PrimExpr]
-  , orderBy :: [OrderExpr]
+type Partition = Partition' PrimExpr
+
+data Partition' a = Partition
+  { partitionBy :: [a]
+  , orderBy :: [OrderExpr' a]
   }
-  deriving (Read, Show)
+  deriving (Foldable, Functor, Traversable, Read, Show)

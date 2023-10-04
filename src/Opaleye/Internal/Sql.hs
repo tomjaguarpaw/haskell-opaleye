@@ -160,10 +160,10 @@ product ss pes = SelectFrom $
           PQ.Lateral    -> Lateral
           PQ.NonLateral -> NonLateral
 
-aggregate :: PQ.Bindings (HPQ.Aggregate' HPQ.Symbol)
+aggregate :: PQ.Bindings HPQ.Aggregate
           -> Select
           -> Select
-aggregate aggrs' s =
+aggregate aggrs s =
   SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (map attr aggrs))
                          , tables = oneTable s
                          , groupBy = Just (groupBy' aggrs) }
@@ -189,9 +189,6 @@ aggregate aggrs' s =
         --- instead use an expression rather than a constant.
         handleEmpty :: [HSql.SqlExpr] -> NEL.NonEmpty HSql.SqlExpr
         handleEmpty = ensureColumnsGen SP.deliteral
-
-        aggrs :: [(Symbol, HPQ.Aggregate)]
-        aggrs = (map . Arr.second . fmap) HPQ.AttrExpr aggrs'
 
         groupBy' :: [(symbol, HPQ.Aggregate)]
                  -> NEL.NonEmpty HSql.SqlExpr
