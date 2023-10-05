@@ -188,6 +188,7 @@ aggregate aggrs' s =
         handleEmpty :: [HSql.SqlExpr] -> NEL.NonEmpty HSql.SqlExpr
         handleEmpty = ensureColumnsGen SP.deliteral
 
+        aggrs :: [(Symbol, HPQ.Aggregate)]
         aggrs = (map . Arr.second . Arr.second) HPQ.AttrExpr aggrs'
 
         groupBy' :: [(symbol, HPQ.Aggregate)]
