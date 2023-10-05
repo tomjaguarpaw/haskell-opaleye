@@ -195,12 +195,12 @@ aggregate aggrs' s =
         groupBy' aggs = handleEmpty $ do
           (_, (HPQ.GroupBy, e)) <- aggs
           pure $ sqlExpr e
-        attr = sqlBinding . Arr.second (uncurry aggrExpr)
+        attr = sqlBinding . Arr.second aggrExpr
 
-aggrExpr :: HPQ.Aggr -> HPQ.PrimExpr -> HPQ.PrimExpr
+aggrExpr :: (HPQ.Aggr, HPQ.PrimExpr) -> HPQ.PrimExpr
 aggrExpr = \case
-  HPQ.GroupBy -> id
-  HPQ.Aggr op ord distinct filter -> \e -> HPQ.AggrExpr distinct op e ord filter
+  (HPQ.GroupBy, e) -> e
+  (HPQ.Aggr op ord distinct filter, e) -> HPQ.AggrExpr distinct op e ord filter
 
 window :: PQ.Bindings (HPQ.WndwOp, HPQ.Partition) -> Select -> Select
 window wndws' s = SelectFrom $ newSelect
