@@ -91,11 +91,7 @@ data AggrDistinct = AggrDistinct | AggrAll
 
 type Aggregate = Aggregate' PrimExpr
 
-type Aggregate' a = Aggr a
-
-data Aggr a
-  = GroupBy a
-  | Aggr (Aggr' a)
+data Aggregate' a = GroupBy a | Aggregate (Aggr' a)
   deriving (Functor, Foldable, Traversable, Show, Read)
 
 data Aggr' a = Aggr'

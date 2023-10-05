@@ -110,8 +110,8 @@ distinctAggregator (A.Aggregator (PM.PackMap pm)) =
   A.Aggregator (PM.PackMap (\f c -> pm (f . setDistinct) c))
   where
     setDistinct (HPQ.GroupBy expr) = HPQ.GroupBy expr
-    setDistinct (HPQ.Aggr aggr) =
-      HPQ.Aggr aggr
+    setDistinct (HPQ.Aggregate aggr) =
+      HPQ.Aggregate aggr
         { HPQ.aggrDistinct = HPQ.AggrDistinct
         }
 
