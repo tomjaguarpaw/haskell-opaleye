@@ -38,6 +38,7 @@ module Opaleye.Aggregate
 import           Control.Applicative (pure)
 import           Data.Profunctor     (lmap)
 import qualified Data.Profunctor as P
+import           Data.Profunctor.Product.Default (def)
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
@@ -106,9 +107,9 @@ aggregateOrdered o agg = aggregate (orderAggregate o agg)
 -- | Aggregate only distinct values
 distinctAggregator :: Aggregator a b -> Aggregator a b
 distinctAggregator (A.Aggregator (PM.PackMap pm)) =
-  A.Aggregator (PM.PackMap (\f c -> pm (f . P.first' setDistinct) c))
+  A.Aggregator (PM.PackMap (\f c -> pm (f . setDistinct) c))
   where
-    setDistinct HPQ.GroupBy = HPQ.GroupBy
+    setDistinct (HPQ.GroupBy expr) = HPQ.GroupBy expr
     setDistinct (HPQ.Aggr aggr) =
       HPQ.Aggr aggr
         { HPQ.aggrDistinct = HPQ.AggrDistinct

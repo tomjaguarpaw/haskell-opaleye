@@ -2,6 +2,8 @@
 --                HWT Group (c) 2003, haskelldb-users@lists.sourceforge.net
 -- License     :  BSD-style
 
+{-# LANGUAGE DeriveTraversable #-}
+
 module Opaleye.Internal.HaskellDB.PrimQuery where
 
 import qualified Opaleye.Internal.Tag as T
@@ -22,7 +24,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | CompositeExpr     PrimExpr Attribute -- ^ Composite Type Query
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | UnExpr    UnOp PrimExpr
-                | AggrExpr  Aggr' PrimExpr
+                | AggrExpr  (Aggr' PrimExpr)
                 | WndwExpr  WndwOp Partition
                 | ConstExpr Literal
                 | CaseExpr [(PrimExpr,PrimExpr)] PrimExpr
@@ -89,20 +91,21 @@ data AggrDistinct = AggrDistinct | AggrAll
 
 type Aggregate = Aggregate' PrimExpr
 
-type Aggregate' a = (Aggr, a)
+type Aggregate' a = Aggr a
 
-data Aggr
-  = GroupBy
-  | Aggr Aggr'
-  deriving (Show, Read)
+data Aggr a
+  = GroupBy a
+  | Aggr (Aggr' a)
+  deriving (Functor, Foldable, Traversable, Show, Read)
 
-data Aggr' = Aggr'
+data Aggr' a = Aggr'
   { aggrOp :: !AggrOp
+  , aggrExprs :: !a
   , aggrOrder :: ![OrderExpr]
   , aggrDistinct :: !AggrDistinct
   , aggrFilter :: !(Maybe PrimExpr)
   }
-  deriving (Show, Read)
+  deriving (Functor, Foldable, Traversable, Show, Read)
 
 data OrderExpr = OrderExpr OrderOp PrimExpr
                deriving (Show,Read)

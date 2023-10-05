@@ -2,6 +2,8 @@
 module Opaleye.Internal.Aggregate where
 
 import           Control.Applicative (Applicative, liftA2, pure, (<*>))
+import           Data.Foldable (toList)
+import           Data.Traversable (for)
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
@@ -12,6 +14,7 @@ import qualified Opaleye.Internal.Order as O
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.PrimQuery as PQ
 import qualified Opaleye.Internal.Tag as T
+import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.SqlTypes as T
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
@@ -34,11 +37,11 @@ newtype Aggregator a b =
 
 makeAggr' :: Maybe HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap
-  (\f e -> f (aggr, e)))
+  (\f e -> f (aggr e)))
   where
     aggr = case mAggrOp of
       Nothing -> HPQ.GroupBy
-      Just op -> HPQ.Aggr (HPQ.Aggr' op [] HPQ.AggrAll Nothing)
+      Just op -> \e -> HPQ.Aggr (HPQ.Aggr' op e [] HPQ.AggrAll Nothing)
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
@@ -81,9 +84,9 @@ makeAggr = makeAggr' . Just
 
 orderAggregate :: O.Order a -> Aggregator a b -> Aggregator a b
 orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
-  (\f c -> pm (f . P.first' (setOrder (O.orderExprs c o))) c))
+  (\f c -> pm (f . setOrder (O.orderExprs c o)) c))
   where
-    setOrder _ HPQ.GroupBy = HPQ.GroupBy
+    setOrder _ (HPQ.GroupBy e) = HPQ.GroupBy e
     setOrder order (HPQ.Aggr aggr) =
       HPQ.Aggr aggr
         { HPQ.aggrOrder = order
@@ -127,24 +130,31 @@ aggregateU agg (c0, primQ, t0) = (c1, primQ')
           PM.run (runAggregator agg (extractAggregateFields t0) c0)
 
         projPEs = map fst projPEs_inners
-        inners  = map snd projPEs_inners
+        inners  = concatMap snd projPEs_inners
 
         primQ' = PQ.Aggregate projPEs (PQ.Rebind True inners primQ)
 
 extractAggregateFields
-  :: T.Tag
-  -> (m, HPQ.PrimExpr)
+  :: Traversable t
+  => T.Tag
+  -> (t HPQ.PrimExpr)
   -> PM.PM [((HPQ.Symbol,
-              (m, HPQ.Symbol)),
-              (HPQ.Symbol, HPQ.PrimExpr))]
+              t HPQ.Symbol),
+              PQ.Bindings HPQ.PrimExpr)]
            HPQ.PrimExpr
-extractAggregateFields tag (m, pe) = do
+extractAggregateFields tag agg = do
   i <- PM.new
 
   let souter = HPQ.Symbol ("result" ++ i) tag
-      sinner = HPQ.Symbol ("inner" ++ i) tag
 
-  PM.write ((souter, (m, sinner)), (sinner, pe))
+  bindings <- for agg $ \pe -> do
+    j <- PM.new
+    let sinner = HPQ.Symbol ("inner" ++ j) tag
+    pure (sinner, pe)
+
+  let agg' = fmap fst bindings
+
+  PM.write ((souter, agg'), toList bindings)
 
   pure (HPQ.AttrExpr souter)
 
@@ -169,10 +179,10 @@ filterWhereInternal
 filterWhereInternal maybeField predicate aggregator =
   case liftA2 maybeField true aggregator of
     Aggregator (PM.PackMap pm) ->
-      Aggregator (PM.PackMap (\f c -> pm (f . P.first' (setFilter c)) c))
+      Aggregator (PM.PackMap (\f c -> pm (f . setFilter c) c))
   where
     true = P.lmap (const (T.sqlBool True)) (makeAggr HPQ.AggrBoolAnd)
-    setFilter _ HPQ.GroupBy = HPQ.GroupBy
+    setFilter _ (HPQ.GroupBy e) = HPQ.GroupBy e
     setFilter row (HPQ.Aggr aggr) =
       HPQ.Aggr aggr
         { HPQ.aggrFilter = aggrFilter'
