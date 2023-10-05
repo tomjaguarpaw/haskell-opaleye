@@ -97,7 +97,7 @@ data Aggregate' a = GroupBy a | Aggregate (Aggr' a)
 data Aggr' a = Aggr
   { aggrOp :: !AggrOp
   , aggrExprs :: ![a]
-  , aggrOrder :: ![OrderExpr]
+  , aggrOrder :: ![OrderExpr' a]
   , aggrDistinct :: !AggrDistinct
   , aggrFilter :: !(Maybe PrimExpr)
   }
