@@ -192,7 +192,8 @@ ppSqlExpr expr =
       DefaultSqlExpr         -> text "DEFAULT"
       ArraySqlExpr es        -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
       RangeSqlExpr t s e     -> ppRange t s e
-      AggrFunSqlExpr f es ord distinct mfilter -> text f <> parens (ppSqlDistinct distinct <+> commaH ppSqlExpr es <+> ppOrderBy ord) <+> case mfilter of
+      AggrFunSqlExpr f es ord distinct mfilter ->
+        text f <> parens (ppSqlDistinct distinct <+> commaH ppSqlExpr es <+> ppOrderBy ord) <+> case mfilter of
         Nothing -> mempty
         Just e -> text "FILTER" <+> parens (text "WHERE" <+> ppSqlExpr e)
       WndwFunSqlExpr f es window -> ppWindowExpr f es window
