@@ -136,7 +136,7 @@ defaultSqlExpr gen expr =
       -- because it leads to a non-uniformity of treatment, as seen
       -- below.  Perhaps we should have just `AggrExpr AggrOp` and
       -- always put the `PrimExpr` in the `AggrOp`.
-      AggrExpr distinct op e ord mfilter ->
+      AggrExpr (Aggr' op ord distinct mfilter) e  ->
         let
           (op', e') = showAggrOp gen op e
           ord' = toSqlOrder gen <$> ord
