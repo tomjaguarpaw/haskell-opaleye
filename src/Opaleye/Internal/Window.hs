@@ -7,6 +7,8 @@
 -- Perhaps the answer should be "Window"?  This is also attested by
 -- the WINDOW declaration in a SELECT.
 
+{-# LANGUAGE LambdaCase #-}
+
 module Opaleye.Internal.Window where
 
 import           Control.Applicative (Applicative, pure, (<*>), liftA2)
@@ -127,9 +129,9 @@ makeWndwAny op = lmap (const op) makeWndw
 -- argument to 'over').
 aggregatorWindowFunction :: A.Aggregator a b -> (a' -> a) -> WindowFunction a' b
 aggregatorWindowFunction agg g = WindowFunction $ PM.PackMap $ \f a ->
-  pm (\(mop, expr) -> case mop of
-         HPQ.GroupBy -> pure expr
-         HPQ.Aggr op _ _ _ -> f (HPQ.WndwAggregate op expr)) a
+  pm (\case
+         (HPQ.GroupBy, expr) -> pure expr
+         (HPQ.Aggr op _ _ _, expr) -> f (HPQ.WndwAggregate op expr)) a
   where A.Aggregator (PM.PackMap pm) = lmap g agg
 
 
