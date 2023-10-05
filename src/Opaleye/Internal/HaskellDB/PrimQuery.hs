@@ -94,7 +94,7 @@ type Aggregate = Aggregate' PrimExpr
 data Aggregate' a = GroupBy a | Aggregate (Aggr' a)
   deriving (Functor, Foldable, Traversable, Show, Read)
 
-data Aggr' a = Aggr'
+data Aggr' a = Aggr
   { aggrOp :: !AggrOp
   , aggrExprs :: !a
   , aggrOrder :: ![OrderExpr]

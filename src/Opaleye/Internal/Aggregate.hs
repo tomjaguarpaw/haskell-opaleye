@@ -41,7 +41,7 @@ makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap
   where
     aggr = case mAggrOp of
       Nothing -> HPQ.GroupBy
-      Just op -> \e -> HPQ.Aggregate (HPQ.Aggr' op e [] HPQ.AggrAll Nothing)
+      Just op -> \e -> HPQ.Aggregate (HPQ.Aggr op e [] HPQ.AggrAll Nothing)
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
