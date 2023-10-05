@@ -164,7 +164,7 @@ aggregate :: PQ.Bindings (HPQ.Aggr, HPQ.Symbol)
 aggregate aggrs' s =
   SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (map attr aggrs))
                          , tables = oneTable s
-                         , groupBy = (Just . groupBy') aggrs }
+                         , groupBy = Just (groupBy' aggrs) }
   where --- Although in the presence of an aggregation function,
         --- grouping by an empty list is equivalent to omitting group
         --- by, the equivalence does not hold in the absence of an
