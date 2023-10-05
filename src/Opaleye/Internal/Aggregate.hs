@@ -48,7 +48,7 @@ makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap
   where
     aggr = case mAggrOp of
       Nothing -> HPQ.GroupBy
-      Just op -> \e -> HPQ.Aggregate (HPQ.Aggr op [e] [] HPQ.AggrAll Nothing)
+      Just op -> \e -> HPQ.Aggregate (HPQ.Aggr op [e] [] HPQ.AggrAll [] Nothing)
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
@@ -57,7 +57,7 @@ makeAggrExplicit :: U.Unpackspec a a -> HPQ.AggrOp -> Aggregator a (C.Field_ n b
 makeAggrExplicit unpackspec op =
   C.Column <$> Aggregator (PM.PackMap (\f e -> f (aggr e)))
   where
-    aggr a = HPQ.Aggregate (HPQ.Aggr op exprs [] HPQ.AggrAll Nothing)
+    aggr a = HPQ.Aggregate (HPQ.Aggr op exprs [] HPQ.AggrAll [] Nothing)
       where
         exprs = U.collectPEs unpackspec a
 
@@ -227,6 +227,16 @@ filterWhereInternal maybeField predicate aggregator =
         aggrFilter' = Just $ case HPQ.aggrFilter aggr of
           Nothing -> cond'
           Just cond -> HPQ.BinExpr HPQ.OpAnd cond cond'
+
+withinGroup :: O.Order a -> Aggregator a b -> Aggregator a b
+withinGroup o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
+  (\f c -> pm (f . setOrder (O.orderExprs c o)) c))
+  where
+    setOrder _ (HPQ.GroupBy e) = HPQ.GroupBy e
+    setOrder order (HPQ.Aggregate aggr) =
+      HPQ.Aggregate aggr
+        { HPQ.aggrGroup = order
+        }
 
 -- { Boilerplate instances
 

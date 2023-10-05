@@ -101,6 +101,7 @@ data Aggr' a = Aggr
   , aggrExprs :: ![a]
   , aggrOrder :: ![OrderExpr' a]
   , aggrDistinct :: !AggrDistinct
+  , aggrGroup :: ![OrderExpr' a]
   , aggrFilter :: !(Maybe PrimExpr)
   }
   deriving (Functor, Foldable, Traversable, Eq, Ord, Read, Show)

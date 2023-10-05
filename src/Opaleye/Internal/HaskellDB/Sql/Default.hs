@@ -132,15 +132,16 @@ defaultSqlExpr gen expr =
                                 UnOpFun     -> FunSqlExpr op' [e']
                                 UnOpPrefix  -> PrefixSqlExpr op' (ParensSqlExpr e')
                                 UnOpPostfix -> PostfixSqlExpr op' (ParensSqlExpr e')
-      AggrExpr (Aggr op e ord distinct mfilter) ->
+      AggrExpr (Aggr op e ord distinct group mfilter) ->
         let
           (op', e') = showAggrOp gen op e
           ord' = toSqlOrder gen <$> ord
           distinct' = case distinct of
             AggrDistinct -> SqlDistinct
             AggrAll      -> SqlNotDistinct
+          group' = toSqlOrder gen <$> group
           mfilter' = sqlExpr gen <$> mfilter
-         in AggrFunSqlExpr op' e' ord' distinct' mfilter'
+         in AggrFunSqlExpr op' e' ord' distinct' group' mfilter'
       WndwExpr op window  -> let (op', e') = showWndwOp gen op
                                  window' = toSqlPartition gen window
                               in WndwFunSqlExpr op' e' window'
