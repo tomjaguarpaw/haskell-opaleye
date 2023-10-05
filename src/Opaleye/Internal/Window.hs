@@ -129,9 +129,8 @@ aggregatorWindowFunction :: A.Aggregator a b -> (a' -> a) -> WindowFunction a' b
 aggregatorWindowFunction agg g = WindowFunction $ PM.PackMap $ \f a ->
   pm (\aggregate -> case aggregate of
          HPQ.GroupBy expr -> pure expr
-         HPQ.Aggregate (HPQ.Aggr op exprs _ _ _) -> f (HPQ.WndwAggregate op exprs)) a
+         HPQ.Aggregate (HPQ.Aggr op exprs _ _ _ _) -> f (HPQ.WndwAggregate op exprs)) a
   where A.Aggregator (PM.PackMap pm) = lmap g agg
-
 
 -- | 'over' applies a 'WindowFunction' on a particular 'Window'.  For
 -- example,
