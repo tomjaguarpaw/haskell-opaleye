@@ -93,12 +93,15 @@ type Aggregate' a = (Aggr, a)
 
 data Aggr
   = GroupBy
-  | Aggr
-      { aggrOp :: !AggrOp
-      , aggrOrder :: ![OrderExpr]
-      , aggrDistinct :: !AggrDistinct
-      , aggrFilter :: !(Maybe PrimExpr)
-      }
+  | Aggr Aggr'
+  deriving (Show, Read)
+
+data Aggr' = Aggr'
+  { aggrOp :: !AggrOp
+  , aggrOrder :: ![OrderExpr]
+  , aggrDistinct :: !AggrDistinct
+  , aggrFilter :: !(Maybe PrimExpr)
+  }
   deriving (Show, Read)
 
 data OrderExpr = OrderExpr OrderOp PrimExpr

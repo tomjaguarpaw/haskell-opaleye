@@ -38,7 +38,7 @@ makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap
   where
     aggr = case mAggrOp of
       Nothing -> HPQ.GroupBy
-      Just op -> HPQ.Aggr op [] HPQ.AggrAll Nothing
+      Just op -> HPQ.Aggr (HPQ.Aggr' op [] HPQ.AggrAll Nothing)
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
@@ -84,8 +84,8 @@ orderAggregate o (Aggregator (PM.PackMap pm)) = Aggregator (PM.PackMap
   (\f c -> pm (f . P.first' (setOrder (O.orderExprs c o))) c))
   where
     setOrder _ HPQ.GroupBy = HPQ.GroupBy
-    setOrder order aggr =
-      aggr
+    setOrder order (HPQ.Aggr aggr) =
+      HPQ.Aggr aggr
         { HPQ.aggrOrder = order
         }
 
@@ -173,8 +173,8 @@ filterWhereInternal maybeField predicate aggregator =
   where
     true = P.lmap (const (T.sqlBool True)) (makeAggr HPQ.AggrBoolAnd)
     setFilter _ HPQ.GroupBy = HPQ.GroupBy
-    setFilter row aggr =
-      aggr
+    setFilter row (HPQ.Aggr aggr) =
+      HPQ.Aggr aggr
         { HPQ.aggrFilter = aggrFilter'
         }
       where
