@@ -105,8 +105,10 @@ data Aggr' a = Aggr
   }
   deriving (Functor, Foldable, Traversable, Show, Read)
 
-data OrderExpr = OrderExpr OrderOp PrimExpr
-               deriving (Show,Read)
+type OrderExpr = OrderExpr' PrimExpr
+
+data OrderExpr' a = OrderExpr OrderOp a
+  deriving (Functor, Foldable, Traversable, Show, Read)
 
 data OrderNulls = NullsFirst | NullsLast
                 deriving (Show,Read)
