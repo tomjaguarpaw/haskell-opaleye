@@ -131,7 +131,7 @@ aggregatorWindowFunction :: A.Aggregator a b -> (a' -> a) -> WindowFunction a' b
 aggregatorWindowFunction agg g = WindowFunction $ PM.PackMap $ \f a ->
   pm (\case
          (HPQ.GroupBy, expr) -> pure expr
-         (HPQ.Aggr (HPQ.Aggr' op _ _ _), expr) -> f (HPQ.WndwAggregate op expr)) a
+         (HPQ.Aggr (HPQ.Aggr' op _ _ _), e) -> f (HPQ.WndwAggregate op e)) a
   where A.Aggregator (PM.PackMap pm) = lmap g agg
 
 
