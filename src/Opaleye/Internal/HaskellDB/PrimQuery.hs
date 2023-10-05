@@ -82,7 +82,7 @@ data UnOp = OpNot
 data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
                 | AggrStdDev | AggrStdDevP | AggrVar | AggrVarP
                 | AggrBoolOr | AggrBoolAnd | AggrArr | JsonArr
-                | AggrStringAggr PrimExpr
+                | AggrStringAggr
                 | AggrOther String
                 deriving (Show,Read)
 
@@ -96,7 +96,7 @@ data Aggregate' a = GroupBy a | Aggregate (Aggr' a)
 
 data Aggr' a = Aggr
   { aggrOp :: !AggrOp
-  , aggrExprs :: !a
+  , aggrExprs :: ![a]
   , aggrOrder :: ![OrderExpr]
   , aggrDistinct :: !AggrDistinct
   , aggrFilter :: !(Maybe PrimExpr)
@@ -131,7 +131,7 @@ data WndwOp
   | WndwFirstValue PrimExpr
   | WndwLastValue PrimExpr
   | WndwNthValue PrimExpr PrimExpr
-  | WndwAggregate AggrOp PrimExpr
+  | WndwAggregate AggrOp [PrimExpr]
   deriving (Show,Read)
 
 data Partition = Partition

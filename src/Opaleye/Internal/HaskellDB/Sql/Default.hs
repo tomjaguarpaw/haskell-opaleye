@@ -2,6 +2,8 @@
 --                HWT Group (c) 2003, haskelldb-users@lists.sourceforge.net
 -- License     :  BSD-style
 
+{-# LANGUAGE LambdaCase #-}
+
 module Opaleye.Internal.HaskellDB.Sql.Default  where
 
 import Control.Applicative ((<$>))
@@ -130,12 +132,6 @@ defaultSqlExpr gen expr =
                                 UnOpFun     -> FunSqlExpr op' [e']
                                 UnOpPrefix  -> PrefixSqlExpr op' (ParensSqlExpr e')
                                 UnOpPostfix -> PostfixSqlExpr op' (ParensSqlExpr e')
-      -- TODO: The current arrangement whereby the delimiter parameter
-      -- of string_agg is in the AggrStringAggr constructor, but the
-      -- parameter being aggregated is not, seems unsatisfactory
-      -- because it leads to a non-uniformity of treatment, as seen
-      -- below.  Perhaps we should have just `AggrExpr AggrOp` and
-      -- always put the `PrimExpr` in the `AggrOp`.
       AggrExpr (Aggr op e ord distinct mfilter) ->
         let
           (op', e') = showAggrOp gen op e
@@ -223,23 +219,27 @@ sqlUnOp  OpUpper       = ("UPPER", UnOpFun)
 sqlUnOp  (UnOpOther s) = (s, UnOpFun)
 
 
-showAggrOp :: SqlGenerator -> AggrOp -> PrimExpr -> (String, [SqlExpr])
-showAggrOp gen op arg = case op of
-  AggrCount -> ("COUNT", [sqlExpr gen arg])
-  AggrSum -> ("SUM", [sqlExpr gen arg])
-  AggrAvg -> ("AVG", [sqlExpr gen arg])
-  AggrMin -> ("MIN", [sqlExpr gen arg])
-  AggrMax -> ("MAX", [sqlExpr gen arg])
-  AggrStdDev -> ("StdDev", [sqlExpr gen arg])
-  AggrStdDevP -> ("StdDevP", [sqlExpr gen arg])
-  AggrVar -> ("Var", [sqlExpr gen arg])
-  AggrVarP -> ("VarP", [sqlExpr gen arg])
-  AggrBoolAnd -> ("BOOL_AND", [sqlExpr gen arg])
-  AggrBoolOr -> ("BOOL_OR", [sqlExpr gen arg])
-  AggrArr -> ("ARRAY_AGG", [sqlExpr gen arg])
-  JsonArr -> ("JSON_AGG", [sqlExpr gen arg])
-  AggrStringAggr sep -> ("STRING_AGG", [sqlExpr gen arg, sqlExpr gen sep])
-  AggrOther s -> (s, [sqlExpr gen arg])
+showAggrOp :: SqlGenerator -> AggrOp -> [PrimExpr] -> (String, [SqlExpr])
+showAggrOp gen op args = (showAggrOpFunction op, map (sqlExpr gen) args)
+
+
+showAggrOpFunction :: AggrOp -> String
+showAggrOpFunction = \case
+  AggrCount -> "COUNT"
+  AggrSum -> "SUM"
+  AggrAvg -> "AVG"
+  AggrMin -> "MIN"
+  AggrMax -> "MAX"
+  AggrStdDev -> "StdDev"
+  AggrStdDevP -> "StdDevP"
+  AggrVar -> "Var"
+  AggrVarP -> "VarP"
+  AggrBoolAnd -> "BOOL_AND"
+  AggrBoolOr -> "BOOL_OR"
+  AggrArr -> "ARRAY_AGG"
+  JsonArr -> "JSON_AGG"
+  AggrStringAggr -> "STRING_AGG"
+  AggrOther s -> s
 
 
 showWndwOp :: SqlGenerator -> WndwOp -> (String, [SqlExpr])

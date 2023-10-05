@@ -41,10 +41,19 @@ makeAggr' mAggrOp = P.dimap C.unColumn C.Column $ Aggregator (PM.PackMap
   where
     aggr = case mAggrOp of
       Nothing -> HPQ.GroupBy
-      Just op -> \e -> HPQ.Aggregate (HPQ.Aggr op e [] HPQ.AggrAll Nothing)
+      Just op -> \e -> HPQ.Aggregate (HPQ.Aggr op [e] [] HPQ.AggrAll Nothing)
 
 makeAggr :: HPQ.AggrOp -> Aggregator (C.Field_ n a) (C.Field_ n' b)
 makeAggr = makeAggr' . Just
+
+makeAggrExplicit :: U.Unpackspec a a -> HPQ.AggrOp -> Aggregator a (C.Field_ n b)
+makeAggrExplicit unpackspec op =
+  C.Column <$> Aggregator (PM.PackMap (\f e -> f (aggr e)))
+  where
+    aggr a = HPQ.Aggregate (HPQ.Aggr op exprs [] HPQ.AggrAll Nothing)
+      where
+        exprs = U.collectPEs unpackspec a
+
 
 -- | Order the values within each aggregation in `Aggregator` using
 -- the given ordering. This is only relevant for aggregations that

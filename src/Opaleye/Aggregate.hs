@@ -196,7 +196,8 @@ jsonAgg = A.makeAggr HPQ.JsonArr
 
 stringAgg :: F.Field T.SqlText
           -> Aggregator (F.Field T.SqlText) (F.Field T.SqlText)
-stringAgg = A.makeAggr' . Just . HPQ.AggrStringAggr . IC.unColumn
+stringAgg delimiter =
+  lmap (\a -> (a, delimiter)) $ A.makeAggrExplicit def HPQ.AggrStringAggr
 
 -- | Count the number of rows in a query.  This is different from
 -- 'aggregate' 'count' because it always returns exactly one row, even
