@@ -99,7 +99,7 @@ type Aggr = Aggr' PrimExpr
 data Aggr' a = Aggr
   { aggrOp :: !AggrOp
   , aggrExprs :: ![a]
-  , aggrOrder :: ![OrderExpr]
+  , aggrOrder :: ![OrderExpr' a]
   , aggrDistinct :: !AggrDistinct
   , aggrFilter :: !(Maybe PrimExpr)
   }
