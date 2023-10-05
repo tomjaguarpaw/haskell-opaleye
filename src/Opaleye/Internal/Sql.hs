@@ -197,7 +197,7 @@ aggregate aggrs' s =
           pure $ sqlExpr e
         attr = sqlBinding . Arr.second aggrExpr
 
-aggrExpr :: (HPQ.Aggr, HPQ.PrimExpr) -> HPQ.PrimExpr
+aggrExpr :: HPQ.Aggregate -> HPQ.PrimExpr
 aggrExpr = \case
   (HPQ.GroupBy, e) -> e
   (HPQ.Aggr op ord distinct filter, e) -> HPQ.AggrExpr distinct op e ord filter
