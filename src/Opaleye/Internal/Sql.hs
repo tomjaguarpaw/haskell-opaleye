@@ -190,7 +190,7 @@ aggregate aggrs' s =
 
         aggrs = (map . Arr.second . Arr.second) HPQ.AttrExpr aggrs'
 
-        groupBy' :: [(symbol, (HPQ.Aggr, HPQ.PrimExpr))]
+        groupBy' :: [(symbol, HPQ.Aggregate)]
                  -> NEL.NonEmpty HSql.SqlExpr
         groupBy' aggs = handleEmpty $ do
           (_, (HPQ.GroupBy, e)) <- aggs
