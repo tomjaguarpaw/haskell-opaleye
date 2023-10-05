@@ -87,7 +87,9 @@ data AggrOp     = AggrCount | AggrSum | AggrAvg | AggrMin | AggrMax
 data AggrDistinct = AggrDistinct | AggrAll
                   deriving (Eq,Show,Read)
 
-type Aggregate = (Aggr, PrimExpr)
+type Aggregate = Aggregate' PrimExpr
+
+type Aggregate' a = (Aggr, a)
 
 data Aggr
   = GroupBy
