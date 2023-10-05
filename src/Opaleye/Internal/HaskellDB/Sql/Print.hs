@@ -193,9 +193,11 @@ ppSqlExpr expr =
       ArraySqlExpr es        -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
       RangeSqlExpr t s e     -> ppRange t s e
       AggrFunSqlExpr f es ord distinct mfilter ->
-        text f <> parens (ppSqlDistinct distinct <+> commaH ppSqlExpr es <+> ppOrderBy ord) <+> case mfilter of
-        Nothing -> mempty
-        Just e -> text "FILTER" <+> parens (text "WHERE" <+> ppSqlExpr e)
+        text f <> parens (ppSqlDistinct distinct <+> commaH ppSqlExpr es <+> ppOrderBy ord) <+> filter
+        where
+          filter = case mfilter of
+            Nothing -> mempty
+            Just e -> text "FILTER" <+> parens (text "WHERE" <+> ppSqlExpr e)
       WndwFunSqlExpr f es window -> ppWindowExpr f es window
       CaseSqlExpr cs el   -> text "CASE" <+> vcat (toList (fmap ppWhen cs))
                              <+> text "ELSE" <+> ppSqlExpr el <+> text "END"
