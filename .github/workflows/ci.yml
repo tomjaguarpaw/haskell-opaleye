@@ -47,6 +47,6 @@ jobs:
     - uses: tomjaguarpaw/neil@tag-ac7e72e
       with:
         github-user: tomjaguarpaw
-        branch: tag-ac7e72e
+        branch: tag-4459934
       env:
         POSTGRES_CONNSTRING: "user='postgres' dbname='postgres' password='postgres' host='localhost' port='5432'"
