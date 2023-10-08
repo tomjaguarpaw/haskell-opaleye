@@ -10,8 +10,6 @@ import           Opaleye.Select (Select)
 import           Opaleye.Field (Field_)
 import           Opaleye.Aggregate (Aggregator, groupBy, aggregate)
 
-import           Control.Applicative (Applicative, pure, (<*>))
-
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)

@@ -8,7 +8,6 @@ module Opaleye.Internal.Values where
 import           Opaleye.Internal.Column (Field_(Column))
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Column as OC
-import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.Internal.Tag as T
 import qualified Opaleye.Internal.Operators as O
 import qualified Opaleye.Internal.PrimQuery as PQ
@@ -25,9 +24,8 @@ import           Data.Profunctor (Profunctor, dimap, rmap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
-import           Data.Semigroup (Semigroup, (<>))
 
-import           Control.Applicative (Applicative, pure, (<*>), liftA2)
+import           Control.Applicative (liftA2)
 
 nonEmptyValues :: Rowspec columns columns'
                -> NEL.NonEmpty columns

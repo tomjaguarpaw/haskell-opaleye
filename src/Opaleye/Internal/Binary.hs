@@ -17,7 +17,6 @@ import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
 
-import           Control.Applicative (Applicative, pure, (<*>))
 import           Control.Arrow ((***))
 
 extractBinaryFields :: T.Tag -> (HPQ.PrimExpr, HPQ.PrimExpr)

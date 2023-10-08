@@ -8,7 +8,6 @@ import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.Column as IC
 import qualified Opaleye.Field as F
 
-import           Control.Applicative (Applicative, pure, (<*>))
 import           Data.Profunctor (Profunctor, dimap)
 import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP

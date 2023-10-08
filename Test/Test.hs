@@ -6,7 +6,7 @@
 module Main where
 
 import qualified Configuration.Dotenv             as Dotenv
-import           Control.Applicative              ((<$>), (<*>), (<|>))
+import           Control.Applicative              ((<|>))
 import qualified Control.Applicative              as A
 import           Control.Arrow                    ((&&&), (***), (<<<), (>>>))
 import qualified Control.Arrow                    as Arr
@@ -15,7 +15,6 @@ import qualified Data.Aeson                       as Json
 import qualified Data.Function                    as F
 import           Data.Int (Int32)
 import qualified Data.List                        as L
-import           Data.Monoid                      ((<>))
 import qualified Data.Ord                         as Ord
 import qualified Data.Profunctor                  as P
 import qualified Data.Profunctor.Product          as PP

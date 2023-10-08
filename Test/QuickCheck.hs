@@ -20,7 +20,6 @@ import qualified Opaleye.Join as OJ
 import qualified Opaleye.Exists as OE
 
 import qualified Database.PostgreSQL.Simple as PGS
-import           Control.Applicative (Applicative, pure, (<$>), (<*>))
 import qualified Control.Arrow as Arrow
 import           Control.Arrow ((<<<))
 import           Control.Category (Category, (.), id)

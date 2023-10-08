@@ -7,7 +7,7 @@
 module Opaleye.Internal.RunQuery where
 
 import           Control.Applicative
-  (Applicative, pure, (<$>), (*>), (<*>), liftA2)
+  (liftA2)
 
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Cursor  as PGSC (Cursor)

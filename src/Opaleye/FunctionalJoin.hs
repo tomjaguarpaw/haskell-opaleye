@@ -10,9 +10,6 @@ module Opaleye.FunctionalJoin (
   fullJoinF,
   ) where
 
-import           Control.Applicative             ((<$>), (<*>))
-import           Control.Arrow                   ((<<<))
-
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor.Product         as PP
 

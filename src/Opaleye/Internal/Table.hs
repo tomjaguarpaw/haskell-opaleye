@@ -18,9 +18,7 @@ import           Data.Profunctor (Profunctor, dimap, lmap)
 import           Data.Profunctor.Product (ProductProfunctor)
 import qualified Data.Profunctor.Product as PP
 import qualified Data.List.NonEmpty as NEL
-import           Data.Monoid (Monoid, mempty, mappend)
-import           Data.Semigroup (Semigroup, (<>))
-import           Control.Applicative (Applicative, pure, (<*>), liftA2)
+import           Control.Applicative (liftA2)
 import qualified Control.Arrow as Arr
 
 -- | Define a table as follows, where \"id\", \"color\", \"location\",

@@ -5,7 +5,6 @@ module Opaleye.Internal.PrimQuery where
 import           Prelude hiding (product)
 
 import qualified Data.List.NonEmpty as NEL
-import           Data.Semigroup (Semigroup, (<>))
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Opaleye.Internal.HaskellDB.PrimQuery (Symbol)

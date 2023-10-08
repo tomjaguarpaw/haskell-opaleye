@@ -11,9 +11,7 @@
 
 module Opaleye.Internal.Window where
 
-import           Control.Applicative (Applicative, pure, (<*>), liftA2)
 import           Data.Profunctor (lmap, Profunctor, dimap)
-import           Data.Semigroup (Semigroup, (<>))
 
 import qualified Opaleye.Internal.Aggregate as A
 import qualified Opaleye.Internal.PackMap as PM

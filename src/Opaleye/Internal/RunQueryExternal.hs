@@ -10,7 +10,6 @@ module Opaleye.Internal.RunQueryExternal
                          IRQ.FromField,
                  ) where
 
-import           Control.Applicative (pure, (<$>))
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Cursor  as PGSC
 

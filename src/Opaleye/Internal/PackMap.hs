@@ -7,7 +7,7 @@ import qualified Opaleye.Internal.Tag as T
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-import           Control.Applicative (Applicative, pure, (<*>), liftA2)
+import           Control.Applicative (liftA2)
 import           Control.Arrow (first, second)
 import qualified Control.Monad.Trans.State as State
 import           Data.Profunctor (Profunctor, dimap, rmap)

@@ -1,7 +1,7 @@
 {-# LANGUAGE TupleSections #-}
 module Opaleye.Internal.Aggregate where
 
-import           Control.Applicative (Applicative, liftA2, pure, (<*>))
+import           Control.Applicative (liftA2)
 import           Data.Foldable (toList)
 import           Data.Traversable (for)
 

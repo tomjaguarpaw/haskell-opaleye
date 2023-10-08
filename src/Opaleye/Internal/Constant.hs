@@ -25,9 +25,6 @@ import           Data.Profunctor.Product         (empty, (***!), (+++!))
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor                 as P
 
-import           Control.Applicative (Applicative, pure, (<*>))
-import           Data.Functor                    ((<$>))
-
 import qualified Database.PostgreSQL.Simple.Range as R
 import           Database.PostgreSQL.Simple.Newtypes ( Aeson, getAeson )
 

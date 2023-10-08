@@ -9,7 +9,6 @@ import Opaleye.Internal.Column (Field_(Column))
 import Opaleye.Field (Field)
 import Opaleye.Internal.HaskellDB.PrimQuery (Literal (StringLit), PrimExpr (ConstExpr, FunExpr))
 import Opaleye.Internal.PGTypesExternal (SqlJson)
-import Data.Semigroup
 
 -- | Combine @JSONBuildObjectFields@ using @('<>')@
 newtype JSONBuildObjectFields

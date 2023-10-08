@@ -18,7 +18,6 @@ import qualified Opaleye.Internal.MaybeFields as OM
 import qualified Opaleye.Internal.Values as OV
 
 import           Control.Arrow ((>>>))
-import           Control.Applicative (pure)
 import qualified Data.Profunctor.Product.Default as D
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP

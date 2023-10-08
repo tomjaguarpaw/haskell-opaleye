@@ -18,11 +18,9 @@ import qualified Control.Arrow as Arr
 import           Control.Arrow ((&&&), (***), arr, returnA)
 import qualified Control.Category as C
 import           Control.Category ((<<<), id)
-import           Control.Applicative (Applicative, pure, (<*>))
 import           Control.Monad.Trans.State.Strict (State, evalState, runState, state)
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
-import           Data.Semigroup ((<>))
 
 -- | A parametrised 'Select'.  A @SelectArr a b@ accepts an argument
 -- of type @a@.

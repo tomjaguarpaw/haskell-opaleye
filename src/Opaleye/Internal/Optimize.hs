@@ -8,9 +8,8 @@ import qualified Opaleye.Internal.PrimQuery as PQ
 import           Opaleye.Internal.Helpers   ((.:))
 
 import qualified Data.List.NonEmpty as NEL
-import           Data.Semigroup ((<>))
 
-import           Control.Applicative ((<$>), (<*>), liftA2, pure)
+import           Control.Applicative (liftA2)
 import           Control.Arrow (first)
 
 optimize :: PQ.PrimQuery' a -> PQ.PrimQuery' a

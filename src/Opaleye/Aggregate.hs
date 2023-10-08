@@ -35,14 +35,12 @@ module Opaleye.Aggregate
        , countRows
        ) where
 
-import           Control.Applicative (pure)
 import           Data.Profunctor     (lmap)
 import qualified Data.Profunctor as P
 import           Data.Profunctor.Product.Default (def)
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
-import qualified Opaleye.Internal.Column as IC
 import           Opaleye.Internal.MaybeFields (MaybeFields (MaybeFields))
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ

@@ -16,7 +16,7 @@ import qualified Opaleye as O
 import qualified Opaleye.Exists as OE
 import qualified Opaleye.Join as OJ
 
-import           Control.Applicative (pure, (<$>), (<*>), liftA2)
+import           Control.Applicative (liftA2)
 import qualified Control.Arrow as Arrow
 import           Control.Arrow ((<<<))
 import           Control.Category ((.), id)
