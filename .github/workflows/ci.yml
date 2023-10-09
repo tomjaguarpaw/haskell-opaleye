@@ -34,7 +34,7 @@ jobs:
     steps:
     - run: git config --global core.autocrlf false
     - uses: actions/checkout@v2
-    - uses: haskell/actions/setup@v2
+    - uses: haskell-actions/setup@v2.5
       id: setup-haskell
       with:
         ghc-version: ${{ matrix.ghc }}
