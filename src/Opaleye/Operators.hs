@@ -107,7 +107,8 @@ module Opaleye.Operators
   , addInterval
   , minusInterval
   , TimestampPrecision(..)
-  , dateTrunc
+  , dateTruncTimestamp
+  , dateTruncTimestamptz
   -- * Deprecated
   )
 
@@ -519,22 +520,8 @@ data TimestampPrecision =
 precisionToExpr :: TimestampPrecision -> HPQ.PrimExpr
 precisionToExpr p = HPQ.ConstExpr . HPQ.ByteStringLit . TE.encodeUtf8 . Text.toLower . Text.dropEnd 9 . Text.pack $ show p
 
--- Allows defining functions that take both timestamp and timestamptz
-class TimestampAsExpr e where
-  timestampAsExpr :: e -> HPQ.PrimExpr
-  exprAsField :: HPQ.PrimExpr -> e
+dateTruncTimestamp :: TimestampPrecision -> F.Field T.SqlTimestamp -> F.Field T.SqlTimestamp
+dateTruncTimestamp p (Column e) = Column $ HPQ.FunExpr "date_trunc" [(precisionToExpr p), e]
 
-instance TimestampAsExpr (F.Field T.SqlTimestamp) where
-  timestampAsExpr :: F.Field T.SqlTimestamp -> HPQ.PrimExpr
-  timestampAsExpr (Column e) = e
-  exprAsField :: HPQ.PrimExpr -> Field T.SqlTimestamp
-  exprAsField q = Column q
-
-instance TimestampAsExpr (F.Field T.SqlTimestamptz) where
-  timestampAsExpr :: F.Field T.SqlTimestamptz -> HPQ.PrimExpr
-  timestampAsExpr (Column e) = e
-  exprAsField :: HPQ.PrimExpr -> Field T.SqlTimestamptz
-  exprAsField q = Column q
-
-dateTrunc :: TimestampAsExpr e => TimestampPrecision -> e -> e
-dateTrunc p e = exprAsField $ HPQ.FunExpr "date_trunc" [(precisionToExpr p), timestampAsExpr e]
+dateTruncTimestamptz :: TimestampPrecision -> F.Field T.SqlTimestamptz -> F.Field T.SqlTimestamptz
+dateTruncTimestamptz p (Column e) = Column $ HPQ.FunExpr "date_trunc" [(precisionToExpr p), e]
