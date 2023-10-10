@@ -5,6 +5,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 -- We can probably disable ConstraintKinds and TypeSynonymInstances
 -- when we move to Sql... instead of PG..
@@ -104,6 +106,8 @@ module Opaleye.Operators
   , IntervalNum
   , addInterval
   , minusInterval
+  , TimestampPrecision(..)
+  , dateTrunc
   -- * Deprecated
   )
 
@@ -136,6 +140,9 @@ import qualified Opaleye.Column   as Column
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Profunctor.Product.Default as D
+
+import qualified Data.Text as Text
+import qualified Data.Text.Encoding as TE
 
 {-| Keep only the rows of a query satisfying a given condition, using an
 SQL @WHERE@ clause.  It is equivalent to the Haskell function
@@ -492,3 +499,42 @@ minusInterval = C.binOp (HPQ.:-)
 -- | Current date and time (start of current transaction)
 now :: F.Field T.SqlTimestamptz
 now = Column $ HPQ.FunExpr "now" []
+
+data TimestampPrecision =
+  MicrosecondsPrecision
+  | MillisecondsPrecision
+  | SecondPrecision
+  | MinutePrecision
+  | HourPrecision
+  | DayPrecision
+  | WeekPrecision
+  | MonthPrecision
+  | QuarterPrecision
+  | YearPrecision
+  | DecadePrecision
+  | CenturyPrecision
+  | MillenniumPrecision
+  deriving Show
+
+precisionToExpr :: TimestampPrecision -> HPQ.PrimExpr
+precisionToExpr p = HPQ.ConstExpr . HPQ.ByteStringLit . TE.encodeUtf8 . Text.toLower . Text.dropEnd 9 . Text.pack $ show p
+
+-- Allows defining functions that take both timestamp and timestamptz
+class TimestampAsExpr e where
+  timestampAsExpr :: e -> HPQ.PrimExpr
+  exprAsField :: HPQ.PrimExpr -> e
+
+instance TimestampAsExpr (F.Field T.SqlTimestamp) where
+  timestampAsExpr :: F.Field T.SqlTimestamp -> HPQ.PrimExpr
+  timestampAsExpr (Column e) = e
+  exprAsField :: HPQ.PrimExpr -> Field T.SqlTimestamp
+  exprAsField q = Column q
+
+instance TimestampAsExpr (F.Field T.SqlTimestamptz) where
+  timestampAsExpr :: F.Field T.SqlTimestamptz -> HPQ.PrimExpr
+  timestampAsExpr (Column e) = e
+  exprAsField :: HPQ.PrimExpr -> Field T.SqlTimestamptz
+  exprAsField q = Column q
+
+dateTrunc :: TimestampAsExpr e => TimestampPrecision -> e -> e
+dateTrunc p e = exprAsField $ HPQ.FunExpr "date_trunc" [(precisionToExpr p), timestampAsExpr e]
