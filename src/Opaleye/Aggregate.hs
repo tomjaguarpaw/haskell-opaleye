@@ -37,7 +37,6 @@ module Opaleye.Aggregate
 
 import           Data.Profunctor     (lmap)
 import qualified Data.Profunctor as P
-import           Data.Profunctor.Product.Default (def)
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
@@ -47,6 +46,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Operators as O
 import qualified Opaleye.Internal.PackMap as PM
 import qualified Opaleye.Internal.Tag as Tag
+import qualified Opaleye.Internal.Unpackspec as U
 
 import qualified Opaleye.Field     as F
 import qualified Opaleye.Order     as Ord
@@ -195,7 +195,9 @@ jsonAgg = A.makeAggr HPQ.JsonArr
 stringAgg :: F.Field T.SqlText
           -> Aggregator (F.Field T.SqlText) (F.Field T.SqlText)
 stringAgg delimiter =
-  lmap (\a -> (a, delimiter)) $ A.makeAggrExplicit def HPQ.AggrStringAggr
+  A.makeAggrExplicit
+    (U.unpackspecField <* lmap (const delimiter) U.unpackspecField)
+    HPQ.AggrStringAggr
 
 -- | Count the number of rows in a query.  This is different from
 -- 'aggregate' 'count' because it always returns exactly one row, even
