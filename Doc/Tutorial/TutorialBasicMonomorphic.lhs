@@ -7,7 +7,7 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye (Field, FieldNullable,
->                          Table, table, selectTable,
+>                          Table, table, tableWithSchema, selectTable,
 >                          tableField,
 >                          Select, (.==),
 >                          aggregate, groupBy,
@@ -66,6 +66,12 @@ manipulation tutorial you can see an example of when they might differ.
 > personTable = table "personTable" (p3 ( tableField "name"
 >                                       , tableField "age"
 >                                       , tableField "address" ))
+
+> personTable' :: Table (Field SqlText, Field SqlInt4, Field SqlText)
+>                       (Field SqlText, Field SqlInt4, Field SqlText)
+> personTable' = tableWithSchema "myschema" "personTable" (p3 ( tableField "name"
+>                                                             , tableField "age"
+>                                                             , tableField "address" ))
 
 By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we
@@ -142,6 +148,9 @@ them.
 >
 > instance Default Unpackspec BirthdayField BirthdayField where
 >   def = birthdayFieldDef
+
+Naturally this is all derivable using `Generic` or Template Haskell,
+but no one's bothered to implement that yet.  Would you like to?
 
 Then we can use 'table' to make a table on our record type in exactly
 the same way as before.
@@ -287,6 +296,9 @@ purpose, which is just a notational convenience.
 > instance Default Opaleye.Internal.Join.NullMaker BirthdayField BirthdayFieldNullable where
 >   def = BirthdayFieldNullable <$> P.lmap bdNameField D.def
 >                                <*> P.lmap bdDayField  D.def
+
+Again, this is all derivable using `Generic` or Template Haskell, if
+someone would take the time to implement it.
 
 A left join is expressed by specifying the two tables to join and the
 join condition.
