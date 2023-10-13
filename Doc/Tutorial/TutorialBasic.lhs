@@ -171,8 +171,7 @@ example we might want to discard the "address" field of our
 Projection gives us our first example of using "do notation" to
 write Opaleye queries.
 
-Here we run the `personSelect` passing in () to signify "zero
-arguments".  We pattern match on the results and return only the
+Here we run the `personSelect`, pattern match on the results and return only the
 fields we are interested in.
 
 > nameAge :: Select (Field SqlText, Field SqlInt4)
