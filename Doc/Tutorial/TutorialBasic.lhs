@@ -644,9 +644,7 @@ String' into a 'Field Int64'.
 Outer join
 ==========
 
-Opaleye supports left joins.  (Full outer joins and right joins are
-left to be added as a simple starter project for a new Opaleye
-contributor!)
+Opaleye supports left joins.
 
 Because left joins can change non-nullable fields into nullable
 fields we have to make sure the type of the output supports
