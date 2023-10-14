@@ -7,7 +7,7 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye (Field, FieldNullable,
->                          Table, table, selectTable,
+>                          Table, table, tableWithSchema, selectTable,
 >                          tableField,
 >                          Select, (.==),
 >                          aggregate, groupBy,
@@ -69,9 +69,9 @@ manipulation tutorial you can see an example of when they might differ.
 
 > personTable' :: Table (Field SqlText, Field SqlInt4, Field SqlText)
 >                       (Field SqlText, Field SqlInt4, Field SqlText)
-> personTable' = table "personTable" (p3 ( tableField "name"
->                                        , tableField "age"
->                                        , tableField "address" ))
+> personTable' = tableWithSchema "myschema" "personTable" (p3 ( tableField "name"
+>                                                             , tableField "age"
+>                                                             , tableField "address" ))
 
 By default, the table `"personTable"` is looked up in PostgreSQL's
 default `"public"` schema. If we wanted to specify a different schema we

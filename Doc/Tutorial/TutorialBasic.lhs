@@ -171,8 +171,7 @@ example we might want to discard the "address" field of our
 Projection gives us our first example of using "do notation" to
 write Opaleye queries.
 
-Here we run the `personSelect` passing in () to signify "zero
-arguments".  We pattern match on the results and return only the
+Here we run the `personSelect`, pattern match on the results and return only the
 fields we are interested in.
 
 > nameAge :: Select (Field SqlText, Field SqlInt4)
@@ -644,9 +643,7 @@ String' into a 'Field Int64'.
 Outer join
 ==========
 
-Opaleye supports left joins.  (Full outer joins and right joins are
-left to be added as a simple starter project for a new Opaleye
-contributor!)
+Opaleye supports left joins.
 
 Because left joins can change non-nullable fields into nullable
 fields we have to make sure the type of the output supports
