@@ -104,6 +104,9 @@ module Opaleye.Operators
   , IntervalNum
   , addInterval
   , minusInterval
+  , TimestampPrecision(..)
+  , dateTruncTimestamp
+  , dateTruncTimestamptz
   -- * Deprecated
   )
 
@@ -136,6 +139,9 @@ import qualified Opaleye.Column   as Column
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 import qualified Data.Profunctor.Product.Default as D
+
+import qualified Data.Text as Text
+import qualified Data.Text.Encoding as TE
 
 {-| Keep only the rows of a query satisfying a given condition, using an
 SQL @WHERE@ clause.  It is equivalent to the Haskell function
@@ -492,3 +498,28 @@ minusInterval = C.binOp (HPQ.:-)
 -- | Current date and time (start of current transaction)
 now :: F.Field T.SqlTimestamptz
 now = Column $ HPQ.FunExpr "now" []
+
+data TimestampPrecision =
+  MicrosecondsPrecision
+  | MillisecondsPrecision
+  | SecondPrecision
+  | MinutePrecision
+  | HourPrecision
+  | DayPrecision
+  | WeekPrecision
+  | MonthPrecision
+  | QuarterPrecision
+  | YearPrecision
+  | DecadePrecision
+  | CenturyPrecision
+  | MillenniumPrecision
+  deriving Show
+
+precisionToExpr :: TimestampPrecision -> HPQ.PrimExpr
+precisionToExpr p = HPQ.ConstExpr . HPQ.ByteStringLit . TE.encodeUtf8 . Text.toLower . Text.dropEnd 9 . Text.pack $ show p
+
+dateTruncTimestamp :: TimestampPrecision -> F.Field T.SqlTimestamp -> F.Field T.SqlTimestamp
+dateTruncTimestamp p (Column e) = Column $ HPQ.FunExpr "date_trunc" [(precisionToExpr p), e]
+
+dateTruncTimestamptz :: TimestampPrecision -> F.Field T.SqlTimestamptz -> F.Field T.SqlTimestamptz
+dateTruncTimestamptz p (Column e) = Column $ HPQ.FunExpr "date_trunc" [(precisionToExpr p), e]
