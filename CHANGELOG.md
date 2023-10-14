@@ -1,3 +1,6 @@
+* Added 'dateTruncTimestamp` and `dateTruncTimestamptz` (thanks to
+  @njaremko)
+
 ## 0.10.1.1
 
 * Fix bugs in `WITH`.  See
