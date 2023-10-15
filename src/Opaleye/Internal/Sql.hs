@@ -83,12 +83,14 @@ data BinOp = Except | ExceptAll | Union | UnionAll | Intersect | IntersectAll de
 data Lateral = Lateral | NonLateral deriving Show
 data LockStrength = Update deriving Show
 data Recursive = NonRecursive | Recursive deriving Show
+data Materialized = Materialized | NotMaterialized deriving Show
 data With = With {
-  wTable     :: HSql.SqlTable, -- The name of the result, i.e. WITH <name> AS
-  wCols      :: [HSql.SqlColumn],
-  wRecursive :: Recursive,
-  wWith      :: Select,
-  wSelect    :: Select
+  wTable        :: HSql.SqlTable, -- The name of the result, i.e. WITH <name> AS
+  wCols         :: [HSql.SqlColumn],
+  wRecursive    :: Recursive,
+  wMaterialized :: Maybe Materialized,
+  wWith         :: Select,
+  wSelect       :: Select
 } deriving Show
 
 
@@ -266,8 +268,8 @@ binary op (select1, select2) = SelectBinary Binary {
   bSelect2 = select2
   }
 
-with :: PQ.Recursive -> Symbol -> [Symbol] -> Select -> Select -> Select
-with recursive name cols wWith wSelect =
+with :: PQ.Recursive -> Maybe PQ.Materialized -> Symbol -> [Symbol] -> Select -> Select -> Select
+with recursive materialized name cols wWith wSelect =
   SelectFrom
     newSelect
       { attrs = Star
@@ -278,6 +280,10 @@ with recursive name cols wWith wSelect =
    wRecursive = case recursive of
      PQ.NonRecursive -> NonRecursive
      PQ.Recursive -> Recursive
+   wMaterialized = case materialized of
+     Nothing -> Nothing
+     Just PQ.Materialized -> Just Materialized
+     Just PQ.NotMaterialized -> Just NotMaterialized
    wCols = map (HSql.SqlColumn . sqlSymbol) cols
 
 

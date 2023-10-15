@@ -126,12 +126,17 @@ ppRecursive :: Sql.Recursive -> Doc
 ppRecursive Sql.Recursive = text "RECURSIVE"
 ppRecursive Sql.NonRecursive = mempty
 
+ppMaterialized :: Sql.Materialized -> Doc
+ppMaterialized Sql.Materialized = text "MATERIALIZED"
+ppMaterialized Sql.NotMaterialized = text "NOT MATERIALIZED"
+
 ppWith :: With -> Doc
 ppWith w
   =  text "WITH" <+> ppRecursive (Sql.wRecursive w)
   <+> HPrint.ppTable (Sql.wTable w)
   <+> parens (HPrint.commaV unColumn (Sql.wCols w))
   <+> text "AS"
+  <+> foldMap ppMaterialized (Sql.wMaterialized w)
   $$ parens (ppSql (Sql.wWith w))
   $$ ppSql (Sql.wSelect w)
   where unColumn (HSql.SqlColumn col) = text col

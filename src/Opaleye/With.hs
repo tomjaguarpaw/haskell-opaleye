@@ -2,11 +2,13 @@
 
 module Opaleye.With
   ( with,
+    withMaterialized,
     withRecursive,
     withRecursiveDistinct,
 
     -- * Explicit versions
     withExplicit,
+    withMaterializedExplicit,
     withRecursiveExplicit,
     withRecursiveDistinctExplicit,
   )
@@ -29,6 +31,9 @@ import Opaleye.Internal.Unpackspec (Unpackspec (..), runUnpackspec)
 
 with :: Default Unpackspec a a => Select a -> (Select a -> Select b) -> Select b
 with = withExplicit def
+
+withMaterialized :: Default Unpackspec a a => Select a -> (Select a -> Select b) -> Select b
+withMaterialized = withMaterializedExplicit def
 
 -- | Denotionally, @withRecursive s f@ is the smallest set of rows @r@ such
 -- that
@@ -65,7 +70,13 @@ withRecursiveDistinct = withRecursiveDistinctExplicit def
 
 withExplicit :: Unpackspec a a -> Select a -> (Select a -> Select b) -> Select b
 withExplicit unpackspec rhsSelect bodySelect = productQueryArr $ do
-  withG unpackspec PQ.NonRecursive (\_ -> rebind rhsSelect) bodySelect
+  withG unpackspec PQ.NonRecursive Nothing (\_ -> rebind rhsSelect) bodySelect
+  where
+    rebind = (>>> rebindExplicitPrefixNoStar "rebind" unpackspec)
+
+withMaterializedExplicit :: Unpackspec a a -> Select a -> (Select a -> Select b) -> Select b
+withMaterializedExplicit unpackspec rhsSelect bodySelect = productQueryArr $ do
+  withG unpackspec PQ.NonRecursive (Just PQ.Materialized) (\_ -> rebind rhsSelect) bodySelect
   where
     rebind = (>>> rebindExplicitPrefixNoStar "rebind" unpackspec)
 
@@ -74,7 +85,7 @@ withRecursiveExplicit binaryspec base recursive = productQueryArr $ do
   let bodySelect selectCte = selectCte
   let rhsSelect selectCte = unionAllExplicit binaryspec base (selectCte >>= recursive)
 
-  withG unpackspec PQ.Recursive rhsSelect bodySelect
+  withG unpackspec PQ.Recursive Nothing rhsSelect bodySelect
   where
     unpackspec = binaryspecToUnpackspec binaryspec
 
@@ -83,17 +94,18 @@ withRecursiveDistinctExplicit binaryspec base recursive = productQueryArr $ do
   let bodySelect selectCte = selectCte
   let rhsSelect selectCte = unionExplicit binaryspec base (selectCte >>= recursive)
 
-  withG unpackspec PQ.Recursive rhsSelect bodySelect
+  withG unpackspec PQ.Recursive Nothing rhsSelect bodySelect
   where
     unpackspec = binaryspecToUnpackspec binaryspec
 
 withG ::
   Unpackspec a a ->
   PQ.Recursive ->
+  Maybe PQ.Materialized ->
   (Select a -> Select a) ->
   (Select a -> Select b) ->
   State Tag.Tag (b, PQ.PrimQuery)
-withG unpackspec recursive rhsSelect bodySelect = do
+withG unpackspec recursive materialized rhsSelect bodySelect = do
   (selectCte, withCte) <- freshCte unpackspec
 
   let rhsSelect' = rhsSelect selectCte
@@ -102,14 +114,14 @@ withG unpackspec recursive rhsSelect bodySelect = do
   (_, rhsQ) <- runSimpleSelect rhsSelect'
   bodyQ <- runSimpleSelect bodySelect'
 
-  pure (withCte recursive rhsQ bodyQ)
+  pure (withCte recursive materialized rhsQ bodyQ)
 
 freshCte ::
   Unpackspec a a ->
   State
     Tag.Tag
     ( Select a,
-      PQ.Recursive -> PQ.PrimQuery -> (b, PQ.PrimQuery) -> (b, PQ.PrimQuery)
+      PQ.Recursive -> Maybe PQ.Materialized -> PQ.PrimQuery -> (b, PQ.PrimQuery) -> (b, PQ.PrimQuery)
     )
 freshCte unpackspec = do
   cteName <- HPQ.Symbol "cte" <$> Tag.fresh
@@ -131,8 +143,8 @@ freshCte unpackspec = do
 
   pure
     ( selectCte,
-      \recursive withQ (withedCols, withedQ) ->
-        (withedCols, PQ.With recursive cteName (map fst cteBindings) withQ withedQ)
+      \recursive materialized withQ (withedCols, withedQ) ->
+        (withedCols, PQ.With recursive materialized cteName (map fst cteBindings) withQ withedQ)
     )
 
 binaryspecToUnpackspec :: Binaryspec a a -> Unpackspec a a
