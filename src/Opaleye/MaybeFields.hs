@@ -19,6 +19,7 @@ module Opaleye.MaybeFields (
   fromMaybeFields,
   maybeFields,
   maybeFieldsToNullable,
+  isJustAnd,
   -- * Creating a 'Select' which returns 'MaybeFields'
   Opaleye.Join.optional,
   Opaleye.MaybeFields.traverseMaybeFields,

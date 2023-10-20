@@ -142,6 +142,14 @@ traverseMaybeFields query = proc mfInput -> do
 
   where a `implies` b = Opaleye.Internal.Operators.not a .|| b
 
+isJustAnd ::
+  MaybeFields a ->
+  (a -> Opaleye.Field.Field SqlBool) ->
+  Opaleye.Field.Field SqlBool
+isJustAnd ma cond = matchMaybe ma $ \case
+  Nothing -> Opaleye.SqlTypes.sqlBool False
+  Just a -> cond a
+
 optional :: SelectArr i a -> SelectArr i (MaybeFields a)
 optional = Opaleye.Internal.Lateral.laterally (optionalInternal (MaybeFields . isNotNull))
   where isNotNull = Opaleye.Internal.Operators.not . Opaleye.Field.isNull
