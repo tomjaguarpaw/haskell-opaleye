@@ -21,6 +21,7 @@ module Opaleye.Field (
   FieldNullable,
   Nullability(..),
   -- * Coercing fields
+  C.unsafeCast,
   unsafeCoerceField,
   -- * Working with @NULL@
   -- | Instead of working with @NULL@ you are recommended to use
