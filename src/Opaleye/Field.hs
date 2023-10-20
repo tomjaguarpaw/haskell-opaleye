@@ -20,7 +20,7 @@ module Opaleye.Field (
   Field,
   FieldNullable,
   Nullability(..),
-  -- * Coercing fields
+  -- * Casting fields
   C.unsafeCast,
   unsafeCoerceField,
   -- * Working with @NULL@
