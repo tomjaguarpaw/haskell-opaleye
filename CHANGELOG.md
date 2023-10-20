@@ -1,3 +1,9 @@
+## 0.10.2.0
+
+* Added `isJustAnd`
+
+* Add `withMaterialized` (thanks to Shane O'Brien)
+
 * Added 'dateTruncTimestamp` and `dateTruncTimestamptz` (thanks to
   @njaremko)
 
