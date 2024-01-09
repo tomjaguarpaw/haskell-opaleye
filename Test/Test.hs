@@ -34,7 +34,7 @@ import qualified Opaleye                          as O
 import qualified Opaleye.Field                    as F
 import qualified Opaleye.Internal.Aggregate       as IA
 import qualified Opaleye.Internal.Column          as O (unColumn)
-import qualified Opaleye.Internal.HaskellDB.PrimQuery as O (PrimExpr (..))
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as O (AggrOp (..), PrimExpr (..))
 import qualified Opaleye.Internal.Operators       as O (relationValuedExpr)
 import           Opaleye.Internal.RunQuery        (DefaultFromField)
 import           Opaleye.Internal.MaybeFields     as OM
@@ -1444,6 +1444,25 @@ testUnnest = do
         expectation :: [(Int32, T.Text)]
         expectation = zipWith (,) as bs
 
+testSetAggregate :: Test
+testSetAggregate = do
+  xit "set aggregate (percentile_cont)" $ testH query (`shouldBe` [expectation])
+  where query :: Select (Field O.SqlFloat8)
+        query = O.aggregate median (O.values as)
+
+        median :: IA.Aggregator (Field O.SqlFloat8) (Field O.SqlFloat8)
+        median = percentileCont 0.5
+
+        percentileCont :: O.Field O.SqlFloat8 -> IA.Aggregator (Field O.SqlFloat8) (Field O.SqlFloat8)
+        percentileCont fraction = IA.withinGroup (O.asc id) (P.lmap (const fraction) aggr)
+          where
+            aggr = IA.makeAggr (O.AggrOther "percentile_cont")
+
+        as :: [Field O.SqlFloat8]
+        as = [1, 2, 3, 4]
+
+        expectation :: Double
+        expectation = 2.5
 
 main :: IO ()
 main = do
@@ -1525,6 +1544,7 @@ main = do
         testStringArrayAggregateOrdered
         testDistinctAndAggregate
         testDoubleAggregate
+        testSetAggregate
       describe "distinct" $ do
         testDistinct
       describe "distinct on"
