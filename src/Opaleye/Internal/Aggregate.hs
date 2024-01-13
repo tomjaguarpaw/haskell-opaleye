@@ -133,15 +133,15 @@ aggregatorApply = Aggregator $ PM.PackMap $ \f (agg, a) ->
 -- aggregate.  On the other hand, referring to a field from a previous
 -- query in an ORDER BY expression is totally fine!
 aggregateU :: Aggregator a b
-           -> (a, PQ.PrimQuery, T.Tag) -> (b, PQ.PrimQuery)
-aggregateU agg (c0, primQ, t0) = (c1, primQ')
+           -> (a, T.Tag) -> (b, PQ.PrimQuery -> PQ.PrimQuery)
+aggregateU agg (c0, t0) = (c1, primQ')
   where (c1, projPEs_inners) =
           PM.run (runAggregator agg (extractAggregateFields t0) c0)
 
         projPEs = map fst projPEs_inners
         inners  = concatMap snd projPEs_inners
 
-        primQ' = PQ.Aggregate projPEs (PQ.Rebind True inners primQ)
+        primQ' = PQ.Aggregate projPEs . PQ.Rebind True inners
 
 extractAggregateFields
   :: Traversable t

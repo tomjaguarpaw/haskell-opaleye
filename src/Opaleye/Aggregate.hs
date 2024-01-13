@@ -35,6 +35,7 @@ module Opaleye.Aggregate
        , countRows
        ) where
 
+import           Control.Arrow (second)
 import           Data.Profunctor     (lmap)
 import qualified Data.Profunctor as P
 
@@ -88,7 +89,7 @@ aggregate :: Aggregator a b -> S.Select a -> S.Select b
 aggregate agg q = Q.productQueryArr $ do
   (a, pq) <- Q.runSimpleSelect q
   t <- Tag.fresh
-  pure (A.aggregateU agg (a, pq, t))
+  pure (second ($ pq) (A.aggregateU agg (a, t)))
 
 -- | Order the values within each aggregation in `Aggregator` using
 -- the given ordering. This is only relevant for aggregations that
