@@ -4,6 +4,7 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Opaleye.Internal.MaybeFields where
