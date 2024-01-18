@@ -146,7 +146,7 @@ aggregateU agg (c0, t0) = (c1, primQ')
 extractAggregateFields
   :: Traversable t
   => T.Tag
-  -> (t HPQ.PrimExpr)
+  -> t HPQ.PrimExpr
   -> PM.PM [((HPQ.Symbol,
               t HPQ.Symbol),
               PQ.Bindings HPQ.PrimExpr)]
