@@ -1,7 +1,6 @@
 {-# OPTIONS_HADDOCK not-home #-}
 
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Opaleye.Internal.Operators where

@@ -1,8 +1,5 @@
 {-# OPTIONS_HADDOCK not-home #-}
 
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Opaleye.Internal.Distinct where
 
 import qualified Opaleye.Internal.MaybeFields as M

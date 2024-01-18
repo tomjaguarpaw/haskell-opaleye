@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module Opaleye.ToFields (-- * Creating 'Field's from Haskell values
                          toFields,
                          toFieldsI,

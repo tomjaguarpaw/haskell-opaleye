@@ -3,7 +3,6 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleInstances #-}
 
 module Opaleye.Internal.Column where
 

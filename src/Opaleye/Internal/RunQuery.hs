@@ -1,6 +1,5 @@
 {-# OPTIONS_HADDOCK not-home #-}
 
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 

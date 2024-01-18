@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 -- | 'MaybeFields' is Opaleye's analogue to 'Data.Maybe.Maybe'.  You
 -- probably won't want to create values of type 'MaybeFields'
 -- directly; instead they will appear as the result of

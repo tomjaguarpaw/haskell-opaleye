@@ -1,7 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-
-
 {- |
 
  Table fields can be required or optional and, independently, nullable or

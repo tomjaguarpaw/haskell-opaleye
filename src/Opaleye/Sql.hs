@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Opaleye.Sql (
   -- * Showing SQL

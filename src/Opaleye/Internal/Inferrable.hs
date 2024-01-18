@@ -1,8 +1,5 @@
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DataKinds #-}
 
 module Opaleye.Internal.Inferrable where

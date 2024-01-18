@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module Opaleye.Distinct (distinct,
                          distinctOn,
                          distinctOnBy,

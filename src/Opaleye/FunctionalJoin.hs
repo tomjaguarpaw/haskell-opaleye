@@ -2,9 +2,6 @@
 -- See "Opaleye.Join" for details on the best way to do other joins in
 -- Opaleye.
 
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Opaleye.FunctionalJoin (
   -- * Full outer join
   fullJoinF,

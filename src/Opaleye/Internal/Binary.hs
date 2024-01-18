@@ -1,7 +1,5 @@
 {-# OPTIONS_HADDOCK not-home #-}
 
-{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
-
 module Opaleye.Internal.Binary where
 
 import           Opaleye.Internal.Column (Field_(Column), unColumn)

@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module Opaleye.Internal.Rebind where
 
 import Data.Profunctor.Product.Default (Default, def)

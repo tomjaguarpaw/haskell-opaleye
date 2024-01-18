@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module Opaleye.Values(
   values,
   -- * Explicit versions

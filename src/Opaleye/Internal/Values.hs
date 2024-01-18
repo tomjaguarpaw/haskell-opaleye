@@ -1,5 +1,4 @@
 {-# LANGUAGE Arrows #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE LambdaCase #-}
 

@@ -1,8 +1,5 @@
 -- | Left, right, and full outer joins.
 
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 
 module Opaleye.Join where

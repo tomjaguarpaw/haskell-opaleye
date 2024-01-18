@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module Opaleye.Internal.Lateral
   ( lateral
   , viaLateral

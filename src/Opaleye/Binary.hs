@@ -32,8 +32,6 @@
 -- @Control.Applicative.Alternative@ instance but it fails to work
 -- only because of the typeclass constraint it has.
 
-{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
-
 module Opaleye.Binary (-- * Binary operations
                        unionAll,
                        union,
