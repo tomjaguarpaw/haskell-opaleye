@@ -129,7 +129,7 @@ aggregatorApply = Aggregator $ PM.PackMap $ \f (agg, a) ->
 --     https://github.com/tomjaguarpaw/haskell-opaleye/pull/460#issuecomment-626716160
 --
 -- Instead of detecting when we are aggregating over a field from a
--- previous query we just create new names for all field before we
+-- previous query we just create new names for all fields before we
 -- aggregate.  On the other hand, referring to a field from a previous
 -- query in an ORDER BY expression is totally fine!
 aggregateU :: Aggregator a b
