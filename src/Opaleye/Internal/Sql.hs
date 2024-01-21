@@ -160,7 +160,7 @@ product ss pes = SelectFrom $
           PQ.Lateral    -> Lateral
           PQ.NonLateral -> NonLateral
 
-aggregate :: PQ.Bindings (HPQ.Aggregate' HPQ.Symbol)
+aggregate :: PQ.Bindings HPQ.Aggregate
           -> Select
           -> Select
 aggregate aggrs' s =
@@ -191,7 +191,7 @@ aggregate aggrs' s =
         handleEmpty = ensureColumnsGen SP.deliteral
 
         aggrs :: [(Symbol, HPQ.Aggregate)]
-        aggrs = (map . Arr.second . fmap) HPQ.AttrExpr aggrs'
+        aggrs = aggrs'
 
         groupBy' :: [(symbol, HPQ.Aggregate)]
                  -> NEL.NonEmpty HSql.SqlExpr
