@@ -135,37 +135,25 @@ aggregatorApply = Aggregator $ PM.PackMap $ \f (agg, a) ->
 aggregateU :: Aggregator a b
            -> (a, T.Tag) -> (b, PQ.PrimQuery -> PQ.PrimQuery)
 aggregateU agg (c0, t0) = (c1, primQ')
-  where (c1, projPEs_inners) =
+  where projPEs_inners :: PQ.Bindings HPQ.Aggregate
+        (c1, projPEs_inners) =
           PM.run (runAggregator agg (extractAggregateFields t0) c0)
 
-        projPEs = map fst projPEs_inners
-        inners  = concatMap snd projPEs_inners
+        projPEs = projPEs_inners
 
-        primQ' = PQ.Aggregate projPEs . PQ.Rebind True inners
+        primQ' = PQ.Aggregate projPEs
 
 extractAggregateFields
-  :: Traversable t
-  => T.Tag
-  -> t HPQ.PrimExpr
-  -> PM.PM [((HPQ.Symbol,
-              t HPQ.Symbol),
-              PQ.Bindings HPQ.PrimExpr)]
-           HPQ.PrimExpr
+  :: T.Tag
+  -> HPQ.Aggregate
+  -> PM.PM (PQ.Bindings HPQ.Aggregate) HPQ.PrimExpr
 extractAggregateFields tag agg = do
   i <- PM.new
+  let sinner = HPQ.Symbol ("result" ++ i) tag
 
-  let souter = HPQ.Symbol ("result" ++ i) tag
+  PM.write (sinner, agg)
 
-  bindings <- for agg $ \pe -> do
-    j <- PM.new
-    let sinner = HPQ.Symbol ("inner" ++ j) tag
-    pure (sinner, pe)
-
-  let agg' = fmap fst bindings
-
-  PM.write ((souter, agg'), toList bindings)
-
-  pure (HPQ.AttrExpr souter)
+  pure (HPQ.AttrExpr sinner)
 
 unsafeMax :: Aggregator (C.Field a) (C.Field a)
 unsafeMax = makeAggr HPQ.AggrMax

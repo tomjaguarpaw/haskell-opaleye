@@ -471,7 +471,7 @@ genSelectArr =
 genSelectMapper :: [TQ.Gen (O.Select Fields -> O.Select Fields)]
 genSelectMapper =
     [ do
-        return (O.distinctExplicit distinctFields)
+        return (O.distinctExplicit unpackFields distinctFields)
     , do
         ArbitraryPositiveInt l <- TQ.arbitrary
         return (O.limit l)
@@ -481,9 +481,8 @@ genSelectMapper =
     , do
         o                <- TQ.arbitrary
         return (O.orderBy (arbitraryOrder o))
-
     , do
-        return (O.aggregate aggregateFields)
+        return (O.aggregateExplicit unpackFields aggregateFields)
     , do
         let q' q = P.dimap (\_ -> fst . firstBoolOrTrue (O.sqlBool True))
                            (fieldsList

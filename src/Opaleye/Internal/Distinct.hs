@@ -5,19 +5,21 @@ module Opaleye.Internal.Distinct where
 import qualified Opaleye.Internal.MaybeFields as M
 import           Opaleye.Select (Select)
 import           Opaleye.Field (Field_)
-import           Opaleye.Aggregate (Aggregator, groupBy, aggregate)
+import           Opaleye.Aggregate (Aggregator, groupBy, aggregateExplicit)
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product as PP
 import           Data.Profunctor.Product.Default (Default, def)
+import           Opaleye.Internal.Unpackspec (Unpackspec)
 
 -- We implement distinct simply by grouping by all columns.  We could
 -- instead implement it as SQL's DISTINCT but implementing it in terms
 -- of something else that we already have is easier at this point.
 
-distinctExplicit :: Distinctspec fields fields'
+distinctExplicit :: Unpackspec fields fields
+                 -> Distinctspec fields fields'
                  -> Select fields -> Select fields'
-distinctExplicit (Distinctspec agg) = aggregate agg
+distinctExplicit u (Distinctspec agg) = aggregateExplicit u agg
 
 newtype Distinctspec a b = Distinctspec (Aggregator a b)
 

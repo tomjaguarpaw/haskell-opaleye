@@ -620,7 +620,7 @@ testStringArrayAggregateOrdered = it "" $ q `selectShouldReturnSorted` expected
 
 
 testStringArrayAggregateOrderedDistinct :: Test
-testStringArrayAggregateOrderedDistinct = xit "" $ q `selectShouldReturnSorted` expected
+testStringArrayAggregateOrderedDistinct = it "" $ q `selectShouldReturnSorted` expected
   where q =
           O.aggregateOrdered
             (O.asc snd)
@@ -1477,7 +1477,7 @@ testUnnest = do
 
 testSetAggregate :: Test
 testSetAggregate = do
-  xit "set aggregate (percentile_cont)" $ testH query (`shouldBe` [expectation])
+  it "set aggregate (percentile_cont)" $ testH query (`shouldBe` [expectation])
   where query :: Select (Field O.SqlFloat8)
         query = O.aggregate median (O.values as)
 

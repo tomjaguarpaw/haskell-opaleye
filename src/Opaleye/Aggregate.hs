@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | Perform aggregation on 'S.Select's.  To aggregate a 'S.Select' you
 -- should construct an 'Aggregator' encoding how you want the
@@ -33,11 +34,14 @@ module Opaleye.Aggregate
        , stringAgg
        -- * Counting rows
        , countRows
+       -- * Explicit
+       , aggregateExplicit
        ) where
 
-import           Control.Arrow (second)
+import           Control.Arrow (second, (<<<))
 import           Data.Profunctor     (lmap)
 import qualified Data.Profunctor as P
+import qualified Data.Profunctor.Product.Default as D
 
 import qualified Opaleye.Internal.Aggregate as A
 import           Opaleye.Internal.Aggregate (Aggregator, orderAggregate)
@@ -46,6 +50,7 @@ import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Operators as O
 import qualified Opaleye.Internal.PackMap as PM
+import           Opaleye.Internal.Rebind (rebindExplicit)
 import qualified Opaleye.Internal.Tag as Tag
 import qualified Opaleye.Internal.Unpackspec as U
 
@@ -85,11 +90,8 @@ result of an aggregation.
 -}
 -- See 'Opaleye.Internal.Sql.aggregate' for details of how aggregating
 -- by an empty query with no group by is handled.
-aggregate :: Aggregator a b -> S.Select a -> S.Select b
-aggregate agg q = Q.productQueryArr $ do
-  (a, pq) <- Q.runSimpleSelect q
-  t <- Tag.fresh
-  pure (second ($ pq) (A.aggregateU agg (a, t)))
+aggregate :: D.Default U.Unpackspec a a => Aggregator a b -> S.Select a -> S.Select b
+aggregate = aggregateExplicit D.def
 
 -- | Order the values within each aggregation in `Aggregator` using
 -- the given ordering. This is only relevant for aggregations that
@@ -100,7 +102,13 @@ aggregate agg q = Q.productQueryArr $ do
 -- you need different orderings for different aggregations, use
 -- 'Opaleye.Internal.Aggregate.orderAggregate'.
 
-aggregateOrdered  :: Ord.Order a -> Aggregator a b -> S.Select a -> S.Select b
+aggregateExplicit :: U.Unpackspec a a' -> Aggregator a' b -> S.Select a -> S.Select b
+aggregateExplicit u agg q = Q.productQueryArr $ do
+  (a, pq) <- Q.runSimpleSelect (rebindExplicit u <<< q)
+  t <- Tag.fresh
+  pure (second ($ pq) (A.aggregateU agg (a, t)))
+
+aggregateOrdered  :: D.Default U.Unpackspec a a => Ord.Order a -> Aggregator a b -> S.Select a -> S.Select b
 aggregateOrdered o agg = aggregate (orderAggregate o agg)
 
 -- | Aggregate only distinct values

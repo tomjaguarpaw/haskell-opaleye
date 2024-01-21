@@ -432,7 +432,7 @@ order o (ArbitrarySelect q) =
 
 distinct :: ArbitrarySelect -> Connection -> IO TQ.Property
 distinct =
-  compareDenotation' (O.distinctExplicit distinctFields) nub
+  compareDenotation' (O.distinctExplicit unpackFields distinctFields) nub
 
 -- When we generalise compareDenotation... we can just test
 --
@@ -455,7 +455,7 @@ valuesEmpty l =
 
 aggregate :: ArbitrarySelect -> Connection -> IO TQ.Property
 aggregate =
-  compareDenotationNoSort' (O.aggregate aggregateFields)
+  compareDenotationNoSort' (O.aggregateExplicit unpackFields aggregateFields)
                            aggregateDenotation
 
 
