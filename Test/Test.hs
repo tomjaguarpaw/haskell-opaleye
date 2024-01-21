@@ -632,6 +632,21 @@ testStringArrayAggregateOrderedDistinct = xit "" $ q `selectShouldReturnSorted` 
                    ]
         sortedData = L.sortBy (Ord.comparing snd) table7data
 
+-- See
+--
+--     https://github.com/tomjaguarpaw/haskell-opaleye/pull/578#issuecomment-1782638274
+testStringArrayAggregateOrderedDistinctDuplicateFields :: Test
+testStringArrayAggregateOrderedDistinctDuplicateFields = xit "" $ q `selectShouldReturnSorted` expected
+  where q =
+          O.aggregateOrdered
+            (O.asc (\x -> snd x O..++ snd x))
+            (PP.p2 (O.arrayAgg, O.distinctAggregator . O.stringAgg . O.sqlString $ ","))
+            table7Q
+        expected = [ ( map fst sortedData
+                     , L.intercalate "," $ map NE.head $ NE.group $ map snd sortedData
+                     )
+                   ]
+        sortedData = L.sortBy (Ord.comparing snd) table7data
 
 -- | Using orderAggregate you can apply different orderings to
 -- different aggregates.
@@ -1559,6 +1574,7 @@ main = do
         testMultipleAggregateOrdered
         testStringArrayAggregateOrdered
         testStringArrayAggregateOrderedDistinct
+        testStringArrayAggregateOrderedDistinctDuplicateFields
         testDistinctAndAggregate
         testDoubleAggregate
         testSetAggregate
