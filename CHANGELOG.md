@@ -1,3 +1,9 @@
+## 0.10.2.1
+
+* Fixed bug that generated broken queries when using ordered
+  `aggregateOrdered` with `distinctAggregator`, and when using set
+  aggregation.
+
 ## 0.10.2.0
 
 * Added `isJustAnd`
