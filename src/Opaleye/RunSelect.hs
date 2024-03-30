@@ -46,7 +46,6 @@ import qualified Data.Profunctor.Product.Default as D
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runSelect@.
--- @
 runSelect :: D.Default FromFields fields haskells
           => PGS.Connection
           -- ^
@@ -162,8 +161,8 @@ declareCursorExplicit = RQ.declareCursorExplicit
 -- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
 --
 -- @
---- runSelectI :: 'S.Select' (Foo ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlText') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlBool')
----            -> IO [Foo Int String Bool]
+-- runSelectI :: 'S.Select' (Foo ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlText') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlBool')
+--            -> IO [Foo Int String Bool]
 -- @
 runSelectI :: (D.Default (Inferrable FromFields) fields haskells)
            => PGS.Connection
