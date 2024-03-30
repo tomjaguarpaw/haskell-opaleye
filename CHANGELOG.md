@@ -1,3 +1,7 @@
+## 0.10.2.2
+
+* Documentation improvements
+
 ## 0.10.2.1
 
 * Fixed bug that generated broken queries when using ordered
