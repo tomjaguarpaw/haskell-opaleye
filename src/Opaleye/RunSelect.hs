@@ -3,8 +3,8 @@
 
 module Opaleye.RunSelect
   (-- * Running 'S.Select's
-   runSelect,
    runSelectI,
+   runSelect,
    runSelectFold,
    -- * Cursor interface
    declareCursor,
@@ -39,23 +39,13 @@ import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 
 import qualified Data.Profunctor.Product.Default as D
 
--- | @runSelect@'s use of the @'D.Default' 'FromFields'@
+-- | An alternative version of @runSelectI@ that is more general but
+-- has worse type inference.  @runSelect@'s use of the @'D.Default'
+-- 'FromFields'@
 -- typeclass means that the
 -- compiler will have trouble inferring types.  It is strongly
 -- recommended that you provide full type signatures when using
 -- @runSelect@.
---
--- Example type specialization:
---
--- @
--- runSelect :: 'S.Select' ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4', 'Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
--- @
---
--- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
---
--- @
--- runSelect :: 'S.Select' (Foo ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlText') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlBool')
---           -> IO [Foo Int String Bool]
 -- @
 runSelect :: D.Default FromFields fields haskells
           => PGS.Connection
@@ -163,7 +153,17 @@ declareCursorExplicit
     -> IO (IRQ.Cursor haskells)
 declareCursorExplicit = RQ.declareCursorExplicit
 
--- | Version of 'runSelect' with better type inference
+-- | Example type specialization:
+--
+-- @
+-- runSelectI :: 'S.Select' ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4', 'Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
+-- @
+--
+-- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
+--
+-- @
+-- runSelectI :: 'S.Select' (Foo ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4') ('Opaleye.Field.Field' 'Opaleye.Sql
+-- @
 runSelectI :: (D.Default (Inferrable FromFields) fields haskells)
            => PGS.Connection
            -- ^
