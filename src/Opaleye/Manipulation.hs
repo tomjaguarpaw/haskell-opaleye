@@ -180,7 +180,7 @@ data Update haskells = forall fieldsW fieldsR. Update
 -- @uUpdateWith = updateEasy (\\... -> ...)@
 updateEasy :: D.Default Updater fieldsR fieldsW
            => (fieldsR -> fieldsR)
-           -- ^
+           -- ^ ͘
            -> (fieldsR -> fieldsW)
 updateEasy u = u' . u
   where Updater u' = D.def
@@ -206,7 +206,7 @@ rCount = MI.Count
 -- 'rReturning'.
 rReturning :: D.Default RS.FromFields fields haskells
            => (fieldsR -> fields)
-           -- ^
+           -- ^ ͘
            -> MI.Returning fieldsR [haskells]
 rReturning = rReturningExplicit D.def
 
@@ -215,14 +215,14 @@ rReturning = rReturningExplicit D.def
 -- flexible.
 rReturningI :: D.Default (Inferrable RS.FromFields) fields haskells
             => (fieldsR -> fields)
-            -- ^
+            -- ^ ͘
             -> MI.Returning fieldsR [haskells]
 rReturningI = rReturningExplicit (runInferrable D.def)
 
 -- | Return a function of the inserted or updated rows.  Explicit
 -- version.  You probably just want to use 'rReturning' instead.
 rReturningExplicit :: RS.FromFields fields haskells
-                   -- ^
+                   -- ^ ͘
                    -> (fieldsR -> fields)
                    -- ^
                    -> MI.Returning fieldsR [haskells]

@@ -101,7 +101,7 @@ import qualified Data.Profunctor.Product.Default as D
 -- @
 selectTable :: D.Default U.Unpackspec fields fields
             => Table a fields
-            -- ^
+            -- ^ ͘
             -> S.Select fields
 selectTable = selectTableExplicit D.def
 
@@ -126,7 +126,7 @@ tableWithSchema = T.TableWithSchema
 selectTableExplicit :: U.Unpackspec tablefields fields
                     -- ^
                     -> Table a tablefields
-                    -- ^
+                    -- ^ ͘
                     -> S.Select fields
 selectTableExplicit cm table' = Q.productQueryArr $ do
   t0 <- Tag.fresh

@@ -66,7 +66,7 @@ traverseMaybeFields :: (Default Unpackspec a a, Default Unpackspec b b)
                     => SelectArr a b
                     -- ^
                     -> SelectArr (MaybeFields a) (MaybeFields b)
-                    -- ^
+                    -- ^ ͘
 traverseMaybeFields = Opaleye.Internal.MaybeFields.traverseMaybeFields
 
 -- The Unpackspecs are currently redundant, but I'm adding them in

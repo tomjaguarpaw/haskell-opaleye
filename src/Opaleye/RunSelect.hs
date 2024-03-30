@@ -51,7 +51,7 @@ runSelect :: D.Default FromFields fields haskells
           => PGS.Connection
           -- ^
           -> S.Select fields
-          -- ^
+          -- ^ ͘
           -> IO [haskells]
 runSelect = RQ.runQuery
 
@@ -60,7 +60,7 @@ runSelectTF :: D.Default FromFields (rec TF.O) (rec TF.H)
             => PGS.Connection
             -- ^
             -> S.Select (rec TF.O)
-            -- ^
+            -- ^ ͘
             -> IO [rec TF.H]
 runSelectTF = RQ.runQuery
 
@@ -78,7 +78,7 @@ runSelectFold
   -> b
   -- ^
   -> (b -> haskells -> IO b)
-  -- ^
+  -- ^ ͘
   -> IO b
 runSelectFold = RQ.runQueryFold
 
@@ -89,7 +89,7 @@ declareCursor
     => PGS.Connection
     -- ^
     -> S.Select fields
-    -- ^
+    -- ^ ͘
     -> IO (IRQ.Cursor haskells)
 declareCursor = RQ.declareCursor
 
@@ -108,7 +108,7 @@ foldForward
     -> (a -> haskells -> IO a)
     -- ^
     -> a
-    -- ^
+    -- ^ ͘
     -> IO (Either a a)
 foldForward = RQ.foldForward
 
@@ -168,6 +168,6 @@ runSelectI :: (D.Default (Inferrable FromFields) fields haskells)
            => PGS.Connection
            -- ^
            -> S.Select fields
-           -- ^
+           -- ^ ͘
            -> IO [haskells]
 runSelectI = RQ.runQueryExplicit (runInferrable D.def)

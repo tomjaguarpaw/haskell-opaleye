@@ -48,6 +48,6 @@ toFields = C.toFields
 -- | Version of 'C.toFields' with better type inference
 toFieldsI :: (D.Default (Inferrable C.ToFields) haskells fields)
           => haskells
-          -- ^
+          -- ^ ͘
           -> fields
 toFieldsI = toFieldsExplicit (runInferrable D.def)

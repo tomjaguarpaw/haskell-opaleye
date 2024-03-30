@@ -62,7 +62,7 @@ matchNullable :: Field b
               -> (Field a -> Field b)
               -- ^
               -> FieldNullable a
-              -- ^
+              -- ^ ͘
               -> Field b
 matchNullable replacement f x = C.unsafeIfThenElse (isNull x) replacement
                                                    (f (unsafeCoerceField x))
@@ -76,7 +76,7 @@ matchNullable replacement f x = C.unsafeIfThenElse (isNull x) replacement
 fromNullable :: Field a
              -- ^
              -> FieldNullable a
-             -- ^
+             -- ^ ͘
              -> Field a
 fromNullable = flip matchNullable id
 
