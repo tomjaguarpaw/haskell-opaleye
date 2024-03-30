@@ -1,3 +1,7 @@
+## 0.10.2.3
+
+* Documentation improvements
+
 ## 0.10.2.2
 
 * Documentation improvements
