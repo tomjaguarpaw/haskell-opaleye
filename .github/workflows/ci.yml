@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        ghc: ['9.6', '9.4', '9.2', '9.0', '8.10', '8.8']
+        ghc: ['9.8', '9.6', '9.4', '9.2', '9.0', '8.10', '8.8']
 
     services:
       postgres:
@@ -47,6 +47,6 @@ jobs:
     - uses: tomjaguarpaw/neil@tag-ac7e72e
       with:
         github-user: tomjaguarpaw
-        branch: tag-4459934
+        branch: tag-2743efb
       env:
         POSTGRES_CONNSTRING: "user='postgres' dbname='postgres' password='postgres' host='localhost' port='5432'"
