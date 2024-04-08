@@ -15,6 +15,8 @@ import qualified Data.Text.Lazy.Encoding as LTextEncoding
 import qualified Data.ByteString as SByteString
 import qualified Data.ByteString.Lazy as LByteString
 import qualified Data.Time.Format.ISO8601.Compat as Time
+import Text.PrettyPrint.HughesPJ ((<>), doubleQuotes, render, text)
+import Prelude hiding ((<>))
 
 unsafePgFormatTime :: Time.ISO8601 t => HPQ.Name -> t -> Field c
 unsafePgFormatTime typeName = castToType typeName . format
@@ -37,5 +39,8 @@ lazyDecodeUtf8 = LText.unpack . LTextEncoding.decodeUtf8
 
 class IsSqlType sqlType where
   showSqlType :: proxy sqlType -> String
+  showSqlType sqlType = render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_))
+                    where (schema, type_) = showSqlTypeWithSchema sqlType
+  showSqlTypeWithSchema :: proxy sqlType -> (String, String)
 
-  {-# MINIMAL showSqlType #-}
+  {-# MINIMAL showSqlType | showSqlTypeWithSchema #-}
