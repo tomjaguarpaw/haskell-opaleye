@@ -90,10 +90,12 @@ module Opaleye.SqlTypes (
   SqlBytea,
   -- * @IsSqlType@
   P.IsSqlType(P.showSqlType),
+  IPT.sqlTypeWithSchema,
   ) where
 
 import qualified Opaleye.Field   as F
 import qualified Opaleye.Internal.Column as IC
+import qualified Opaleye.Internal.PGTypes as IPT
 import qualified Opaleye.Internal.PGTypesExternal as P
 import           Opaleye.Internal.PGTypesExternal (IsSqlType, IsRangeType)
 import           Opaleye.Internal.PGTypesExternal (SqlBool,

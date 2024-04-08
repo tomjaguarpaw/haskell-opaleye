@@ -13,10 +13,11 @@ module Opaleye.Experimental.Enum
 
 import           Opaleye.Field (Field)
 import qualified Opaleye as O
+import qualified Opaleye.Internal.PGTypes as IPT
 import qualified Opaleye.Internal.RunQuery as RQ
 
 import           Data.ByteString.Char8 (unpack)
-import Text.PrettyPrint.HughesPJ ((<>), doubleQuotes, render, text)
+import Text.PrettyPrint.HughesPJ (doubleQuotes, render, text)
 import Prelude hiding ((<>))
 
 data EnumMapper sqlEnum haskellSum = EnumMapper {
@@ -120,9 +121,7 @@ enumMapperWithSchema :: String
            -- the Haskell type that you use to represent the @ENUM@.
 enumMapperWithSchema schema type_ =
   enumMapper'
-    (render (doubleQuotes (text schema)
-              <> text "."
-              <> doubleQuotes (text type_)))
+    (IPT.sqlTypeWithSchema schema type_)
 
 enumMapper' :: String
            -- ^ The name of the @ENUM@ type
