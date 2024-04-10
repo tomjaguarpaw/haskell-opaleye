@@ -89,7 +89,7 @@ module Opaleye.SqlTypes (
   SqlUuid,
   SqlBytea,
   -- * @IsSqlType@
-  P.IsSqlType(P.showSqlType, P.showSqlTypeWithSchema),
+  P.IsSqlType(P.showSqlType),
   ) where
 
 import qualified Opaleye.Field   as F

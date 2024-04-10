@@ -37,10 +37,10 @@ strictDecodeUtf8 = SText.unpack . STextEncoding.decodeUtf8
 lazyDecodeUtf8 :: LByteString.ByteString -> String
 lazyDecodeUtf8 = LText.unpack . LTextEncoding.decodeUtf8
 
+sqlTypeWithSchema :: String -> String -> String
+sqlTypeWithSchema schema type_ = render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_))
+
 class IsSqlType sqlType where
   showSqlType :: proxy sqlType -> String
-  showSqlType sqlType = render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_))
-                    where (schema, type_) = showSqlTypeWithSchema sqlType
-  showSqlTypeWithSchema :: proxy sqlType -> (String, String)
 
-  {-# MINIMAL showSqlType | showSqlTypeWithSchema #-}
+  {-# MINIMAL showSqlType #-}
