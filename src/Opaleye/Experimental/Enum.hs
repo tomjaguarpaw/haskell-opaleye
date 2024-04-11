@@ -11,6 +11,7 @@ module Opaleye.Experimental.Enum
 
 import           Opaleye.Field (Field)
 import qualified Opaleye as O
+import qualified Opaleye.Internal.PGTypes as IPT
 import qualified Opaleye.Internal.RunQuery as RQ
 
 import           Data.ByteString.Char8 (unpack)
@@ -115,7 +116,7 @@ enumMapperWithSchema :: String
            -- ^ The @sqlEnum@ type variable is phantom. To protect
            -- yourself against type mismatches you should set it to
            -- the Haskell type that you use to represent the @ENUM@.
-enumMapperWithSchema schema type_ = enumMapper' $ sqlTypeWithSchema schema type_
+enumMapperWithSchema schema type_ = enumMapper' $ IPT.sqlTypeWithSchema schema type_
 
 enumMapper' :: String
            -- ^ The name of the @ENUM@ type
