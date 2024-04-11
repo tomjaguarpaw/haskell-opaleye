@@ -115,7 +115,7 @@ enumMapperWithSchema :: String
            -- ^ The @sqlEnum@ type variable is phantom. To protect
            -- yourself against type mismatches you should set it to
            -- the Haskell type that you use to represent the @ENUM@.
-enumMapperWithSchema schema type_ = enumMapper' (render (doubleQuotes (text schema) <> text "." <> doubleQuotes (text type_)))
+enumMapperWithSchema schema type_ = enumMapper' $ sqlTypeWithSchema schema type_
 
 enumMapper' :: String
            -- ^ The name of the @ENUM@ type
