@@ -1,3 +1,8 @@
+## 0.10.3.0
+
+* Added `enumShowSqlType` and `sqlTypeWithSchema` (thanks to
+  @stevemao)
+
 ## 0.10.2.3
 
 * Documentation improvements
