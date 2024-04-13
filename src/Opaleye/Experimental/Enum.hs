@@ -1,4 +1,5 @@
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Opaleye.Experimental.Enum
   (
@@ -7,6 +8,7 @@ module Opaleye.Experimental.Enum
     enumMapperWithSchema,
     enumFromField,
     enumToFields,
+    enumShowSqlType,
   ) where
 
 import           Opaleye.Field (Field)
@@ -20,6 +22,7 @@ import Prelude hiding ((<>))
 data EnumMapper sqlEnum haskellSum = EnumMapper {
     enumFromField :: RQ.FromField sqlEnum haskellSum
   , enumToFields :: O.ToFields haskellSum (Field sqlEnum)
+  , enumShowSqlType :: forall proxy. proxy sqlEnum -> String
   }
 
 -- | Create a mapping between a Postgres @ENUM@ type and a Haskell
@@ -85,7 +88,7 @@ data EnumMapper sqlEnum haskellSum = EnumMapper {
 --   def = enumToFields sqlRatingMapper
 --
 -- instance IsSqlType SqlRating where
---   showSqlType _ = "mpaa_rating"
+--   showSqlType = enumShowSqlType sqlRatingMapper
 -- @
 enumMapper :: String
            -- ^ The name of the @ENUM@ type
@@ -136,6 +139,7 @@ enumMapper' :: String
 enumMapper' type_ from to_ = EnumMapper {
     enumFromField = fromFieldEnum
   , enumToFields = toFieldsEnum
+  , enumShowSqlType = \_ -> type_
   }
    where
      toFieldsEnum = O.toToFields (O.unsafeCast type_ . O.sqlString . to_)
