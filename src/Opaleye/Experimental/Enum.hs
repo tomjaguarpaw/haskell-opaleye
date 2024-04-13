@@ -83,6 +83,9 @@ data EnumMapper sqlEnum haskellSum = EnumMapper {
 --
 -- instance D.Default O.ToFields Rating (O.Field SqlRating) where
 --   def = enumToFields sqlRatingMapper
+--
+-- instance IsSqlType SqlRating where
+--   showSqlType _ = "mpaa_rating"
 -- @
 enumMapper :: String
            -- ^ The name of the @ENUM@ type
