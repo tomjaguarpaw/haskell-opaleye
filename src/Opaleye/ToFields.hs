@@ -1,14 +1,20 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Opaleye.ToFields (-- * Creating 'Field's from Haskell values
                          toFields,
                          toFieldsI,
                          -- * Creating @ToFields@
                          C.toToFields,
+                         makeToToField,
                          -- * Explicit versions
                          toFieldsExplicit,
                          -- * Adaptor
                          C.ToFields,
                          ) where
 
+import           Data.Proxy (Proxy (Proxy))
+import           Opaleye.Internal.PGTypes (IsSqlType, showSqlType)
+import qualified Opaleye.Internal.Column as Column
 import qualified Opaleye.Internal.Constant as C
 import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 
@@ -51,3 +57,11 @@ toFieldsI :: (D.Default (Inferrable C.ToFields) haskells fields)
           -- ^ ͘
           -> fields
 toFieldsI = toFieldsExplicit (runInferrable D.def)
+
+makeToToField ::
+  forall haskell sqlType1 sqlType2.
+  IsSqlType sqlType2 =>
+  (haskell -> Column.Field sqlType1) ->
+  C.ToFields haskell (Column.Field sqlType2)
+makeToToField f = C.toToFields (
+  Column.unsafeCast (showSqlType (Proxy :: Proxy sqlType2)) . f)
