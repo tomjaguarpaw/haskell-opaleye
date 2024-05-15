@@ -4,13 +4,16 @@
 -- you can use '*', '/', '+', '-' on them.  To create 'Field_'s, see
 -- "Opaleye.ToFields" and "Opaleye.SqlTypes".
 --
--- 'Field_' used to be called 'C.Column' and for technical reasons
+-- 'Field_' used to be called t'C.Column' and for technical reasons
 -- there are still a few uses of the old name around.  If you see
--- @'C.Column' SqlType@ then you can understand it as @'Field'
--- SqlType@, and if you see @'C.Column' ('C.Nullable' SqlType)@ then
+-- @t'C.Column' SqlType@ then you can understand it as @'Field'
+-- SqlType@, and if you see @t'C.Column' ( t'C.Nullable' SqlType )@ then
 -- you can understand it as @'FieldNullable' SqlType@.
 --
--- 'C.Column' will be removed in version 0.11.
+-- t'C.Column' will be removed in version 0.11.
+--
+-- (Due to Haddock formatting errors, this documentation previously
+-- incorrectly stated that @Field_@ would be removed.  It won't be!)
 
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
