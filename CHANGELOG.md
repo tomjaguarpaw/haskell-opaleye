@@ -1,3 +1,7 @@
+## 0.10.3.1
+
+* Improve Haddock
+
 ## 0.10.3.0
 
 * Added `enumShowSqlType` and `sqlTypeWithSchema` (thanks to
