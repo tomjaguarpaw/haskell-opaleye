@@ -17,7 +17,7 @@ import qualified Data.ByteString                 as SBS
 import qualified Data.ByteString.Lazy            as LBS
 import qualified Data.Scientific                 as Sci
 import qualified Data.Time.Compat                as Time
-import qualified Data.UUID                       as UUID
+import qualified Data.UUID.Types                 as UUID
 
 import qualified Data.Profunctor.Product         as PP
 import           Data.Profunctor.Product         (empty, (***!), (+++!))

@@ -24,7 +24,7 @@ import qualified Data.ByteString as SByteString
 import qualified Data.ByteString.Lazy as LByteString
 import           Data.Scientific as Sci
 import qualified Data.Time.Compat as Time
-import qualified Data.UUID as UUID
+import qualified Data.UUID.Types as UUID
 
 import           Data.Int (Int64)
 

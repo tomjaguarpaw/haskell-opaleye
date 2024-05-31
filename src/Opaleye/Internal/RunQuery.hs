@@ -44,7 +44,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Time.Compat as Time
 import qualified Data.Scientific as Sci
 import qualified Data.String as String
-import           Data.UUID (UUID)
+import           Data.UUID.Types (UUID)
 import           GHC.Int (Int32, Int64)
 
 -- { Only needed for postgresql-simple FieldParsers

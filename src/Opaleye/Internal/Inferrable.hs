@@ -22,7 +22,7 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text as ST
 import qualified Data.Time.Compat as Time
 import           Data.Typeable (Typeable)
-import           Data.UUID (UUID)
+import           Data.UUID.Types (UUID)
 import qualified Database.PostgreSQL.Simple.Range as R
 import           GHC.Int (Int32, Int64)
 

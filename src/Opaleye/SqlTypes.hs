@@ -130,7 +130,7 @@ import           Data.Scientific as Sci
 import qualified Data.Text as SText
 import qualified Data.Text.Lazy as LText
 import qualified Data.Time.Compat as Time
-import qualified Data.UUID as UUID
+import qualified Data.UUID.Types as UUID
 
 import qualified Database.PostgreSQL.Simple.Range as R
 
