@@ -8,11 +8,12 @@
 >
 > import           Opaleye (Field, FieldNullable,
 >                          Table, table, tableWithSchema, selectTable,
+>                          MaybeFields,
 >                          tableField,
 >                          Select, (.==),
 >                          aggregate, groupBy,
->                          count, avg, sum, leftJoin, runSelect,
->                          showSql, Unpackspec,
+>                          count, avg, sum, optional, runSelect,
+>                          showSql, where_, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8)
 >
 > import qualified Opaleye                 as O
@@ -280,34 +281,16 @@ Opaleye supports left/right and full outer joins.  A left or right
 join is expressed by using `optional`.  For full outer joins see
 `Opaleye.Join`.
 
-Because left joins can change non-nullable fields into nullable
-fields we have to make sure the type of the output supports
-nullability.  We introduce the following type synonym for this
-purpose, which is just a notational convenience.
-
-> data BirthdayFieldNullable =
->   BirthdayFieldNullable { bdNameFieldNullable :: FieldNullable SqlText
->                          , bdDayFieldNullable  :: FieldNullable SqlDate }
->
-> instance Default O.Unpackspec BirthdayFieldNullable BirthdayFieldNullable where
->   def = BirthdayFieldNullable <$> P.lmap bdNameFieldNullable D.def
->                                <*> P.lmap bdDayFieldNullable  D.def
->
-> instance Default Opaleye.Internal.Join.NullMaker BirthdayField BirthdayFieldNullable where
->   def = BirthdayFieldNullable <$> P.lmap bdNameField D.def
->                                <*> P.lmap bdDayField  D.def
-
-Again, this is all derivable using `Generic` or Template Haskell, if
-someone would take the time to implement it.
-
-A left join is expressed by specifying the two tables to join and the
-join condition.
 
 > personBirthdayLeftJoin :: Select ((Field SqlText, Field SqlInt4, Field SqlText),
->                                  BirthdayFieldNullable)
-> personBirthdayLeftJoin = leftJoin personSelect birthdaySelect eqName
->     where eqName ((name, _, _), birthdayRow) =
->             name .== bdNameField birthdayRow
+>                                  MaybeFields BirthdayField)
+> personBirthdayLeftJoin = do
+>   personRow@(name, _, _) <- personSelect
+>   mBirthdayRow <- optional $ do
+>     birthdayRow <- birthdaySelect
+>     where_ (name .== bdNameField birthdayRow)
+>     pure birthdayRow
+>   pure (personRow, mBirthdayRow)
 
 The generated SQL is
 
