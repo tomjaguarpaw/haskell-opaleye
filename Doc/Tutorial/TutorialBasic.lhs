@@ -643,7 +643,9 @@ String' into a 'Field Int64'.
 Outer join
 ==========
 
-Opaleye supports left joins.
+Opaleye supports left/right and full outer joins.  A left or right
+join is expressed by using `optional`.  For full outer joins see
+`Opaleye.Join`.
 
 Because left joins can change non-nullable fields into nullable
 fields we have to make sure the type of the output supports
