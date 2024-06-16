@@ -138,8 +138,25 @@ optionalRestrict = J.optionalRestrict
 --          -> Select ((Field a, Field b), (FieldNullable c, FieldNullable d))
 -- @
 
--- | We suggest you use 'optionalRestrict' instead.  Instead of writing
+-- | We suggest you use 'optional' instead.  Instead of writing
 -- \"@'Opaleye.Join.leftJoin' qL qR cond@\" you can write
+--
+-- @
+-- do
+--   fieldsL <- qL
+--   maybeFieldsR \<- 'optional' $ do
+--     fieldsR <- qR
+--     cond (fieldsL, fieldsR)
+--     pure fieldsR
+--   pure (fieldsL, maybeFieldsR)
+-- @
+--
+-- Typically everything except the 'optional' block can be inlined in
+-- surrounding @do@ notation.  In such cases, readability and
+-- maintainability increase dramatically.
+--
+-- Alternatively, if you have a reason to avoid @LATERAL@ joins you
+-- can use 'optionalRestrict' and arrow notation.
 --
 -- @
 -- proc () -> do
@@ -147,10 +164,6 @@ optionalRestrict = J.optionalRestrict
 --   maybeFieldsR \<- 'optionalRestrict' qR -\< 'Prelude.curry' cond fieldsL
 --   'Control.Arrow.returnA' -< (fieldsL, maybeFieldsR)
 -- @
---
--- Typically everything except the 'optionalRestrict' line can be
--- inlined in surrounding arrow notation.  In such cases, readability
--- and maintainability increase dramatically.
 leftJoin  :: (D.Default U.Unpackspec fieldsL fieldsL,
               D.Default U.Unpackspec fieldsR fieldsR,
               D.Default J.NullMaker fieldsR nullableFieldsR)
@@ -160,7 +173,7 @@ leftJoin  :: (D.Default U.Unpackspec fieldsL fieldsL,
           -> S.Select (fieldsL, nullableFieldsR) -- ^ Left join
 leftJoin = leftJoinExplicit D.def D.def D.def
 
--- | We suggest you don't use this.  'optionalRestrict' is probably
+-- | We suggest you don't use this.  'optional' or 'optionalRestrict' are probably
 -- better for your use case.  'Opaleye.Join.leftJoinA' is the same as
 -- 'optionalRestrict' except without the return type wrapped in
 -- 'Opaleye.Internal.MaybeFields.MaybeFields'.
@@ -174,7 +187,7 @@ leftJoinA :: (D.Default U.Unpackspec fieldsR fieldsR,
           -- result comes out
 leftJoinA = leftJoinAExplict D.def D.def
 
--- | We suggest you use 'optionalRestrict' instead.  See 'leftJoin'
+-- | We suggest you use 'optional' or 'optionalRestrict' instead.  See 'leftJoin'
 -- for more details.
 rightJoin  :: (D.Default U.Unpackspec fieldsL fieldsL,
                D.Default U.Unpackspec fieldsR fieldsR,
