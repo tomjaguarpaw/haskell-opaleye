@@ -8,11 +8,12 @@
 > import           Prelude hiding (sum)
 >
 > import           Opaleye (Field, FieldNullable, matchNullable, isNull,
+>                          MaybeFields,
 >                          Table, table, tableField, selectTable,
 >                          Select, (.==), (.<=), (.&&), (.<),
 >                          (.===),
 >                          (.++), ifThenElse, sqlString, aggregate, groupBy,
->                          count, avg, sum, leftJoin, runSelect,
+>                          count, avg, sum, optional, runSelect,
 >                          showSql, where_, Unpackspec,
 >                          SqlInt4, SqlInt8, SqlText, SqlDate, SqlFloat8, SqlBool)
 >
@@ -647,21 +648,15 @@ Opaleye supports left/right and full outer joins.  A left or right
 join is expressed by using `optional`.  For full outer joins see
 `Opaleye.Join`.
 
-Because left joins can change non-nullable fields into nullable
-fields we have to make sure the type of the output supports
-nullability.  We introduce the following type synonym for this
-purpose, which is just a notational convenience.
-
-> type FieldNullableBirthday = Birthday' (FieldNullable SqlText)
->                                         (FieldNullable SqlDate)
-
-A left join is expressed by specifying the two tables to join and the
-join condition.
-
 > personBirthdayLeftJoin :: Select ((Field SqlText, Field SqlInt4, Field SqlText),
->                                  FieldNullableBirthday)
-> personBirthdayLeftJoin = leftJoin personSelect birthdaySelect eqName
->     where eqName ((name, _, _), birthdayRow) = name .== bdName birthdayRow
+>                                  MaybeFields BirthdayField)
+> personBirthdayLeftJoin = do
+>   personRow@(name, _, _) <- personSelect
+>   mBirthdayRow <- optional $ do
+>     birthdayRow <- birthdaySelect
+>     where_ (name .== bdName birthdayRow)
+>     pure birthdayRow
+>   pure (personRow, mBirthdayRow)
 
 The generated SQL is
 
