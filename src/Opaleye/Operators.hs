@@ -58,6 +58,7 @@ module Opaleye.Operators
   , sqlLength
   -- * Containment operators
   , in_
+  , inMany
   , inSelect
   -- * JSON operators
   , SqlIsJson
@@ -296,6 +297,19 @@ in_ :: (F.Foldable f) => f (Field a) -> Field a -> F.Field T.SqlBool
 in_ fcas (Column a) = case NEL.nonEmpty (F.toList fcas) of
    Nothing -> T.sqlBool False
    Just xs -> Column $ HPQ.BinExpr HPQ.OpIn a (HPQ.ListExpr (fmap C.unColumn xs))
+
+-- | @inMany@ is a generalization of 'in_' to values with multiple
+-- fields.  It is designed to be used in prefix form.
+--
+-- @inMany validUsers user@ checks whether @user@ is a valid user.
+-- @inMany validUsers@ is a function which checks whether a user is a
+-- valid user.
+inMany ::
+  (F.Foldable f, D.Default O.EqPP fields fields) =>
+  f fields ->
+  fields ->
+  F.Field T.SqlBool
+inMany xs x = ors (fmap (.=== x) (F.toList xs))
 
 -- | True if the first argument occurs amongst the rows of the second,
 -- false otherwise.
