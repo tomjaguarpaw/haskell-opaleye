@@ -289,9 +289,9 @@ sqlLength  (Column e) = Column (HPQ.FunExpr "length" [e])
 
 -- | 'in_' is designed to be used in prefix form.
 --
--- 'in_' @validProducts@ @product@ checks whether @product@ is a valid
--- product.  'in_' @validProducts@ is a function which checks whether
--- a product is a valid product.
+-- 'in_' @validUsers@ @user@ checks whether @user@ is a valid user.
+-- 'in_' @validUsers@ is a function which checks whether a user is a
+-- valid user.
 in_ :: (Functor f, F.Foldable f) => f (Field a) -> Field a -> F.Field T.SqlBool
 in_ fcas (Column a) = case NEL.nonEmpty (F.toList fcas) of
    Nothing -> T.sqlBool False
