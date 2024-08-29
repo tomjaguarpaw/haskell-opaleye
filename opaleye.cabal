@@ -139,7 +139,7 @@ test-suite test
     product-profunctors,
     QuickCheck,
     semigroups,
-    text >= 0.11 && < 2.1,
+    text >= 0.11 && < 2.2,
     time-compat,
     transformers,
     hspec,
