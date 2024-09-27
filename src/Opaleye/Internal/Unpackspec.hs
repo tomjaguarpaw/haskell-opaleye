@@ -24,7 +24,7 @@ newtype Unpackspec fields fields' =
   -- 'Default' instance of type @Foo (Field a) (Field b) (Field c)@
   -- will allow you to manipulate or extract the three 'HPQ.PrimExpr's
   -- contained therein (for a user-defined product type @Foo@, assuming
-  -- the @makeAdaptorAndInstance@ splice from
+  -- the @makeAdaptorAndInstanceInferrable@ splice from
   -- @Data.Profunctor.Product.TH@ has been run).
   --
   -- Users should almost never need to create or manipulate

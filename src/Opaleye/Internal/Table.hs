@@ -31,7 +31,7 @@ import qualified Control.Arrow as Arr
 --                                , quantity :: d
 --                                , radius   :: e }
 --
--- \$('Data.Profunctor.Product.TH.makeAdaptorAndInstance' \"pWidget\" ''Widget)
+-- \$('Data.Profunctor.Product.TH.makeAdaptorAndInstanceInferrable' \"pWidget\" ''Widget)
 --
 -- widgetTable :: Table (Widget (Maybe (Field SqlInt4)) (Field SqlText) (Field SqlText)
 --                              (Field SqlInt4) (Field SqlFloat8))

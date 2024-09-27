@@ -30,7 +30,7 @@ import qualified Data.Profunctor.Product.Default as D
 -- showSql :: Select (Field a, Field b) -> Maybe String
 -- @
 --
--- Assuming the @makeAdaptorAndInstance@ splice has been run for the
+-- Assuming the @makeAdaptorAndInstanceInferrable@ splice has been run for the
 -- product type @Foo@:
 --
 -- @

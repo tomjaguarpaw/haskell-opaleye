@@ -188,14 +188,14 @@ infix 4 ./=
 
 infix 4 .===
 -- | A polymorphic equality operator that works for all types that you
--- have run `makeAdaptorAndInstance` on.  This may be unified with
+-- have run `makeAdaptorAndInstanceInferrable` on.  This may be unified with
 -- `.==` in a future version.
 (.===) :: D.Default O.EqPP fields fields => fields -> fields -> F.Field T.SqlBool
 (.===) = (O..==)
 
 infix 4 ./==
 -- | A polymorphic inequality operator that works for all types that
--- you have run `makeAdaptorAndInstance` on.  This may be unified with
+-- you have run `makeAdaptorAndInstanceInferrable` on.  This may be unified with
 -- `./=` in a future version.
 (./==) :: D.Default O.EqPP fields fields => fields -> fields -> F.Field T.SqlBool
 (./==) = Opaleye.Operators.not .: (O..==)

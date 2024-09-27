@@ -22,7 +22,7 @@ import           Data.Profunctor.Product.Default (Default, def)
 -- values :: [(Field a, Field b)] -> Select (Field a, Field b)
 -- @
 --
--- Assuming the @makeAdaptorAndInstance@ splice has been run for the
+-- Assuming the @makeAdaptorAndInstanceInferrable@ splice has been run for the
 -- product type @Foo@:
 --
 -- @

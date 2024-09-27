@@ -28,7 +28,7 @@ import Opaleye.Internal.Unpackspec (Unpackspec)
 -- distinct :: Select (Field a, Field b) -> Select (Field a, Field b)
 -- @
 --
--- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
+-- Assuming the @makeAdaptorAndInstanceInferrable@ splice has been run for the product type @Foo@:
 --
 -- @
 -- distinct :: Select (Foo (Field a) (Field b) (Field c)) -> Select (Foo (Field a) (Field b) (Field c))

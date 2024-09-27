@@ -158,7 +158,7 @@ declareCursorExplicit = RQ.declareCursorExplicit
 -- runSelectI :: 'S.Select' ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4', 'Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlText') -> IO [(Int, String)]
 -- @
 --
--- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
+-- Assuming the @makeAdaptorAndInstanceInferrable@ splice has been run for the product type @Foo@:
 --
 -- @
 -- runSelectI :: 'S.Select' (Foo ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlInt4') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlText') ('Opaleye.Field.Field' 'Opaleye.SqlTypes.SqlBool')

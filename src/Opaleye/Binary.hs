@@ -10,7 +10,7 @@
 --          -> S.Select (Field a, Field b)
 -- @
 --
--- Assuming the @makeAdaptorAndInstance@ splice has been run for the product type @Foo@:
+-- Assuming the @makeAdaptorAndInstanceInferrable@ splice has been run for the product type @Foo@:
 --
 -- @
 -- unionAll :: S.Select (Foo (Field a) (Field b) (Field c))
