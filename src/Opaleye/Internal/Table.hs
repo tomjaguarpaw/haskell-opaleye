@@ -94,7 +94,6 @@ requiredTableField columnName = TableFields
   (requiredW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
-
 -- | 'optionalTableField' is for fields that you can omit on writes, such as
 --  fields which have defaults or which are SERIAL.
 optionalTableField :: String -> TableFields (Maybe (Field_ n a)) (Field_ n a)
