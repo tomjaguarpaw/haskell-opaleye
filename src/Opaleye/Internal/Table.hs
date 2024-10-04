@@ -90,8 +90,8 @@ newtype Writer columns dummy =
 -- | 'requiredTableField' is for fields which are not optional.  You
 -- must provide them on writes.
 requiredTableField :: String -> TableFields (Field_ n a) (Field_ n a)
-requiredTableField columnName = TableFields
-  ((lmap Just . optionalW) columnName)
+requiredTableField columnName = lmap Just $ TableFields
+  (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 -- | 'optionalTableField' is for fields that you can omit on writes, such as
