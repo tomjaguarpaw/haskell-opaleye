@@ -125,6 +125,9 @@ instance D.Default Updater (Field_ n a) (Field_ n a) where
 instance D.Default Updater (Field_ n a) (Maybe (Field_ n a)) where
   def = Updater Just
 
+instance D.Default Updater (Field_ n a) () where
+  def = Updater (const ())
+
 arrangeDeleteReturning :: U.Unpackspec columnsReturned ignored
                        -> T.Table columnsW columnsR
                        -> (columnsR -> Field SqlBool)
