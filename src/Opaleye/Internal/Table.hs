@@ -185,8 +185,8 @@ instance Monoid (Zip a) where
 
 requiredW :: String -> Writer (Field_ n a) (Field_ n a)
 requiredW columnName =
-  Writer (PM.iso (flip (,) columnName . fmap unColumn') id)
-  where unColumn' = maybe HPQ.DefaultInsertExpr unColumn . Just
+  lmap Just (Writer (PM.iso (flip (,) columnName . fmap maybeUnColumn) id))
+  where maybeUnColumn = maybe HPQ.DefaultInsertExpr unColumn
 
 optionalW :: String -> Writer (Maybe (Field_ n a)) (Field_ n a)
 optionalW columnName =
