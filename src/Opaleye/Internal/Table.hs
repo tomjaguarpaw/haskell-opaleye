@@ -87,6 +87,9 @@ newtype Writer columns dummy =
   Writer (forall f. Functor f =>
           PM.PackMap (f HPQ.PrimExpr, String) () (f columns) ())
 
+coerceWriterOutput :: Writer columns dummy -> Writer columns dummy'
+coerceWriterOutput (Writer w) = Writer w
+
 -- | 'requiredTableField' is for fields which are not optional.  You
 -- must provide them on writes.
 requiredTableField :: String -> TableFields (Field_ n a) (Field_ n a)
@@ -108,6 +111,11 @@ optionalTableField columnName = TableFields
 -- <https://github.com/tomjaguarpaw/haskell-opaleye/issues/447#issuecomment-685617841>.
 readOnlyTableField :: String -> TableFields () (Field_ n a)
 readOnlyTableField = lmap (const Nothing) . optionalTableField
+
+omitOnWriteTableField :: String -> TableFields () (Field_ n a)
+omitOnWriteTableField columnName = TableFields
+  (coerceWriterOutput (pure ()))
+  (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 -- | You should not define your own instances of
 -- 'InferrableTableField'.
