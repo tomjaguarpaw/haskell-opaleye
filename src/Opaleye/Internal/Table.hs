@@ -91,7 +91,7 @@ newtype Writer columns dummy =
 -- must provide them on writes.
 requiredTableField :: String -> TableFields (Field_ n a) (Field_ n a)
 requiredTableField columnName = TableFields
-  (requiredW columnName)
+  ((lmap Just . optionalW) columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 -- | 'optionalTableField' is for fields that you can omit on writes, such as
@@ -182,9 +182,6 @@ instance Monoid (Zip a) where
   mempty = Zip mempty'
     where mempty' = [] `NEL.cons` mempty'
   mappend = (<>)
-
-requiredW :: String -> Writer (Field_ n a) (Field_ n a)
-requiredW = lmap Just . optionalW
 
 optionalW :: String -> Writer (Maybe (Field_ n a)) (Field_ n a)
 optionalW columnName =
