@@ -92,8 +92,8 @@ newtype Writer columns dummy =
 requiredTableField :: String -> TableFields (Field_ n a) (Field_ n a)
 requiredTableField = lmap Just . optionalTableField
 
--- | 'optionalTableField' is for fields that you can omit on writes, such as
---  fields which have defaults or which are SERIAL.
+-- | 'optionalTableField' is for fields that you can omit on writes,
+-- such as fields which have defaults or which are SERIAL.
 optionalTableField :: String -> TableFields (Maybe (Field_ n a)) (Field_ n a)
 optionalTableField columnName = TableFields
   (optionalW columnName)
