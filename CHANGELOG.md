@@ -1,3 +1,11 @@
+## 0.10.4.0
+
+* Added `instance Default Updater (Field_ n a) ()`
+
+* Added `omitOnWriteTableField`
+
+* Added `inMany` and removed `Functor` constraint from `in_`.
+
 ## 0.10.3.1
 
 * Improve Haddock
