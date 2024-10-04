@@ -184,7 +184,7 @@ instance Monoid (Zip a) where
   mappend = (<>)
 
 requiredW :: String -> Writer (Field_ n a) (Field_ n a)
-requiredW columnName = lmap Just (optionalW columnName)
+requiredW columnName = (lmap Just . optionalW) columnName
 
 optionalW :: String -> Writer (Maybe (Field_ n a)) (Field_ n a)
 optionalW columnName =
