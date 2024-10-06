@@ -95,7 +95,7 @@ coerceWriterOutput (Writer w) = Writer w
 requiredTableField :: String -> TableFields (Field_ n a) (Field_ n a)
 requiredTableField = lmap Just . optionalTableField
 
--- | @optionalTableField@ is for fields that you can omit on writes,
+-- | @optionalTableField@ is for fields that you can be set to @DEFAULT@ on writes,
 -- such as fields which have defaults or which are SERIAL.  Setting
 -- the write value to @Nothing@ uses SQL @DEFAULT@ in the generated
 -- update.
