@@ -112,6 +112,8 @@ optionalTableField columnName = TableFields
 readOnlyTableField :: String -> TableFields () (Field_ n a)
 readOnlyTableField = lmap (const Nothing) . optionalTableField
 
+-- | @omitOnwritetablefield@ is for fields that should be omitted on
+-- writes, such as those that are @GENERATED ALWAYS@.
 omitOnWriteTableField :: String -> TableFields () (Field_ n a)
 omitOnWriteTableField columnName = TableFields
   (coerceWriterOutput (pure ()))
