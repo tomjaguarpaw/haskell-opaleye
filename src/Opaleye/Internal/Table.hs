@@ -90,12 +90,12 @@ newtype Writer columns dummy =
 coerceWriterOutput :: Writer columns dummy -> Writer columns dummy'
 coerceWriterOutput (Writer w) = Writer w
 
--- | 'requiredTableField' is for fields which are not optional.  You
+-- | @requiredTableField@ is for fields which are not optional.  You
 -- must provide them on writes.
 requiredTableField :: String -> TableFields (Field_ n a) (Field_ n a)
 requiredTableField = lmap Just . optionalTableField
 
--- | 'optionalTableField' is for fields that you can omit on writes,
+-- | @optionalTableField@ is for fields that you can omit on writes,
 -- such as fields which have defaults or which are SERIAL.  Setting
 -- the write value to @Nothing@ uses SQL @DEFAULT@ in the generated
 -- update.
@@ -104,7 +104,7 @@ optionalTableField columnName = TableFields
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
--- | Don't use 'readOnlyTableField'.  It will be formally deprecated
+-- | Don't use @readOnlyTableField@.  It will be formally deprecated
 -- in a future version.  It is broken for updates because it always
 -- updates its field with @DEFAULT@ which is very unlikely to be what
 -- you want!  For more details see
