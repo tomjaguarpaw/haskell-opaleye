@@ -43,19 +43,25 @@ instance
   => D.Default (Inferrable FromFields) (F.FieldNullable a) maybe_b where
   def = Inferrable (RQ.fromFieldsNullable (runInferrable D.def))
 
+inferrable :: p a b -> Inferrable p a b
+inferrable = Inferrable
+
+inferrableDef :: D.Default p a b => Inferrable p a b
+inferrableDef = inferrable D.def
+
 -- FromField
 
 instance int ~ Int => D.Default (Inferrable FromField) T.SqlInt4 int where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance int64 ~ Int64 => D.Default (Inferrable FromField) T.SqlInt8 int64 where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance text ~ ST.Text => D.Default (Inferrable FromField) T.SqlText text where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance varchar ~ ST.Text => D.Default (Inferrable FromField) T.SqlVarcharN varchar where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance (Typeable h, D.Default (Inferrable FromField) f h, hs ~ [h])
   => D.Default (Inferrable FromField) (T.SqlArray f) hs where
@@ -66,25 +72,25 @@ instance (Typeable h, D.Default (Inferrable FromField) f h, hs ~ [Maybe h])
   def = Inferrable (RQ.fromFieldArrayNullable (runInferrable D.def))
 
 instance double ~ Double => D.Default (Inferrable FromField) T.SqlFloat8 double where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance scientific ~ Sci.Scientific
   => D.Default (Inferrable FromField) T.SqlNumeric scientific where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance bool ~ Bool => D.Default (Inferrable FromField) T.SqlBool bool where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance uuid ~ UUID => D.Default (Inferrable FromField) T.SqlUuid uuid where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance bytestring ~ SBS.ByteString
   => D.Default (Inferrable FromField) T.SqlBytea bytestring where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance day ~ Time.Day
   => D.Default (Inferrable FromField) T.SqlDate day where
-  def = Inferrable D.def
+  def = inferrableDef
 
 -- I'm not certain what we should map timestamptz to.  The
 -- postgresql-simple types it maps to are ZonedTime and UTCTime, but
@@ -93,23 +99,23 @@ instance day ~ Time.Day
 
 --instance utctime ~ Time.UTCTime
 --  => D.Default (Inferrable FromField) T.SqlTimestamptz utctime where
---  def = Inferrable D.def
+--  def = inferrableDef
 
 instance localtime ~ Time.LocalTime
   => D.Default (Inferrable FromField) T.SqlTimestamp localtime where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance timeofday ~ Time.TimeOfDay
   => D.Default (Inferrable FromField) T.SqlTime timeofday where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance calendardifftime ~ Time.CalendarDiffTime
   => D.Default (Inferrable FromField) T.SqlInterval calendardifftime where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance cttext ~ CI.CI ST.Text
   => D.Default (Inferrable FromField) T.SqlCitext cttext where
-  def = Inferrable D.def
+  def = inferrableDef
 
 -- It's not clear what to map JSON types to
 
@@ -149,107 +155,107 @@ instance (D.Default (Inferrable ToFields) a (C.Column b),
 
 instance F.Field a ~ fieldA
   => D.Default (Inferrable ToFields) (F.Field a) fieldA where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlText ~ cSqlText
   => D.Default (Inferrable ToFields) String cSqlText where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlBytea ~ cSqlBytea
   => D.Default (Inferrable ToFields) LBS.ByteString cSqlBytea where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlBytea ~ cSqlBytea
   => D.Default (Inferrable ToFields) SBS.ByteString cSqlBytea where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlText ~ cSqlText
   => D.Default (Inferrable ToFields) ST.Text cSqlText where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlText ~ cSqlText
   => D.Default (Inferrable ToFields) LT.Text cSqlText where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlNumeric ~ cSqlNumeric
   => D.Default (Inferrable ToFields) Sci.Scientific cSqlNumeric where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlInt4 ~ cSqlInt4
   => D.Default (Inferrable ToFields) Int cSqlInt4 where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlInt4 ~ cSqlInt4
   => D.Default (Inferrable ToFields) Int32 cSqlInt4 where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlInt8 ~ cSqlInt8
   => D.Default (Inferrable ToFields) Int64 cSqlInt8 where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlFloat8 ~ cSqlFloat8
   => D.Default (Inferrable ToFields) Double cSqlFloat8 where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlBool ~ cSqlBool
   => D.Default (Inferrable ToFields) Bool cSqlBool where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlUuid ~ cSqlUuid
   => D.Default (Inferrable ToFields) UUID cSqlUuid where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlDate ~ cSqlDate
   => D.Default (Inferrable ToFields) Time.Day cSqlDate where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlTimestamptz ~ cSqlTimestamptz
   => D.Default (Inferrable ToFields) Time.UTCTime cSqlTimestamptz where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlTimestamptz ~ cSqlTimestamptz
   => D.Default (Inferrable ToFields) Time.ZonedTime cSqlTimestamptz where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlTime ~ cSqlTime
   => D.Default (Inferrable ToFields) Time.TimeOfDay cSqlTime where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlInterval ~ cSqlInterval
   => D.Default (Inferrable ToFields) Time.CalendarDiffTime cSqlInterval where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlCitext ~ cSqlCitext
   => D.Default (Inferrable ToFields) (CI.CI ST.Text) cSqlCitext where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field T.SqlCitext ~ cSqlCitext
   => D.Default (Inferrable ToFields) (CI.CI LT.Text) cSqlCitext where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field (T.SqlRange T.SqlInt4) ~ cRangeInt4
   => D.Default (Inferrable ToFields) (R.PGRange Int) cRangeInt4 where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field (T.SqlRange T.SqlInt8) ~ cRangeInt8
   => D.Default (Inferrable ToFields) (R.PGRange Int64) cRangeInt8 where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field (T.SqlRange T.SqlNumeric) ~ cRangeScientific
   => D.Default (Inferrable ToFields) (R.PGRange Sci.Scientific) cRangeScientific where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field (T.SqlRange T.SqlTimestamp) ~ cRangeTimestamp
   => D.Default (Inferrable ToFields) (R.PGRange Time.LocalTime) cRangeTimestamp where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field (T.SqlRange T.SqlTimestamptz) ~ cRangeTimestamptz
   => D.Default (Inferrable ToFields) (R.PGRange Time.UTCTime) cRangeTimestamptz where
-  def = Inferrable D.def
+  def = inferrableDef
 
 instance F.Field (T.SqlRange T.SqlDate) ~ cRangeDate
   => D.Default (Inferrable ToFields) (R.PGRange Time.Day) cRangeDate where
-  def = Inferrable D.def
+  def = inferrableDef
 
 {-  It's not clear if Aeson Value should map to JSON or JSONB.
 
