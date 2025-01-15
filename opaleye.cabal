@@ -57,6 +57,7 @@ library
                    Opaleye.Exists,
                    Opaleye.Field,
                    Opaleye.FunctionalJoin,
+                   Opaleye.Inferrable,
                    Opaleye.Join,
                    Opaleye.Label,
                    Opaleye.Lateral,
