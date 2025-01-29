@@ -1,3 +1,9 @@
+## 0.10.5.0
+
+* Added `Opaleye.Inferrable`
+
+* Added `limitField` and `offsetField`
+
 ## 0.10.4.0
 
 * Added `instance Default Updater (Field_ n a) ()`
