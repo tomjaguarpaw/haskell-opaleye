@@ -30,6 +30,7 @@ module Opaleye.Order ( -- * Order by
 
 import qualified Data.Profunctor.Product.Default as D
 import qualified Opaleye.Field as F
+import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Order as O
 import qualified Opaleye.Internal.QueryArr as Q
@@ -122,8 +123,8 @@ not what you want).
 SELECT * FROM (SELECT * FROM yourTable LIMIT 10) OFFSET 50
 @
 -}
-limit :: Int -> S.Select a -> S.Select a
-limit n a = Q.productQueryArr $ do
+limit :: F.Field T.SqlInt8 -> S.Select a -> S.Select a
+limit (C.Column n) a = Q.productQueryArr $ do
   a_pq <- Q.runSimpleSelect a
   pure (O.limit' n a_pq)
 
@@ -134,8 +135,8 @@ that many result rows.
 /WARNING:/ Please read the documentation of 'limit' before combining
 'offset' with 'limit'.
 -}
-offset :: Int -> S.Select a -> S.Select a
-offset n a = Q.productQueryArr $ do
+offset :: F.Field T.SqlInt8 -> S.Select a -> S.Select a
+offset (C.Column n) a = Q.productQueryArr $ do
   a_pq <- Q.runSimpleSelect a
   pure (O.offset' n a_pq)
 

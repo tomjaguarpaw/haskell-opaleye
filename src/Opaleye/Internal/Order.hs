@@ -60,10 +60,10 @@ orderByU os (columns, primQ) = (columns, primQ')
 orderExprs :: a -> Order a -> [HPQ.OrderExpr]
 orderExprs x (Order os) = map (uncurry HPQ.OrderExpr) (os x)
 
-limit' :: Int -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
+limit' :: HPQ.PrimExpr -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
 limit' n (x, q) = (x, PQ.Limit (PQ.LimitOp n) q)
 
-offset' :: Int -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
+offset' :: HPQ.PrimExpr -> (a, PQ.PrimQuery) -> (a, PQ.PrimQuery)
 offset' n (x, q) = (x, PQ.Limit (PQ.OffsetOp n) q)
 
 distinctOn :: U.Unpackspec b b -> (a -> b)
@@ -75,8 +75,9 @@ distinctOnBy :: U.Unpackspec b b -> (a -> b) -> Order a
 distinctOnBy ups proj ord (cols, pq) = (cols, pqOut)
     where pqOut = case NL.nonEmpty (U.collectPEs ups (proj cols)) of
             Just xs -> PQ.DistinctOnOrderBy (Just xs) oexprs pq
-            Nothing -> PQ.Limit (PQ.LimitOp 1) (PQ.DistinctOnOrderBy Nothing oexprs pq)
+            Nothing -> PQ.Limit (PQ.LimitOp one) (PQ.DistinctOnOrderBy Nothing oexprs pq)
           oexprs = orderExprs cols ord
+          one = HPQ.ConstExpr (HPQ.IntegerLit 1)
 
 -- | Order the results of a given query exactly, as determined by the given list
 -- of input fields. Note that this list does not have to contain an entry for
