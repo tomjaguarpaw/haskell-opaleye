@@ -75,8 +75,9 @@ distinctOnBy :: U.Unpackspec b b -> (a -> b) -> Order a
 distinctOnBy ups proj ord (cols, pq) = (cols, pqOut)
     where pqOut = case NL.nonEmpty (U.collectPEs ups (proj cols)) of
             Just xs -> PQ.DistinctOnOrderBy (Just xs) oexprs pq
-            Nothing -> PQ.Limit (PQ.LimitOp 1) (PQ.DistinctOnOrderBy Nothing oexprs pq)
+            Nothing -> PQ.Limit (PQ.LimitOp one) (PQ.DistinctOnOrderBy Nothing oexprs pq)
           oexprs = orderExprs cols ord
+          one = 1
 
 -- | Order the results of a given query exactly, as determined by the given list
 -- of input fields. Note that this list does not have to contain an entry for
