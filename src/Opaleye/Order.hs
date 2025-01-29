@@ -12,7 +12,9 @@ module Opaleye.Order ( -- * Order by
                      , descNullsFirst
                      -- * Limit and offset
                      , limit
+                     , dynamicLimit
                      , offset
+                     , dynamicOffset
                      -- * Distinct on
                      , distinctOn
                      , distinctOnBy
@@ -123,8 +125,12 @@ not what you want).
 SELECT * FROM (SELECT * FROM yourTable LIMIT 10) OFFSET 50
 @
 -}
-limit :: F.Field T.SqlInt8 -> S.Select a -> S.Select a
-limit (C.Column n) a = Q.productQueryArr $ do
+limit :: Int -> S.Select a -> S.Select a
+limit = dynamicLimit . fromIntegral
+
+-- | A version of 'limit' that can accept a dynamic SQL expression.
+dynamicLimit :: F.Field T.SqlInt8 -> S.Select a -> S.Select a
+dynamicLimit (C.Column n) a = Q.productQueryArr $ do
   a_pq <- Q.runSimpleSelect a
   pure (O.limit' n a_pq)
 
@@ -135,8 +141,12 @@ that many result rows.
 /WARNING:/ Please read the documentation of 'limit' before combining
 'offset' with 'limit'.
 -}
-offset :: F.Field T.SqlInt8 -> S.Select a -> S.Select a
-offset (C.Column n) a = Q.productQueryArr $ do
+offset :: Int -> S.Select a -> S.Select a
+offset = dynamicOffset . fromIntegral
+
+-- | A version of 'offset' that can accept a dynamic SQL expression.
+dynamicOffset :: F.Field T.SqlInt8 -> S.Select a -> S.Select a
+dynamicOffset (C.Column n) a = Q.productQueryArr $ do
   a_pq <- Q.runSimpleSelect a
   pure (O.offset' n a_pq)
 
