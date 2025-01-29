@@ -47,8 +47,8 @@ data From = From {
   groupBy    :: Maybe (NEL.NonEmpty HSql.SqlExpr),
   orderBy    :: [(HSql.SqlExpr, HSql.SqlOrder)],
   distinctOn :: Maybe (NEL.NonEmpty HSql.SqlExpr),
-  limit      :: Maybe Int,
-  offset     :: Maybe Int,
+  limit      :: Maybe HSql.SqlExpr,
+  offset     :: Maybe HSql.SqlExpr,
   for        :: Maybe LockStrength
   }
           deriving Show
@@ -231,9 +231,9 @@ limit_ lo s = SelectFrom $ newSelect { tables = oneTable s
                                      , limit = limit'
                                      , offset = offset' }
   where (limit', offset') = case lo of
-          PQ.LimitOp n         -> (Just n, Nothing)
-          PQ.OffsetOp n        -> (Nothing, Just n)
-          PQ.LimitOffsetOp l o -> (Just l, Just o)
+          PQ.LimitOp n         -> (Just (sqlExpr n), Nothing)
+          PQ.OffsetOp n        -> (Nothing, Just (sqlExpr n))
+          PQ.LimitOffsetOp l o -> (Just (sqlExpr l), Just (sqlExpr o))
 
 join :: PQ.JoinType
      -> HPQ.PrimExpr

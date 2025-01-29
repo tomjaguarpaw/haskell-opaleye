@@ -739,6 +739,38 @@ testLimitOffset = it "" $ limitOrderShouldMatch (O.limit 2 . O.offset 2) (take 2
 testOffsetLimit :: Test
 testOffsetLimit = it "" $ limitOrderShouldMatch (O.offset 2 . O.limit 2) (drop 2 . take 2)
 
+limitFieldOrderShouldMatch
+  :: (Field O.SqlInt8 -> Select (Field O.SqlInt4, Field O.SqlInt4) -> Select (Field O.SqlInt4, Field O.SqlInt4))
+  -> (Int -> [(Int, Int)] -> [(Int, Int)])
+  -> (PGS.Connection -> Expectation)
+limitFieldOrderShouldMatch olQ ol =
+  testH
+    (nsQ >>= \n -> olQ n (orderQ table1Q))
+    ((ns >>= \n -> ol n (order table1data)) `shouldBe`)
+  where
+    orderQ = O.orderBy (O.desc snd)
+    order = L.sortBy (flip (Ord.comparing snd))
+    ns = [1, 2, 3, 4]
+    nsQ = O.values $ fromIntegral <$> ns
+
+testLimitField :: Test
+testLimitField = it "" $ limitFieldOrderShouldMatch O.limitField take
+
+testOffsetField :: Test
+testOffsetField = it "" $ limitFieldOrderShouldMatch O.offsetField drop
+
+testLimitFieldOffset :: Test
+testLimitFieldOffset = it "" $
+  limitFieldOrderShouldMatch
+    (\n -> O.limitField n . O.offsetField n)
+    (\n -> take n . drop n)
+
+testOffsetFieldLimit :: Test
+testOffsetFieldLimit = it "" $
+  limitFieldOrderShouldMatch
+    (\n -> O.offsetField n . O.limitField n)
+    (\n -> drop n . take n)
+
 testDistinctAndAggregate :: Test
 testDistinctAndAggregate = it "" $ q `selectShouldReturnSorted` expectedResult
   where q = O.distinct table1Q
@@ -1595,6 +1627,11 @@ main = do
         testOffset
         testLimitOffset
         testOffsetLimit
+      describe "limit field" $ do
+        testLimitField
+        testOffsetField
+        testLimitFieldOffset
+        testOffsetFieldLimit
       describe "double" $ do
         testDoubleDistinct
         testDoubleLeftJoin
