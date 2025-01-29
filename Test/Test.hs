@@ -739,6 +739,32 @@ testLimitOffset = it "" $ limitOrderShouldMatch (O.limit 2 . O.offset 2) (take 2
 testOffsetLimit :: Test
 testOffsetLimit = it "" $ limitOrderShouldMatch (O.offset 2 . O.limit 2) (drop 2 . take 2)
 
+dynamicLimitOrderShouldMatch
+  :: (Field O.SqlInt8 -> Select (Field O.SqlInt4, Field O.SqlInt4) -> Select (Field O.SqlInt4, Field O.SqlInt4))
+  -> (Int -> [(Int, Int)] -> [(Int, Int)])
+  -> (PGS.Connection -> Expectation)
+dynamicLimitOrderShouldMatch olQ ol =
+  testH
+    (nsQ >>= \n -> olQ n (orderQ table1Q))
+    ((ns >>= \n -> ol n (order table1data)) `shouldBe`)
+  where
+    orderQ = O.orderBy (O.desc snd)
+    order = L.sortBy (flip (Ord.comparing snd))
+    ns = [1, 2, 3, 4]
+    nsQ = O.values $ fromIntegral <$> ns
+
+testDynamicLimit :: Test
+testDynamicLimit = it "" $ dynamicLimitOrderShouldMatch O.dynamicLimit take
+
+testDynamicOffset :: Test
+testDynamicOffset = it "" $ dynamicLimitOrderShouldMatch O.dynamicOffset drop
+
+testDynamicLimitOffset :: Test
+testDynamicLimitOffset = it "" $ dynamicLimitOrderShouldMatch (\n -> O.dynamicLimit n . O.dynamicOffset n) (\n -> take n . drop n)
+
+testDynamicOffsetLimit :: Test
+testDynamicOffsetLimit = it "" $ dynamicLimitOrderShouldMatch (\n -> O.dynamicOffset n . O.dynamicLimit n) (\n -> drop n . take n)
+
 testDistinctAndAggregate :: Test
 testDistinctAndAggregate = it "" $ q `selectShouldReturnSorted` expectedResult
   where q = O.distinct table1Q
@@ -1595,6 +1621,11 @@ main = do
         testOffset
         testLimitOffset
         testOffsetLimit
+      describe "dynamic limit" $ do
+        testDynamicLimit
+        testDynamicOffset
+        testDynamicLimitOffset
+        testDynamicOffsetLimit
       describe "double" $ do
         testDoubleDistinct
         testDoubleLeftJoin
