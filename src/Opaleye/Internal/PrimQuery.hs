@@ -9,9 +9,9 @@ import qualified Opaleye.Internal.HaskellDB.Sql as HSql
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import           Opaleye.Internal.HaskellDB.PrimQuery (Symbol)
 
-data LimitOp = LimitOp Int
-             | OffsetOp Int
-             | LimitOffsetOp Int Int
+data LimitOp = LimitOp HPQ.PrimExpr
+             | OffsetOp HPQ.PrimExpr
+             | LimitOffsetOp HPQ.PrimExpr HPQ.PrimExpr
              deriving Show
 
 data BinOp = Except

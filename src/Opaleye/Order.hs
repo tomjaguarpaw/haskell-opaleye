@@ -12,7 +12,9 @@ module Opaleye.Order ( -- * Order by
                      , descNullsFirst
                      -- * Limit and offset
                      , limit
+                     , limitField
                      , offset
+                     , offsetField
                      -- * Distinct on
                      , distinctOn
                      , distinctOnBy
@@ -30,6 +32,7 @@ module Opaleye.Order ( -- * Order by
 
 import qualified Data.Profunctor.Product.Default as D
 import qualified Opaleye.Field as F
+import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Order as O
 import qualified Opaleye.Internal.QueryArr as Q
@@ -123,7 +126,12 @@ SELECT * FROM (SELECT * FROM yourTable LIMIT 10) OFFSET 50
 @
 -}
 limit :: Int -> S.Select a -> S.Select a
-limit n a = Q.productQueryArr $ do
+limit = limitField . fromIntegral
+
+-- | A version of 'limit' that can accept a @Field@ rather than a
+-- constant @Int@.
+limitField :: F.Field T.SqlInt8 -> S.Select a -> S.Select a
+limitField (C.Column n) a = Q.productQueryArr $ do
   a_pq <- Q.runSimpleSelect a
   pure (O.limit' n a_pq)
 
@@ -135,7 +143,12 @@ that many result rows.
 'offset' with 'limit'.
 -}
 offset :: Int -> S.Select a -> S.Select a
-offset n a = Q.productQueryArr $ do
+offset = offsetField . fromIntegral
+
+-- | A version of 'offset' that can accept a @Field@ rather than a
+-- constant @Int@.
+offsetField :: F.Field T.SqlInt8 -> S.Select a -> S.Select a
+offsetField (C.Column n) a = Q.productQueryArr $ do
   a_pq <- Q.runSimpleSelect a
   pure (O.offset' n a_pq)
 

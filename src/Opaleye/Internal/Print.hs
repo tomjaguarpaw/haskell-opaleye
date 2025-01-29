@@ -192,13 +192,18 @@ ppGroupBy :: Maybe (NEL.NonEmpty HSql.SqlExpr) -> Doc
 ppGroupBy Nothing   = empty
 ppGroupBy (Just xs) = HPrint.ppGroupBy (NEL.toList xs)
 
-ppLimit :: Maybe Int -> Doc
+ppLimit :: Maybe HSql.SqlExpr -> Doc
 ppLimit Nothing = empty
-ppLimit (Just n) = text ("LIMIT " ++ show n)
+ppLimit (Just n) = text "LIMIT" <+> ppSqlExprParens n
 
-ppOffset :: Maybe Int -> Doc
+ppOffset :: Maybe HSql.SqlExpr -> Doc
 ppOffset Nothing = empty
-ppOffset (Just n) = text ("OFFSET " ++ show n)
+ppOffset (Just n) = text "OFFSET" <+> ppSqlExprParens n
+
+ppSqlExprParens :: HSql.SqlExpr -> Doc
+ppSqlExprParens = \case
+  HSql.ConstSqlExpr a -> text a
+  a -> parens (HPrint.ppSqlExpr a)
 
 ppFor :: Maybe Sql.LockStrength -> Doc
 ppFor Nothing       = empty
