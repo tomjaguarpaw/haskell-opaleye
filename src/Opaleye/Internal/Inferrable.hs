@@ -24,7 +24,7 @@ import qualified Data.Time.Compat as Time
 import           Data.Typeable (Typeable)
 import           Data.UUID.Types (UUID)
 import qualified Database.PostgreSQL.Simple.Range as R
-import           GHC.Int (Int32, Int64)
+import           GHC.Int (Int16, Int32, Int64)
 
 -- | Despite its name, 'Inferrable' doesn't provide any inferability
 -- improvements itself, it's just a conveniently-named newtype wrapper
@@ -50,6 +50,9 @@ inferrableDef :: D.Default p a b => Inferrable p a b
 inferrableDef = inferrable D.def
 
 -- FromField
+
+instance int16 ~ Int16 => D.Default (Inferrable FromField) T.SqlInt2 int16 where
+  def = inferrableDef
 
 instance int ~ Int => D.Default (Inferrable FromField) T.SqlInt4 int where
   def = inferrableDef

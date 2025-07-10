@@ -74,6 +74,9 @@ instance D.Default ToFields LT.Text (Field T.SqlVarcharN) where
 instance D.Default ToFields Sci.Scientific (Field T.SqlNumeric) where
   def = toToFields T.sqlNumeric
 
+instance D.Default ToFields Int.Int16 (Field T.SqlInt2) where
+  def = toToFields $ T.sqlInt2 . fromIntegral
+
 instance D.Default ToFields Int (Field T.SqlInt4) where
   def = toToFields T.sqlInt4
 
