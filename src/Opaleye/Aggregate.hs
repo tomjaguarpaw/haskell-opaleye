@@ -19,6 +19,7 @@ module Opaleye.Aggregate
        -- * Basic 'Aggregator's
        , groupBy
        , Opaleye.Aggregate.sum
+       , sumInt2
        , sumInt4
        , sumInt8
        , count
@@ -140,6 +141,9 @@ groupBy = A.makeAggr' Nothing
 -- use 'sumInt4' or 'sumInt8' instead.
 sum :: Aggregator (F.Field a) (F.Field a)
 sum = A.unsafeSum
+
+sumInt2 :: Aggregator (F.Field T.SqlInt2) (F.Field T.SqlInt8)
+sumInt2 = fmap F.unsafeCoerceField Opaleye.Aggregate.sum
 
 sumInt4 :: Aggregator (F.Field T.SqlInt4) (F.Field T.SqlInt8)
 sumInt4 = fmap F.unsafeCoerceField Opaleye.Aggregate.sum
