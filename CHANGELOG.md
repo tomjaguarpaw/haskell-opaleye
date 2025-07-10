@@ -1,3 +1,7 @@
+## 0.10.6.0
+
+* Added `int2` functions and instances (thanks to @fpringle)
+
 ## 0.10.5.0
 
 * Added `Opaleye.Inferrable`
