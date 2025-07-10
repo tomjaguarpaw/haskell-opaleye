@@ -9,6 +9,7 @@ module Opaleye.SqlTypes (
   sqlDouble,
   sqlInt8,
   sqlNumeric,
+  sqlInt2,
   -- ** Types
   SqlInt4,
   SqlFloat8,
@@ -125,7 +126,7 @@ import qualified Data.Aeson as Ae
 import qualified Data.ByteString as SByteString
 import qualified Data.ByteString.Lazy as LByteString
 import qualified Data.CaseInsensitive as CI
-import           Data.Int (Int64)
+import           Data.Int (Int16, Int64)
 import           Data.Scientific as Sci
 import qualified Data.Text as SText
 import qualified Data.Text.Lazy as LText
@@ -153,6 +154,9 @@ sqlLazyText = P.pgLazyText
 
 sqlNumeric :: Sci.Scientific -> F.Field SqlNumeric
 sqlNumeric = P.pgNumeric
+
+sqlInt2 :: Int16 -> F.Field SqlInt2
+sqlInt2 = P.pgInt2
 
 sqlInt4 :: Int -> F.Field SqlInt4
 sqlInt4 = P.pgInt4

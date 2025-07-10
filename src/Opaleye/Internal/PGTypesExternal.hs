@@ -88,6 +88,9 @@ sqlLazyTextVarcharN = IPT.literalColumn . HPQ.StringLit . LText.unpack
 pgNumeric :: Sci.Scientific -> Field PGNumeric
 pgNumeric = IPT.literalColumn . HPQ.NumericLit
 
+pgInt2 :: Int16 -> Field PGInt2
+pgInt2 = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
+
 pgInt4 :: Int -> Field PGInt4
 pgInt4 = IPT.literalColumn . HPQ.IntegerLit . fromIntegral
 
