@@ -45,7 +45,7 @@ import qualified Data.Time.Compat as Time
 import qualified Data.Scientific as Sci
 import qualified Data.String as String
 import           Data.UUID.Types (UUID)
-import           GHC.Int (Int32, Int64)
+import           GHC.Int (Int16, Int32, Int64)
 
 -- { Only needed for postgresql-simple FieldParsers
 
@@ -178,6 +178,9 @@ instance DefaultFromField sqlType haskellType
   def = defaultFromField
 
 instance DefaultFromField T.SqlNumeric Sci.Scientific where
+  defaultFromField = fromPGSFromField
+
+instance DefaultFromField T.SqlInt2 Int16 where
   defaultFromField = fromPGSFromField
 
 instance DefaultFromField T.SqlInt4 Int where

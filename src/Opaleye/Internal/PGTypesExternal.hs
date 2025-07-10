@@ -26,12 +26,15 @@ import           Data.Scientific as Sci
 import qualified Data.Time.Compat as Time
 import qualified Data.UUID.Types as UUID
 
-import           Data.Int (Int64)
+import           Data.Int (Int16, Int64)
 
 import qualified Database.PostgreSQL.Simple.Range as R
 
 instance C.SqlNum SqlFloat8 where
   sqlFromInteger = pgDouble . fromInteger
+
+instance C.SqlNum SqlInt2 where
+  sqlFromInteger = pgInt2 . fromInteger
 
 instance C.SqlNum SqlInt4 where
   sqlFromInteger = pgInt4 . fromInteger
