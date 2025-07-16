@@ -1,3 +1,5 @@
+## 0.10.7.0
+
 * Added `unsafeCastSqlType`, `typedNull` and `untypedNull`, allowing
   workaround for
   [#621](https://github.com/tomjaguarpaw/haskell-opaleye/issues/621).
