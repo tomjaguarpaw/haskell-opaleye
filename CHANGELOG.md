@@ -1,3 +1,8 @@
+* Added `unsafeCastSqlType`, `typedNull` and `untypedNull`, allowing
+  workaround for
+  [#621](https://github.com/tomjaguarpaw/haskell-opaleye/issues/621).
+  Thanks to @fpringle.
+
 ## 0.10.6.0
 
 * Added `int2` functions and instances (thanks to @fpringle)
