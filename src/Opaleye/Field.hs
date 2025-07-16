@@ -1,3 +1,6 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+
 -- | Functions for working directly with 'Field_'s.
 --
 -- Please note that numeric 'Field_' types are instances of 'Num', so
@@ -25,11 +28,14 @@ module Opaleye.Field (
   Nullability(..),
   -- * Casting fields
   C.unsafeCast,
+  unsafeCastSqlType,
   unsafeCoerceField,
   -- * Working with @NULL@
   -- | Instead of working with @NULL@ you are recommended to use
   -- "Opaleye.MaybeFields" instead.
   Opaleye.Field.null,
+  typedNull,
+  untypedNull,
   isNull,
   matchNullable,
   fromNullable,
@@ -45,11 +51,31 @@ import qualified Opaleye.Internal.Column   as C
 import qualified Opaleye.Internal.PGTypesExternal  as T
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
+import           Data.Proxy (Proxy(Proxy))
+
 -- FIXME Put Nullspec (or sqltype?) constraint on this
 
--- | A @NULL@ of any type
+-- | A @NULL@ of any type.  This will change to become 'typedNull' in
+-- a future version.
 null :: FieldNullable a
 null = Column (HPQ.ConstExpr HPQ.NullLit)
+
+-- | Cast a column to any other type, as long as it has an instance of
+-- 'T.IsSqlType'.  Should be used in preference to 'C.unsafeCast'.
+unsafeCastSqlType :: forall a b n. (T.IsSqlType b) => Field_ n a -> Field_ n b
+unsafeCastSqlType = C.unsafeCast (T.showSqlType @b Proxy)
+
+-- | Same as 'null', but with an explicit type @CAST@. This can help
+-- in situations when PostgreSQL can't figure out the type of a
+-- @NULL@. In a future major version this will replace @null@.
+typedNull :: T.IsSqlType a => FieldNullable a
+typedNull = unsafeCastSqlType null
+
+-- | A @NULL@ of any type with no @CAST@ supplied.  Use this in
+-- preference to 'null' if you really don't want a type cast applied
+-- to your @NULL@.
+untypedNull :: FieldNullable a
+untypedNull = null
 
 -- | @TRUE@ if the value of the field is @NULL@, @FALSE@ otherwise.
 isNull :: FieldNullable a -> Field T.PGBool

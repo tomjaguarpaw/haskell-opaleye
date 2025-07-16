@@ -1527,6 +1527,17 @@ testSetAggregate = do
         expectation :: Double
         expectation = 2.5
 
+-- See https://github.com/tomjaguarpaw/haskell-opaleye/issues/621
+testSelectCaseNull :: Test
+testSelectCaseNull = do
+  it "" $ testH query (`shouldBe` expectation)
+    where query :: Select (O.FieldNullable O.SqlInt4)
+          -- Fails with null instead of typedNull
+          query = O.values [O.toNullable 0, O.ifThenElse (O.toFields True) O.typedNull O.typedNull]
+
+          expectation :: [Maybe Int]
+          expectation = [Just 0, Nothing]
+
 main :: IO ()
 main = do
   let envVarName = "POSTGRES_CONNSTRING"
@@ -1672,6 +1683,7 @@ main = do
         testUpdate
         testDeleteReturning
         testInsertConflict
+        testSelectCaseNull
       describe "range" $ do
         testRangeOverlap
         testRangeDateOverlap
