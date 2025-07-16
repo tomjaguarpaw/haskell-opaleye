@@ -47,7 +47,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 -- FIXME Put Nullspec (or sqltype?) constraint on this
 
--- | A NULL of any type
+-- | A @NULL@ of any type
 null :: FieldNullable a
 null = Column (HPQ.ConstExpr HPQ.NullLit)
 
