@@ -188,7 +188,7 @@ ppSqlExpr expr =
       ListSqlExpr es         -> parens (commaH ppSqlExpr (NEL.toList es))
       ParamSqlExpr _ v       -> ppSqlExpr v
       PlaceHolderSqlExpr     -> text "?"
-      CastSqlExpr typ e      -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> text typ)
+      CastSqlExpr typ e      -> text "CAST" <> parens (ppSqlExpr e <+> text "AS" <+> doubleQuotes (text typ))
       DefaultSqlExpr         -> text "DEFAULT"
       ArraySqlExpr es        -> text "ARRAY" <> brackets (commaH ppSqlExpr es)
       RangeSqlExpr t s e     -> ppRange t s e
