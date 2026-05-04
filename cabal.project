@@ -1,1 +1,3 @@
 packages: opaleye.cabal
+
+allow-newer: postgresql-simple:base, postgresql-simple:template-haskell, postgresql-simple:containers
