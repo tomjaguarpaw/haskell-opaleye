@@ -439,7 +439,8 @@ arrayPosition (Column fs) (Column f') =
 
 -- | Whether the element (needle) exists in the array (haystack).
 -- N.B. this is implemented hackily using @array_position@.  If you
--- need it to be implemented using @= any@ then please open an issue.
+-- want the equivalent implemented using @= any@ then use
+-- 'sqlElemAny'.
 sqlElem :: F.Field_ n a -- ^ Needle
         -> F.Field (T.SqlArray_ n a) -- ^ Haystack
         -> F.Field T.SqlBool
