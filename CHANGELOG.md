@@ -1,3 +1,8 @@
+## 0.10.8.0
+
+* Added `sqlElemAny`, a version of `sqlElem` that uses `= any` under
+  the hood.  (Thanks to @simmsb).
+
 ## 0.10.7.0
 
 * Added `unsafeCastSqlType`, `typedNull` and `untypedNull`, allowing
