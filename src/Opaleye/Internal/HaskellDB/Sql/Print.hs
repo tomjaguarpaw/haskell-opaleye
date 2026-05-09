@@ -181,6 +181,7 @@ ppSqlExpr expr =
       ParensSqlExpr e        -> parens (ppSqlExpr e)
       SubscriptSqlExpr e1 e2 -> ppSqlExpr e1 <> brackets (ppSqlExpr e2)
       BinSqlExpr op e1 e2    -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2
+      AnySqlExpr op e1 e2    -> ppSqlExpr e1 <+> text op <+> text "ANY" <+> parens (ppSqlExpr e2)
       PrefixSqlExpr op e     -> text op <+> ppSqlExpr e
       PostfixSqlExpr op e    -> ppSqlExpr e <+> text op
       FunSqlExpr f es        -> text f <> parens (commaH ppSqlExpr es)

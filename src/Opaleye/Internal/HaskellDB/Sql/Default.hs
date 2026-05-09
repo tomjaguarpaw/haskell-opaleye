@@ -124,6 +124,10 @@ defaultSqlExpr gen expr =
                 (leftE, paren rightE)
               _ -> (paren leftE, paren rightE)
         in BinSqlExpr (showBinOp op) expL expR
+      AnyExpr op e1 e2 ->
+        let leftE = sqlExpr gen e1
+            rightE = sqlExpr gen e2
+        in AnySqlExpr (showBinOp op) (ParensSqlExpr leftE) rightE
       UnExpr op e      -> let (op',t) = sqlUnOp op
                               e' = sqlExpr gen e
                            in case t of

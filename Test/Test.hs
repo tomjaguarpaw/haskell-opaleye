@@ -1134,6 +1134,15 @@ testSqlElem = do
     testH (A.pure (O.sqlElem 999 (O.sqlArray O.sqlInt4 [5,6,7])))
           (`shouldBe` [False])
 
+testSqlElemAny :: Test
+testSqlElemAny = do
+  it "checks presence of the element (SqlInt4)" $
+    testH (A.pure (O.sqlElemAny 5 (O.sqlArray O.sqlInt4 [5,6,7])))
+          (`shouldBe` [True])
+  it "checks absence of the element (SqlInt4)" $
+    testH (A.pure (O.sqlElemAny 999 (O.sqlArray O.sqlInt4 [5,6,7])))
+          (`shouldBe` [False])
+
 type JsonTest a = SpecWith (Select (Field a) -> PGS.Connection -> Expectation)
 -- Test opaleye's equivalent of c1->'c'
 testJsonGetFieldValue :: (O.SqlIsJson a, DefaultFromField a Json.Value)
@@ -1658,6 +1667,7 @@ main = do
         testArrayAppend
         testArrayPosition
         testSqlElem
+        testSqlElemAny
       describe "joins" $ do
         testLeftJoin
         testLeftJoinNullable

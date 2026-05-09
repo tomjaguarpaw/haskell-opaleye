@@ -23,6 +23,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | BaseTableAttrExpr Attribute
                 | CompositeExpr     PrimExpr Attribute -- ^ Composite Type Query
                 | BinExpr   BinOp PrimExpr PrimExpr
+                | AnyExpr   BinOp PrimExpr PrimExpr -- ^ <expr> <op> ANY(<expr>)
                 | UnExpr    UnOp PrimExpr
                 | AggrExpr  (Aggr' PrimExpr)
                 | WndwExpr  WndwOp Partition

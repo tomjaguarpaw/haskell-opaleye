@@ -86,6 +86,7 @@ module Opaleye.Operators
   , index
   , arrayPosition
   , sqlElem
+  , sqlElemAny
   -- * Range operators
   , overlap
   , liesWithin
@@ -443,6 +444,13 @@ sqlElem :: F.Field_ n a -- ^ Needle
         -> F.Field (T.SqlArray_ n a) -- ^ Haystack
         -> F.Field T.SqlBool
 sqlElem f fs = (O.not . F.isNull . arrayPosition fs) f
+
+-- | Whether the element (needle) exists in the array (haystack).
+-- This is implemented using @= any@.
+sqlElemAny :: F.Field_ n a -- ^ Needle
+           -> F.Field (T.SqlArray_ n a) -- ^ Haystack
+           -> F.Field T.SqlBool
+sqlElemAny (Column f) (Column fs) = Column $ HPQ.AnyExpr (HPQ.:==) f fs
 
 overlap :: Field (T.SqlRange a) -> Field (T.SqlRange a) -> F.Field T.SqlBool
 overlap = C.binOp (HPQ.:&&)
