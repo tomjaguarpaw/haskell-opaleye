@@ -29,7 +29,7 @@ data SemijoinType = Semi | Anti deriving Show
 data TableIdentifier = TableIdentifier
   { tiSchemaName :: Maybe String
   , tiTableName  :: String
-  } deriving Show
+  } deriving (Show, Eq, Ord)
 
 tiToSqlTable :: TableIdentifier -> HSql.SqlTable
 tiToSqlTable ti = HSql.SqlTable { HSql.sqlTableSchemaName = tiSchemaName ti
