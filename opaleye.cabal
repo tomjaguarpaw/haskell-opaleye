@@ -29,7 +29,7 @@ library
                       FlexibleInstances
   hs-source-dirs: src
   build-depends:
-      aeson               >= 0.6     && < 2.3
+      aeson               >= 0.6     && < 2.4
     , base                >= 4.9     && < 4.22
     , base16-bytestring   >= 0.1.1.6 && < 1.1
     , case-insensitive    >= 1.2     && < 1.3
