@@ -356,5 +356,5 @@ doUpdateEasy :: ( D.Default U.Unpackspec conflictCols conflictCols
              -- ^ Update function; receives the @EXCLUDED@ pseudo-row
              -> HSql.OnConflict
 doUpdateEasy table conflictTarget updateFn =
-  MI.arrangeDoUpdate D.def D.def table conflictTarget (u' . updateFn)
+  doUpdate table conflictTarget (u' . updateFn)
   where Updater u' = D.def

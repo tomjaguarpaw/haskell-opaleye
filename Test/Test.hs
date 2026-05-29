@@ -1,10 +1,10 @@
-{-# LANGUAGE Arrows                #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE Arrows              #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell     #-}
 
 module Main where
 
@@ -154,20 +154,15 @@ table11 :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
                    (Field O.SqlInt4, Field O.SqlInt4)
 table11 = O.table "table11" (PP.p2 (required "column1", required "column2"))
 
-data UpsertRow' a b = UpsertRow
-  { upsertKey :: a
-  , upsertVal :: b
-  } deriving (Show, Eq, Ord)
+upsertTable :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
+                   (Field O.SqlInt4, Field O.SqlInt4)
+upsertTable = O.table "table12" (PP.p2 (required "column1", required "column2"))
 
-$(makeAdaptorAndInstance "pUpsertRow" ''UpsertRow')
+upsertKey :: (Field O.SqlInt4, Field O.SqlInt4) -> Field O.SqlInt4
+upsertKey = fst
 
-type UpsertRowFields = UpsertRow' (Field O.SqlInt4) (Field O.SqlInt4)
-
-upsertTable :: O.Table UpsertRowFields UpsertRowFields
-upsertTable = O.table "table11" $ pUpsertRow UpsertRow
-  { upsertKey = required "column1"
-  , upsertVal = required "column2"
-  }
+upsertVal :: (Field O.SqlInt4, Field O.SqlInt4) -> Field O.SqlInt4
+upsertVal = snd
 
 tableKeywordColNames :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
                                 (Field O.SqlInt4, Field O.SqlInt4)
@@ -313,7 +308,7 @@ fields2 t = (t, ["column1", "column2"])
 
 -- This should ideally be derived from the table definition above
 tables :: [Table_]
-tables = map fields2 ["table1", "TABLE2", "table3", "table4"]
+tables = map fields2 ["table1", "TABLE2", "table3", "table4", "table12"]
          ++ [("keywordtable", ["column", "where"])]
 
 serialTables :: [Table_]
@@ -1049,31 +1044,31 @@ testInsertConflict = it "inserts with conflicts" $ \conn -> do
 -- runs an upsert with the given conflict action, then checks the result.
 runUpsertTest :: O.OnConflict -> PGS.Connection -> IO ()
 runUpsertTest onConflict conn = do
-  _ <- O.runDelete_ conn O.Delete { O.dTable     = upsertTable
+  let t = upsertTable
+  _ <- O.runDelete_ conn O.Delete { O.dTable     = t
                                   , O.dWhere     = const (O.toFields True)
                                   , O.dReturning = O.rCount }
-  _ <- O.runInsert_ conn O.Insert { O.iTable      = upsertTable
+  _ <- O.runInsert_ conn O.Insert { O.iTable      = t
                                   , O.iRows       = initial
                                   , O.iReturning  = O.rCount
                                   , O.iOnConflict = Nothing }
-  _ <- O.runInsert_ conn O.Insert { O.iTable      = upsertTable
+  _ <- O.runInsert_ conn O.Insert { O.iTable      = t
                                   , O.iRows       = upserted
                                   , O.iReturning  = O.rCount
                                   , O.iOnConflict = Just onConflict }
-  rows <- O.runSelect conn (O.selectTable upsertTable) :: IO [UpsertRow' Int Int]
-  L.sort rows `shouldBe` [ UpsertRow 1 99
-                          , UpsertRow 2 20
-                          , UpsertRow 3 30 ]
+  rows <- O.runSelect conn (O.selectTable t) :: IO [(Int, Int)]
+  L.sort rows `shouldBe` [ (1, 99)
+                         , (2, 20)
+                         , (3, 30) ]
   where
-    initial  = [UpsertRow 1 10, UpsertRow 2 20] :: [UpsertRowFields]
-    upserted = [UpsertRow 1 99, UpsertRow 3 30] :: [UpsertRowFields]
+    initial  = [(1, 10), (2, 20)]
+    upserted = [(1, 99), (3, 30)]
 
 testDoUpdate :: Test
 testDoUpdate = it "doUpdate replaces conflicting rows using excluded values" $
   runUpsertTest
     (O.doUpdate upsertTable upsertKey
-      (\excl -> UpsertRow { upsertKey = upsertKey excl
-                          , upsertVal = upsertVal excl }))
+      (\excl -> (upsertKey excl, upsertVal excl)))
 
 testDoUpdateEasy :: Test
 testDoUpdateEasy = it "doUpdateEasy replaces conflicting rows without needing write-type wrappers" $

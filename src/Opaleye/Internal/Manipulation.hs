@@ -94,6 +94,11 @@ arrangeDoUpdate unpackConflict unpackR table conflictTarget updateFn =
     conflictPEs = U.collectPEs unpackConflict (conflictTarget columnsR)
     conflictSqlCols = map peToSqlColumn conflictPEs
     peToSqlColumn (HPQ.BaseTableAttrExpr a) = HSql.SqlColumn a
+    -- Erroring out on non table columns is suboptimal.  The way to
+    -- get around it is probably something we should have done all
+    -- along: have one type for true columns which you can read to get
+    -- a Field.  We're not going to do that yet, so let's live with
+    -- the lack of type safety.
     peToSqlColumn pe = error ("arrangeDoUpdate: conflict target must be a plain table column, got: " ++ show pe)
     excludedRow = I.runIdentity $ U.runUnpackspec unpackR toExcludedPE columnsR
     toExcludedPE (HPQ.BaseTableAttrExpr a) = I.Identity (HPQ.ExcludedAttrExpr a)
