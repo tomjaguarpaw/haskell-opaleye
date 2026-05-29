@@ -73,10 +73,20 @@ data SqlUpdate  = SqlUpdate SqlTable [(SqlColumn,SqlExpr)] [SqlExpr]
 -- | Data type for SQL DELETE statements.
 data SqlDelete  = SqlDelete SqlTable [SqlExpr]
 
+data SqlConflictTarget
+  = SqlConflictColumns [SqlColumn]
+  -- ^ @ON CONFLICT (col, ...)@
+  | SqlConflictConstraint String
+  -- ^ @ON CONFLICT ON CONSTRAINT name@
+  deriving Show
+
 {-# DEPRECATED DoNothing "Use 'doNothing' instead.  @DoNothing@ will be removed in version 0.11" #-}
 -- It won't be removed, it will just be made internal
 data OnConflict = DoNothing
                 -- ^ @ON CONFLICT DO NOTHING@
+                | DoUpdate SqlConflictTarget [(SqlColumn, SqlExpr)]
+                -- ^ @ON CONFLICT (...) DO UPDATE SET ...@
+                deriving Show
 
 --- | Data type for SQL INSERT statements.
 data SqlInsert  = SqlInsert SqlTable [SqlColumn] (NEL.NonEmpty [SqlExpr]) (Maybe OnConflict)

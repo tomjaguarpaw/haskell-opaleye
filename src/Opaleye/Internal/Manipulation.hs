@@ -4,7 +4,10 @@ module Opaleye.Internal.Manipulation where
 
 import qualified Control.Applicative as A
 
+import qualified Data.Functor.Identity as I
+
 import           Opaleye.Internal.Column (Field_(Column), Field)
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Sql  as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Default  as SD
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
@@ -76,6 +79,28 @@ arrangeInsertManySql :: T.Table columnsW columnsR
                      -> String
 arrangeInsertManySql =
   show . HPrint.ppInsert .:. arrangeInsertMany
+
+arrangeDoUpdate
+  :: U.Unpackspec conflictCols conflictCols
+  -> U.Unpackspec columnsR columnsR
+  -> T.Table columnsW columnsR
+  -> (columnsR -> conflictCols)
+  -> (columnsR -> columnsW)
+  -> HSql.OnConflict
+arrangeDoUpdate unpackConflict unpackR table conflictTarget updateFn =
+  HSql.DoUpdate (HSql.SqlConflictColumns conflictSqlCols) sqlAssigns
+  where
+    TI.View columnsR = TI.tableColumnsView (TI.tableColumns table)
+    conflictPEs = U.collectPEs unpackConflict (conflictTarget columnsR)
+    conflictSqlCols = map peToSqlColumn conflictPEs
+    peToSqlColumn (HPQ.BaseTableAttrExpr a) = HSql.SqlColumn a
+    peToSqlColumn pe = error ("arrangeDoUpdate: conflict target must be a plain table column, got: " ++ show pe)
+    excludedRow = I.runIdentity $ U.runUnpackspec unpackR toExcludedPE columnsR
+    toExcludedPE (HPQ.BaseTableAttrExpr a) = I.Identity (HPQ.ExcludedAttrExpr a)
+    toExcludedPE pe = I.Identity pe
+    writer = TI.tableColumnsWriter (TI.tableColumns table)
+    writerAssigns = TI.runWriter writer (updateFn excludedRow)
+    sqlAssigns = [(HSql.SqlColumn col, Sql.sqlExpr pe) | (pe, col) <- writerAssigns]
 
 runInsertManyReturningExplicit
   :: RS.FromFields columnsReturned haskells

@@ -24,7 +24,7 @@ import Prelude hiding ((<>))
 import Opaleye.Internal.HaskellDB.Sql (SqlColumn(..), SqlDelete(..),
                                SqlExpr(..), SqlOrder(..), SqlInsert(..),
                                SqlUpdate(..), SqlTable(..), SqlRangeBound(..),
-                               SqlPartition(..), OnConflict(..))
+                               SqlPartition(..), OnConflict(..), SqlConflictTarget(..))
 import qualified Opaleye.Internal.HaskellDB.Sql as Sql
 
 import Data.List (intersperse)
@@ -115,9 +115,19 @@ ppDelete (SqlDelete table criteria) =
     text "DELETE FROM" <+> ppTable table $$ ppWhere criteria
 
 
+ppConflictTarget :: SqlConflictTarget -> Doc
+ppConflictTarget (SqlConflictColumns [])   = empty
+ppConflictTarget (SqlConflictColumns cols) = parens (commaH ppColumn cols)
+ppConflictTarget (SqlConflictConstraint n) = text "ON CONSTRAINT" <+> doubleQuotes (text n)
+
 ppConflictStatement :: Maybe OnConflict -> Doc
 ppConflictStatement Nothing = text ""
 ppConflictStatement (Just DoNothing) = text "ON CONFLICT DO NOTHING"
+ppConflictStatement (Just (DoUpdate target assigns)) =
+  text "ON CONFLICT" <+> ppConflictTarget target
+  <+> text "DO UPDATE SET"
+  <+> commaV ppAssign assigns
+  where ppAssign (c, e) = ppColumn c <+> equals <+> ppSqlExpr e
 
 ppInsert :: SqlInsert -> Doc
 ppInsert (SqlInsert table names values onConflict)

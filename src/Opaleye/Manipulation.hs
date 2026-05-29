@@ -37,11 +37,11 @@ module Opaleye.Manipulation (-- * Insert
                              rReturningI,
                              rReturningExplicit,
                              -- * On conflict
-                             -- | Currently 'doNothing' is the
-                             -- only conflict action supported by
-                             -- Opaleye.
                              HSql.OnConflict,
                              doNothing,
+                             doUpdate,
+                             doUpdateEasy,
+                             doUpdateAll,
                              -- * Deprecated
                              runInsert_,
                              runUpdate_,
@@ -63,6 +63,7 @@ import           Opaleye.Internal.Helpers ((.:.))
 import           Opaleye.Internal.Inferrable (Inferrable, runInferrable)
 import           Opaleye.Internal.Manipulation (Updater(Updater))
 import qualified Opaleye.Internal.Manipulation as MI
+import qualified Opaleye.Internal.Unpackspec as U
 import           Opaleye.SqlTypes (SqlBool)
 
 import qualified Opaleye.Internal.HaskellDB.Sql as HSql
@@ -256,5 +257,104 @@ runUpdateReturningExplicit qr conn t update cond r =
         parser = IRQ.prepareRowParser qr (r v)
         TI.View v = TI.tableColumnsView (TI.tableColumns t)
 
+-- | Skip the conflicting row, leaving the existing row unchanged.
+--
+-- @
+-- iOnConflict = Just doNothing
+-- @
 doNothing :: HSql.OnConflict
 doNothing = HSql.DoNothing
+
+-- | Replace every column with the corresponding @EXCLUDED@ value on
+-- conflict.  This is the most common upsert pattern.  Equivalent to
+-- @'doUpdateEasy' table conflictTarget id@.
+--
+-- @
+-- -- data Stock' a b = Stock { sku :: a, quantity :: b }
+-- -- \$(makeAdaptorAndInstance \"pStock\" \'\'Stock\')
+-- -- type Stock = Stock' (Field SqlText) (Field SqlInt4)
+-- --
+-- -- stockTable :: Table Stock Stock
+-- -- stockTable = table "stock" $ pStock Stock
+-- --   { sku      = requiredTableField "sku"
+-- --   , quantity = requiredTableField "quantity"
+-- --   }
+-- -- On conflict: both sku and quantity are replaced with the new row's values.
+--
+-- iOnConflict = Just (doUpdateAll stockTable sku)
+-- @
+doUpdateAll :: ( D.Default U.Unpackspec conflictCols conflictCols
+               , D.Default U.Unpackspec fieldsR fieldsR
+               , D.Default MI.Updater fieldsR fieldsW
+               )
+            => T.Table fieldsW fieldsR
+            -> (fieldsR -> conflictCols)
+            -- ^ Columns forming the conflict target
+            -> HSql.OnConflict
+doUpdateAll table conflictTarget = doUpdateEasy table conflictTarget id
+
+-- | Build an @ON CONFLICT (...) DO UPDATE SET@ conflict action.
+-- The update function receives the @EXCLUDED@ pseudo-row and returns
+-- the new column values.  Optional columns (created with
+-- 'Opaleye.Table.optionalTableField') must be wrapped in 'Just';
+-- see 'doUpdateEasy' to avoid this.
+--
+-- @
+-- -- data Stock' a b c = Stock { sku :: a, quantity :: b, reserved :: c }
+-- -- \$(makeAdaptorAndInstance \"pStock\" \'\'Stock\')
+-- -- type Stock  = Stock' (Field SqlText) (Field SqlInt4) (Field SqlInt4)
+-- -- type StockW = Stock' (Field SqlText) (Maybe (Field SqlInt4)) (Maybe (Field SqlInt4))
+-- --
+-- -- stockTable :: Table StockW Stock
+-- -- stockTable = table "stock" $ pStock Stock
+-- --   { sku      = requiredTableField "sku"
+-- --   , quantity = optionalTableField "quantity"
+-- --   , reserved = optionalTableField "reserved"
+-- --   }
+-- -- On conflict: sku unchanged, quantity updated, reserved reset to DEFAULT.
+--
+-- iOnConflict = Just (doUpdate stockTable sku
+--     (\\excl -> Stock
+--         { sku      = sku excl       -- unchanged (equals conflict key)
+--         , quantity = Just (quantity excl)  -- updated (Just required)
+--         , reserved = Nothing               -- reset to column DEFAULT
+--         }))
+-- @
+doUpdate :: ( D.Default U.Unpackspec conflictCols conflictCols
+            , D.Default U.Unpackspec fieldsR fieldsR
+            )
+         => T.Table fieldsW fieldsR
+         -> (fieldsR -> conflictCols)
+         -- ^ Columns forming the conflict target
+         -> (fieldsR -> fieldsW)
+         -- ^ Update function; receives the @EXCLUDED@ pseudo-row
+         -> HSql.OnConflict
+doUpdate = MI.arrangeDoUpdate D.def D.def
+
+-- | Like 'doUpdate' but optional columns do not need to be wrapped in
+-- 'Just'.
+--
+-- @
+-- -- (same stockTable as 'doUpdate' above)
+-- -- On conflict: sku unchanged, quantity updated, reserved reset to DEFAULT.
+-- -- No Just wrapping needed — compare with 'doUpdate'.
+--
+-- iOnConflict = Just (doUpdateEasy stockTable sku
+--     (\\excl -> excl
+--         { quantity = quantity excl  -- updated (no Just needed)
+--         , reserved = reserved excl  -- updated (no Just needed)
+--         }))
+-- @
+doUpdateEasy :: ( D.Default U.Unpackspec conflictCols conflictCols
+                , D.Default U.Unpackspec fieldsR fieldsR
+                , D.Default MI.Updater fieldsR fieldsW
+                )
+             => T.Table fieldsW fieldsR
+             -> (fieldsR -> conflictCols)
+             -- ^ Columns forming the conflict target
+             -> (fieldsR -> fieldsR)
+             -- ^ Update function; receives the @EXCLUDED@ pseudo-row
+             -> HSql.OnConflict
+doUpdateEasy table conflictTarget updateFn =
+  MI.arrangeDoUpdate D.def D.def table conflictTarget (u' . updateFn)
+  where Updater u' = D.def
