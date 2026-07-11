@@ -308,7 +308,7 @@ fields2 t = (t, ["column1", "column2"])
 
 -- This should ideally be derived from the table definition above
 tables :: [Table_]
-tables = map fields2 ["table1", "TABLE2", "table3", "table4", "table12"]
+tables = map fields2 ["table1", "TABLE2", "table3", "table4"]
          ++ [("keywordtable", ["column", "where"])]
 
 serialTables :: [Table_]
@@ -324,7 +324,11 @@ jsonbTables :: [Table_]
 jsonbTables = [("table9", ["column1"])]
 
 conflictTables :: [Table_]
-conflictTables = [("table10", ["column1"]), ("table11", ["column1", "column2"])]
+conflictTables =
+  [ ("table10", ["column1"]),
+    ("table11", ["column1", "column2"]),
+    ("table12", ["column1", "column2"])
+  ]
 
 dropAndCreateDB :: PGS.Connection -> IO ()
 dropAndCreateDB conn = do
