@@ -85,7 +85,7 @@ arrangeDoUpdate
   -> U.Unpackspec columnsR columnsR
   -> T.Table columnsW columnsR
   -> (columnsR -> conflictCols)
-  -> (columnsR -> columnsW)
+  -> (columnsR -> columnsR -> columnsW)
   -> HSql.OnConflict
 arrangeDoUpdate unpackConflict unpackR table conflictTarget updateFn =
   HSql.DoUpdate (HSql.SqlConflictColumns conflictSqlCols) sqlAssigns
@@ -95,11 +95,17 @@ arrangeDoUpdate unpackConflict unpackR table conflictTarget updateFn =
     conflictSqlCols = map peToSqlColumn conflictPEs
     peToSqlColumn (HPQ.BaseTableAttrExpr a) = HSql.SqlColumn a
     peToSqlColumn pe = error ("arrangeDoUpdate: conflict target must be a plain table column, got: " ++ show pe)
-    excludedRow = I.runIdentity $ U.runUnpackspec unpackR toExcludedPE columnsR
-    toExcludedPE (HPQ.BaseTableAttrExpr a) = I.Identity (HPQ.ExcludedAttrExpr a)
-    toExcludedPE pe = I.Identity pe
+    -- Both rows have to be qualified on the right hand side of DO
+    -- UPDATE SET: the existing row and excluded are both in scope
+    -- there, so an unqualified column name is ambiguous.  The existing
+    -- row is qualified by the bare table name, without the schema.
+    qualifyRow q = I.runIdentity . U.runUnpackspec unpackR (toQualifiedPE q)
+    toQualifiedPE q (HPQ.BaseTableAttrExpr a) = I.Identity (HPQ.QualifiedAttrExpr q a)
+    toQualifiedPE _ pe = I.Identity pe
+    existingRow = qualifyRow (PQ.tiTableName (TI.tableIdentifier table)) columnsR
+    excludedRow = qualifyRow "excluded" columnsR
     writer = TI.tableColumnsWriter (TI.tableColumns table)
-    writerAssigns = TI.runWriter writer (updateFn excludedRow)
+    writerAssigns = TI.runWriter writer (updateFn existingRow excludedRow)
     sqlAssigns = [(HSql.SqlColumn col, Sql.sqlExpr pe) | (pe, col) <- writerAssigns]
 
 runInsertManyReturningExplicit

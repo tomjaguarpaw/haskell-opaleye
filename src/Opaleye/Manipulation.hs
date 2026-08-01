@@ -267,7 +267,7 @@ doNothing = HSql.DoNothing
 
 -- | Replace every column with the corresponding @EXCLUDED@ value on
 -- conflict.  This is the most common upsert pattern.  Equivalent to
--- @'doUpdateEasy' table conflictTarget id@.
+-- @'doUpdateEasy' table conflictTarget (\\_ excluded -> excluded)@.
 --
 -- @
 -- -- data Stock' a b = Stock { sku :: a, quantity :: b }
@@ -291,13 +291,15 @@ doUpdateAll :: ( D.Default U.Unpackspec conflictCols conflictCols
             -> (fieldsR -> conflictCols)
             -- ^ Columns forming the conflict target
             -> HSql.OnConflict
-doUpdateAll table conflictTarget = doUpdateEasy table conflictTarget id
+doUpdateAll table conflictTarget =
+  doUpdateEasy table conflictTarget (\_ excluded -> excluded)
 
--- | Build an @ON CONFLICT (...) DO UPDATE SET@ conflict action.
--- The update function receives the @EXCLUDED@ pseudo-row and returns
--- the new column values.  Optional columns (created with
--- 'Opaleye.Table.optionalTableField') must be wrapped in 'Just';
--- see 'doUpdateEasy' to avoid this.
+-- | Build an @ON CONFLICT (...) DO UPDATE SET@ conflict action.  The
+-- update function receives the existing row and the @EXCLUDED@
+-- pseudo-row (the row that was proposed for insertion) and returns the
+-- new column values.  Optional columns (created with
+-- 'Opaleye.Table.optionalTableField') must be wrapped in 'Just'; see
+-- 'doUpdateEasy' to avoid this.
 --
 -- @
 -- -- data Stock' a b c = Stock { sku :: a, quantity :: b, reserved :: c }
@@ -311,23 +313,28 @@ doUpdateAll table conflictTarget = doUpdateEasy table conflictTarget id
 -- --   , quantity = optionalTableField "quantity"
 -- --   , reserved = optionalTableField "reserved"
 -- --   }
--- -- On conflict: sku unchanged, quantity updated, reserved reset to DEFAULT.
+-- -- On conflict: sku unchanged, quantity accumulated, reserved reset to DEFAULT.
 --
 -- iOnConflict = Just (doUpdate stockTable sku
---     (\\excl -> Stock
---         { sku      = sku excl       -- unchanged (equals conflict key)
---         , quantity = Just (quantity excl)  -- updated (Just required)
---         , reserved = Nothing               -- reset to column DEFAULT
+--     (\\existing excluded -> Stock
+--         { sku      = sku excluded  -- unchanged (equals conflict key)
+--         , quantity = Just (quantity existing + quantity excluded)
+--         , reserved = Nothing       -- reset to column DEFAULT
 --         }))
 -- @
+--
+-- To leave a column untouched, set it to its value in the existing row,
+-- e.g. @reserved = Just (reserved existing)@.  Note that 'Nothing' means
+-- @DEFAULT@, not \"leave unchanged\".
 doUpdate :: ( D.Default U.Unpackspec conflictCols conflictCols
             , D.Default U.Unpackspec fieldsR fieldsR
             )
          => T.Table fieldsW fieldsR
          -> (fieldsR -> conflictCols)
          -- ^ Columns forming the conflict target
-         -> (fieldsR -> fieldsW)
-         -- ^ Update function; receives the @EXCLUDED@ pseudo-row
+         -> (fieldsR -> fieldsR -> fieldsW)
+         -- ^ Update function; receives the existing row and the
+         -- @EXCLUDED@ pseudo-row
          -> HSql.OnConflict
 doUpdate = MI.arrangeDoUpdate D.def D.def
 
@@ -336,15 +343,18 @@ doUpdate = MI.arrangeDoUpdate D.def D.def
 --
 -- @
 -- -- (same stockTable as 'doUpdate' above)
--- -- On conflict: sku unchanged, quantity updated, reserved reset to DEFAULT.
+-- -- On conflict: sku unchanged, quantity accumulated, reserved overwritten.
 -- -- No Just wrapping needed — compare with 'doUpdate'.
 --
 -- iOnConflict = Just (doUpdateEasy stockTable sku
---     (\\excl -> excl
---         { quantity = quantity excl  -- updated (no Just needed)
---         , reserved = reserved excl  -- updated (no Just needed)
+--     (\\existing excluded -> existing
+--         { quantity = quantity existing + quantity excluded
+--         , reserved = reserved excluded
 --         }))
 -- @
+--
+-- Updating the existing row with record syntax, as above, means any
+-- column you do not mention keeps its existing value.
 doUpdateEasy :: ( D.Default U.Unpackspec conflictCols conflictCols
                 , D.Default U.Unpackspec fieldsR fieldsR
                 , D.Default MI.Updater fieldsR fieldsW
@@ -352,9 +362,11 @@ doUpdateEasy :: ( D.Default U.Unpackspec conflictCols conflictCols
              => T.Table fieldsW fieldsR
              -> (fieldsR -> conflictCols)
              -- ^ Columns forming the conflict target
-             -> (fieldsR -> fieldsR)
-             -- ^ Update function; receives the @EXCLUDED@ pseudo-row
+             -> (fieldsR -> fieldsR -> fieldsR)
+             -- ^ Update function; receives the existing row and the
+             -- @EXCLUDED@ pseudo-row
              -> HSql.OnConflict
 doUpdateEasy table conflictTarget updateFn =
-  MI.arrangeDoUpdate D.def D.def table conflictTarget (u' . updateFn)
+  MI.arrangeDoUpdate D.def D.def table conflictTarget
+    (\existing excluded -> u' (updateFn existing excluded))
   where Updater u' = D.def

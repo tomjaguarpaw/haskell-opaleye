@@ -1045,10 +1045,10 @@ testInsertConflict = it "inserts with conflicts" $ \conn -> do
 
         runSelectTable10 conn = O.runSelect conn (O.selectTable table10)
 
--- Helper shared by the three doUpdate tests: inserts initial rows,
--- runs an upsert with the given conflict action, then checks the result.
-runUpsertTest :: O.OnConflict -> PGS.Connection -> IO ()
-runUpsertTest onConflict conn = do
+-- Helper shared by the doUpdate tests: inserts initial rows, runs an
+-- upsert with the given conflict action, then checks the result.
+runUpsertTest :: O.OnConflict -> [UpsertRow' Int Int] -> PGS.Connection -> IO ()
+runUpsertTest onConflict expected conn = do
   _ <- O.runDelete_ conn O.Delete { O.dTable     = upsertTable
                                   , O.dWhere     = const (O.toFields True)
                                   , O.dReturning = O.rCount }
@@ -1061,27 +1061,48 @@ runUpsertTest onConflict conn = do
                                   , O.iReturning  = O.rCount
                                   , O.iOnConflict = Just onConflict }
   rows <- O.runSelect conn (O.selectTable upsertTable) :: IO [UpsertRow' Int Int]
-  L.sort rows `shouldBe` [ UpsertRow 1 99
-                          , UpsertRow 2 20
-                          , UpsertRow 3 30 ]
+  L.sort rows `shouldBe` expected
   where
     initial  = [UpsertRow 1 10, UpsertRow 2 20] :: [UpsertRowFields]
     upserted = [UpsertRow 1 99, UpsertRow 3 30] :: [UpsertRowFields]
+
+replacedRows :: [UpsertRow' Int Int]
+replacedRows = [UpsertRow 1 99, UpsertRow 2 20, UpsertRow 3 30]
 
 testDoUpdate :: Test
 testDoUpdate = it "doUpdate replaces conflicting rows using excluded values" $
   runUpsertTest
     (O.doUpdate upsertTable upsertKey
-      (\excl -> UpsertRow { upsertKey = upsertKey excl
-                          , upsertVal = upsertVal excl }))
+      (\_ excluded -> UpsertRow { upsertKey = upsertKey excluded
+                                , upsertVal = upsertVal excluded }))
+    replacedRows
+
+testDoUpdateExisting :: Test
+testDoUpdateExisting = it "doUpdate can refer to the existing row" $
+  runUpsertTest
+    (O.doUpdate upsertTable upsertKey
+      (\existing excluded ->
+         UpsertRow { upsertKey = upsertKey excluded
+                   , upsertVal = upsertVal existing + upsertVal excluded }))
+    -- Row 1 accumulates 10 + 99; row 3 is a plain insert, so no
+    -- existing row is involved.
+    [UpsertRow 1 109, UpsertRow 2 20, UpsertRow 3 30]
 
 testDoUpdateEasy :: Test
 testDoUpdateEasy = it "doUpdateEasy replaces conflicting rows without needing write-type wrappers" $
-  runUpsertTest (O.doUpdateEasy upsertTable upsertKey id)
+  runUpsertTest (O.doUpdateEasy upsertTable upsertKey (\_ excluded -> excluded))
+                replacedRows
+
+testDoUpdateEasyExisting :: Test
+testDoUpdateEasyExisting = it "doUpdateEasy leaves unmentioned columns at their existing values" $
+  runUpsertTest
+    (O.doUpdateEasy upsertTable upsertKey (\existing _ -> existing))
+    -- Row 1 keeps its existing value of 10.
+    [UpsertRow 1 10, UpsertRow 2 20, UpsertRow 3 30]
 
 testDoUpdateAll :: Test
 testDoUpdateAll = it "doUpdateAll replaces all columns of conflicting rows" $
-  runUpsertTest (O.doUpdateAll upsertTable upsertKey)
+  runUpsertTest (O.doUpdateAll upsertTable upsertKey) replacedRows
 
 testKeywordColNames :: Test
 testKeywordColNames = it "" $ \conn -> do
@@ -1755,7 +1776,9 @@ main = do
         testDeleteReturning
         testInsertConflict
         testDoUpdate
+        testDoUpdateExisting
         testDoUpdateEasy
+        testDoUpdateEasyExisting
         testDoUpdateAll
         testSelectCaseNull
       describe "range" $ do
