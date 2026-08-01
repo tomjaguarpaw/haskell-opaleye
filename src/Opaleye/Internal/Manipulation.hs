@@ -88,13 +88,18 @@ arrangeDoUpdate
   -> (columnsR -> columnsR -> columnsW)
   -> HSql.OnConflict
 arrangeDoUpdate unpackConflict unpackR table conflictTarget updateFn =
-  HSql.DoUpdate (HSql.SqlConflictColumns conflictSqlCols) sqlAssigns
+  HSql.DoUpdate (HSql.SqlConflictColumns conflictSqlExprs) sqlAssigns
   where
     TI.View columnsR = TI.tableColumnsView (TI.tableColumns table)
     conflictPEs = U.collectPEs unpackConflict (conflictTarget columnsR)
-    conflictSqlCols = map peToSqlColumn conflictPEs
-    peToSqlColumn (HPQ.BaseTableAttrExpr a) = HSql.SqlColumn a
-    peToSqlColumn pe = error ("arrangeDoUpdate: conflict target must be a plain table column, got: " ++ show pe)
+    -- Postgres has nothing to infer a unique index from if the
+    -- conflict target is empty, and rejects the statement, so fail
+    -- here with a message that says which function is at fault.
+    conflictSqlExprs = case NEL.nonEmpty (map Sql.sqlExpr conflictPEs) of
+      Just nel -> nel
+      Nothing  -> error "Opaleye: the conflict target of doUpdate, \
+                        \doUpdateEasy or doUpdateAll must contain at \
+                        \least one column"
     -- Both rows have to be qualified on the right hand side of DO
     -- UPDATE SET: the existing row and excluded are both in scope
     -- there, so an unqualified column name is ambiguous.  The existing

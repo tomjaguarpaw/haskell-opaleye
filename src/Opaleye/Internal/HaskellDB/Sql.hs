@@ -73,11 +73,11 @@ data SqlUpdate  = SqlUpdate SqlTable [(SqlColumn,SqlExpr)] [SqlExpr]
 -- | Data type for SQL DELETE statements.
 data SqlDelete  = SqlDelete SqlTable [SqlExpr]
 
-data SqlConflictTarget
-  = SqlConflictColumns [SqlColumn]
-  -- ^ @ON CONFLICT (col, ...)@
-  | SqlConflictConstraint String
-  -- ^ @ON CONFLICT ON CONSTRAINT name@
+newtype SqlConflictTarget
+  = SqlConflictColumns (NEL.NonEmpty SqlExpr)
+  -- ^ @ON CONFLICT (col, (expr), ...)@.  An entry may be a plain
+  -- column, or an expression when the unique index being inferred is
+  -- an expression index.  Postgres requires at least one entry.
   deriving Show
 
 {-# DEPRECATED DoNothing "Use 'doNothing' instead.  @DoNothing@ will be removed in version 0.11" #-}

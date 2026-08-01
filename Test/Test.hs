@@ -169,6 +169,12 @@ upsertTable = O.table "table11" $ pUpsertRow UpsertRow
   , upsertVal = required "column2"
   }
 
+-- table12's unique index is on lower(column1) rather than on a column,
+-- so upserting into it exercises an expression conflict target.
+exprIndexTable :: O.Table (Field O.SqlText, Field O.SqlInt4)
+                          (Field O.SqlText, Field O.SqlInt4)
+exprIndexTable = O.table "table12" (PP.p2 (required "column1", required "column2"))
+
 tableKeywordColNames :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
                                 (Field O.SqlInt4, Field O.SqlInt4)
 tableKeywordColNames = O.table "keywordtable"
@@ -331,6 +337,15 @@ jsonbTables = [("table9", ["column1"])]
 conflictTables :: [Table_]
 conflictTables = [("table10", ["column1"]), ("table11", ["column1", "column2"])]
 
+-- Unlike the other conflict tables, table12's uniqueness comes from an
+-- expression index rather than a primary key.
+dropAndCreateTableExprIndex :: PGS.Query
+dropAndCreateTableExprIndex =
+  "DROP TABLE IF EXISTS \"public\".\"table12\";\
+  \CREATE TABLE \"public\".\"table12\"\
+  \ (\"column1\" text, \"column2\" integer);\
+  \CREATE UNIQUE INDEX ON \"public\".\"table12\" (lower(\"column1\"));"
+
 dropAndCreateDB :: PGS.Connection -> IO ()
 dropAndCreateDB conn = do
   mapM_ execute tables
@@ -338,6 +353,7 @@ dropAndCreateDB conn = do
   mapM_ executeSerial serialTables
   mapM_ executeJson jsonTables
   mapM_ executeConflict conflictTables
+  _ <- PGS.execute_ conn dropAndCreateTableExprIndex
   mapM_ executeJsonb jsonbTables
   where execute = PGS.execute_ conn . dropAndCreateTableInt
         executeTextTable = PGS.execute_ conn . dropAndCreateTableText
@@ -1104,6 +1120,29 @@ testDoUpdateAll :: Test
 testDoUpdateAll = it "doUpdateAll replaces all columns of conflicting rows" $
   runUpsertTest (O.doUpdateAll upsertTable upsertKey) replacedRows
 
+testDoUpdateExprTarget :: Test
+testDoUpdateExprTarget = it "doUpdate can conflict on an expression index" $ \conn -> do
+  _ <- O.runDelete_ conn O.Delete { O.dTable     = exprIndexTable
+                                  , O.dWhere     = const (O.toFields True)
+                                  , O.dReturning = O.rCount }
+  _ <- O.runInsert_ conn O.Insert { O.iTable      = exprIndexTable
+                                  , O.iRows       = [O.toFields ("Foo" :: String, 10 :: Int)]
+                                  , O.iReturning  = O.rCount
+                                  , O.iOnConflict = Nothing }
+  -- "FOO" conflicts with "Foo" only via the lower(column1) index.
+  _ <- O.runInsert_ conn O.Insert { O.iTable      = exprIndexTable
+                                  , O.iRows       = [O.toFields ("FOO" :: String, 5 :: Int)]
+                                  , O.iReturning  = O.rCount
+                                  , O.iOnConflict = Just conflictAction }
+  rows <- O.runSelect conn (O.selectTable exprIndexTable) :: IO [(String, Int)]
+  rows `shouldBe` [("Foo", 15)]
+  where
+    -- Keeps the existing "Foo" rather than taking excluded's "FOO".
+    conflictAction =
+      O.doUpdateEasy exprIndexTable (\(c1, _) -> O.lower c1)
+        (\(existingKey, existingVal) (_, excludedVal) ->
+           (existingKey, existingVal + excludedVal))
+
 testKeywordColNames :: Test
 testKeywordColNames = it "" $ \conn -> do
   let q :: IO [(Int, Int)]
@@ -1780,6 +1819,7 @@ main = do
         testDoUpdateEasy
         testDoUpdateEasyExisting
         testDoUpdateAll
+        testDoUpdateExprTarget
         testSelectCaseNull
       describe "range" $ do
         testRangeOverlap

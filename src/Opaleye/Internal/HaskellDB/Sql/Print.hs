@@ -116,9 +116,14 @@ ppDelete (SqlDelete table criteria) =
 
 
 ppConflictTarget :: SqlConflictTarget -> Doc
-ppConflictTarget (SqlConflictColumns [])   = empty
-ppConflictTarget (SqlConflictColumns cols) = parens (commaH ppColumn cols)
-ppConflictTarget (SqlConflictConstraint n) = text "ON CONSTRAINT" <+> doubleQuotes (text n)
+ppConflictTarget (SqlConflictColumns es) =
+  parens (commaH ppConflictTargetEntry (NEL.toList es))
+  -- A plain column must be printed bare.  Postgres only matches a
+  -- parenthesised entry against an expression index, so wrapping a
+  -- column reference in parens would stop it inferring an ordinary
+  -- index on that column.
+  where ppConflictTargetEntry (ColumnSqlExpr c) = ppColumn c
+        ppConflictTargetEntry e                 = parens (ppSqlExpr e)
 
 ppConflictStatement :: Maybe OnConflict -> Doc
 ppConflictStatement Nothing = text ""
