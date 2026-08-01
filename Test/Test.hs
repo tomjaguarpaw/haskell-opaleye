@@ -1,7 +1,10 @@
-{-# LANGUAGE Arrows              #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE Arrows                #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TemplateHaskell       #-}
 
 module Main where
 
@@ -20,6 +23,7 @@ import qualified Data.Ord                         as Ord
 import qualified Data.Profunctor                  as P
 import qualified Data.Profunctor.Product          as PP
 import qualified Data.Profunctor.Product.Default  as D
+import           Data.Profunctor.Product.TH       (makeAdaptorAndInstance)
 import qualified Data.String                      as String
 import qualified Data.ByteString                  as SBS
 import qualified Data.Text                        as T
@@ -145,6 +149,31 @@ table9 = O.table "table9" (required "column1")
 
 table10 :: O.Table (Field O.SqlInt4) (Field O.SqlInt4)
 table10 = O.table "table10" (required "column1")
+
+table11 :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
+                   (Field O.SqlInt4, Field O.SqlInt4)
+table11 = O.table "table11" (PP.p2 (required "column1", required "column2"))
+
+data UpsertRow' a b = UpsertRow
+  { upsertKey :: a
+  , upsertVal :: b
+  } deriving (Show, Eq, Ord)
+
+$(makeAdaptorAndInstance "pUpsertRow" ''UpsertRow')
+
+type UpsertRowFields = UpsertRow' (Field O.SqlInt4) (Field O.SqlInt4)
+
+upsertTable :: O.Table UpsertRowFields UpsertRowFields
+upsertTable = O.table "table11" $ pUpsertRow UpsertRow
+  { upsertKey = required "column1"
+  , upsertVal = required "column2"
+  }
+
+-- table12's unique index is on lower(column1) rather than on a column,
+-- so upserting into it exercises an expression conflict target.
+exprIndexTable :: O.Table (Field O.SqlText, Field O.SqlInt4)
+                          (Field O.SqlText, Field O.SqlInt4)
+exprIndexTable = O.table "table12" (PP.p2 (required "column1", required "column2"))
 
 tableKeywordColNames :: O.Table (Field O.SqlInt4, Field O.SqlInt4)
                                 (Field O.SqlInt4, Field O.SqlInt4)
@@ -306,7 +335,16 @@ jsonbTables :: [Table_]
 jsonbTables = [("table9", ["column1"])]
 
 conflictTables :: [Table_]
-conflictTables = [("table10", ["column1"])]
+conflictTables = [("table10", ["column1"]), ("table11", ["column1", "column2"])]
+
+-- Unlike the other conflict tables, table12's uniqueness comes from an
+-- expression index rather than a primary key.
+dropAndCreateTableExprIndex :: PGS.Query
+dropAndCreateTableExprIndex =
+  "DROP TABLE IF EXISTS \"public\".\"table12\";\
+  \CREATE TABLE \"public\".\"table12\"\
+  \ (\"column1\" text, \"column2\" integer);\
+  \CREATE UNIQUE INDEX ON \"public\".\"table12\" (lower(\"column1\"));"
 
 dropAndCreateDB :: PGS.Connection -> IO ()
 dropAndCreateDB conn = do
@@ -315,6 +353,7 @@ dropAndCreateDB conn = do
   mapM_ executeSerial serialTables
   mapM_ executeJson jsonTables
   mapM_ executeConflict conflictTables
+  _ <- PGS.execute_ conn dropAndCreateTableExprIndex
   mapM_ executeJsonb jsonbTables
   where execute = PGS.execute_ conn . dropAndCreateTableInt
         executeTextTable = PGS.execute_ conn . dropAndCreateTableText
@@ -1022,6 +1061,88 @@ testInsertConflict = it "inserts with conflicts" $ \conn -> do
 
         runSelectTable10 conn = O.runSelect conn (O.selectTable table10)
 
+-- Helper shared by the doUpdate tests: inserts initial rows, runs an
+-- upsert with the given conflict action, then checks the result.
+runUpsertTest :: O.OnConflict -> [UpsertRow' Int Int] -> PGS.Connection -> IO ()
+runUpsertTest onConflict expected conn = do
+  _ <- O.runDelete_ conn O.Delete { O.dTable     = upsertTable
+                                  , O.dWhere     = const (O.toFields True)
+                                  , O.dReturning = O.rCount }
+  _ <- O.runInsert_ conn O.Insert { O.iTable      = upsertTable
+                                  , O.iRows       = initial
+                                  , O.iReturning  = O.rCount
+                                  , O.iOnConflict = Nothing }
+  _ <- O.runInsert_ conn O.Insert { O.iTable      = upsertTable
+                                  , O.iRows       = upserted
+                                  , O.iReturning  = O.rCount
+                                  , O.iOnConflict = Just onConflict }
+  rows <- O.runSelect conn (O.selectTable upsertTable) :: IO [UpsertRow' Int Int]
+  L.sort rows `shouldBe` expected
+  where
+    initial  = [UpsertRow 1 10, UpsertRow 2 20] :: [UpsertRowFields]
+    upserted = [UpsertRow 1 99, UpsertRow 3 30] :: [UpsertRowFields]
+
+replacedRows :: [UpsertRow' Int Int]
+replacedRows = [UpsertRow 1 99, UpsertRow 2 20, UpsertRow 3 30]
+
+testDoUpdate :: Test
+testDoUpdate = it "doUpdate replaces conflicting rows using excluded values" $
+  runUpsertTest
+    (O.doUpdate upsertTable upsertKey
+      (\_ excluded -> UpsertRow { upsertKey = upsertKey excluded
+                                , upsertVal = upsertVal excluded }))
+    replacedRows
+
+testDoUpdateExisting :: Test
+testDoUpdateExisting = it "doUpdate can refer to the existing row" $
+  runUpsertTest
+    (O.doUpdate upsertTable upsertKey
+      (\existing excluded ->
+         UpsertRow { upsertKey = upsertKey excluded
+                   , upsertVal = upsertVal existing + upsertVal excluded }))
+    -- Row 1 accumulates 10 + 99; row 3 is a plain insert, so no
+    -- existing row is involved.
+    [UpsertRow 1 109, UpsertRow 2 20, UpsertRow 3 30]
+
+testDoUpdateEasy :: Test
+testDoUpdateEasy = it "doUpdateEasy replaces conflicting rows without needing write-type wrappers" $
+  runUpsertTest (O.doUpdateEasy upsertTable upsertKey (\_ excluded -> excluded))
+                replacedRows
+
+testDoUpdateEasyExisting :: Test
+testDoUpdateEasyExisting = it "doUpdateEasy leaves unmentioned columns at their existing values" $
+  runUpsertTest
+    (O.doUpdateEasy upsertTable upsertKey (\existing _ -> existing))
+    -- Row 1 keeps its existing value of 10.
+    [UpsertRow 1 10, UpsertRow 2 20, UpsertRow 3 30]
+
+testDoUpdateAll :: Test
+testDoUpdateAll = it "doUpdateAll replaces all columns of conflicting rows" $
+  runUpsertTest (O.doUpdateAll upsertTable upsertKey) replacedRows
+
+testDoUpdateExprTarget :: Test
+testDoUpdateExprTarget = it "doUpdate can conflict on an expression index" $ \conn -> do
+  _ <- O.runDelete_ conn O.Delete { O.dTable     = exprIndexTable
+                                  , O.dWhere     = const (O.toFields True)
+                                  , O.dReturning = O.rCount }
+  _ <- O.runInsert_ conn O.Insert { O.iTable      = exprIndexTable
+                                  , O.iRows       = [O.toFields ("Foo" :: String, 10 :: Int)]
+                                  , O.iReturning  = O.rCount
+                                  , O.iOnConflict = Nothing }
+  -- "FOO" conflicts with "Foo" only via the lower(column1) index.
+  _ <- O.runInsert_ conn O.Insert { O.iTable      = exprIndexTable
+                                  , O.iRows       = [O.toFields ("FOO" :: String, 5 :: Int)]
+                                  , O.iReturning  = O.rCount
+                                  , O.iOnConflict = Just conflictAction }
+  rows <- O.runSelect conn (O.selectTable exprIndexTable) :: IO [(String, Int)]
+  rows `shouldBe` [("Foo", 15)]
+  where
+    -- Keeps the existing "Foo" rather than taking excluded's "FOO".
+    conflictAction =
+      O.doUpdateEasy exprIndexTable (\(c1, _) -> O.lower c1)
+        (\(existingKey, existingVal) (_, excludedVal) ->
+           (existingKey, existingVal + excludedVal))
+
 testKeywordColNames :: Test
 testKeywordColNames = it "" $ \conn -> do
   let q :: IO [(Int, Int)]
@@ -1693,6 +1814,12 @@ main = do
         testUpdate
         testDeleteReturning
         testInsertConflict
+        testDoUpdate
+        testDoUpdateExisting
+        testDoUpdateEasy
+        testDoUpdateEasyExisting
+        testDoUpdateAll
+        testDoUpdateExprTarget
         testSelectCaseNull
       describe "range" $ do
         testRangeOverlap
