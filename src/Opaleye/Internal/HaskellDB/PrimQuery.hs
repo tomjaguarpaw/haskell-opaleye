@@ -41,6 +41,7 @@ data PrimExpr   = AttrExpr  Symbol
                 | ArrayExpr [PrimExpr] -- ^ ARRAY[..]
                 | RangeExpr String BoundExpr BoundExpr
                 | ArrayIndex PrimExpr PrimExpr
+                | ArraySlice PrimExpr PrimExpr PrimExpr
                 deriving (Read,Show)
 
 data Literal = NullLit
