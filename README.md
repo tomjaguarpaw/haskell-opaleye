@@ -94,11 +94,6 @@ by setting the `POSTGRES_CONNSTRING` environment variable:
 POSTGRES_CONNSTRING="user=tom dbname=opaleye_test" stack test
 ```
 
-# Commercial support
-
-Commercial support for Opaleye is provided by [Purely
-Agile](http://www.purelyagile.com/).
-
 # Backup maintainers
 
 The only person authorised to merge to `master` or upload this package
