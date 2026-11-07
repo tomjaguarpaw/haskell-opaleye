@@ -180,6 +180,7 @@ ppSqlExpr expr =
       CompositeSqlExpr s x   -> parens (ppSqlExpr s) <> text "." <> text x
       ParensSqlExpr e        -> parens (ppSqlExpr e)
       SubscriptSqlExpr e1 e2 -> ppSqlExpr e1 <> brackets (ppSqlExpr e2)
+      SliceSqlExpr e1 e2 e3  -> ppSqlExpr e1 <> brackets (ppSqlExpr e2 <> text ":" <> ppSqlExpr e3)
       BinSqlExpr op e1 e2    -> ppSqlExpr e1 <+> text op <+> ppSqlExpr e2
       AnySqlExpr op e1 e2    -> ppSqlExpr e1 <+> text op <+> text "ANY" <+> parens (ppSqlExpr e2)
       PrefixSqlExpr op e     -> text op <+> ppSqlExpr e

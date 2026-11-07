@@ -166,6 +166,7 @@ defaultSqlExpr gen expr =
                              bound PQ.NegInfinity   = Sql.NegInfinity
                         in RangeSqlExpr t (bound l) (bound r)
       ArrayIndex e1 e2 -> SubscriptSqlExpr (ParensSqlExpr $ sqlExpr gen e1) (ParensSqlExpr $ sqlExpr gen e2)
+      ArraySlice e1 e2 e3 -> SliceSqlExpr (ParensSqlExpr $ sqlExpr gen e1) (ParensSqlExpr $ sqlExpr gen e2) (ParensSqlExpr $ sqlExpr gen e3)
 
 showBinOp :: BinOp -> String
 showBinOp  (:==)        = "="

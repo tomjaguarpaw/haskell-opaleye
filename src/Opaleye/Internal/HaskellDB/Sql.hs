@@ -50,6 +50,7 @@ data SqlExpr = ColumnSqlExpr  SqlColumn
              | BinSqlExpr     String SqlExpr SqlExpr
              | AnySqlExpr     String SqlExpr SqlExpr
              | SubscriptSqlExpr SqlExpr SqlExpr
+             | SliceSqlExpr   SqlExpr SqlExpr SqlExpr
              | PrefixSqlExpr  String SqlExpr
              | PostfixSqlExpr String SqlExpr
              | FunSqlExpr     String [SqlExpr]
