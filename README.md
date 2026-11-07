@@ -50,11 +50,6 @@ Please get started with Opaleye by referring to these two tutorials
 
 # Contact
 
-## Contact the author
-
-The main author of Opaleye is Tom Ellis.  He can be [contacted via
-email](http://web.jaguarpaw.co.uk/~tom/contact/).
-
 ## File bugs
 
 Please file bugs on the [Opaleye GitHub issue tracking
