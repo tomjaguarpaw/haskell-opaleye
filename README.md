@@ -48,6 +48,16 @@ Please get started with Opaleye by referring to these two tutorials
 
 * [Abstracting out common columns in Opaleye](https://www.williamyaoh.com/posts/2019-12-28-abstracting-out-common-columns-opaleye.html)
 
+# Maintenance
+
+Opaleye is no longer actively maintained.  If you would like to take
+over maintenance then please open an issue on the [Opaleye GitHub
+issue tracking
+page](https://github.com/tomjaguarpaw/haskell-opaleye/issues/).  An
+actively maintained alternative is
+[`rel8`](https://hackage.haskell.org/package/rel8), which is built on
+Opaleye.
+
 # Contact
 
 ## File bugs
@@ -88,32 +98,6 @@ by setting the `POSTGRES_CONNSTRING` environment variable:
 ```
 POSTGRES_CONNSTRING="user=tom dbname=opaleye_test" stack test
 ```
-
-# Backup maintainers
-
-The only person authorised to merge to `master` or upload this package
-to Hackage is Tom Ellis.
-
-However, to ensure continuity of service to Opaleye users there are
-backup maintainers.
-
-* If Tom Ellis is unavailable or unresponsive to maintenance requests
-for three months then full ownership of the project, including the
-GitHub repository, Hackage upload rights, and the right to amend this
-backup maintainers policy, passes to Oliver Charles
-(ollie@ocharles.org.uk).
-
-* If Tom Ellis is unavailable or unresponsive to maintenance requests
-for four months, and this policy has not been changed to the contrary,
-then full ownership of the project, including the GitHub repository,
-Hackage upload rights, and the right to amend this backup maintainers
-policy passes to Shane O'Brien (@duairc).
-
-* If Tom Ellis is unavailable or unresponsive to maintenance requests
-for six months, and this policy has not been changed to the contrary,
-then full ownership of the project, including the GitHub repository,
-Hackage upload rights, and the right to amend this backup maintainers
-policy passes to Ellie Hermaszewska (@expipiplus1).
 
 # Contributors
 
