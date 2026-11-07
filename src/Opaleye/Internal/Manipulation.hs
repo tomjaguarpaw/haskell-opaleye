@@ -4,7 +4,10 @@ module Opaleye.Internal.Manipulation where
 
 import qualified Control.Applicative as A
 
+import qualified Data.Functor.Identity as I
+
 import           Opaleye.Internal.Column (Field_(Column), Field)
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.HaskellDB.Sql  as HSql
 import qualified Opaleye.Internal.HaskellDB.Sql.Default  as SD
 import qualified Opaleye.Internal.HaskellDB.Sql.Generate as SG
@@ -76,6 +79,39 @@ arrangeInsertManySql :: T.Table columnsW columnsR
                      -> String
 arrangeInsertManySql =
   show . HPrint.ppInsert .:. arrangeInsertMany
+
+arrangeDoUpdate
+  :: U.Unpackspec conflictCols conflictCols
+  -> U.Unpackspec columnsR columnsR
+  -> T.Table columnsW columnsR
+  -> (columnsR -> conflictCols)
+  -> (columnsR -> columnsR -> columnsW)
+  -> HSql.OnConflict
+arrangeDoUpdate unpackConflict unpackR table conflictTarget updateFn =
+  HSql.DoUpdate (HSql.SqlConflictColumns conflictSqlExprs) sqlAssigns
+  where
+    TI.View columnsR = TI.tableColumnsView (TI.tableColumns table)
+    conflictPEs = U.collectPEs unpackConflict (conflictTarget columnsR)
+    -- Postgres has nothing to infer a unique index from if the
+    -- conflict target is empty, and rejects the statement, so fail
+    -- here with a message that says which function is at fault.
+    conflictSqlExprs = case NEL.nonEmpty (map Sql.sqlExpr conflictPEs) of
+      Just nel -> nel
+      Nothing  -> error "Opaleye: the conflict target of doUpdate, \
+                        \doUpdateEasy or doUpdateAll must contain at \
+                        \least one column"
+    -- Both rows have to be qualified on the right hand side of DO
+    -- UPDATE SET: the existing row and excluded are both in scope
+    -- there, so an unqualified column name is ambiguous.  The existing
+    -- row is qualified by the bare table name, without the schema.
+    qualifyRow q = I.runIdentity . U.runUnpackspec unpackR (toQualifiedPE q)
+    toQualifiedPE q (HPQ.BaseTableAttrExpr a) = I.Identity (HPQ.QualifiedAttrExpr q a)
+    toQualifiedPE _ pe = I.Identity pe
+    existingRow = qualifyRow (PQ.tiTableName (TI.tableIdentifier table)) columnsR
+    excludedRow = qualifyRow "excluded" columnsR
+    writer = TI.tableColumnsWriter (TI.tableColumns table)
+    writerAssigns = TI.runWriter writer (updateFn existingRow excludedRow)
+    sqlAssigns = [(HSql.SqlColumn col, Sql.sqlExpr pe) | (pe, col) <- writerAssigns]
 
 runInsertManyReturningExplicit
   :: RS.FromFields columnsReturned haskells

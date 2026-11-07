@@ -21,6 +21,12 @@ data Symbol = Symbol String T.Tag deriving (Read, Show)
 
 data PrimExpr   = AttrExpr  Symbol
                 | BaseTableAttrExpr Attribute
+                | QualifiedAttrExpr String Attribute
+                  -- ^ @qualifier.attr@.  Used in @ON CONFLICT DO
+                  -- UPDATE@, where the proposed row is referred to as
+                  -- @excluded.attr@ and the existing row as
+                  -- @tablename.attr@.  Both must be qualified there:
+                  -- an unqualified name is ambiguous.
                 | CompositeExpr     PrimExpr Attribute -- ^ Composite Type Query
                 | BinExpr   BinOp PrimExpr PrimExpr
                 | AnyExpr   BinOp PrimExpr PrimExpr -- ^ <expr> <op> ANY(<expr>)
